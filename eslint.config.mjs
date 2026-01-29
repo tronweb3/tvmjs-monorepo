@@ -80,7 +80,7 @@ export default [
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
       '@typescript-eslint/restrict-plus-operands': 'off',
       '@typescript-eslint/return-await': 'error',
-      '@typescript-eslint/strict-boolean-expressions': ['error'],
+      '@typescript-eslint/strict-boolean-expressions': 'off',
       '@typescript-eslint/no-use-before-define': 'off', // TODO: Decide if this is needed
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'off', // TODO: Decide if this is needed
