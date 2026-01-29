@@ -11,7 +11,7 @@ import {
 import { EventEmitter } from 'eventemitter3'
 
 import { crc32 } from './crc.ts'
-import { eipsDict } from './eips.ts'
+import { tipsDict } from './eips.ts'
 import { Hardfork } from './enums.ts'
 import { hardforksDict } from './hardforks.ts'
 
@@ -278,10 +278,10 @@ export class Common {
    */
   setEIPs(eips: number[] = []) {
     for (const eip of eips) {
-      if (!(eip in eipsDict)) {
+      if (!(eip in tipsDict)) {
         throw EthereumJSErrorWithoutCode(`${eip} not supported`)
       }
-      const minHF = this.gteHardfork(eipsDict[eip]['minimumHardfork'])
+      const minHF = this.gteHardfork(tipsDict[eip]['minimumHardfork'])
       if (!minHF) {
         throw EthereumJSErrorWithoutCode(
           `${eip} cannot be activated on hardfork ${this.hardfork()}, minimumHardfork: ${minHF}`,
@@ -293,8 +293,8 @@ export class Common {
     this._buildActivatedEIPsCache()
 
     for (const eip of eips) {
-      if (eipsDict[eip].requiredEIPs !== undefined) {
-        for (const elem of eipsDict[eip].requiredEIPs!) {
+      if (tipsDict[eip].requiredEIPs !== undefined) {
+        for (const elem of tipsDict[eip].requiredEIPs!) {
           if (!(eips.includes(elem) || this.isActivatedEIP(elem))) {
             throw EthereumJSErrorWithoutCode(
               `${eip} requires EIP ${elem}, but is not included in the EIP list`,
@@ -428,7 +428,7 @@ export class Common {
    * @returns The value requested (throws if not found)
    */
   paramByEIP(name: string, eip: number): bigint | undefined {
-    if (!(eip in eipsDict)) {
+    if (!(eip in tipsDict)) {
       throw EthereumJSErrorWithoutCode(`${eip} not supported`)
     }
 

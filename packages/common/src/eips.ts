@@ -550,3 +550,168 @@ export const eipsDict: EIPsDict = {
     requiredEIPs: [],
   },
 }
+
+export const tipsDict: EIPsDict = {
+  /**
+   * Frontier/Chainstart
+   * (there is no Meta-EIP currently for Frontier, so 1 was chosen)
+   */
+  1: {
+    minimumHardfork: Hardfork.Chainstart,
+  },
+  /**
+   * Homestead HF Meta EIP
+   */
+  606: {
+    minimumHardfork: Hardfork.Chainstart,
+  },
+  /**
+   * TangerineWhistle HF Meta EIP
+   */
+  608: {
+    minimumHardfork: Hardfork.Homestead,
+  },
+  /**
+   * Spurious Dragon HF Meta EIP
+   */
+  607: {
+    minimumHardfork: Hardfork.TangerineWhistle,
+  },
+  /**
+   * Byzantium HF Meta EIP
+   */
+  609: {
+    minimumHardfork: Hardfork.SpuriousDragon,
+  },
+  /**
+   * Constantinople HF Meta EIP
+   */
+  1013: {
+    minimumHardfork: Hardfork.Constantinople,
+  },
+  /**
+   * Description : Transient storage opcodes
+   * URL         : https://eips.ethereum.org/EIPS/eip-1153
+   * Status      : Final
+   */
+  1153: {
+    minimumHardfork: Hardfork.Chainstart,
+  },
+  /**
+   * Description : Fee market change for ETH 1.0 chain
+   * URL         : https://eips.ethereum.org/EIPS/eip-1559
+   * Status      : Final
+   */
+  1559: {
+    minimumHardfork: Hardfork.Berlin,
+    requiredEIPs: [2930],
+  },
+  /**
+   * Petersburg HF Meta EIP
+   */
+  1716: {
+    minimumHardfork: Hardfork.Constantinople,
+  },
+  /**
+   * Istanbul HF Meta EIP
+   */
+  1679: {
+    minimumHardfork: Hardfork.Constantinople,
+  },
+  /**
+   * MuirGlacier HF Meta EIP
+   */
+  2384: {
+    minimumHardfork: Hardfork.Istanbul,
+  },
+  /**
+   * Description : BLS12-381 precompiles
+   * URL         : https://eips.ethereum.org/EIPS/eip-2537
+   * Status      : Review
+   */
+  2537: {
+    minimumHardfork: Hardfork.Chainstart,
+  },
+  /**
+   * Description : ModExp gas cost
+   * URL         : https://eips.ethereum.org/EIPS/eip-2565
+   * Status      : Final
+   */
+  2565: {
+    minimumHardfork: Hardfork.Byzantium,
+  },
+  /**
+   * Description : Typed Transaction Envelope
+   * URL         : https://eips.ethereum.org/EIPS/eip-2718
+   * Status      : Final
+   */
+  2718: {
+    minimumHardfork: Hardfork.Chainstart,
+  },
+  /**
+   * Description : Optional access lists
+   * URL         : https://eips.ethereum.org/EIPS/eip-2930
+   * Status      : Final
+   */
+  2930: {
+    minimumHardfork: Hardfork.Istanbul,
+    requiredEIPs: [2718, 2929],
+  },
+  /**
+   * Description : Gas cost increases for state access opcodes
+   * URL         : https://eips.ethereum.org/EIPS/eip-2929
+   * Status      : Final
+   */
+  2929: {
+    minimumHardfork: Hardfork.Chainstart,
+  },
+  /**
+   * Description : BASEFEE opcode
+   * URL         : https://eips.ethereum.org/EIPS/eip-3198
+   * Status      : Final
+   */
+  3198: {
+    minimumHardfork: Hardfork.London,
+  },
+  /**
+   * Description : Reduction in refunds
+   * URL         : https://eips.ethereum.org/EIPS/eip-3529
+   * Status      : Final
+   */
+  3529: {
+    minimumHardfork: Hardfork.Berlin,
+    requiredEIPs: [2929],
+  },
+  /**
+   * Description : Reject new contracts starting with the 0xEF byte
+   * URL         : https://eips.ethereum.org/EIPS/eip-3541
+   * Status      : Final
+   */
+  3541: {
+    minimumHardfork: Hardfork.Berlin,
+  },
+  /**
+   * Description : PUSH0 instruction
+   * URL         : https://eips.ethereum.org/EIPS/eip-3855
+   * Status      : Final
+   */
+  3855: {
+    minimumHardfork: Hardfork.Chainstart,
+  },
+  /**
+   * Description : MCOPY - Memory copying instruction
+   * URL         : https://eips.ethereum.org/EIPS/eip-5656
+   * Status      : Final
+   */
+  5656: {
+    minimumHardfork: Hardfork.Shanghai,
+  },
+  /**
+   * Description : SELFDESTRUCT only in same transaction
+   * URL         : https://eips.ethereum.org/EIPS/eip-6780
+   * Status      : Final
+   */
+  6780: {
+    minimumHardfork: Hardfork.London,
+  },
+}
