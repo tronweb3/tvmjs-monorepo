@@ -1,4 +1,4 @@
-import type { GethGenesis } from '@ethereumjs/common'
+import type { GethGenesis } from '@tvmjs/common'
 
 /**
  * Geth genesis configuration for debug/testing scenarios.

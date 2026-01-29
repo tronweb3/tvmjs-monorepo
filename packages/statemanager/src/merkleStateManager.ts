@@ -1,6 +1,7 @@
-import { Common, Mainnet } from '@ethereumjs/common'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Common, Mainnet } from '@tvmjs/common'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
 import {
   Account,
   EthereumJSErrorWithoutCode,
@@ -16,21 +17,15 @@ import {
   unpadBytes,
   unprefixedHexToBytes,
   utf8ToBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import { OriginalStorageCache } from './cache/index.ts'
 import type { Caches, MerkleStateManagerOpts } from './index.ts'
 import { modifyAccountFields } from './util.ts'
 
-import type {
-  AccountFields,
-  StateManagerInterface,
-  StorageDump,
-  StorageRange,
-} from '@ethereumjs/common'
-import type { Address, DB } from '@ethereumjs/util'
+import type { AccountFields, StateManagerInterface, StorageDump, StorageRange } from '@tvmjs/common'
+import type { Address, DB } from '@tvmjs/util'
 import type { Debugger } from 'debug'
 
 /**
@@ -51,10 +46,10 @@ export const CODEHASH_PREFIX = utf8ToBytes('c')
  * and storage slots.
  *
  * The default state manager implementation uses a
- * `@ethereumjs/mpt` trie as a data backend.
+ * `@tvmjs/mpt` trie as a data backend.
  *
  * Note that there is a `SimpleStateManager` dependency-free state
- * manager implementation available shipped with the `@ethereumjs/statemanager`
+ * manager implementation available shipped with the `@tvmjs/statemanager`
  * package which might be an alternative to this implementation
  * for many basic use cases.
  */

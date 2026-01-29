@@ -1,4 +1,4 @@
-import { Account, createAddressFromString, hexToBytes } from '@ethereumjs/util'
+import { Account, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { EVMErrorTypeString } from '../src/errors.ts'

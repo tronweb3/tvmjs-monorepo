@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { bytesToHex, randomBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { bytesToHex, randomBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {

@@ -1,14 +1,14 @@
-import { createBlock, genRequestsRoot } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createCLRequest, equalsBytes, hexToBytes } from '@ethereumjs/util'
 import { sha256 } from '@noble/hashes/sha2.js'
+import { createBlock, genRequestsRoot } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createCLRequest, equalsBytes, hexToBytes } from '@tvmjs/util'
 import { assert, describe, expect, it } from 'vitest'
 
 import { buildBlock, createVM, runBlock } from '../../../src/index.ts'
 import { setupVM } from '../utils.ts'
 
-import type { CLRequest, CLRequestType } from '@ethereumjs/util'
+import type { CLRequest, CLRequestType } from '@tvmjs/util'
 
 const invalidRequestsRoot = hexToBytes(
   '0xc98048d6605eb79ecc08d90b8817f44911ec474acd8d11688453d2c6ef743bc5',

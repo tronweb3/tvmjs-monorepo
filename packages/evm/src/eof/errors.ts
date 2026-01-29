@@ -1,4 +1,4 @@
-import { EthereumJSErrorWithoutCode } from '@ethereumjs/util'
+import { EthereumJSErrorWithoutCode } from '@tvmjs/util'
 
 export type EOFErrorMessage = (typeof EOFErrorMessage)[keyof typeof EOFErrorMessage]
 

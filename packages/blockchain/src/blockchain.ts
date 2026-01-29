@@ -1,5 +1,5 @@
-import { Block, BlockHeader, createBlock } from '@ethereumjs/block'
-import { Common, ConsensusAlgorithm, ConsensusType, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Block, BlockHeader, createBlock } from '@tvmjs/block'
+import { Common, ConsensusAlgorithm, ConsensusType, Hardfork, Mainnet } from '@tvmjs/common'
 import {
   BIGINT_0,
   BIGINT_1,
@@ -14,7 +14,7 @@ import {
   bytesToUnprefixedHex,
   concatBytes,
   equalsBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 import { EventEmitter } from 'eventemitter3'
 
@@ -29,9 +29,9 @@ import {
 import { DBManager } from './db/manager.ts'
 import { DBTarget } from './db/operation.ts'
 
-import type { HeaderData } from '@ethereumjs/block'
-import type { CliqueConfig, GenesisState } from '@ethereumjs/common'
-import type { BigIntLike, DB, DBObject } from '@ethereumjs/util'
+import type { HeaderData } from '@tvmjs/block'
+import type { CliqueConfig, GenesisState } from '@tvmjs/common'
+import type { BigIntLike, DB, DBObject } from '@tvmjs/util'
 import type { Debugger } from 'debug'
 import type {
   BlockchainEvent,

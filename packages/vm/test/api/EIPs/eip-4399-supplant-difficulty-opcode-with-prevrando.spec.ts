@@ -1,12 +1,12 @@
-import { createBlock } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { bytesToBigInt, hexToBytes } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { bytesToBigInt, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
+import type { InterpreterStep } from '@tvmjs/evm'
 
 describe('EIP-4399 -> 0x44 (DIFFICULTY) should return PREVRANDAO', () => {
   it('should return the right values', async () => {

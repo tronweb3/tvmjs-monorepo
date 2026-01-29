@@ -4,13 +4,13 @@ import {
   intToHex,
   isHexString,
   stripHexPrefix,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import { Holesky, Hoodi, Mainnet, Sepolia } from './chains.ts'
 import { Hardfork } from './enums.ts'
 import { hardforksDict } from './hardforks.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 import type { GethGenesis } from './gethGenesis.ts'
 import type { HardforksDict } from './types.ts'
 

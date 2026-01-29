@@ -1,11 +1,11 @@
-import { equalsBytes } from '@ethereumjs/util'
+import { equalsBytes } from '@tvmjs/util'
 
 import { EVMError } from '../errors.ts'
 
 import { adjustSstoreGasEIP2929 } from './EIP2929.ts'
 import { trap } from './util.ts'
 
-import type { Common } from '@ethereumjs/common'
+import type { Common } from '@tvmjs/common'
 import type { RunState } from '../interpreter.ts'
 
 /**

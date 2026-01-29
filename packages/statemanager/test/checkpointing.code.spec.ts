@@ -1,5 +1,5 @@
-import { type StateManagerInterface } from '@ethereumjs/common'
-import { Account, Address, hexToBytes } from '@ethereumjs/util'
+import { type StateManagerInterface } from '@tvmjs/common'
+import { Account, Address, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Caches, MerkleStateManager, SimpleStateManager } from '../src/index.ts'

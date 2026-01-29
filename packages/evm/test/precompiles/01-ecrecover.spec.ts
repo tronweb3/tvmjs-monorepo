@@ -1,6 +1,6 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { bytesToHex, bytesToUnprefixedHex, hexToBytes, utf8ToBytes } from '@ethereumjs/util'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { bytesToHex, bytesToUnprefixedHex, hexToBytes, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createEVM, getActivePrecompiles } from '../../src/index.ts'

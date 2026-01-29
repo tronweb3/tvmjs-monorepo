@@ -1,5 +1,5 @@
-import { EthereumJSErrorWithoutCode, equalsBytes } from '@ethereumjs/util'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { EthereumJSErrorWithoutCode, equalsBytes } from '@tvmjs/util'
 
 import { createMPTFromProof } from '../index.ts'
 import { MerklePatriciaTrie } from '../mpt.ts'

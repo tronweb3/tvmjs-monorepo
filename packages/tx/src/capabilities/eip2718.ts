@@ -1,12 +1,12 @@
-import { RLP } from '@ethereumjs/rlp'
-import { BIGINT_0, BIGINT_1, EthereumJSErrorWithoutCode, concatBytes } from '@ethereumjs/util'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { RLP } from '@tvmjs/rlp'
+import { BIGINT_0, BIGINT_1, EthereumJSErrorWithoutCode, concatBytes } from '@tvmjs/util'
 
 import { txTypeBytes } from '../util/internal.ts'
 
 import { errorMsg } from './legacy.ts'
 
-import type { Input } from '@ethereumjs/rlp'
+import type { Input } from '@tvmjs/rlp'
 import type { EIP2718CompatibleTx } from '../types.ts'
 
 /**

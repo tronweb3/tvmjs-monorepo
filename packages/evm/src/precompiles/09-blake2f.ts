@@ -1,4 +1,4 @@
-import { bytesToHex } from '@ethereumjs/util'
+import { bytesToHex } from '@tvmjs/util'
 
 import { EVMError } from '../errors.ts'
 import { OOGResult } from '../evm.ts'

@@ -1,8 +1,8 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { KECCAK256_RLP } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { KECCAK256_RLP } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import type { MerkleStateManager } from '@ethereumjs/statemanager'
+import type { MerkleStateManager } from '@tvmjs/statemanager'
 import { createVM } from '../../../src/index.ts'
 
 describe('General MuirGlacier VM tests', () => {

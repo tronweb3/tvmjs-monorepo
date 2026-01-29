@@ -4,7 +4,7 @@ import {
   invalidSpuriousDragonGethGenesis,
   kilnGethGenesis,
   postMergeGethGenesis,
-} from '@ethereumjs/testdata'
+} from '@tvmjs/testdata'
 import { assert, describe, it } from 'vitest'
 
 import { parseGethGenesisState } from '../src/gethGenesis.ts'

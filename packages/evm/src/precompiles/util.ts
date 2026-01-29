@@ -1,4 +1,4 @@
-import { short } from '@ethereumjs/util'
+import { short } from '@tvmjs/util'
 
 import type { PrecompileInput } from './index.ts'
 

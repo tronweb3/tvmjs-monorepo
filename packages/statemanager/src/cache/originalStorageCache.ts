@@ -1,6 +1,6 @@
-import { bytesToUnprefixedHex } from '@ethereumjs/util'
+import { bytesToUnprefixedHex } from '@tvmjs/util'
 
-import type { Address } from '@ethereumjs/util'
+import type { Address } from '@tvmjs/util'
 
 type getStorage = (address: Address, key: Uint8Array) => Promise<Uint8Array>
 

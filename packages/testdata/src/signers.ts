@@ -1,4 +1,4 @@
-import { Address, hexToBytes } from '@ethereumjs/util'
+import { Address, hexToBytes } from '@tvmjs/util'
 
 /**
  * Common set of Signers for internal test construction.

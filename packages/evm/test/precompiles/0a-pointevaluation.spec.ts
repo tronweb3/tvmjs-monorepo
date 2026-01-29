@@ -1,18 +1,18 @@
-import { Hardfork, createCommonFromGethGenesis } from '@ethereumjs/common'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { Hardfork, createCommonFromGethGenesis } from '@tvmjs/common'
 import {
   bytesToBigInt,
   computeVersionedHash,
   concatBytes,
   hexToBytes,
   unpadBytes,
-} from '@ethereumjs/util'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 import { assert, describe, it } from 'vitest'
 
 import { createEVM, getActivePrecompiles } from '../../src/index.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 import type { PrecompileInput } from '../../src/index.ts'
 const kzg = new microEthKZG(trustedSetup)
 const BLS_MODULUS = BigInt(
@@ -21,7 +21,7 @@ const BLS_MODULUS = BigInt(
 
 describe('Precompiles: point evaluation', () => {
   it('should work', async () => {
-    const { eip4844GethGenesis } = await import('@ethereumjs/testdata')
+    const { eip4844GethGenesis } = await import('@tvmjs/testdata')
 
     const common = createCommonFromGethGenesis(eip4844GethGenesis, {
       chain: 'custom',

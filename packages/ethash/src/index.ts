@@ -1,5 +1,6 @@
-import { Block, BlockHeader, createBlock, createBlockHeader } from '@ethereumjs/block'
-import { RLP } from '@ethereumjs/rlp'
+import { keccak_256, keccak_512 } from '@noble/hashes/sha3.js'
+import { Block, BlockHeader, createBlock, createBlockHeader } from '@tvmjs/block'
+import { RLP } from '@tvmjs/rlp'
 import {
   BIGINT_0,
   EthereumJSErrorWithoutCode,
@@ -13,8 +14,7 @@ import {
   equalsBytes,
   hexToBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
-import { keccak_256, keccak_512 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 
 import {
   bytesReverse,
@@ -27,8 +27,8 @@ import {
   params,
 } from './util.ts'
 
-import type { BlockData, HeaderData } from '@ethereumjs/block'
-import type { DB, DBObject, PrefixedHexString } from '@ethereumjs/util'
+import type { BlockData, HeaderData } from '@tvmjs/block'
+import type { DB, DBObject, PrefixedHexString } from '@tvmjs/util'
 
 function xor(a: Uint8Array, b: Uint8Array) {
   const len = Math.max(a.length, b.length)

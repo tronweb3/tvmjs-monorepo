@@ -1,5 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
-import { EthereumJSErrorWithoutCode, bigIntToBytes, equalsBytes } from '@ethereumjs/util'
+import { RLP } from '@tvmjs/rlp'
+import { EthereumJSErrorWithoutCode, bigIntToBytes, equalsBytes } from '@tvmjs/util'
 
 import { generateCliqueBlockExtraData } from '../consensus/clique.ts'
 import { numberToHex, valuesArrayToHeaderData } from '../helpers.ts'

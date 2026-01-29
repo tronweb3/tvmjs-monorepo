@@ -1,4 +1,4 @@
-import { bytesToHex, setLengthRight } from '@ethereumjs/util'
+import { bytesToHex, setLengthRight } from '@tvmjs/util'
 
 import { EVMErrorResult, OOGResult } from '../evm.ts'
 

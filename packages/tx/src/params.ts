@@ -1,4 +1,4 @@
-import type { ParamsDict } from '@ethereumjs/common'
+import type { ParamsDict } from '@tvmjs/common'
 
 export const paramsTx: ParamsDict = {
   /**

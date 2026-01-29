@@ -9,8 +9,8 @@ import {
   eoaCode7702AuthorizationListJSONItemToBytes,
   isEOACode7702AuthorizationList,
   toBytes,
-} from '@ethereumjs/util'
-import type { Address, EOACode7702AuthorizationListBytes } from '@ethereumjs/util'
+} from '@tvmjs/util'
+import type { Address, EOACode7702AuthorizationListBytes } from '@tvmjs/util'
 
 import * as EIP1559 from '../capabilities/eip1559.ts'
 import * as EIP2718 from '../capabilities/eip2718.ts'
@@ -27,7 +27,7 @@ import {
 
 import { createEOACode7702Tx } from './constructors.ts'
 
-import type { Common } from '@ethereumjs/common'
+import type { Common } from '@tvmjs/common'
 
 import type {
   AccessListBytes,

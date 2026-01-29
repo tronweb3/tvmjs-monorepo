@@ -1,3 +1,5 @@
+import { secp256k1 } from '@noble/curves/secp256k1.js'
+import { keccak_256 } from '@noble/hashes/sha3.js'
 import {
   Address,
   BIGINT_0,
@@ -9,9 +11,7 @@ import {
   ecrecover,
   publicToAddress,
   unpadBytes,
-} from '@ethereumjs/util'
-import { secp256k1 } from '@noble/curves/secp256k1.js'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 
 import { Capability, TransactionType } from '../types.ts'
 

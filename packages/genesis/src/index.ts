@@ -1,11 +1,11 @@
-import { Chain } from '@ethereumjs/common'
+import { Chain } from '@tvmjs/common'
 
 import { holeskyGenesis } from './genesisStates/holesky.ts'
 import { hoodiGenesis } from './genesisStates/hoodi.ts'
 import { mainnetGenesis } from './genesisStates/mainnet.ts'
 import { sepoliaGenesis } from './genesisStates/sepolia.ts'
 
-import type { GenesisState } from '@ethereumjs/common'
+import type { GenesisState } from '@tvmjs/common'
 
 /**
  * Utility to get the genesisState of a well known network

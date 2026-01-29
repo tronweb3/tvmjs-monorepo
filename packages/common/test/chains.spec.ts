@@ -1,4 +1,4 @@
-import { goerliChainConfig } from '@ethereumjs/testdata'
+import { goerliChainConfig } from '@tvmjs/testdata'
 import { assert, describe, it } from 'vitest'
 
 import {

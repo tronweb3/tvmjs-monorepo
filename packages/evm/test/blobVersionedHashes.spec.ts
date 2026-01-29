@@ -1,4 +1,4 @@
-import { Hardfork, createCommonFromGethGenesis } from '@ethereumjs/common'
+import { Hardfork, createCommonFromGethGenesis } from '@tvmjs/common'
 import {
   Account,
   Address,
@@ -6,18 +6,18 @@ import {
   createAddressFromString,
   hexToBytes,
   unpadBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createEVM } from '../src/index.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 import type { EVMRunCallOpts } from '../src/types.ts'
 
 describe('BLOBHASH / access blobVersionedHashes in calldata', () => {
   it('should work', async () => {
     // setup the evm
-    const { eip4844GethGenesis } = await import('@ethereumjs/testdata')
+    const { eip4844GethGenesis } = await import('@tvmjs/testdata')
     const common = createCommonFromGethGenesis(eip4844GethGenesis, {
       chain: 'custom',
       hardfork: Hardfork.Cancun,
@@ -47,7 +47,7 @@ describe('BLOBHASH / access blobVersionedHashes in calldata', () => {
 describe(`BLOBHASH: access blobVersionedHashes within contract calls`, () => {
   it('should work', async () => {
     // setup the evm
-    const { eip4844GethGenesis } = await import('@ethereumjs/testdata')
+    const { eip4844GethGenesis } = await import('@tvmjs/testdata')
     const common = createCommonFromGethGenesis(eip4844GethGenesis, {
       chain: 'custom',
       hardfork: Hardfork.Cancun,
@@ -97,7 +97,7 @@ describe(`BLOBHASH: access blobVersionedHashes within contract calls`, () => {
 describe(`BLOBHASH: access blobVersionedHashes in a CREATE/CREATE2 frame`, () => {
   it('should work', async () => {
     // setup the evm
-    const { eip4844GethGenesis } = await import('@ethereumjs/testdata')
+    const { eip4844GethGenesis } = await import('@tvmjs/testdata')
     const common = createCommonFromGethGenesis(eip4844GethGenesis, {
       chain: 'custom',
       hardfork: Hardfork.Cancun,

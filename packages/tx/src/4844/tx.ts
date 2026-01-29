@@ -11,7 +11,7 @@ import {
   intToUnpaddedBytes,
   toBytes,
   toType,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import * as EIP1559 from '../capabilities/eip1559.ts'
 import * as EIP2718 from '../capabilities/eip2718.ts'
@@ -29,8 +29,8 @@ import {
 
 import { createBlob4844Tx } from './constructors.ts'
 
-import type { Common } from '@ethereumjs/common'
-import type { Address, PrefixedHexString } from '@ethereumjs/util'
+import type { Common } from '@tvmjs/common'
+import type { Address, PrefixedHexString } from '@tvmjs/util'
 import type {
   AccessListBytes,
   TxData as AllTypesTxData,

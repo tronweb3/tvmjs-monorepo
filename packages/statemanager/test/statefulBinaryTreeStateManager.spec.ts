@@ -1,4 +1,5 @@
-import { Common, Mainnet } from '@ethereumjs/common'
+import { blake3 } from '@noble/hashes/blake3.js'
+import { Common, Mainnet } from '@tvmjs/common'
 import {
   Account,
   BinaryTreeLeafType,
@@ -9,14 +10,13 @@ import {
   hexToBytes,
   matchingBytesLength,
   setLengthLeft,
-} from '@ethereumjs/util'
-import { blake3 } from '@noble/hashes/blake3.js'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Caches } from '../src/index.ts'
 import { StatefulBinaryTreeStateManager } from '../src/statefulBinaryTreeStateManager.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 const hashFunction = blake3
 

@@ -1,5 +1,5 @@
-import type { BigIntLike, KZG, PrefixedHexString } from '@ethereumjs/util'
 import type { secp256k1 } from '@noble/curves/secp256k1.js'
+import type { BigIntLike, KZG, PrefixedHexString } from '@tvmjs/util'
 import type { ConsensusAlgorithm, ConsensusType, Hardfork } from './enums.ts'
 
 export interface ChainName {

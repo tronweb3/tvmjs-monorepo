@@ -1,20 +1,14 @@
-import type { Block, BlockOptions, HeaderData } from '@ethereumjs/block'
-import type { Common, ParamsDict, StateManagerInterface } from '@ethereumjs/common'
-import type {
-  EVMInterface,
-  EVMMockBlockchainInterface,
-  EVMOpts,
-  EVMResult,
-  Log,
-} from '@ethereumjs/evm'
-import type { AccessList, TypedTransaction } from '@ethereumjs/tx'
+import type { Block, BlockOptions, HeaderData } from '@tvmjs/block'
+import type { Common, ParamsDict, StateManagerInterface } from '@tvmjs/common'
+import type { EVMInterface, EVMMockBlockchainInterface, EVMOpts, EVMResult, Log } from '@tvmjs/evm'
+import type { AccessList, TypedTransaction } from '@tvmjs/tx'
 import type {
   BigIntLike,
   CLRequest,
   CLRequestType,
   PrefixedHexString,
   WithdrawalData,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import type { Bloom } from './bloom/index.ts'
 export type TxReceipt = PreByzantiumTxReceipt | PostByzantiumTxReceipt | EIP4844BlobTxReceipt
 
@@ -107,7 +101,7 @@ export interface VMOpts {
    * - `hardfork`: `mainnet` hardforks up to the `Paris` hardfork
    * - `eips`: `2537` (usage e.g. `eips: [ 2537, ]`)
    *
-   * Note: check the associated `@ethereumjs/evm` instance options
+   * Note: check the associated `@tvmjs/evm` instance options
    * documentation for supported EIPs.
    *
    * ### Default Setup
@@ -154,7 +148,7 @@ export interface VMOpts {
   setHardfork?: boolean | BigIntLike
   /**
    * VM parameters sorted by EIP can be found in the exported `paramsVM` dictionary,
-   * which is internally passed to the associated `@ethereumjs/common` instance which
+   * which is internally passed to the associated `@tvmjs/common` instance which
    * manages parameter selection based on the hardfork and EIP settings.
    *
    * This option allows providing a custom set of parameters. Note that parameters
@@ -251,7 +245,7 @@ export interface SealBlockOpts {
  */
 export interface RunBlockOpts {
   /**
-   * The @ethereumjs/block to process
+   * The @tvmjs/block to process
    */
   block: Block
   /**
@@ -385,12 +379,12 @@ export interface AfterBlockEvent extends RunBlockResult {
  */
 export interface RunTxOpts {
   /**
-   * The `@ethereumjs/block` the `tx` belongs to.
+   * The `@tvmjs/block` the `tx` belongs to.
    * If omitted, a default blank block will be used.
    */
   block?: Block
   /**
-   * An `@ethereumjs/tx` to run
+   * An `@tvmjs/tx` to run
    */
   tx: TypedTransaction
   /**

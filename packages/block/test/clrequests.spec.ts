@@ -1,11 +1,11 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { CLRequestType, createCLRequest, equalsBytes, hexToBytes } from '@ethereumjs/util'
 import { sha256 } from '@noble/hashes/sha2.js'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { CLRequestType, createCLRequest, equalsBytes, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createBlock, genRequestsRoot } from '../src/index.ts'
 
-import type { CLRequest } from '@ethereumjs/util'
+import type { CLRequest } from '@tvmjs/util'
 
 describe('[Block]: CLRequests tests', () => {
   // Common with EIP-7685 enabled (CLRequests)

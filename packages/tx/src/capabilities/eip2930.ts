@@ -1,6 +1,6 @@
 import * as Legacy from './legacy.ts'
 
-import { EthereumJSErrorWithoutCode } from '@ethereumjs/util'
+import { EthereumJSErrorWithoutCode } from '@tvmjs/util'
 import type { EIP2930CompatibleTx } from '../types.ts'
 
 /**

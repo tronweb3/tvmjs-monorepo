@@ -1,17 +1,11 @@
-import {
-  Address,
-  createAccount,
-  createZeroAddress,
-  equalsBytes,
-  hexToBytes,
-} from '@ethereumjs/util'
+import { Address, createAccount, createZeroAddress, equalsBytes, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Caches, MerkleStateManager } from '../src/index.ts'
 
 import { createAccountWithDefaults } from './util.ts'
 
-import type { AccountData } from '@ethereumjs/util'
+import type { AccountData } from '@tvmjs/util'
 
 describe('StateManager -> Code', () => {
   for (const accountCacheOpts of [{ size: 1000 }, { size: 0 }]) {
@@ -24,7 +18,7 @@ describe('StateManager -> Code', () => {
 
           NOTE: Currently, the only problem which this code prefix fixes, is putting 0x80 as contract code
           -> This hashes to the empty trie node hash (0x80 = RLP([])), so keccak_256(0x80) = empty trie node hash
-          -> Therefore, each empty state trie now points to 0x80, which is not a valid trie node, which crashes @ethereumjs/mpt
+          -> Therefore, each empty state trie now points to 0x80, which is not a valid trie node, which crashes @tvmjs/mpt
         */
 
         // Setup

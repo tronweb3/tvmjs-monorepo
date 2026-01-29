@@ -1,5 +1,5 @@
 {
-  "name": "@ethereumjs/statemanager",
+  "name": "@tvmjs/statemanager",
   "version": "10.1.0",
   "description": "An Ethereum statemanager implementation",
   "keywords": ["ethereum", "statemanager"],
@@ -47,19 +47,19 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@ethereumjs/binarytree": "^10.1.0",
-    "@ethereumjs/common": "^10.1.0",
-    "@ethereumjs/rlp": "^10.1.0",
-    "@ethereumjs/mpt": "^10.1.0",
-    "@ethereumjs/util": "^10.1.0",
+    "@tvmjs/binarytree": "^10.1.0",
+    "@tvmjs/common": "^10.1.0",
+    "@tvmjs/rlp": "^10.1.0",
+    "@tvmjs/mpt": "^10.1.0",
+    "@tvmjs/util": "^10.1.0",
     "@js-sdsl/ordered-map": "^4.4.2",
     "@noble/hashes": "^2.0.1",
     "debug": "^4.4.0",
     "lru-cache": "11.0.2"
   },
   "devDependencies": {
-    "@ethereumjs/block": "^10.1.0",
-    "@ethereumjs/genesis": "^10.1.0",
+    "@tvmjs/block": "^10.1.0",
+    "@tvmjs/genesis": "^10.1.0",
     "@types/debug": "^4.1.12",
     "micro-eth-signer": "0.15.0"
   }

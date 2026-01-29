@@ -1,7 +1,9 @@
-import { ConsensusType } from '@ethereumjs/common'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
-import { Blob4844Tx, Capability } from '@ethereumjs/tx'
+import { sha256 } from '@noble/hashes/sha2.js'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { ConsensusType } from '@tvmjs/common'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
+import { Blob4844Tx, Capability } from '@tvmjs/tx'
 import {
   BIGINT_0,
   EthereumJSErrorWithoutCode,
@@ -9,13 +11,11 @@ import {
   KECCAK256_RLP_ARRAY,
   bytesToHex,
   equalsBytes,
-} from '@ethereumjs/util'
-import { sha256 } from '@noble/hashes/sha2.js'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 
-import type { Common } from '@ethereumjs/common'
-import type { FeeMarket1559Tx, LegacyTx, TypedTransaction } from '@ethereumjs/tx'
-import type { Withdrawal } from '@ethereumjs/util'
+import type { Common } from '@tvmjs/common'
+import type { FeeMarket1559Tx, LegacyTx, TypedTransaction } from '@tvmjs/tx'
+import type { Withdrawal } from '@tvmjs/util'
 /* eslint-disable */
 // This is to allow for a proper and linked collection of constructors for the class header.
 // For tree shaking/code size this should be no problem since types go away on transpilation.

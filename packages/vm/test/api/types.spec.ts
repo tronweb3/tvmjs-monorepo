@@ -1,10 +1,10 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createAccessList2930Tx, createLegacyTx } from '@ethereumjs/tx'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createAccessList2930Tx, createLegacyTx } from '@tvmjs/tx'
 import { assert, describe, it } from 'vitest'
 
-import type { BlockData } from '@ethereumjs/block'
-import type { AccessList2930TxData, TransactionType, TxData } from '@ethereumjs/tx'
+import type { BlockData } from '@tvmjs/block'
+import type { AccessList2930TxData, TransactionType, TxData } from '@tvmjs/tx'
 
 describe('[Types]', () => {
   it('should ensure that the actual objects can be safely used as their data types', () => {

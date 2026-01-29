@@ -1,5 +1,5 @@
 import path from 'path'
-import { hexToBytes } from '@ethereumjs/util'
+import { hexToBytes } from '@tvmjs/util'
 import * as dir from 'node-dir'
 import { assert, describe, it } from 'vitest'
 

@@ -1,4 +1,4 @@
-import { concatBytes, randomBytes, setLengthLeft } from '@ethereumjs/util'
+import { concatBytes, randomBytes, setLengthLeft } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Common, Mainnet, createCustomCommon } from '../src/index.ts'

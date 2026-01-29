@@ -1,7 +1,9 @@
-import { BinaryTree } from '@ethereumjs/binarytree'
-import { BinaryTreeAccessedStateType } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
-import type { Address, BinaryTreeExecutionWitness, PrefixedHexString } from '@ethereumjs/util'
+import { blake3 } from '@noble/hashes/blake3.js'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { BinaryTree } from '@tvmjs/binarytree'
+import { BinaryTreeAccessedStateType } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
+import type { Address, BinaryTreeExecutionWitness, PrefixedHexString } from '@tvmjs/util'
 import {
   Account,
   BINARY_TREE_CODE_CHUNK_SIZE,
@@ -32,9 +34,7 @@ import {
   setLengthRight,
   short,
   unprefixedHexToBytes,
-} from '@ethereumjs/util'
-import { blake3 } from '@noble/hashes/blake3.js'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import { OriginalStorageCache } from './cache/originalStorageCache.ts'
@@ -49,7 +49,7 @@ import type {
   StorageDump,
   StoragePair,
   StorageRange,
-} from '@ethereumjs/common'
+} from '@tvmjs/common'
 import type { Debugger } from 'debug'
 import type { Caches } from './cache/caches.ts'
 import type { BinaryTreeState, StatefulBinaryTreeStateManagerOpts } from './types.ts'

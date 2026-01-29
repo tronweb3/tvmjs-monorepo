@@ -3,18 +3,18 @@ import { assert, describe, it } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 
-import type { Block } from '@ethereumjs/block'
-import { createBlock, createBlockFromRLP } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import type { Block } from '@tvmjs/block'
+import { createBlock, createBlockFromRLP } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
 import {
   bytesToHex,
   createAddressFromString,
   hexToBigInt,
   hexToBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 import { createVM, runBlock } from '../../src/index.ts'
 import { setupPreConditions } from '../util.ts'

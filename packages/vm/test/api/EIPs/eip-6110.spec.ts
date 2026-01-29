@@ -1,6 +1,7 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet, getPresetChainConfig } from '@ethereumjs/common'
-import { createTx } from '@ethereumjs/tx'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet, getPresetChainConfig } from '@tvmjs/common'
+import { createTx } from '@tvmjs/tx'
 import {
   CLRequestType,
   Units,
@@ -10,14 +11,13 @@ import {
   createAddressFromString,
   hexToBytes,
   randomBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { buildBlock, runBlock } from '../../../src/index.ts'
 import { setupVM } from '../utils.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 function parseDepositRequest(requestData: Uint8Array) {
   const pubkey = requestData.subarray(0, 48)

@@ -1,4 +1,4 @@
-import { EthereumJSErrorWithoutCode, PrioritizedTaskExecutor } from '@ethereumjs/util'
+import { EthereumJSErrorWithoutCode, PrioritizedTaskExecutor } from '@tvmjs/util'
 
 import { BranchMPTNode, ExtensionMPTNode, LeafMPTNode } from '../node/index.ts'
 

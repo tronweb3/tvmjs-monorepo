@@ -1,5 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
-import { EthereumJSErrorWithoutCode } from '@ethereumjs/util'
+import { RLP } from '@tvmjs/rlp'
+import { EthereumJSErrorWithoutCode } from '@tvmjs/util'
 
 import { BinaryNodeType, NODE_WIDTH } from './types.ts'
 

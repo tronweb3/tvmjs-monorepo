@@ -1,6 +1,6 @@
-import { utf8ToBytes } from '@ethereumjs/util'
+import { utf8ToBytes } from '@tvmjs/util'
 
-import type { DB, ValueEncoding } from '@ethereumjs/util'
+import type { DB, ValueEncoding } from '@tvmjs/util'
 
 export interface BinaryTreeOpts {
   /**

@@ -10,14 +10,14 @@
  * PLEASE DO NOT COPY LARGER PARTS OF THE CODE TO THE NEW RUNNER BUT RE-IMPLEMENT
  * (USE COMMON SENSE).
  */
-import { createBlock, createBlockFromRLP } from '@ethereumjs/block'
-import { EthashConsensus, createBlockchain } from '@ethereumjs/blockchain'
-import { ConsensusAlgorithm } from '@ethereumjs/common'
-import { Ethash } from '@ethereumjs/ethash'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
-import { Caches, MerkleStateManager } from '@ethereumjs/statemanager'
-import { createTxFromRLP } from '@ethereumjs/tx'
+import { createBlock, createBlockFromRLP } from '@tvmjs/block'
+import { EthashConsensus, createBlockchain } from '@tvmjs/blockchain'
+import { ConsensusAlgorithm } from '@tvmjs/common'
+import { Ethash } from '@tvmjs/ethash'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
+import { Caches, MerkleStateManager } from '@tvmjs/statemanager'
+import { createTxFromRLP } from '@tvmjs/tx'
 import {
   MapDB,
   bytesToBigInt,
@@ -25,16 +25,16 @@ import {
   hexToBytes,
   isHexString,
   stripHexPrefix,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert } from 'vitest'
 
 import { buildBlock, createVM, runBlock } from '../../../src/index.ts'
 import { setupPreConditions, verifyPostConditions } from '../../util.ts'
 
-import type { Block } from '@ethereumjs/block'
-import type { Blockchain, ConsensusDict } from '@ethereumjs/blockchain'
-import type { Common, StateManagerInterface } from '@ethereumjs/common'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { Block } from '@tvmjs/block'
+import type { Blockchain, ConsensusDict } from '@tvmjs/blockchain'
+import type { Common, StateManagerInterface } from '@tvmjs/common'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 function logComment(t: typeof assert, message: string): void {
   console.log(`[TEST] ${message}`)

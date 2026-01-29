@@ -1,14 +1,14 @@
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { EVM, createEVM } from '@ethereumjs/evm'
-import { testnetMergeChainConfig } from '@ethereumjs/testdata'
-import { Account, KECCAK256_RLP, createAddressFromString, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { EVM, createEVM } from '@tvmjs/evm'
+import { testnetMergeChainConfig } from '@tvmjs/testdata'
+import { Account, KECCAK256_RLP, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { type VMOpts, createVM, paramsVM } from '../../src/index.ts'
 
 import { setupVM } from './utils.ts'
 
-import type { MerkleStateManager } from '@ethereumjs/statemanager'
+import type { MerkleStateManager } from '@tvmjs/statemanager'
 
 /**
  * Tests for the main constructor API and

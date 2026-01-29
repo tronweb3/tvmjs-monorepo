@@ -1,9 +1,9 @@
-import { Block } from '@ethereumjs/block'
-import { createFeeMarket1559Tx } from '@ethereumjs/tx'
-import { Account, bytesToHex } from '@ethereumjs/util'
+import { Block } from '@tvmjs/block'
+import { createFeeMarket1559Tx } from '@tvmjs/tx'
+import { Account, bytesToHex } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { SIGNER_A } from '@ethereumjs/testdata'
+import { SIGNER_A } from '@tvmjs/testdata'
 import { createVM, runBlock, runTx } from '../../src/index.ts'
 
 describe('VM events', () => {

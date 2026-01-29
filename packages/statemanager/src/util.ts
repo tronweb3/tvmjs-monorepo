@@ -1,7 +1,7 @@
-import { Account, bytesToHex } from '@ethereumjs/util'
+import { Account, bytesToHex } from '@tvmjs/util'
 
-import type { AccountFields, StateManagerInterface } from '@ethereumjs/common'
-import type { Address } from '@ethereumjs/util'
+import type { AccountFields, StateManagerInterface } from '@tvmjs/common'
+import type { Address } from '@tvmjs/util'
 
 export async function modifyAccountFields(
   stateManager: StateManagerInterface,

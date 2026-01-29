@@ -1,11 +1,11 @@
-import { Block } from '@ethereumjs/block'
-import { RLP } from '@ethereumjs/rlp'
-import { BIGINT_0 } from '@ethereumjs/util'
+import { Block } from '@tvmjs/block'
+import { RLP } from '@tvmjs/rlp'
+import { BIGINT_0 } from '@tvmjs/util'
 
 import { bytesBE8 } from './constants.ts'
 import { DBOp, DBTarget } from './operation.ts'
 
-import type { BlockHeader } from '@ethereumjs/block'
+import type { BlockHeader } from '@tvmjs/block'
 
 /*
  * This extra helper file serves as an interface between the blockchain API functionality

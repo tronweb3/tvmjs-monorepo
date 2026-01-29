@@ -1,6 +1,6 @@
-import { Chain, ChainNameFromNumber } from '@ethereumjs/common'
-import { getGenesis } from '@ethereumjs/genesis'
-import { Account, Address, hexToBytes, utf8ToBytes } from '@ethereumjs/util'
+import { Chain, ChainNameFromNumber } from '@tvmjs/common'
+import { getGenesis } from '@tvmjs/genesis'
+import { Account, Address, hexToBytes, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { MerkleStateManager } from '../src/index.ts'

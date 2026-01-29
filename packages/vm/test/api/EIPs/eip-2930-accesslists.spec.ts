@@ -1,18 +1,18 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createAccessList2930Tx } from '@ethereumjs/tx'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createAccessList2930Tx } from '@tvmjs/tx'
 import {
   Address,
   bytesToHex,
   createAccount,
   createAddressFromPrivateKey,
   hexToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { SIGNER_A } from '@ethereumjs/testdata'
+import { SIGNER_A } from '@tvmjs/testdata'
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
+import type { InterpreterStep } from '@tvmjs/evm'
 
 const common = new Common({
   eips: [2718, 2929, 2930],

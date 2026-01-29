@@ -2,12 +2,7 @@
  * External Interfaces for other EthereumJS libraries
  */
 
-import type {
-  Account,
-  Address,
-  BinaryTreeExecutionWitness,
-  PrefixedHexString,
-} from '@ethereumjs/util'
+import type { Account, Address, BinaryTreeExecutionWitness, PrefixedHexString } from '@tvmjs/util'
 
 export interface StorageDump {
   [key: string]: string
@@ -120,7 +115,7 @@ export interface BinaryTreeAccessWitnessInterface {
 }
 
 /*
- * Generic StateManager interface corresponding with the @ethereumjs/statemanager package
+ * Generic StateManager interface corresponding with the @tvmjs/statemanager package
  *
  */
 export interface StateManagerInterface {

@@ -1,6 +1,6 @@
-import { equalsBytes } from '@ethereumjs/util'
+import { equalsBytes } from '@tvmjs/util'
 
-import type { Common } from '@ethereumjs/common'
+import type { Common } from '@tvmjs/common'
 import type { RunState } from '../interpreter.ts'
 
 /**

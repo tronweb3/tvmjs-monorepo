@@ -1,5 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { RLP } from '@tvmjs/rlp'
 import { assert, describe, it } from 'vitest'
 import { Address } from '../src/address.ts'
 import {

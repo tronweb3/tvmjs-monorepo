@@ -1,11 +1,11 @@
-import { Hardfork, createCommonFromGethGenesis } from '@ethereumjs/common'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { Hardfork, createCommonFromGethGenesis } from '@tvmjs/common'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 import { assert, describe, expect, it } from 'vitest'
 
 import { createBlockFromBeaconPayloadJSON, createBlockHeader } from '../src/index.ts'
 
-import { eip4844GethGenesis } from '@ethereumjs/testdata'
+import { eip4844GethGenesis } from '@tvmjs/testdata'
 import { payloadSlot87335Data } from './testdata/payload-slot-87335.ts'
 import { payloadSlot87475Data } from './testdata/payload-slot-87475.ts'
 

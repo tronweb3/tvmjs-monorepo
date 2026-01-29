@@ -10,15 +10,15 @@
  * PLEASE DO NOT COPY LARGER PARTS OF THE CODE TO THE NEW RUNNER BUT RE-IMPLEMENT
  * (USE COMMON SENSE).
  */
-import { Block } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { type InterpreterStep } from '@ethereumjs/evm'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { Caches, MerkleStateManager } from '@ethereumjs/statemanager'
-import { Account, bytesToHex, createAddressFromString, toBytes } from '@ethereumjs/util'
+import { Block } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { type InterpreterStep } from '@tvmjs/evm'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { Caches, MerkleStateManager } from '@tvmjs/statemanager'
+import { Account, bytesToHex, createAddressFromString, toBytes } from '@tvmjs/util'
 import type { assert } from 'vitest'
 
-import type { StateManagerInterface } from '@ethereumjs/common'
+import type { StateManagerInterface } from '@tvmjs/common'
 import { createVM, runTx } from '../../../src/index.ts'
 import { makeBlockFromEnv, makeTx, setupPreConditions } from '../../util.ts'
 

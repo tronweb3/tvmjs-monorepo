@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
 import { TransactionType, createTx, paramsTx } from '../src/index.ts'

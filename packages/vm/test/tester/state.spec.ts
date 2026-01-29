@@ -10,7 +10,7 @@
  * PLEASE DO NOT COPY LARGER PARTS OF THE CODE TO THE NEW RUNNER BUT RE-IMPLEMENT
  * (USE COMMON SENSE).
  */
-import type { Common } from '@ethereumjs/common'
+import type { Common } from '@tvmjs/common'
 
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import * as mcl from 'mcl-wasm'
@@ -26,7 +26,7 @@ import {
   NobleBLS,
   NobleBN254,
   RustBN254,
-} from '@ethereumjs/evm'
+} from '@tvmjs/evm'
 import { initRustBN } from 'rustbn-wasm'
 import {
   DEFAULT_FORK_CONFIG,

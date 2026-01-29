@@ -1,4 +1,4 @@
-import { Mainnet } from '@ethereumjs/common'
+import { Mainnet } from '@tvmjs/common'
 import {
   CLRequest,
   CLRequestType,
@@ -10,7 +10,7 @@ import {
   concatBytes,
   createAddressFromString,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import type { RunTxResult } from './types.ts'
 import type { VM } from './vm.ts'

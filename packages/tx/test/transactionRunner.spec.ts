@@ -1,5 +1,5 @@
-import { Common, Mainnet } from '@ethereumjs/common'
-import { EthereumJSErrorWithoutCode, bytesToHex, hexToBytes } from '@ethereumjs/util'
+import { Common, Mainnet } from '@tvmjs/common'
+import { EthereumJSErrorWithoutCode, bytesToHex, hexToBytes } from '@tvmjs/util'
 import minimist from 'minimist'
 import { assert, describe, it } from 'vitest'
 
@@ -7,7 +7,7 @@ import { createTxFromRLP } from '../src/transactionFactory.ts'
 
 import { getTests } from './testLoader.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 import type { ForkName, ForkNamesMap, OfficialTransactionTestData } from './types.ts'
 
 const argv = minimist(process.argv.slice(2))

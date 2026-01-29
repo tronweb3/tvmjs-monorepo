@@ -1,6 +1,6 @@
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { Chain } from '@ethereumjs/common'
-import { getGenesis } from '@ethereumjs/genesis'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Chain } from '@tvmjs/common'
+import { getGenesis } from '@tvmjs/genesis'
 import { assert, describe, it } from 'vitest'
 
 import { createVM } from '../../src/index.ts'

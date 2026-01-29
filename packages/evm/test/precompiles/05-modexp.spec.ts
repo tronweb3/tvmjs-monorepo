@@ -1,12 +1,12 @@
-import { Common, Mainnet } from '@ethereumjs/common'
-import { bytesToHex, hexToBytes } from '@ethereumjs/util'
+import { Common, Mainnet } from '@tvmjs/common'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, beforeAll, describe, it } from 'vitest'
 
 import { createEVM, getActivePrecompiles } from '../../src/index.ts'
 
 import { testData } from './modexp-testdata.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 import type { EVM } from '../../src/index.ts'
 import type { PrecompileFunc } from '../../src/precompiles/types.ts'
 

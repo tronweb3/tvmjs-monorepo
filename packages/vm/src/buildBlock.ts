@@ -1,18 +1,15 @@
+import { sha256 } from '@noble/hashes/sha2.js'
 import {
   createBlock,
   createSealedCliqueBlock,
   genRequestsRoot,
   genTransactionsTrieRoot,
   genWithdrawalsTrieRoot,
-} from '@ethereumjs/block'
-import { ConsensusType, Hardfork } from '@ethereumjs/common'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
-import {
-  Blob4844Tx,
-  NetworkWrapperType,
-  createMinimal4844TxFromNetworkWrapper,
-} from '@ethereumjs/tx'
+} from '@tvmjs/block'
+import { ConsensusType, Hardfork } from '@tvmjs/common'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
+import { Blob4844Tx, NetworkWrapperType, createMinimal4844TxFromNetworkWrapper } from '@tvmjs/tx'
 import {
   Address,
   BIGINT_0,
@@ -26,8 +23,7 @@ import {
   createZeroAddress,
   toBytes,
   toType,
-} from '@ethereumjs/util'
-import { sha256 } from '@noble/hashes/sha2.js'
+} from '@tvmjs/util'
 
 import { Bloom } from './bloom/index.ts'
 import { runTx } from './index.ts'
@@ -40,9 +36,9 @@ import {
   rewardAccount,
 } from './runBlock.ts'
 
-import type { Block, HeaderData } from '@ethereumjs/block'
-import type { TypedTransaction } from '@ethereumjs/tx'
-import type { Withdrawal } from '@ethereumjs/util'
+import type { Block, HeaderData } from '@tvmjs/block'
+import type { TypedTransaction } from '@tvmjs/tx'
+import type { Withdrawal } from '@tvmjs/util'
 import type { BuildBlockOpts, BuilderOpts, RunTxResult, SealBlockOpts } from './types.ts'
 import type { VM } from './vm.ts'
 

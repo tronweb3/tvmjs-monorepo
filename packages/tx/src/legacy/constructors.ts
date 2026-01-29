@@ -1,5 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
-import { EthereumJSErrorWithoutCode, validateNoLeadingZeroes } from '@ethereumjs/util'
+import { RLP } from '@tvmjs/rlp'
+import { EthereumJSErrorWithoutCode, validateNoLeadingZeroes } from '@tvmjs/util'
 
 import { LegacyTx } from './tx.ts'
 

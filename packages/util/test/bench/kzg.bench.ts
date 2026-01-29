@@ -1,4 +1,4 @@
-import { getBlobs } from '@ethereumjs/util'
+import { getBlobs } from '@tvmjs/util'
 import { loadKZG } from 'kzg-wasm'
 import { bench, describe } from 'vitest'
 

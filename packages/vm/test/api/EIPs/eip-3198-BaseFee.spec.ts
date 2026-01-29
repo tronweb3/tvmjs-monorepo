@@ -1,13 +1,13 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { FeeMarket1559Tx } from '@ethereumjs/tx'
-import { Address, Units, hexToBytes, privateToAddress } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { FeeMarket1559Tx } from '@tvmjs/tx'
+import { Address, Units, hexToBytes, privateToAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
-import type { TypedTransaction } from '@ethereumjs/tx'
+import type { InterpreterStep } from '@tvmjs/evm'
+import type { TypedTransaction } from '@tvmjs/tx'
 
 const common = new Common({
   eips: [1559, 2718, 2930, 3198],

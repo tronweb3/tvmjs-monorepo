@@ -1,13 +1,6 @@
-import {
-  MapDB,
-  bytesToHex,
-  bytesToUtf8,
-  equalsBytes,
-  hexToBytes,
-  utf8ToBytes,
-} from '@ethereumjs/util'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { MapDB, bytesToHex, bytesToUtf8, equalsBytes, hexToBytes, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { MerklePatriciaTrie, ROOT_DB_KEY, createMPT } from '../../src/index.ts'

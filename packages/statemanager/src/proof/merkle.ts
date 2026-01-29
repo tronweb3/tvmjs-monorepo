@@ -3,8 +3,8 @@ import {
   createMerkleProof,
   updateMPTFromMerkleProof,
   verifyMerkleProof,
-} from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
+} from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
 import {
   EthereumJSErrorWithoutCode,
   KECCAK256_NULL,
@@ -19,12 +19,12 @@ import {
   hexToBytes,
   setLengthLeft,
   unpadBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import { MerkleStateManager } from '../merkleStateManager.ts'
 
-import type { Proof, StorageProof } from '@ethereumjs/common'
-import type { Address, PrefixedHexString } from '@ethereumjs/util'
+import type { Proof, StorageProof } from '@tvmjs/common'
+import type { Address, PrefixedHexString } from '@tvmjs/util'
 import type { MerkleStateManagerOpts } from '../index.ts'
 
 /**

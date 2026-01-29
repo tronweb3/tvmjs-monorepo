@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import {
   Address,
   concatBytes,
@@ -6,7 +6,7 @@ import {
   equalsBytes,
   hexToBytes,
   privateToAddress,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createEVM } from '../../src/index.ts'

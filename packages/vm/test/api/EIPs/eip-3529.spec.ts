@@ -1,12 +1,12 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { Account, Address, bytesToHex, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import { Account, Address, bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { InterpreterStep } from '@tvmjs/evm'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 const address = new Address(hexToBytes(`0x${'11'.repeat(20)}`))
 const pkey = hexToBytes(`0x${'20'.repeat(32)}`)

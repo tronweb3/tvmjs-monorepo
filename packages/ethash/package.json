@@ -1,5 +1,5 @@
 {
-  "name": "@ethereumjs/ethash",
+  "name": "@tvmjs/ethash",
   "version": "10.0.0",
   "description": "An implementation of the Ethash consensus algorithm in JavaScript",
   "keywords": ["ethash", "ethereum", "POW"],
@@ -48,14 +48,14 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@ethereumjs/block": "^10.1.0",
-    "@ethereumjs/rlp": "^10.1.0",
-    "@ethereumjs/util": "^10.1.0",
+    "@tvmjs/block": "^10.1.0",
+    "@tvmjs/rlp": "^10.1.0",
+    "@tvmjs/util": "^10.1.0",
     "@noble/hashes": "^2.0.1",
     "bigint-crypto-utils": "^3.3.0"
   },
   "devDependencies": {
-    "@ethereumjs/common": "^10.1.0"
+    "@tvmjs/common": "^10.1.0"
   },
   "engines": {
     "node": ">=20"

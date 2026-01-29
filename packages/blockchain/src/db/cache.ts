@@ -1,4 +1,4 @@
-import { bytesToUnprefixedHex } from '@ethereumjs/util'
+import { bytesToUnprefixedHex } from '@tvmjs/util'
 import { LRUCache } from 'lru-cache'
 
 /**

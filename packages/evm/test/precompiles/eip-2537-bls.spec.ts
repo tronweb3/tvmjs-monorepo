@@ -1,12 +1,12 @@
 import { readFileSync, readdirSync } from 'fs'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { Address, bytesToHex, createZeroAddress, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Address, bytesToHex, createZeroAddress, hexToBytes } from '@tvmjs/util'
 import * as mcl from 'mcl-wasm'
 import { assert, describe, it } from 'vitest'
 
 import { MCLBLS, createEVM, getActivePrecompiles } from '../../src/index.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 // BLS tests, run this from `./packages/evm` using `npx vitest run ./test/precompiles/eip-2537-bls.spec.ts`
 

@@ -1,6 +1,6 @@
-import { Common, Mainnet } from '@ethereumjs/common'
-import { Address, hexToBytes } from '@ethereumjs/util'
 import { p256 } from '@noble/curves/nist.js'
+import { Common, Mainnet } from '@tvmjs/common'
+import { Address, hexToBytes } from '@tvmjs/util'
 import { assert, beforeAll, describe, it } from 'vitest'
 
 import { createEVM } from '../../src/index.ts'

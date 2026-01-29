@@ -1,5 +1,5 @@
-import { Hardfork } from '@ethereumjs/common'
-import { type Address, bytesToUnprefixedHex } from '@ethereumjs/util'
+import { Hardfork } from '@tvmjs/common'
+import { type Address, bytesToUnprefixedHex } from '@tvmjs/util'
 
 import { precompile0a } from './0a-kzg-point-evaluation.ts'
 import { precompile0b } from './0b-bls12-g1add.ts'
@@ -22,7 +22,7 @@ import { precompile100 } from './100-p256verify.ts'
 import { MCLBLS, NobleBLS } from './bls12_381/index.ts'
 import { NobleBN254, RustBN254 } from './bn254/index.ts'
 
-import type { Common } from '@ethereumjs/common'
+import type { Common } from '@tvmjs/common'
 import type { PrecompileFunc, PrecompileInput } from './types.ts'
 
 interface PrecompileEntry {

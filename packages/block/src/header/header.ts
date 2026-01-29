@@ -1,5 +1,6 @@
-import { Common, ConsensusAlgorithm, ConsensusType, Hardfork, Mainnet } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Common, ConsensusAlgorithm, ConsensusType, Hardfork, Mainnet } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
 import {
   Address,
   BIGINT_0,
@@ -19,8 +20,7 @@ import {
   equalsBytes,
   hexToBytes,
   toType,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 
 import {
   CLIQUE_EXTRA_SEAL,

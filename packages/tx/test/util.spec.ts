@@ -1,4 +1,4 @@
-import { MAX_INTEGER, MAX_UINT64 } from '@ethereumjs/util'
+import { MAX_INTEGER, MAX_UINT64 } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { valueOverflowCheck } from '../src/util/internal.ts'

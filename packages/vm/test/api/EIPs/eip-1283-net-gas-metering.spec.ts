@@ -1,11 +1,11 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { Address, bigIntToBytes, hexToBytes, setLengthLeft } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Address, bigIntToBytes, hexToBytes, setLengthLeft } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM } from '../../../src/index.ts'
 import { createAccountWithDefaults } from '../utils.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 /**
  * Tests taken from https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1283.md

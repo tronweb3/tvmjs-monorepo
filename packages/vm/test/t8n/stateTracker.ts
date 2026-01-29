@@ -5,9 +5,9 @@ import {
   hexToBytes,
   setLengthLeft,
   unpadBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
-import type { Account, Address, PrefixedHexString } from '@ethereumjs/util'
+import type { Account, Address, PrefixedHexString } from '@tvmjs/util'
 import type { VM } from '../../src/vm.ts'
 import type { T8NAlloc } from './types.ts'
 

@@ -1,5 +1,5 @@
-import type { Chain } from '@ethereumjs/common'
-import { ChainGenesis } from '@ethereumjs/common'
+import type { Chain } from '@tvmjs/common'
+import { ChainGenesis } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
 import { getGenesis } from '../src/index.ts'

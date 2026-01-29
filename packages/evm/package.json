@@ -1,5 +1,5 @@
 {
-  "name": "@ethereumjs/evm",
+  "name": "@tvmjs/evm",
   "version": "10.1.0",
   "description": "JavaScript Ethereum Virtual Machine (EVM) implementation",
   "keywords": ["ethereum", "EVM", "JavaScript", "TypeScript"],
@@ -54,10 +54,10 @@
     "visualize:bundle": "npx vite build --config=./vite.config.bundler.ts --emptyOutDir=false --outDir ."
   },
   "dependencies": {
-    "@ethereumjs/binarytree": "^10.1.0",
-    "@ethereumjs/common": "^10.1.0",
-    "@ethereumjs/statemanager": "^10.1.0",
-    "@ethereumjs/util": "^10.1.0",
+    "@tvmjs/binarytree": "^10.1.0",
+    "@tvmjs/common": "^10.1.0",
+    "@tvmjs/statemanager": "^10.1.0",
+    "@tvmjs/util": "^10.1.0",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "debug": "^4.4.0",

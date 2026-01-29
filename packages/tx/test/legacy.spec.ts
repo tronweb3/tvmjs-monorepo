@@ -1,6 +1,6 @@
-import { Common, Hardfork, Mainnet, Sepolia, createCustomCommon } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
-import { goerliChainConfig } from '@ethereumjs/testdata'
+import { Common, Hardfork, Mainnet, Sepolia, createCustomCommon } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
+import { goerliChainConfig } from '@tvmjs/testdata'
 import {
   bytesToBigInt,
   bytesToHex,
@@ -9,7 +9,7 @@ import {
   intToBytes,
   toBytes,
   unpadBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {
@@ -21,7 +21,7 @@ import {
 import { transactionTestEip155VitalikTestsData } from './testData/transactionTestEip155VitalikTests.ts'
 import { txsData } from './testData/txs.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 import type { TransactionType, TxData, TypedTransaction } from '../src/index.ts'
 
 describe('[Transaction]', () => {

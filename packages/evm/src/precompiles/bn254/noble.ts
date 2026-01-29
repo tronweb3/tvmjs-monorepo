@@ -1,3 +1,4 @@
+import { bn254 } from '@noble/curves/bn254.js'
 import {
   BIGINT_0,
   bigIntToBytes,
@@ -6,8 +7,7 @@ import {
   equalsBytes,
   hexToBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
-import { bn254 } from '@noble/curves/bn254.js'
+} from '@tvmjs/util'
 
 import { EVMError } from '../../errors.ts'
 

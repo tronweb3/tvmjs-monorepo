@@ -1,26 +1,21 @@
-import { createBlock } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import {
-  SIGNER_A,
-  SIGNER_G,
-  customChainConfig,
-  testnetMergeChainConfig,
-} from '@ethereumjs/testdata'
-import { createTx } from '@ethereumjs/tx'
+import { createBlock } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { SIGNER_A, SIGNER_G, customChainConfig, testnetMergeChainConfig } from '@tvmjs/testdata'
+import { createTx } from '@tvmjs/tx'
 import {
   bytesToHex,
   createAddressFromPrivateKey,
   createAddressFromString,
   hexToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { encodeFunctionData } from 'viem'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../src/index.ts'
 
-import type { AccountState, GenesisState } from '@ethereumjs/common'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { AccountState, GenesisState } from '@tvmjs/common'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 const storage: Array<[PrefixedHexString, PrefixedHexString]> = [
   [

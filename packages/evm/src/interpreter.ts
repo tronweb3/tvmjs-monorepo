@@ -1,4 +1,4 @@
-import { ConsensusAlgorithm } from '@ethereumjs/common'
+import { ConsensusAlgorithm } from '@tvmjs/common'
 import {
   Account,
   BIGINT_0,
@@ -11,7 +11,7 @@ import {
   bytesToHex,
   equalsBytes,
   setLengthRight,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import { FORMAT, MAGIC, VERSION } from './eof/constants.ts'
@@ -25,12 +25,8 @@ import { Message } from './message.ts'
 import { trap } from './opcodes/index.ts'
 import { Stack } from './stack.ts'
 
-import type {
-  BinaryTreeAccessWitnessInterface,
-  Common,
-  StateManagerInterface,
-} from '@ethereumjs/common'
-import type { Address, PrefixedHexString } from '@ethereumjs/util'
+import type { BinaryTreeAccessWitnessInterface, Common, StateManagerInterface } from '@tvmjs/common'
+import type { Address, PrefixedHexString } from '@tvmjs/util'
 import { stackDelta } from './eof/stackDelta.ts'
 import type { EVM } from './evm.ts'
 import type { Journal } from './journal.ts'

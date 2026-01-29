@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
 import * as difficultyMainNetwork from '../../ethereum-tests/BasicTests/difficultyMainNetwork.json' with {

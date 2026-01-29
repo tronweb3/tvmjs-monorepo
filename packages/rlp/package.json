@@ -1,5 +1,5 @@
 {
-  "name": "@ethereumjs/rlp",
+  "name": "@tvmjs/rlp",
   "version": "10.1.0",
   "description": "Recursive Length Prefix Encoding Module",
   "keywords": ["rlp", "ethereum"],

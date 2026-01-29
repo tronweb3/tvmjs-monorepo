@@ -12,7 +12,7 @@ import {
   bytesToHex,
   setLengthLeft,
   setLengthRight,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import { OOGResult } from '../evm.ts'
 
@@ -149,7 +149,7 @@ export function precompile05(opts: PrecompileInput): ExecResult {
   }
 
   // Upper bounds by EIP-7823 (Osaka and upwards) or otherwise
-  // @ethereumjs/util setLengthRight limitation
+  // @tvmjs/util setLengthRight limitation
   const maxSize = opts.common.isActivatedEIP(7823) ? BIGINT_1024 : BIGINT_2147483647
 
   if (opts._debug !== undefined) {

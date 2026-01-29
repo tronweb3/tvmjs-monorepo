@@ -1,5 +1,5 @@
-import { createBlock } from '@ethereumjs/block'
-import { BIGINT_0, EthereumJSErrorWithoutCode, bytesToHex, equalsBytes } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { BIGINT_0, EthereumJSErrorWithoutCode, bytesToHex, equalsBytes } from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import {
@@ -11,8 +11,8 @@ import {
   getGenesisStateRoot,
 } from './index.ts'
 
-import type { BlockData } from '@ethereumjs/block'
-import type { Chain } from '@ethereumjs/common'
+import type { BlockData } from '@tvmjs/block'
+import type { Chain } from '@tvmjs/common'
 import type { BlockchainOptions, DBOp } from './index.ts'
 
 const DEBUG =

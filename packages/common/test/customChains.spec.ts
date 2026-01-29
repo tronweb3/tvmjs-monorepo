@@ -1,4 +1,4 @@
-import { customChainConfig } from '@ethereumjs/testdata'
+import { customChainConfig } from '@tvmjs/testdata'
 import { assert, describe, it } from 'vitest'
 
 import { Common, Hardfork, Mainnet, createCustomCommon } from '../src/index.ts'

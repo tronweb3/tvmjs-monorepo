@@ -6,7 +6,7 @@ import {
   hexToBytes,
   setLengthLeft,
   setLengthRight,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createEVM } from '../src/index.ts'

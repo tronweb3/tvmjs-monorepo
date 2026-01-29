@@ -1,12 +1,12 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { MapDB } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { MapDB } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Ethash } from '../src/index.ts'
 
-import type { Block, BlockHeader } from '@ethereumjs/block'
-import type { DBObject } from '@ethereumjs/util'
+import type { Block, BlockHeader } from '@tvmjs/block'
+import type { DBObject } from '@tvmjs/util'
 
 const cacheDb = new MapDB<number, DBObject>()
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })

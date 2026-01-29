@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import {
   BIGINT_1,
   MAX_INTEGER,
@@ -8,12 +8,12 @@ import {
   createAddressFromPrivateKey,
   createZeroAddress,
   hexToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createEOACode7702Tx } from '../src/index.ts'
 
-import type { EOACode7702AuthorizationListItem, PrefixedHexString } from '@ethereumjs/util'
+import type { EOACode7702AuthorizationListItem, PrefixedHexString } from '@tvmjs/util'
 import type { TxData } from '../src/7702/tx.ts'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7702] })

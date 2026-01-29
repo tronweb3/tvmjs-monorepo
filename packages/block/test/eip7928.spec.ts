@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { randomBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { randomBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 import { createBlock } from '../src/index.ts'
 

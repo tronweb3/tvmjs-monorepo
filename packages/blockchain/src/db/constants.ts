@@ -1,4 +1,4 @@
-import { bigIntToBytes, concatBytes, utf8ToBytes } from '@ethereumjs/util'
+import { bigIntToBytes, concatBytes, utf8ToBytes } from '@tvmjs/util'
 
 // Geth compatible DB keys
 

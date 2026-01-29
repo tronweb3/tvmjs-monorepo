@@ -1,4 +1,4 @@
-import { decode, encode } from '@ethereumjs/rlp'
+import { decode, encode } from '@tvmjs/rlp'
 import { assert, describe, it } from 'vitest'
 
 import {

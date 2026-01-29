@@ -1,17 +1,13 @@
-import {
-  cliqueEpochTransitionSigners,
-  createBlock,
-  createSealedCliqueBlock,
-} from '@ethereumjs/block'
+import { cliqueEpochTransitionSigners, createBlock, createSealedCliqueBlock } from '@tvmjs/block'
 import {
   Common,
   ConsensusAlgorithm,
   ConsensusType,
   Hardfork,
   createCustomCommon,
-} from '@ethereumjs/common'
-import type { Address } from '@ethereumjs/util'
-import { concatBytes, createAddressFromString, createZeroAddress } from '@ethereumjs/util'
+} from '@tvmjs/common'
+import type { Address } from '@tvmjs/util'
+import { concatBytes, createAddressFromString, createZeroAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { CLIQUE_NONCE_AUTH, CLIQUE_NONCE_DROP, CliqueConsensus } from '../src/consensus/clique.ts'
@@ -26,10 +22,10 @@ import {
   SIGNER_F,
   type Signer,
   goerliChainConfig,
-} from '@ethereumjs/testdata'
+} from '@tvmjs/testdata'
 
-import type { Block } from '@ethereumjs/block'
-import type { CliqueConfig } from '@ethereumjs/common'
+import type { Block } from '@tvmjs/block'
+import type { CliqueConfig } from '@tvmjs/common'
 import type { Blockchain, ConsensusDict } from '../src/index.ts'
 
 const COMMON = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })

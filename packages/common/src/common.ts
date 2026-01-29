@@ -7,7 +7,7 @@ import {
   hexToBytes,
   intToBytes,
   toType,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { EventEmitter } from 'eventemitter3'
 
 import { crc32 } from './crc.ts'
@@ -15,7 +15,7 @@ import { eipsDict } from './eips.ts'
 import { Hardfork } from './enums.ts'
 import { hardforksDict } from './hardforks.ts'
 
-import type { BigIntLike, PrefixedHexString } from '@ethereumjs/util'
+import type { BigIntLike, PrefixedHexString } from '@tvmjs/util'
 import type { ConsensusAlgorithm, ConsensusType } from './enums.ts'
 import type {
   BootstrapNodeConfig,

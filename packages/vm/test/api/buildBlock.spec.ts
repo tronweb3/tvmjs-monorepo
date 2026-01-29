@@ -3,8 +3,8 @@ import {
   cliqueVerifySignature,
   createBlock,
   createSealedCliqueBlock,
-} from '@ethereumjs/block'
-import { EthashConsensus, createBlockchain } from '@ethereumjs/blockchain'
+} from '@tvmjs/block'
+import { EthashConsensus, createBlockchain } from '@tvmjs/blockchain'
 import {
   Common,
   ConsensusAlgorithm,
@@ -12,18 +12,18 @@ import {
   Hardfork,
   Mainnet,
   createCommonFromGethGenesis,
-} from '@ethereumjs/common'
-import { Ethash } from '@ethereumjs/ethash'
-import { createFeeMarket1559Tx, createLegacyTx } from '@ethereumjs/tx'
-import { concatBytes, createAccount, createZeroAddress } from '@ethereumjs/util'
+} from '@tvmjs/common'
+import { Ethash } from '@tvmjs/ethash'
+import { createFeeMarket1559Tx, createLegacyTx } from '@tvmjs/tx'
+import { concatBytes, createAccount, createZeroAddress } from '@tvmjs/util'
 import { assert, describe, expect, it } from 'vitest'
 
 import { buildBlock, createVM, runBlock } from '../../src/index.ts'
 
 import { setBalance } from './utils.ts'
 
-import type { Blockchain, ConsensusDict } from '@ethereumjs/blockchain'
-import { SIGNER_A } from '@ethereumjs/testdata'
+import type { Blockchain, ConsensusDict } from '@tvmjs/blockchain'
+import { SIGNER_A } from '@tvmjs/testdata'
 
 describe('BlockBuilder', () => {
   it('should build a valid block', async () => {

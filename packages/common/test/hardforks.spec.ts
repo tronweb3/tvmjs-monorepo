@@ -1,5 +1,5 @@
-import { goerliChainConfig } from '@ethereumjs/testdata'
-import { hexToBytes } from '@ethereumjs/util'
+import { goerliChainConfig } from '@tvmjs/testdata'
+import { hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {

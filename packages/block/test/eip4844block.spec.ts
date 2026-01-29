@@ -1,12 +1,12 @@
-import { Common, Hardfork, Mainnet, createCommonFromGethGenesis } from '@ethereumjs/common'
-import { createBlob4844Tx } from '@ethereumjs/tx'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { Common, Hardfork, Mainnet, createCommonFromGethGenesis } from '@tvmjs/common'
+import { createBlob4844Tx } from '@tvmjs/tx'
 import {
   blobsToCommitments,
   commitmentsToVersionedHashes,
   getBlobs,
   randomBytes,
-} from '@ethereumjs/util'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 import { assert, describe, it } from 'vitest'
 
@@ -14,9 +14,9 @@ import { fakeExponential, getNumBlobs } from '../src/helpers.ts'
 import { createBlock, createBlockHeader } from '../src/index.ts'
 import { paramsBlock } from '../src/params.ts'
 
-import { eip4844GethGenesis } from '@ethereumjs/testdata'
+import { eip4844GethGenesis } from '@tvmjs/testdata'
 
-import type { TypedTransaction } from '@ethereumjs/tx'
+import type { TypedTransaction } from '@tvmjs/tx'
 
 describe('EIP4844 header tests', () => {
   const kzg = new microEthKZG(trustedSetup)

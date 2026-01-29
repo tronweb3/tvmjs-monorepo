@@ -1,5 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
-import { bytesToHex, equalsBytes } from '@ethereumjs/util'
+import { RLP } from '@tvmjs/rlp'
+import { bytesToHex, equalsBytes } from '@tvmjs/util'
 
 import { BranchMPTNode } from '../node/branch.ts'
 import { ExtensionMPTNode } from '../node/extension.ts'

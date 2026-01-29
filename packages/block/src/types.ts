@@ -1,5 +1,5 @@
-import type { Common, ParamsDict } from '@ethereumjs/common'
-import type { JSONRPCTx, JSONTx, TransactionType, TxData } from '@ethereumjs/tx'
+import type { Common, ParamsDict } from '@tvmjs/common'
+import type { JSONRPCTx, JSONTx, TransactionType, TxData } from '@tvmjs/tx'
 import type {
   AddressLike,
   BigIntLike,
@@ -9,7 +9,7 @@ import type {
   PrefixedHexString,
   WithdrawalBytes,
   WithdrawalData,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import type { BlockHeader } from './index.ts'
 
 /**
@@ -39,7 +39,7 @@ export interface BlockOptions {
   setHardfork?: boolean
   /**
    * Block parameters sorted by EIP can be found in the exported `paramsBlock` dictionary,
-   * which is internally passed to the associated `@ethereumjs/common` instance which
+   * which is internally passed to the associated `@tvmjs/common` instance which
    * manages parameter selection based on the hardfork and EIP settings.
    *
    * This option allows providing a custom set of parameters. Note that parameters

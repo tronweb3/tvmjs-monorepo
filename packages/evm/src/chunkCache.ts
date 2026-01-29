@@ -1,4 +1,4 @@
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 import type { BinaryChunkAccessEvent } from './binaryTreeAccessWitness.ts'
 
 export class ChunkCache {

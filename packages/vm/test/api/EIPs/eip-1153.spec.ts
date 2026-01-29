@@ -1,14 +1,14 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { Account, Address, bytesToInt, hexToBytes, privateToAddress } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import { Account, Address, bytesToInt, hexToBytes, privateToAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
-import { SIGNER_A } from '@ethereumjs/testdata'
-import type { TypedTransaction } from '@ethereumjs/tx'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { InterpreterStep } from '@tvmjs/evm'
+import { SIGNER_A } from '@tvmjs/testdata'
+import type { TypedTransaction } from '@tvmjs/tx'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 interface Test {
   steps: { expectedOpcode: string; expectedGasUsed: number; expectedStack: bigint[] }[]

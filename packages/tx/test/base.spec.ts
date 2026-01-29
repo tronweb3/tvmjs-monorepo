@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import {
   SECP256K1_ORDER,
   bytesToBigInt,
@@ -6,7 +6,7 @@ import {
   hexToBytes,
   privateToPublic,
   utf8ToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {

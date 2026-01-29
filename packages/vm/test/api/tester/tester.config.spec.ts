@@ -1,4 +1,4 @@
-import { Hardfork } from '@ethereumjs/common'
+import { Hardfork } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
 import { getCommon } from '../../tester/config.ts'

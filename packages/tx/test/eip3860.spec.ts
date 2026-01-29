@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createZeroAddress } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createZeroAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { TransactionType, createTx, paramsTx } from '../src/index.ts'

@@ -1,4 +1,4 @@
-import { RLP } from '@ethereumjs/rlp'
+import { RLP } from '@tvmjs/rlp'
 import { assert, describe, it } from 'vitest'
 
 import {
@@ -40,7 +40,7 @@ import {
 
 import { eip1404ExamplesData } from './testdata/eip1014Examples.ts'
 
-import type { Input } from '@ethereumjs/rlp'
+import type { Input } from '@tvmjs/rlp'
 import type { AccountBodyBytes, AccountData, PrefixedHexString } from '../src/index.ts'
 
 const _0n = BigInt(0)

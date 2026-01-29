@@ -1,14 +1,16 @@
+import { secp256k1 } from '@noble/curves/secp256k1.js'
+import { keccak_256 } from '@noble/hashes/sha3.js'
 import {
   createBlock,
   createBlockFromBytesArray,
   createBlockFromRLP,
   createSealedCliqueBlock,
-} from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
-import { type MerkleStateManager } from '@ethereumjs/statemanager'
-import { SIGNER_A, SIGNER_B, customChainConfig, goerliChainConfig } from '@ethereumjs/testdata'
+} from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
+import { type MerkleStateManager } from '@tvmjs/statemanager'
+import { SIGNER_A, SIGNER_B, customChainConfig, goerliChainConfig } from '@tvmjs/testdata'
 import {
   Capability,
   LegacyTx,
@@ -16,7 +18,7 @@ import {
   createEOACode7702Tx,
   createFeeMarket1559Tx,
   createLegacyTx,
-} from '@ethereumjs/tx'
+} from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -31,9 +33,7 @@ import {
   privateToAddress,
   unpadBytes,
   utf8ToBytes,
-} from '@ethereumjs/util'
-import { secp256k1 } from '@noble/curves/secp256k1.js'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runBlock } from '../../src/index.ts'
@@ -42,13 +42,13 @@ import { getDAOCommon, setupPreConditions } from '../util.ts'
 import { blockchainData } from './testdata/blockchain.ts'
 import { createAccountWithDefaults, setBalance, setupVM } from './utils.ts'
 
-import type { Block, BlockBytes } from '@ethereumjs/block'
-import type { TypedTransaction } from '@ethereumjs/tx'
+import type { Block, BlockBytes } from '@tvmjs/block'
+import type { TypedTransaction } from '@tvmjs/tx'
 import type {
   EOACode7702AuthorizationListBytesItem,
   NestedUint8Array,
   PrefixedHexString,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import type { VM } from '../../src/index.ts'
 import type {
   AfterBlockEvent,

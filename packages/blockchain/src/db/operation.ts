@@ -1,4 +1,4 @@
-import { EthereumJSErrorWithoutCode, KeyEncoding, ValueEncoding } from '@ethereumjs/util'
+import { EthereumJSErrorWithoutCode, KeyEncoding, ValueEncoding } from '@tvmjs/util'
 
 import {
   HEADS_KEY,

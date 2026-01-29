@@ -9,7 +9,7 @@ import {
   equalsBytes,
   matchingBitsLength,
   setLengthRight,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import debug from 'debug'
 
 import { CheckpointDB } from './db/index.ts'
@@ -18,7 +18,7 @@ import { StemBinaryNode } from './node/stemNode.ts'
 import { decodeBinaryNode, isInternalBinaryNode, isStemBinaryNode } from './node/util.ts'
 import { type BinaryTreeOpts, ROOT_DB_KEY } from './types.ts'
 
-import type { PutBatch } from '@ethereumjs/util'
+import type { PutBatch } from '@tvmjs/util'
 import type { Debugger } from 'debug'
 import type { BinaryNode } from './node/types.ts'
 
@@ -29,7 +29,7 @@ interface Path {
 }
 
 /**
- * The basic binary tree interface, use with `import { BinaryTree } from '@ethereumjs/binarytree'`.
+ * The basic binary tree interface, use with `import { BinaryTree } from '@tvmjs/binarytree'`.
  *
  * A BinaryTree object can be created with the constructor method:
  *

@@ -1,4 +1,4 @@
-import { BIGINT_0, hexToBytes } from '@ethereumjs/util'
+import { BIGINT_0, hexToBytes } from '@tvmjs/util'
 
 export type Chain = (typeof Chain)[keyof typeof Chain]
 

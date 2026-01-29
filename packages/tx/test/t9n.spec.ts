@@ -1,14 +1,14 @@
 import * as fs from 'fs'
 import path from 'path'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { bytesToHex, hexToBigInt, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { bytesToHex, hexToBigInt, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 import * as yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
 import { createTxFromRLP } from '../src/transactionFactory.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 type T9NArgs = {
   dir: string

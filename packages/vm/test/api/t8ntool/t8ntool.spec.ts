@@ -3,18 +3,18 @@ import { assert, describe, it } from 'vitest'
 
 import { TransitionTool } from '../../t8n/t8ntool.ts'
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { MerkleStateManager } from '@ethereumjs/statemanager'
-import { createTx } from '@ethereumjs/tx'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { MerkleStateManager } from '@tvmjs/statemanager'
+import { createTx } from '@tvmjs/tx'
 import {
   Account,
   type PrefixedHexString,
   createAddressFromPrivateKey,
   hexToBytes,
   randomBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
+import type { InterpreterStep } from '@tvmjs/evm'
 import { type AfterTxEvent, createVM, runTx } from '../../../src/index.ts'
 import { stepTraceJSON, summaryTraceJSON } from '../../t8n/helpers.ts'
 import type { T8NOptions } from '../../t8n/types.ts'

@@ -1,7 +1,7 @@
-import { createBlock } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { Hardfork, createCustomCommon } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
+import { createBlock } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Hardfork, createCustomCommon } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -19,16 +19,16 @@ import {
   privateToAddress,
   setLengthLeft,
   toChecksumAddress,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { buildBlock, createVM, paramsVM, runBlock, runTx } from '../../../src/index.ts'
 
-import type { Block } from '@ethereumjs/block'
-import type { ChainConfig } from '@ethereumjs/common'
-import type { EVM } from '@ethereumjs/evm'
-import type { LegacyTxData } from '@ethereumjs/tx'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { Block } from '@tvmjs/block'
+import type { ChainConfig } from '@tvmjs/common'
+import type { EVM } from '@tvmjs/evm'
+import type { LegacyTxData } from '@tvmjs/tx'
+import type { PrefixedHexString } from '@tvmjs/util'
 import type { VM } from '../../../src/index.ts'
 
 function eip2935ActiveAtCommon(timestamp: number, address: bigint) {

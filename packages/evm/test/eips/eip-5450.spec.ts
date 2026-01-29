@@ -1,4 +1,4 @@
-import { type PrefixedHexString, hexToBytes } from '@ethereumjs/util'
+import { type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { default as testData } from '../../../ethereum-tests/EOFTests/EIP5450/validInvalid.json' with {

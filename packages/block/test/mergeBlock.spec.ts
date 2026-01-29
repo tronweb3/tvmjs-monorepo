@@ -1,11 +1,11 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import {
   KECCAK256_RLP,
   KECCAK256_RLP_ARRAY,
   createZeroAddress,
   equalsBytes,
   hexToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Block, createBlock, createBlockHeader } from '../src/index.ts'

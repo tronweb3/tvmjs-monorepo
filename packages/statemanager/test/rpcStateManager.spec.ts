@@ -1,9 +1,9 @@
-import { createBlockFromJSONRPCProvider, createBlockFromRPC } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createEVM } from '@ethereumjs/evm'
-import type { EVMMockBlockchainInterface, EVMRunCallOpts } from '@ethereumjs/evm'
-import { verifyMerkleProof } from '@ethereumjs/mpt'
-import { createFeeMarket1559Tx, createTxFromRPC } from '@ethereumjs/tx'
+import { createBlockFromJSONRPCProvider, createBlockFromRPC } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createEVM } from '@tvmjs/evm'
+import type { EVMMockBlockchainInterface, EVMRunCallOpts } from '@tvmjs/evm'
+import { verifyMerkleProof } from '@tvmjs/mpt'
+import { createFeeMarket1559Tx, createTxFromRPC } from '@tvmjs/tx'
 import {
   Address,
   bigIntToBytes,
@@ -15,8 +15,8 @@ import {
   hexToBytes,
   setLengthLeft,
   utf8ToBytes,
-} from '@ethereumjs/util'
-import { createVM, runBlock, runTx } from '@ethereumjs/vm'
+} from '@tvmjs/util'
+import { createVM, runBlock, runTx } from '@tvmjs/vm'
 import { assert, describe, expect, it, vi } from 'vitest'
 
 import { MerkleStateManager } from '../src/merkleStateManager.ts'
@@ -33,8 +33,8 @@ const provider = process.env.PROVIDER ?? 'http://cheese'
 // `PROVIDER=https://mainnet.infura.io/v3/[mySuperS3cretproviderKey] npx vitest run test/rpcStateManager.spec.ts
 
 describe('RPC State Manager initialization tests', async () => {
-  vi.mock('@ethereumjs/util', async () => {
-    const util = await vi.importActual('@ethereumjs/util')
+  vi.mock('@tvmjs/util', async () => {
+    const util = await vi.importActual('@tvmjs/util')
     return {
       ...util,
       fetchFromProvider: vi.fn().mockImplementation(async (url, { method, params }: any) => {
@@ -43,7 +43,7 @@ describe('RPC State Manager initialization tests', async () => {
       }),
     }
   })
-  await import('@ethereumjs/util')
+  await import('@tvmjs/util')
 
   it('should work', () => {
     let state = new RPCStateManager({ provider, blockTag: 1n })

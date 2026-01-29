@@ -1,6 +1,6 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createFeeMarket1559Tx } from '@ethereumjs/tx'
-import { Account, Address, Units, bytesToHex, hexToBytes, privateToAddress } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createFeeMarket1559Tx } from '@tvmjs/tx'
+import { Account, Address, Units, bytesToHex, hexToBytes, privateToAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'

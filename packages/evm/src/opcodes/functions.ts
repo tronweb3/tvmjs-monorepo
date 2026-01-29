@@ -1,3 +1,4 @@
+import { keccak_256 } from '@noble/hashes/sha3.js'
 import {
   Address,
   BIGINT_0,
@@ -25,8 +26,7 @@ import {
   concatBytes,
   setLengthLeft,
   setLengthRight,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 
 import { EOFContainer, EOFContainerMode } from '../eof/container.ts'
 import { EOFErrorMessage } from '../eof/errors.ts'
@@ -46,7 +46,7 @@ import {
   writeCallOutput,
 } from './util.ts'
 
-import type { Common } from '@ethereumjs/common'
+import type { Common } from '@tvmjs/common'
 import type { RunState } from '../interpreter.ts'
 
 export interface SyncOpHandler {

@@ -1,6 +1,6 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
-import { goerliBlocks, goerliChainConfig, mainnetBlocks } from '@ethereumjs/testdata'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
+import { goerliBlocks, goerliChainConfig, mainnetBlocks } from '@tvmjs/testdata'
 import {
   KECCAK256_RLP,
   KECCAK256_RLP_ARRAY,
@@ -9,7 +9,7 @@ import {
   createZeroAddress,
   equalsBytes,
   hexToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {
@@ -23,8 +23,8 @@ import {
 
 import { bcBlockGasLimitTestData } from './testdata/bcBlockGasLimitTest.ts'
 
-import type { CliqueConfig } from '@ethereumjs/common'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { CliqueConfig } from '@tvmjs/common'
+import type { PrefixedHexString } from '@tvmjs/util'
 import type { BlockHeader } from '../src/index.ts'
 
 describe('[Block]: Header functions', () => {

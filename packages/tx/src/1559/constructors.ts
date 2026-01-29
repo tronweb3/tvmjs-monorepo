@@ -1,11 +1,11 @@
-import { RLP } from '@ethereumjs/rlp'
+import { RLP } from '@tvmjs/rlp'
 import {
   EthereumJSErrorWithoutCode,
   bytesToBigInt,
   bytesToHex,
   equalsBytes,
   validateNoLeadingZeroes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import { TransactionType } from '../types.ts'
 import { txTypeBytes, validateNotArray } from '../util/internal.ts'

@@ -10,7 +10,7 @@ import type { BaseOpts, ChainConfig, GethConfigOpts } from './index.ts'
  * in a provided {@link chainParamsOrName} dictionary. Some usage example:
  *
  * ```javascript
- * import { createCustomCommon, Mainnet } from '@ethereumjs/common'
+ * import { createCustomCommon, Mainnet } from '@tvmjs/common'
  *
  * createCustomCommon({chainId: 123}, Mainnet)
  * ```

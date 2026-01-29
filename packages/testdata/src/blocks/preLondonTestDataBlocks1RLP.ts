@@ -1,4 +1,4 @@
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 export const preLondonTestDataBlocks1RLP: {
   blockRLP: PrefixedHexString

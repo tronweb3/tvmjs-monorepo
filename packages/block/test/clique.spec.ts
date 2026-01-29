@@ -1,5 +1,5 @@
-import { Common, Hardfork } from '@ethereumjs/common'
-import { createZeroAddress } from '@ethereumjs/util'
+import { Common, Hardfork } from '@tvmjs/common'
+import { createZeroAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {
@@ -13,7 +13,7 @@ import {
   createSealedCliqueBlockHeader,
 } from '../src/index.ts'
 
-import { SIGNER_A, goerliChainConfig } from '@ethereumjs/testdata'
+import { SIGNER_A, goerliChainConfig } from '@tvmjs/testdata'
 
 describe('[Header]: Clique PoA Functionality', () => {
   const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })

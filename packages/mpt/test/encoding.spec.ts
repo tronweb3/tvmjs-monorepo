@@ -1,11 +1,4 @@
-import {
-  MapDB,
-  ValueEncoding,
-  bytesToHex,
-  hexToBytes,
-  toBytes,
-  utf8ToBytes,
-} from '@ethereumjs/util'
+import { MapDB, ValueEncoding, bytesToHex, hexToBytes, toBytes, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { MerklePatriciaTrie } from '../src/index.ts'

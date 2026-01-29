@@ -1,4 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { RLP } from '@tvmjs/rlp'
 import {
   BIGINT_2,
   EthereumJSErrorWithoutCode,
@@ -9,8 +10,7 @@ import {
   intToBytes,
   toBytes,
   unpadBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 
 import * as Legacy from '../capabilities/legacy.ts'
 import { paramsTx } from '../index.ts'
@@ -19,8 +19,8 @@ import { getBaseJSON, sharedConstructor, valueOverflowCheck } from '../util/inte
 
 import { createLegacyTx } from './constructors.ts'
 
-import type { Common } from '@ethereumjs/common'
-import type { Address } from '@ethereumjs/util'
+import type { Common } from '@tvmjs/common'
+import type { Address } from '@tvmjs/util'
 import type {
   TxData as AllTypesTxData,
   TxValuesArray as AllTypesTxValuesArray,
@@ -249,7 +249,7 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
    * and you might need to do yourself with:
    *
    * ```javascript
-   * import { RLP } from '@ethereumjs/rlp'
+   * import { RLP } from '@tvmjs/rlp'
    * const message = tx.getMessageToSign()
    * const serializedMessage = RLP.encode(message)) // use this for the HW wallet input
    * ```

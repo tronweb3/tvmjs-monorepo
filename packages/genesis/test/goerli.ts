@@ -1,4 +1,4 @@
-import type { GenesisState } from '@ethereumjs/common'
+import type { GenesisState } from '@tvmjs/common'
 
 export const goerliGenesis: GenesisState = {
   '0x0000000000000000000000000000000000000000': '0x1',

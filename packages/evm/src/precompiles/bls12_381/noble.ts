@@ -1,3 +1,4 @@
+import { bls12_381 } from '@noble/curves/bls12-381.js'
 import {
   BIGINT_0,
   bigIntToBytes,
@@ -5,8 +6,7 @@ import {
   concatBytes,
   equalsBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
-import { bls12_381 } from '@noble/curves/bls12-381.js'
+} from '@tvmjs/util'
 
 import { EVMError } from '../../errors.ts'
 

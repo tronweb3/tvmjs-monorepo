@@ -3,9 +3,9 @@ import {
   cliqueIsEpochTransition,
   cliqueSigner,
   cliqueVerifySignature,
-} from '@ethereumjs/block'
-import { ConsensusAlgorithm } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
+} from '@tvmjs/block'
+import { ConsensusAlgorithm } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
 import {
   Address,
   BIGINT_0,
@@ -19,11 +19,11 @@ import {
   equalsBytes,
   hexToBytes,
   toType,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
-import type { Block, BlockHeader } from '@ethereumjs/block'
-import type { CliqueConfig } from '@ethereumjs/common'
+import type { Block, BlockHeader } from '@tvmjs/block'
+import type { CliqueConfig } from '@tvmjs/common'
 import type { Blockchain } from '../index.ts'
 import type { Consensus, ConsensusOptions } from '../types.ts'
 

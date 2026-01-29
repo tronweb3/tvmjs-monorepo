@@ -1,4 +1,5 @@
-import { MerklePatriciaTrie, createMPT } from '@ethereumjs/mpt'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { MerklePatriciaTrie, createMPT } from '@tvmjs/mpt'
 import {
   Account,
   Address,
@@ -10,8 +11,7 @@ import {
   equalsBytes,
   hexToBytes,
   randomBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { MerkleStateManager } from '../src/index.ts'
@@ -21,7 +21,7 @@ import { ropstenContractWithStorageData } from './testdata/ropsten_contractWithS
 import { ropstenNonexistentAccountData } from './testdata/ropsten_nonexistentAccount.ts'
 import { ropstenValidAccountData } from './testdata/ropsten_validAccount.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 describe('ProofStateManager', () => {
   it(`should return quantity-encoded RPC representation`, async () => {

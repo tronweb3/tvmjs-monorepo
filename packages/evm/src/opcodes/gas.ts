@@ -1,4 +1,4 @@
-import { Hardfork } from '@ethereumjs/common'
+import { Hardfork } from '@tvmjs/common'
 import {
   BIGINT_0,
   BIGINT_1,
@@ -9,7 +9,7 @@ import {
   bigIntToBytes,
   equalsBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import { EOFErrorMessage } from '../eof/errors.ts'
 import { EVMError } from '../errors.ts'
@@ -28,8 +28,8 @@ import {
   updateSstoreGas,
 } from './util.ts'
 
-import type { Common } from '@ethereumjs/common'
-import type { Address } from '@ethereumjs/util'
+import type { Common } from '@tvmjs/common'
+import type { Address } from '@tvmjs/util'
 import type { RunState } from '../interpreter.ts'
 
 const EXTCALL_TARGET_MAX = BigInt(2) ** BigInt(8 * 20) - BigInt(1)

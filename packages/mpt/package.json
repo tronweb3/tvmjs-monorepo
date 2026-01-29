@@ -1,5 +1,5 @@
 {
-  "name": "@ethereumjs/mpt",
+  "name": "@tvmjs/mpt",
   "version": "10.1.0",
   "description": "Implementation of the modified merkle patricia tree as specified in Ethereum's yellow paper.",
   "keywords": ["merkle", "radix", "trie", "ethereum"],
@@ -53,14 +53,14 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@ethereumjs/rlp": "^10.1.0",
-    "@ethereumjs/util": "^10.1.0",
+    "@tvmjs/rlp": "^10.1.0",
+    "@tvmjs/util": "^10.1.0",
     "@noble/hashes": "^2.0.1",
     "debug": "^4.4.0",
     "lru-cache": "11.0.2"
   },
   "devDependencies": {
-    "@ethereumjs/genesis": "^10.1.0",
+    "@tvmjs/genesis": "^10.1.0",
     "@types/benchmark": "^2.1.5",
     "@types/debug": "^4.1.12",
     "abstract-level": "^3.0.1",

@@ -1,6 +1,6 @@
-import { SIGNER_F, SIGNER_G } from '@ethereumjs/testdata'
+import { SIGNER_F, SIGNER_G } from '@tvmjs/testdata'
 
-import { MerklePatriciaTrie, createMPT, createMPTFromProof } from '@ethereumjs/mpt'
+import { MerklePatriciaTrie, createMPT, createMPTFromProof } from '@tvmjs/mpt'
 import {
   Account,
   KECCAK256_RLP,
@@ -12,7 +12,7 @@ import {
   intToBytes,
   setLengthLeft,
   utf8ToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { CacheType, Caches, MerkleStateManager } from '../src/index.ts'
@@ -22,7 +22,7 @@ import {
   getMerkleStateProof,
 } from '../src/proof/index.ts'
 
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 export const isBrowser = new Function('try {return this===window;}catch(e){ return false;}')
 function verifyAccount(

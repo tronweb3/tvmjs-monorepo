@@ -5,7 +5,7 @@ import {
   bigIntToUnpaddedBytes,
   bytesToBigInt,
   toBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import * as EIP2718 from '../capabilities/eip2718.ts'
 import * as EIP2930 from '../capabilities/eip2930.ts'
@@ -15,8 +15,8 @@ import { getBaseJSON, sharedConstructor, valueOverflowCheck } from '../util/inte
 
 import { createAccessList2930Tx } from './constructors.ts'
 
-import type { Common } from '@ethereumjs/common'
-import type { Address } from '@ethereumjs/util'
+import type { Common } from '@tvmjs/common'
+import type { Address } from '@tvmjs/util'
 import type {
   AccessListBytes,
   TxData as AllTypesTxData,

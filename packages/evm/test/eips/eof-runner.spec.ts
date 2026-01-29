@@ -1,4 +1,4 @@
-import { Account, Address, type PrefixedHexString, hexToBytes } from '@ethereumjs/util'
+import { Account, Address, type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { EOFContainer, createEVM } from '../../src/index.ts'

@@ -1,6 +1,6 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
 import {
   Account,
   CLRequestType,
@@ -12,13 +12,13 @@ import {
   equalsBytes,
   hexToBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { runBlock } from '../../../src/index.ts'
 import { setupVM } from '../utils.ts'
 
-import type { Block } from '@ethereumjs/block'
+import type { Block } from '@tvmjs/block'
 
 const pkey = hexToBytes(`0x${'20'.repeat(32)}`)
 const addr = createAddressFromPrivateKey(pkey)

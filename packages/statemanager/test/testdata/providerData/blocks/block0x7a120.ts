@@ -1,4 +1,4 @@
-import type { JSONRPCBlock } from '@ethereumjs/block'
+import type { JSONRPCBlock } from '@tvmjs/block'
 
 export const block: JSONRPCBlock = {
   difficulty: '0x6dcc051573d',

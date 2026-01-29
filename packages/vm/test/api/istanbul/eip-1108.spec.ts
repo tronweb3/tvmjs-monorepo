@@ -1,6 +1,6 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { getActivePrecompiles } from '@ethereumjs/evm'
-import { hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { getActivePrecompiles } from '@tvmjs/evm'
+import { hexToBytes } from '@tvmjs/util'
 import { assert, beforeAll, describe, it } from 'vitest'
 
 import { createVM } from '../../../src/index.ts'

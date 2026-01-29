@@ -1,4 +1,4 @@
-import { equalsBytes } from '@ethereumjs/util'
+import { equalsBytes } from '@tvmjs/util'
 
 import type { PrecompileInput } from '../types.ts'
 

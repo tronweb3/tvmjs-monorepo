@@ -1,4 +1,4 @@
-import { short } from '@ethereumjs/util'
+import { short } from '@tvmjs/util'
 
 import { OOGResult } from '../evm.ts'
 

@@ -1,5 +1,6 @@
-import { Common, Hardfork, Mainnet, createCommonFromGethGenesis } from '@ethereumjs/common'
-import { SIGNER_G, eip4844GethGenesis } from '@ethereumjs/testdata'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Common, Hardfork, Mainnet, createCommonFromGethGenesis } from '@tvmjs/common'
+import { SIGNER_G, eip4844GethGenesis } from '@tvmjs/testdata'
 import {
   Account,
   Address,
@@ -12,8 +13,7 @@ import {
   hexToBytes,
   padToEven,
   unpadBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { EVMError } from '../src/errors.ts'

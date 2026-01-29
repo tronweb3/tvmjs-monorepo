@@ -1,6 +1,6 @@
-import { utf8ToBytes } from '@ethereumjs/util'
+import { utf8ToBytes } from '@tvmjs/util'
 
-import type { DB, ValueEncoding } from '@ethereumjs/util'
+import type { DB, ValueEncoding } from '@tvmjs/util'
 import type { BranchMPTNode, ExtensionMPTNode, LeafMPTNode } from './node/index.ts'
 import type { WalkController } from './util/walkController.ts'
 
@@ -106,7 +106,7 @@ export interface MPTOpts {
   cacheSize?: number
 
   /**
-   * @ethereumjs/common `Common` instance (an alternative to passing in a `customHashingFunction`)
+   * @tvmjs/common `Common` instance (an alternative to passing in a `customHashingFunction`)
    */
   common?: CommonInterface
 }

@@ -1,7 +1,7 @@
-import { createBlock, createBlockFromBytesArray, createBlockFromRLP } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
-import { MapDB, hexToBytes } from '@ethereumjs/util'
+import { createBlock, createBlockFromBytesArray, createBlockFromRLP } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
+import { MapDB, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Ethash } from '../src/index.ts'
@@ -9,8 +9,8 @@ import { Ethash } from '../src/index.ts'
 import { blockTestsData } from './block_tests_data.ts'
 import { invalidBlockRLP, validBlockRLP } from './ethash_block_rlp_tests.ts'
 
-import type { BlockBytes } from '@ethereumjs/block'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { BlockBytes } from '@tvmjs/block'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 const cacheDB = new MapDB()
 

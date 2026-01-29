@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { goerliChainConfig } from '@ethereumjs/testdata'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { goerliChainConfig } from '@tvmjs/testdata'
 import {
   Address,
   MAX_INTEGER,
@@ -11,7 +11,7 @@ import {
   equalsBytes,
   hexToBytes,
   privateToAddress,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {

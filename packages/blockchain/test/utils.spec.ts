@@ -1,11 +1,7 @@
-import {
-  type GethGenesis,
-  createCommonFromGethGenesis,
-  parseGethGenesisState,
-} from '@ethereumjs/common'
-import { genesisMPTStateRoot } from '@ethereumjs/mpt'
-import { postMergeGethGenesis } from '@ethereumjs/testdata'
-import { bytesToHex } from '@ethereumjs/util'
+import { type GethGenesis, createCommonFromGethGenesis, parseGethGenesisState } from '@tvmjs/common'
+import { genesisMPTStateRoot } from '@tvmjs/mpt'
+import { postMergeGethGenesis } from '@tvmjs/testdata'
+import { bytesToHex } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createBlockchain } from '../src/index.ts'

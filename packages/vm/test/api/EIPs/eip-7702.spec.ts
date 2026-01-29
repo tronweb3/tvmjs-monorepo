@@ -1,6 +1,7 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
-import { createEOACode7702Tx } from '@ethereumjs/tx'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
+import { createEOACode7702Tx } from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -14,14 +15,13 @@ import {
   privateToAddress,
   setLengthRight,
   unpadBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { EOACode7702AuthorizationListBytesItem, PrefixedHexString } from '@ethereumjs/util'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
+import type { EOACode7702AuthorizationListBytesItem, PrefixedHexString } from '@tvmjs/util'
 import type { VM } from '../../../src/index.ts'
 
 // EIP-7702 code designator. If code starts with these bytes, it is a 7702-delegated address

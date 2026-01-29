@@ -1,4 +1,4 @@
-import { Hardfork } from '@ethereumjs/common'
+import { Hardfork } from '@tvmjs/common'
 import {
   Account,
   Address,
@@ -15,7 +15,7 @@ import {
   generateAddress,
   generateAddress2,
   short,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 import { EventEmitter } from 'eventemitter3'
 
@@ -46,7 +46,7 @@ import {
   type ExecResult,
 } from './types.ts'
 
-import type { Common, StateManagerInterface } from '@ethereumjs/common'
+import type { Common, StateManagerInterface } from '@tvmjs/common'
 import type { BinaryTreeAccessWitness } from './binaryTreeAccessWitness.ts'
 import type { InterpreterOpts } from './interpreter.ts'
 import type { Timer } from './logger.ts'

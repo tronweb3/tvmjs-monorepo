@@ -1,12 +1,12 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork } from '@ethereumjs/common'
-import { customChainConfig } from '@ethereumjs/testdata'
-import { bytesToHex } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork } from '@tvmjs/common'
+import { customChainConfig } from '@tvmjs/testdata'
+import { bytesToHex } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createBlockchain } from '../src/index.ts'
 
-import type { Block, BlockHeader } from '@ethereumjs/block'
+import type { Block, BlockHeader } from '@tvmjs/block'
 import type { Consensus, ConsensusDict } from '../src/index.ts'
 
 class fibonacciConsensus implements Consensus {

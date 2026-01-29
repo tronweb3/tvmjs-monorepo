@@ -1,4 +1,6 @@
-import { RLP } from '@ethereumjs/rlp'
+import { blake2b } from '@noble/hashes/blake2.js'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { RLP } from '@tvmjs/rlp'
 import {
   KECCAK256_NULL,
   KECCAK256_RLP_S,
@@ -7,9 +9,7 @@ import {
   concatBytes,
   hexToBytes,
   utf8ToBytes,
-} from '@ethereumjs/util'
-import { blake2b } from '@noble/hashes/blake2.js'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { LeafMPTNode, MerklePatriciaTrie } from '../src/index.ts'

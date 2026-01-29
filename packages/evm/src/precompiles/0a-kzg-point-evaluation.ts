@@ -5,7 +5,7 @@ import {
   computeVersionedHash,
   concatBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import { EVMError } from '../errors.ts'
 import { EVMErrorResult, OOGResult } from '../evm.ts'

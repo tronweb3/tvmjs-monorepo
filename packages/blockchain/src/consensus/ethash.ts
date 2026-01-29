@@ -1,8 +1,8 @@
-import { ConsensusAlgorithm } from '@ethereumjs/common'
-import { EthereumJSErrorWithoutCode, bytesToHex } from '@ethereumjs/util'
+import { ConsensusAlgorithm } from '@tvmjs/common'
+import { EthereumJSErrorWithoutCode, bytesToHex } from '@tvmjs/util'
 import debugDefault from 'debug'
 
-import type { Block, BlockHeader } from '@ethereumjs/block'
+import type { Block, BlockHeader } from '@tvmjs/block'
 import type { Debugger } from 'debug'
 import type { Blockchain } from '../index.ts'
 import type { Consensus, ConsensusOptions } from '../types.ts'

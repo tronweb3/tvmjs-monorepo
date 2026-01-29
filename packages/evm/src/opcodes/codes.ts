@@ -1,11 +1,11 @@
-import { Hardfork } from '@ethereumjs/common'
-import { EthereumJSErrorWithoutCode } from '@ethereumjs/util'
+import { Hardfork } from '@tvmjs/common'
+import { EthereumJSErrorWithoutCode } from '@tvmjs/util'
 
 import { handlers } from './functions.ts'
 import { dynamicGasHandlers } from './gas.ts'
 import { getFullname } from './util.ts'
 
-import type { Common } from '@ethereumjs/common'
+import type { Common } from '@tvmjs/common'
 import { type CustomOpcode, isAddOpcode } from '../types.ts'
 import type { OpHandler } from './functions.ts'
 import type { AsyncDynamicGasHandler, SyncDynamicGasHandler } from './gas.ts'

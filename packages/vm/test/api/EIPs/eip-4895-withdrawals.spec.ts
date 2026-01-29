@@ -1,15 +1,15 @@
-import { createBlock, genWithdrawalsTrieRoot } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
+import { createBlock, genWithdrawalsTrieRoot } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
 import {
   Common,
   Hardfork,
   Mainnet,
   createCommonFromGethGenesis,
   parseGethGenesisState,
-} from '@ethereumjs/common'
-import { decode } from '@ethereumjs/rlp'
-import { withdrawalsGethGenesis } from '@ethereumjs/testdata'
-import { createFeeMarket1559Tx } from '@ethereumjs/tx'
+} from '@tvmjs/common'
+import { decode } from '@tvmjs/rlp'
+import { withdrawalsGethGenesis } from '@tvmjs/testdata'
+import { createFeeMarket1559Tx } from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -18,13 +18,13 @@ import {
   bytesToHex,
   createWithdrawalFromBytesArray,
   hexToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { buildBlock, createVM, runBlock } from '../../../src/index.ts'
 
-import type { Block } from '@ethereumjs/block'
-import type { WithdrawalBytes, WithdrawalData } from '@ethereumjs/util'
+import type { Block } from '@tvmjs/block'
+import type { WithdrawalBytes, WithdrawalData } from '@tvmjs/util'
 
 const common = new Common({
   chain: Mainnet,

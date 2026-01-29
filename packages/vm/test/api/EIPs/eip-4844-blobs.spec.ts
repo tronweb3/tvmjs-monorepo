@@ -1,8 +1,9 @@
-import { createBlock } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { Hardfork, createCommonFromGethGenesis } from '@ethereumjs/common'
-import { eip4844GethGenesis } from '@ethereumjs/testdata'
-import { createBlob4844Tx } from '@ethereumjs/tx'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { createBlock } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Hardfork, createCommonFromGethGenesis } from '@tvmjs/common'
+import { eip4844GethGenesis } from '@tvmjs/testdata'
+import { createBlob4844Tx } from '@tvmjs/tx'
 import {
   Units,
   blobsToCommitments,
@@ -13,8 +14,7 @@ import {
   getBlobs,
   hexToBytes,
   privateToAddress,
-} from '@ethereumjs/util'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 import { assert, describe, it } from 'vitest'
 

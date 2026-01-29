@@ -4,7 +4,7 @@ import {
   type EthereumJSErrorMetaData,
   type EthereumJSErrorObject,
   EthereumJSErrorWithoutCode,
-} from '@ethereumjs/rlp'
+} from '@tvmjs/rlp'
 
 export {
   DEFAULT_ERROR_CODE,

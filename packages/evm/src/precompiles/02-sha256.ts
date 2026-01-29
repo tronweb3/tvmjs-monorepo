@@ -1,5 +1,5 @@
-import { bytesToHex } from '@ethereumjs/util'
 import { sha256 } from '@noble/hashes/sha2.js'
+import { bytesToHex } from '@tvmjs/util'
 
 import { OOGResult } from '../evm.ts'
 

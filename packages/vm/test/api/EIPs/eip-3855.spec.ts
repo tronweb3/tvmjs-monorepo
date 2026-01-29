@@ -1,8 +1,8 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { EVMError, type InterpreterStep } from '@ethereumjs/evm'
+import { EVMError, type InterpreterStep } from '@tvmjs/evm'
 import { createVM } from '../../../src/index.ts'
 
 describe('EIP 3855 tests', () => {

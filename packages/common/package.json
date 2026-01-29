@@ -1,5 +1,5 @@
 {
-  "name": "@ethereumjs/common",
+  "name": "@tvmjs/common",
   "version": "10.1.0",
   "description": "Resources common to all Ethereum implementations",
   "keywords": [
@@ -63,7 +63,7 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@ethereumjs/util": "^10.1.0",
+    "@tvmjs/util": "^10.1.0",
     "eventemitter3": "^5.0.1"
   },
   "devDependencies": {

@@ -1,13 +1,13 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { Address, createAccount, createAddressFromPrivateKey, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import { Address, createAccount, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
-import { SIGNER_A } from '@ethereumjs/testdata'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { InterpreterStep } from '@tvmjs/evm'
+import { SIGNER_A } from '@tvmjs/testdata'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 // Test cases source: https://gist.github.com/holiman/174548cad102096858583c6fbbb0649a
 describe('EIP 2929: gas cost tests', () => {

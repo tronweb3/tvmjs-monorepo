@@ -1,5 +1,5 @@
 {
-  "name": "@ethereumjs/tx",
+  "name": "@tvmjs/tx",
   "version": "10.1.0",
   "description": "Implementation of the various Ethereum Transaction Types",
   "keywords": ["ethereum", "transactions"],
@@ -61,14 +61,14 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@ethereumjs/common": "^10.1.0",
-    "@ethereumjs/rlp": "^10.1.0",
-    "@ethereumjs/util": "^10.1.0",
+    "@tvmjs/common": "^10.1.0",
+    "@tvmjs/rlp": "^10.1.0",
+    "@tvmjs/util": "^10.1.0",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1"
   },
   "devDependencies": {
-    "@ethereumjs/testdata": "1.0.0",
+    "@tvmjs/testdata": "1.0.0",
     "@paulmillr/trusted-setups": "^0.2.0",
     "@types/minimist": "^1.2.5",
     "@types/node-dir": "^0.0.37",

@@ -2,10 +2,10 @@
 // during ESM/CJS build integration (Mai 2023)
 // TODO: reactivate by moving to EVM
 
-/**import { Chain, Common, Hardfork } from '@ethereumjs/common'
-import { EVMErrorMessage } from '@ethereumjs/evm'
-import { F, precompile09 } from '@ethereumjs/evm/dist/precompiles/09-blake2f'
-import { bytesToHex, hexToBytes } from '@ethereumjs/util'
+/**import { Chain, Common, Hardfork } from '@tvmjs/common'
+import { EVMErrorMessage } from '@tvmjs/evm'
+import { F, precompile09 } from '@tvmjs/evm/dist/precompiles/09-blake2f'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { VM, createVM } from '../../../src/index.ts'

@@ -6,7 +6,7 @@ import {
   bigIntToUnpaddedBytes,
   bytesToBigInt,
   toBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import * as EIP1559 from '../capabilities/eip1559.ts'
 import * as EIP2718 from '../capabilities/eip2718.ts'
@@ -17,8 +17,8 @@ import { getBaseJSON, sharedConstructor, valueOverflowCheck } from '../util/inte
 
 import { createFeeMarket1559Tx } from './constructors.ts'
 
-import type { Common } from '@ethereumjs/common'
-import type { Address } from '@ethereumjs/util'
+import type { Common } from '@tvmjs/common'
+import type { Address } from '@tvmjs/util'
 import type {
   AccessListBytes,
   TxData as AllTypesTxData,
