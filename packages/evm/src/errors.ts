@@ -31,6 +31,8 @@ const EVMErrorMessage = {
   INVALID_COMMITMENT: 'kzg commitment does not match versioned hash',
   INVALID_INPUTS: 'kzg inputs invalid',
   INVALID_PROOF: 'kzg proof invalid',
+  CAN_NOT_TRANSFER_TRX_YOURSELF: 'transfer trx failed: Cannot transfer TRX to yourself.',
+  CAN_NOT_TRANSFER_ASSET_YOURSELF: 'transfer trc10 failed: Cannot transfer asset to yourself.',
 } as const
 
 export class EVMError {

@@ -97,8 +97,21 @@ export const paramsEVM: ParamsDict = {
     invalidGas: 0, // Base fee of the INVALID opcode
     selfdestructGas: 0, // Base fee of the SELFDESTRUCT opcode
     prevrandaoGas: 0, // TODO: these below 0-gas additions might also point to non-clean implementations in the code base
-    // evm
-    stackLimit: 1024, // Maximum size of VM stack allowed
+
+    // tvm
+    stackLimit: 64, // Maximum size of VM stack allowed
+
+    // TRON
+    delegatecallGas: 40, // Base fee of the DELEGATECALL opcode
+    staticcallGas: 40, // Base fee of the STATICCALL opcode
+    extcodehashGas: 400, // Base fee of the EXTCODEHASH opcode
+    calltokenGas: 40, // Base fee of the CALLTOKEN opcode
+    tokenbalanceGas: 20, // Base fee of the TOKENBALANCE opcode
+    calltokenvalueGas: 0, // Base fee of the CALLTOKENVALUE opcode
+    calltokenidGas: 0, // Base fee of the CALLTOKENID opcode
+    iscontractGas: 20, // Base fee of the ISCONTRACT opcode
+    batchvalidatesignGas: 1500, // Gas cost per BATCHVALIDATESIGN opcode
+    validatemultisignGas: 1500, // Gas cost per VALIDATEMULTISIGN opcode
   },
   /**
 .  * Homestead HF Meta EIP

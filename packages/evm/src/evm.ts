@@ -410,6 +410,7 @@ export class EVM implements EVMInterface {
     if (!message.delegatecall) {
       try {
         await this._reduceSenderBalance(account, message)
+        await this._reduceSenderTokenBalance(account, message)
       } catch (e) {
         errorMessage = e
       }
@@ -442,6 +443,7 @@ export class EVM implements EVMInterface {
     if (!message.delegatecall) {
       try {
         await this._addToBalance(toAccount, message)
+        await this._addToTokenBalance(toAccount, message)
       } catch (e: any) {
         errorMessage = e
       }
@@ -536,6 +538,7 @@ export class EVM implements EVMInterface {
     }
     // Reduce tx value from sender
     await this._reduceSenderBalance(account, message)
+    await this._reduceSenderTokenBalance(account, message)
 
     if (this.common.isActivatedEIP(3860)) {
       if (
@@ -634,6 +637,7 @@ export class EVM implements EVMInterface {
     let errorMessage
     try {
       await this._addToBalance(toAccount, message as MessageWithTo)
+      await this._addToTokenBalance(toAccount, message as MessageWithTo)
     } catch (e: any) {
       errorMessage = e
     }
@@ -870,6 +874,8 @@ export class EVM implements EVMInterface {
       caller: message.caller ?? createZeroAddress(),
       callData: message.data ?? Uint8Array.from([0]),
       callValue: message.value ?? BIGINT_0,
+      callTokenId: message.tokenId ?? BIGINT_0,
+      callTokenValue: message.tokenValue ?? BIGINT_0,
       code: message.code as Uint8Array,
       isStatic: message.isStatic ?? false,
       isCreate: message.isCreate ?? false,
@@ -1206,6 +1212,26 @@ export class EVM implements EVMInterface {
     return result
   }
 
+  _getTokenBalance(account: Account, tokenId: bigint): bigint {
+    if (account.asset) {
+      return account.asset[Number(tokenId)] || BIGINT_0
+    }
+
+    return BIGINT_0
+  }
+
+  protected async _reduceSenderTokenBalance(account: Account, message: Message): Promise<void> {
+    const newBalance = this._getTokenBalance(account, message.tokenId) - message.tokenValue
+    if (account.asset && message.tokenId !== BIGINT_0) {
+      account.asset[Number(message.tokenId)] = newBalance
+    }
+    const result = this.journal.putAccount(message.caller, account)
+    debug(
+      `Reduced sender (${message.caller.toString()}) tokenId (-> ${message.tokenId.toString()}) tokenValue (-> ${newBalance.toString()})`,
+    )
+    return result
+  }
+
   protected async _addToBalance(toAccount: Account, message: MessageWithTo): Promise<void> {
     const newBalance = toAccount.balance + message.value
     if (newBalance > MAX_INTEGER) {
@@ -1217,6 +1243,22 @@ export class EVM implements EVMInterface {
     if (this.DEBUG) {
       debug(`Added toAccount (${message.to}) balance (-> ${toAccount.balance})`)
     }
+  }
+
+  protected async _addToTokenBalance(toAccount: Account, message: MessageWithTo): Promise<void> {
+    const newBalance = this._getTokenBalance(toAccount, message.tokenId) + message.tokenValue
+    if (newBalance > MAX_INTEGER) {
+      throw new EVMError(EVMError.errorMessages.VALUE_OVERFLOW)
+    }
+    if (toAccount.asset && message.tokenId !== BIGINT_0) {
+      toAccount.asset[Number(message.tokenId)] = newBalance
+    }
+    // putAccount as the nonce may have changed for contract creation
+    const result = this.journal.putAccount(message.to, toAccount)
+    debug(
+      `Added toAccount (${message.to.toString()}) tokenId (-> ${message.tokenId.toString()}) tokenValue (-> ${newBalance.toString()})`,
+    )
+    return result
   }
 
   /**

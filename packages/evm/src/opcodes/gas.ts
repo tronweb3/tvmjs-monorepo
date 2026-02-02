@@ -1081,6 +1081,73 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
         return gas
       },
     ],
+    // TRON - opcode
+    // 0xd0: CALLTOKEN
+    [
+      0xd0,
+      async function (runState, gas, common): Promise<bigint> {
+        const [currentGasLimit, toAddr, value, _tokenId, inOffset, inLength, outOffset, outLength] =
+          runState.stack.peek(8)
+        const toAddress = createAddressFromStackBigInt(toAddr)
+
+        if (runState.interpreter.isStatic() && value !== BIGINT_0) {
+          trap(EVMError.errorMessages.STATIC_STATE_CHANGE)
+        }
+        gas += subMemUsage(runState, inOffset, inLength, common)
+        gas += subMemUsage(runState, outOffset, outLength, common)
+        gas += accessAddressEIP2929(runState, toAddress.bytes, common)
+
+        if (value !== BIGINT_0) {
+          gas += common.param('callValueTransferGas')
+        }
+
+        const account = await runState.stateManager.getAccount(toAddress)
+        if (common.gteHardfork('spuriousDragon')) {
+          // We are at or after Spurious Dragon
+          // Call new account gas: account is DEAD and we transfer nonzero value
+          if ((account === undefined || account.isEmpty()) && value !== BIGINT_0) {
+            gas += common.param('callNewAccountGas')
+          }
+        } else if (account === undefined || account.isEmpty()) {
+          // We are before Spurious Dragon and the account does not exist.
+          // Call new account gas: account does not exist (it is not in the state trie, not even as an "empty" account)
+          gas += common.param('callNewAccountGas')
+        }
+
+        const gasLimit = maxCallGas(
+          currentGasLimit,
+          runState.interpreter.getGasLeft() - gas,
+          runState,
+          common,
+        )
+        // note that TangerineWhistle or later this cannot happen (it could have ran out of gas prior to getting here though)
+        if (gasLimit > runState.interpreter.getGasLeft()) {
+          trap(EVMError.errorMessages.OUT_OF_GAS)
+        }
+        runState.messageGasLimit = gasLimit
+
+        return gas
+      },
+    ],
+    // 0xd1: TOKENBALANCE
+    [
+      0xd1,
+      async function (runState, gas, common): Promise<bigint> {
+        const [_tokenIdBN, addressBN] = runState.stack.peek(2)
+        const address = createAddressFromStackBigInt(addressBN)
+        gas += accessAddressEIP2929(runState, address.bytes, common)
+        return gas
+      },
+    ],
+    [
+      0xd4,
+      async function (runState, gas, common) {
+        const addressBigInt = runState.stack.peek()[0]
+        const address = createAddressFromStackBigInt(addressBigInt)
+        gas += accessAddressEIP2929(runState, address.bytes, common)
+        return gas
+      },
+    ],
   ])
 
 // Set the range [0xa0, 0xa4] to the LOG handler

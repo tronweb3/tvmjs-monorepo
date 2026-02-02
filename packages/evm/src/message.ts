@@ -7,6 +7,8 @@ import type { EOFEnv } from './types.ts'
 
 const defaults = {
   value: BIGINT_0,
+  tokenId: BIGINT_0,
+  tokenValue: BIGINT_0,
   caller: createZeroAddress(),
   data: new Uint8Array(0),
   depth: 0,
@@ -19,6 +21,8 @@ const defaults = {
 interface MessageOpts {
   to?: Address
   value?: bigint
+  tokenId?: bigint
+  tokenValue?: bigint
   caller?: Address
   gasLimit: bigint
   data?: Uint8Array
@@ -46,6 +50,8 @@ interface MessageOpts {
 export class Message {
   to?: Address
   value: bigint
+  tokenId: bigint
+  tokenValue: bigint
   caller: Address
   gasLimit: bigint
   data: Uint8Array
@@ -78,6 +84,8 @@ export class Message {
   constructor(opts: MessageOpts) {
     this.to = opts.to
     this.value = opts.value ?? defaults.value
+    this.tokenId = opts.tokenId ?? defaults.tokenId
+    this.tokenValue = opts.tokenValue ?? defaults.tokenValue
     this.caller = opts.caller ?? defaults.caller
     this.gasLimit = opts.gasLimit
     this.data = opts.data ?? defaults.data

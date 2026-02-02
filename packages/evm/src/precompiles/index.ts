@@ -21,6 +21,8 @@ import { precompile11 } from './11-bls12-map-fp2-to-g2.ts'
 import { precompile100 } from './100-p256verify.ts'
 import { MCLBLS, NobleBLS } from './bls12_381/index.ts'
 import { NobleBN254, RustBN254 } from './bn254/index.ts'
+import { precompilefe } from './fe-validate-multi-sign.ts'
+import { precompileff } from './ff-batch-validate-sign.ts'
 
 import type { Common } from '@tvmjs/common'
 import type { PrecompileFunc, PrecompileInput } from './types.ts'
@@ -215,6 +217,24 @@ const precompileEntries: PrecompileEntry[] = [
     name: 'BLS12_MAP_FP_TO_G2 (0x11)',
   },
   {
+    address: BYTES_19 + 'fe',
+    check: {
+      type: PrecompileAvailabilityCheck.Hardfork,
+      param: Hardfork.Chainstart,
+    },
+    precompile: precompilefe,
+    name: 'VALIDATE_MULTISIGN (0xfe)',
+  },
+  {
+    address: BYTES_19 + 'ff',
+    check: {
+      type: PrecompileAvailabilityCheck.Hardfork,
+      param: Hardfork.Chainstart,
+    },
+    precompile: precompileff,
+    name: 'BATCH_VALIDATE_SIGNATURES (0xff)',
+  },
+  {
     address: '0000000000000000000000000000000000000100',
     check: {
       type: PrecompileAvailabilityCheck.EIP,
@@ -243,6 +263,8 @@ const precompiles: Precompiles = {
   [BYTES_19 + '0f']: precompile0f,
   [BYTES_19 + '10']: precompile10,
   [BYTES_19 + '11']: precompile11,
+  [BYTES_19 + 'fe']: precompilefe,
+  [BYTES_19 + 'ff']: precompileff,
   '0000000000000000000000000000000000000100': precompile100,
 }
 

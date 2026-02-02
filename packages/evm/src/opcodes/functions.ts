@@ -1695,6 +1695,85 @@ export const handlers: Map<number, OpHandler> = new Map([
       return runState.interpreter.selfDestruct(selfdestructToAddress)
     },
   ],
+  // TRON - opcode
+  // 0xd0: CALLTOKEN
+  [
+    0xd0,
+    async function (runState, common) {
+      const [_currentGasLimit, toAddr, value, tokenId, inOffset, inLength, outOffset, outLength] =
+        runState.stack.popN(8)
+      const toAddress = createAddressFromStackBigInt(toAddr)
+
+      if (runState.interpreter.isStatic() && value !== BIGINT_0) {
+        trap(EVMError.errorMessages.STATIC_STATE_CHANGE)
+      }
+
+      let data = new Uint8Array(0)
+      if (inLength !== BIGINT_0) {
+        data = runState.memory.read(Number(inOffset), Number(inLength))
+      }
+
+      let gasLimit = runState.messageGasLimit!
+      if (value !== BIGINT_0) {
+        const callStipend = common.param('callStipendGas')
+        runState.interpreter.addStipend(callStipend)
+        gasLimit += callStipend
+      }
+
+      runState.messageGasLimit = undefined
+
+      const ret = await runState.interpreter.callToken(
+        gasLimit,
+        toAddress,
+        BIGINT_0,
+        tokenId,
+        value,
+        data,
+      )
+      // Write return data to memory
+      writeCallOutput(runState, outOffset, outLength)
+      runState.stack.push(ret)
+    },
+  ],
+  // 0xd1: TOKENBALANCE
+  [
+    0xd1,
+    async function (runState: RunState) {
+      const tokenIdBigInt = runState.stack.pop()
+      const addressBigInt = runState.stack.pop()
+      const address = createAddressFromStackBigInt(addressBigInt)
+      const balance = await runState.interpreter.getExternalTokenBalance(address, tokenIdBigInt)
+      runState.stack.push(balance)
+    },
+  ],
+  // 0xd2: CALLTOKENVALUE
+  [
+    0xd2,
+    function (runState: RunState) {
+      runState.stack.push(runState.interpreter.getCallTokenValue())
+    },
+  ],
+  // 0xd3: CALLTOKENID
+  [
+    0xd3,
+    function (runState: RunState) {
+      runState.stack.push(runState.interpreter.getCallTokenId())
+    },
+  ],
+  // 0xd4: ISCONTRACT
+  [
+    0xd4,
+    async function (runState: RunState) {
+      const addressBigInt = runState.stack.pop()
+      const address = createAddressFromStackBigInt(addressBigInt)
+      if (address.equals(runState.interpreter.getAddress())) {
+        runState.stack.push(BIGINT_1)
+      } else {
+        const size = await runState.interpreter.getExternalCodeSize(address)
+        runState.stack.push(BigInt(size))
+      }
+    },
+  ],
 ])
 
 // Fill in rest of PUSHn, DUPn, SWAPn, LOGn for handlers

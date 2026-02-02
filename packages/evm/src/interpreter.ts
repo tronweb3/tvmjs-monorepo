@@ -68,6 +68,8 @@ export interface Env {
   caller: Address
   callData: Uint8Array
   callValue: bigint
+  callTokenId: bigint
+  callTokenValue: bigint
   code: Uint8Array
   isStatic: boolean
   isCreate: boolean
@@ -673,6 +675,19 @@ export class Interpreter {
     return account.balance
   }
 
+  async getExternalTokenBalance(address: Address, tokenId: bigint) {
+    // shortcut if current account
+    if (address.equals(this._env.address)) {
+      return this._env.contract.getTokenBalance(tokenId)
+    }
+
+    let account = await this._stateManager.getAccount(address)
+    if (!account) {
+      account = new Account()
+    }
+    return account.getTokenBalance(tokenId)
+  }
+
   /**
    * Store 256-bit a value in memory to persistent storage.
    */
@@ -758,6 +773,14 @@ export class Interpreter {
     return this._env.callValue
   }
 
+  getCallTokenId(): bigint {
+    return this._env.callTokenId
+  }
+
+  getCallTokenValue(): bigint {
+    return this._env.callTokenValue
+  }
+
   /**
    * Returns input data in current environment. This pertains to the input
    * data passed with the message call instruction or transaction.
@@ -787,6 +810,10 @@ export class Interpreter {
    */
   getCodeSize(): bigint {
     return BigInt(this._env.code.length)
+  }
+
+  getExternalCodeSize(address: Address): Promise<number> {
+    return this._stateManager.getCodeSize(address)
   }
 
   /**
@@ -1026,6 +1053,15 @@ export class Interpreter {
     msg.selfdestruct = selfdestruct
     msg.gasRefund = this._runState.gasRefund
 
+    if (this._env.address.equals(msg.codeAddress)) {
+      if (msg.value > BIGINT_0) {
+        trap(EVMError.errorMessages.CAN_NOT_TRANSFER_TRX_YOURSELF)
+      }
+      if (msg.tokenValue > BIGINT_0) {
+        trap(EVMError.errorMessages.CAN_NOT_TRANSFER_ASSET_YOURSELF)
+      }
+    }
+
     // empty the return data Uint8Array
     this._runState.returnBytes = new Uint8Array(0)
     let createdAddresses: Set<PrefixedHexString>
@@ -1052,7 +1088,10 @@ export class Interpreter {
     }
 
     // this should always be safe
-    this.useGas(results.execResult.executionGasUsed, 'CALL, STATICCALL, DELEGATECALL, CALLCODE')
+    this.useGas(
+      results.execResult.executionGasUsed,
+      'CALL, STATICCALL, DELEGATECALL, CALLCODE, CALLTOKEN',
+    )
 
     // Set return value
     if (
@@ -1273,6 +1312,32 @@ export class Interpreter {
     }
 
     trap(EVMError.errorMessages.STOP)
+  }
+
+  /**
+   * Sends a message with arbitrary data to a given address path.
+   */
+  async callToken(
+    gasLimit: bigint,
+    address: Address,
+    value: bigint,
+    tokenId: bigint,
+    tokenValue: bigint,
+    data: Uint8Array,
+  ): Promise<bigint> {
+    const msg = new Message({
+      caller: this._env.address,
+      gasLimit,
+      to: address,
+      value,
+      tokenId,
+      tokenValue,
+      data,
+      isStatic: this._env.isStatic,
+      depth: this._env.depth + 1,
+    })
+
+    return this._baseCall(msg)
   }
 
   /**

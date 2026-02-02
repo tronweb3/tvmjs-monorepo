@@ -222,6 +222,13 @@ const opcodes: OpcodeEntry = {
   // '0x70', range - other
   0xfe: defaultOp('INVALID'),
   0xff: asyncAndDynamicGasOp('SELFDESTRUCT'),
+
+  // TRON - Opcode
+  0xd0: asyncAndDynamicGasOp('CALLTOKEN'),
+  0xd1: asyncAndDynamicGasOp('TOKENBALANCE'),
+  0xd2: asyncOp('CALLTOKENVALUE'),
+  0xd3: asyncOp('CALLTOKENID'),
+  0xd4: asyncAndDynamicGasOp('ISCONTRACT'),
 }
 
 // Array of hard forks in order. These changes are repeatedly applied to `opcodes` until the hard fork is in the future based upon the common
