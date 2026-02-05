@@ -15,7 +15,6 @@ export default [
     },
   },
   {
-    ignores: ['./test/api/tvm/soljson.js'],
     rules: {
       '@typescript-eslint/no-use-before-define': 'off',
       'no-invalid-this': 'off',

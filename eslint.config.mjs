@@ -29,6 +29,7 @@ export default [
       '**/lint-staged.config.js',
       '**/tsconfig.lint.json',
       '**/package.json',
+      '**/soljson.js'
     ],
   },
   { files: ['**/*.{js,mjs,cjs,ts,cts,mts}'] },
