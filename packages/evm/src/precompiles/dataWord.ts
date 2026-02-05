@@ -1,3 +1,5 @@
+import { EthereumJSErrorWithoutCode } from '@tvmjs/util'
+
 export class DataWord {
   static readonly WORD_SIZE = 32
 
@@ -33,7 +35,7 @@ export class DataWord {
 
     const intValue = this.intValue()
     if (bytesOccupied > 4 || intValue < 0) {
-      throw new Error('DataWord value does not fit in a safe integer')
+      throw EthereumJSErrorWithoutCode('DataWord value does not fit in a safe integer')
     }
     return intValue
   }
