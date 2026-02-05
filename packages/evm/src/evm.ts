@@ -186,6 +186,7 @@ export class EVM implements EVMInterface {
     Hardfork.Bpo4,
     Hardfork.Bpo5,
     Hardfork.Amsterdam,
+    Hardfork.Tron,
   ]
   protected _tx?: {
     gasPrice: bigint

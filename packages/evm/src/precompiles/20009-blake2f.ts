@@ -171,7 +171,7 @@ export function F(h: Uint32Array, m: Uint32Array, t: Uint32Array, f: boolean, ro
   }
 }
 
-export function precompile09(opts: PrecompileInput): ExecResult {
+export function precompile20009(opts: PrecompileInput): ExecResult {
   const pName = getPrecompileName('09')
   const data = opts.data
   if (data.length !== 213) {

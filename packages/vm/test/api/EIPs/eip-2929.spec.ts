@@ -13,7 +13,7 @@ import type { PrefixedHexString } from '@tvmjs/util'
 describe('EIP 2929: gas cost tests', () => {
   const initialGas = BigInt(0xffffffffff)
   const address = new Address(hexToBytes('0x000000000000000000000000636F6E7472616374'))
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin, eips: [2929] })
+  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Tron, eips: [2929] })
 
   const runTest = async function (test: any) {
     let i = 0
@@ -71,7 +71,7 @@ describe('EIP 2929: gas cost tests', () => {
     const privateKey = SIGNER_A.privateKey
     const contractAddress = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
 
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin, eips: [2929] })
+    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Tron, eips: [2929] })
     const vm = await createVM({ common })
 
     await vm.stateManager.putCode(contractAddress, hexToBytes(code)) // setup the contract code

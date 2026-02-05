@@ -67,7 +67,7 @@ export class Common {
     this.events = new EventEmitter<CommonEvent>()
 
     this._chainParams = JSON.parse(JSON.stringify(opts.chain)) // copy
-    this.DEFAULT_HARDFORK = this._chainParams.defaultHardfork ?? Hardfork.Prague
+    this.DEFAULT_HARDFORK = this._chainParams.defaultHardfork ?? Hardfork.Tron
     // Assign hardfork changes in the sequence of the applied hardforks
     this.HARDFORK_CHANGES = this.hardforks().map((hf) => [
       hf.name,
@@ -579,7 +579,6 @@ export class Common {
     for (const hfChanges of this.HARDFORK_CHANGES) {
       const hf = hfChanges[1]
       if ('eips' in hf) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if ((hf['eips'] as any).includes(eip)) {
           return this.hardforkBlock(hfChanges[0])
         }
@@ -597,7 +596,6 @@ export class Common {
     for (const hfChanges of this.HARDFORK_CHANGES) {
       const hf = hfChanges[1]
       if ('eips' in hf) {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if ((hf['eips'] as any).includes(eip)) {
           return this.hardforkTimestamp(hfChanges[0])
         }

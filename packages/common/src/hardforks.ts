@@ -202,4 +202,93 @@ export const hardforksDict: HardforksDict = {
   amsterdam: {
     eips: [7928],
   },
+  tron: {
+    eips: [],
+  },
+}
+
+export const tronHardforksDict: HardforksDict = {
+  /**
+   * Description: Start of the Ethereum main chain
+   * URL        : -
+   * Status     : Final
+   */
+  chainstart: {
+    eips: [1],
+  },
+  /**
+   * Description: Homestead hardfork with protocol and network changes
+   * URL        : https://eips.ethereum.org/EIPS/eip-606
+   * Status     : Final
+   */
+  homestead: {
+    eips: [606],
+  },
+  /**
+   * Description: Hardfork with gas cost changes for IO-heavy operations
+   * URL        : https://eips.ethereum.org/EIPS/eip-608
+   * Status     : Final
+   */
+  tangerineWhistle: {
+    eips: [608],
+  },
+  /**
+   * Description: HF with EIPs for simple replay attack protection, EXP cost increase, state trie clearing, contract code size limit
+   * URL        : https://eips.ethereum.org/EIPS/eip-607
+   * Status     : Final
+   */
+  spuriousDragon: {
+    eips: [607],
+  },
+  /**
+   * Description: Hardfork with new precompiles, instructions and other protocol changes
+   * URL        : https://eips.ethereum.org/EIPS/eip-609
+   * Status     : Final
+   */
+  byzantium: {
+    eips: [609],
+  },
+  /**
+   * Description: Postponed hardfork including EIP-1283 (SSTORE gas metering changes)
+   * URL        : https://eips.ethereum.org/EIPS/eip-1013
+   * Status     : Final
+   */
+  constantinople: {
+    eips: [1013],
+  },
+  /**
+   * Description: Aka constantinopleFix, removes EIP-1283, activate together with or after constantinople
+   * URL        : https://eips.ethereum.org/EIPS/eip-1716
+   * Status     : Final
+   */
+  petersburg: {
+    eips: [1716],
+  },
+  /**
+   * Description: HF targeted for December 2019 following the Constantinople/Petersburg HF
+   * URL        : https://eips.ethereum.org/EIPS/eip-1679
+   * Status     : Final
+   */
+  istanbul: {
+    eips: [1679],
+  },
+  /**
+   * Description: HF targeted for July 2021 following the Berlin fork
+   * URL        : https://github.com/ethereum/eth1.0-specs/blob/master/network-upgrades/mainnet-upgrades/london.md
+   * Status     : Final
+   */
+  london: {
+    eips: [1559, 3198, 3529, 3541],
+  },
+  /**
+   * Description: Next feature hardfork after the merge hardfork having withdrawals, warm coinbase, push0, limit/meter initcode
+   * URL        : https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/shanghai.md
+   * Status     : Final
+   */
+  shanghai: {
+    eips: [3651, 3855, 3860, 4895],
+  },
+  tron: {
+    eips: [],
+  },
 }

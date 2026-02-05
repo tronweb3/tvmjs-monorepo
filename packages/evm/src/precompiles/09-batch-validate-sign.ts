@@ -4,7 +4,7 @@ import { DataWord } from './dataWord.ts'
 import type { PrecompileInput } from './types.ts'
 import { extractBytes32Array, extractBytesArray, recoverAddrBySign } from './util.ts'
 
-export function precompileff(opts: PrecompileInput): ExecResult {
+export function precompile09(opts: PrecompileInput): ExecResult {
   const data = opts.data
 
   const ENGERYPERSIGN = opts.common.param('batchvalidatesignGas')
@@ -23,6 +23,9 @@ export function precompileff(opts: PrecompileInput): ExecResult {
   const signatures = extractBytesArray(words, words[1].intValueSafe() / DataWord.WORD_SIZE, data)
   const addresses = extractBytes32Array(words, words[2].intValueSafe() / DataWord.WORD_SIZE)
 
+  console.log('precompile09 hash:', hash)
+  console.log('precompile09 signatures:', signatures)
+  console.log('precompile09 addresses:', addresses)
   // check length
   const length = signatures.length
   const returnValue = new Uint8Array(DataWord.WORD_SIZE)
@@ -36,6 +39,7 @@ export function precompileff(opts: PrecompileInput): ExecResult {
   for (let i = 0; i < length; ++i) {
     const address = addresses[i]
     const recoveredAddr = recoverAddrBySign(signatures[i], hash)
+    console.log(`precompile09 address[${i}]:`, address, signatures[i])
     if (DataWord.equalAddressByteArray(address, recoveredAddr)) {
       returnValue[i] = 1
     }

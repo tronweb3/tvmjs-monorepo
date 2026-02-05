@@ -1,7 +1,8 @@
 import { Hardfork } from '@tvmjs/common'
 import { type Address, bytesToUnprefixedHex } from '@tvmjs/util'
 
-import { precompile0a } from './0a-kzg-point-evaluation.ts'
+import { precompile0a } from './0a-validate-multi-sign.ts'
+// import { precompile0a } from './0a-kzg-point-evaluation.ts'
 import { precompile0b } from './0b-bls12-g1add.ts'
 import { precompile0c } from './0c-bls12-g1msm.ts'
 import { precompile0d } from './0d-bls12-g2add.ts'
@@ -15,14 +16,17 @@ import { precompile05 } from './05-modexp.ts'
 import { precompile06 } from './06-bn254-add.ts'
 import { precompile07 } from './07-bn254-mul.ts'
 import { precompile08 } from './08-bn254-pairing.ts'
-import { precompile09 } from './09-blake2f.ts'
+import { precompile09 } from './09-batch-validate-sign.ts'
 import { precompile10 } from './10-bls12-map-fp-to-g1.ts'
 import { precompile11 } from './11-bls12-map-fp2-to-g2.ts'
 import { precompile100 } from './100-p256verify.ts'
+import { precompile20003 } from './20003-ripemd160.ts'
+import { precompile20009 } from './20009-blake2f.ts'
 import { MCLBLS, NobleBLS } from './bls12_381/index.ts'
 import { NobleBN254, RustBN254 } from './bn254/index.ts'
-import { precompilefe } from './fe-validate-multi-sign.ts'
-import { precompileff } from './ff-batch-validate-sign.ts'
+
+// @TODO TRON  support more precompiles
+// 0a-kzg-point-evaluation is not supported yet
 
 import type { Common } from '@tvmjs/common'
 import type { PrecompileFunc, PrecompileInput } from './types.ts'
@@ -136,15 +140,6 @@ const precompileEntries: PrecompileEntry[] = [
     name: 'BN254_PAIRING (0x08)',
   },
   {
-    address: BYTES_19 + '09',
-    check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Istanbul,
-    },
-    precompile: precompile09,
-    name: 'BLAKE2f (0x09)',
-  },
-  {
     address: BYTES_19 + '0a',
     check: {
       type: PrecompileAvailabilityCheck.EIP,
@@ -217,22 +212,22 @@ const precompileEntries: PrecompileEntry[] = [
     name: 'BLS12_MAP_FP_TO_G2 (0x11)',
   },
   {
-    address: BYTES_19 + 'fe',
+    address: BYTES_19 + '09',
     check: {
       type: PrecompileAvailabilityCheck.Hardfork,
       param: Hardfork.Chainstart,
     },
-    precompile: precompilefe,
-    name: 'VALIDATE_MULTISIGN (0xfe)',
+    precompile: precompile09,
+    name: 'BATCH_VALIDATE_SIGNATURES (0xff)',
   },
   {
-    address: BYTES_19 + 'ff',
+    address: BYTES_19 + '0a',
     check: {
       type: PrecompileAvailabilityCheck.Hardfork,
       param: Hardfork.Chainstart,
     },
-    precompile: precompileff,
-    name: 'BATCH_VALIDATE_SIGNATURES (0xff)',
+    precompile: precompile0a,
+    name: 'VALIDATE_MULTISIGN (0xfe)',
   },
   {
     address: '0000000000000000000000000000000000000100',
@@ -242,6 +237,24 @@ const precompileEntries: PrecompileEntry[] = [
     },
     precompile: precompile100,
     name: 'P256VERIFY (0x100)',
+  },
+  {
+    address: '0000000000000000000000000000000000020003',
+    check: {
+      type: PrecompileAvailabilityCheck.Hardfork,
+      param: Hardfork.Chainstart,
+    },
+    precompile: precompile20003,
+    name: 'RIPEMD160 (0x20003)',
+  },
+  {
+    address: '0000000000000000000000000000000000020009',
+    check: {
+      type: PrecompileAvailabilityCheck.Hardfork,
+      param: Hardfork.Istanbul,
+    },
+    precompile: precompile20009,
+    name: 'BLAKE2f (0x20009)',
   },
 ]
 
@@ -263,9 +276,9 @@ const precompiles: Precompiles = {
   [BYTES_19 + '0f']: precompile0f,
   [BYTES_19 + '10']: precompile10,
   [BYTES_19 + '11']: precompile11,
-  [BYTES_19 + 'fe']: precompilefe,
-  [BYTES_19 + 'ff']: precompileff,
   '0000000000000000000000000000000000000100': precompile100,
+  '0000000000000000000000000000000000020003': precompile03, // TRON RIPEMD160 precompile address
+  '0000000000000000000000000000000000020009': precompile20009,
 }
 
 type DeletePrecompile = {

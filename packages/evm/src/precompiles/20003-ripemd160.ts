@@ -1,5 +1,5 @@
-import { sha256 } from '@noble/hashes/sha2.js'
-import { bytesToHex } from '@tvmjs/util'
+import { ripemd160 } from '@noble/hashes/legacy.js'
+import { bytesToHex, setLengthLeft } from '@tvmjs/util'
 
 import { OOGResult } from '../evm.ts'
 
@@ -9,9 +9,7 @@ import { gasLimitCheck } from './util.ts'
 import type { ExecResult } from '../types.ts'
 import type { PrecompileInput } from './types.ts'
 
-// TRON RIPEMD160 precompile at address 0x03
-
-export function precompile03(opts: PrecompileInput): ExecResult {
+export function precompile20003(opts: PrecompileInput): ExecResult {
   const pName = getPrecompileName('03')
   const data = opts.data
 
@@ -22,13 +20,13 @@ export function precompile03(opts: PrecompileInput): ExecResult {
     return OOGResult(opts.gasLimit)
   }
 
-  const hash = sha256(sha256(data))
+  const hash = setLengthLeft(ripemd160(data), 32)
   if (opts._debug !== undefined) {
     opts._debug(`${pName} return hash=${bytesToHex(hash)}`)
   }
 
   return {
     executionGasUsed: gasUsed,
-    returnValue: hash,
+    returnValue: setLengthLeft(ripemd160(data), 32),
   }
 }

@@ -8,7 +8,7 @@ import { DataWord } from './dataWord.ts'
 import type { PrecompileInput } from './types.ts'
 import { convertToTronAddress, extractBytesArray, recoverAddrBySign } from './util.ts'
 
-export async function precompilefe(opts: PrecompileInput): Promise<ExecResult> {
+export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
   const rawData = opts.data
   const vm = opts._EVM
 
