@@ -635,7 +635,9 @@ export const generateAddress2 = function (
     throw EthereumJSErrorWithoutCode('Expected salt to be of length 32')
   }
 
-  const address = keccak_256(concatBytes(hexToBytes('0xff'), from, salt, keccak_256(initCode)))
+  // const address = keccak_256(concatBytes(hexToBytes('0xff'), from, salt, keccak_256(initCode)))
+  // TRON create2 prefix is 0x41
+  const address = keccak_256(concatBytes(hexToBytes('0x41'), from, salt, keccak_256(initCode)))
 
   return address.subarray(-20)
 }
