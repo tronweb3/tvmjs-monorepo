@@ -902,7 +902,9 @@ export class Interpreter {
    * Returns the block's difficulty.
    */
   getBlockDifficulty(): bigint {
-    return this._env.block.header.difficulty
+    // return this._env.block.header.difficulty
+    // for TRON
+    return 0n
   }
 
   /**
