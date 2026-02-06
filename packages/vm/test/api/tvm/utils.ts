@@ -58,7 +58,7 @@ export async function deployContract(vm: VM, contract: ContractData, opt?: any) 
     data: bytecode,
     nonce: await getAccountNonce(vm, caller),
     tokenId: tokenId ?? BIGINT_0,
-    tokenValue: tokenId ?? BIGINT_0,
+    tokenValue: tokenValue ?? BIGINT_0,
   }
 
   let tx
