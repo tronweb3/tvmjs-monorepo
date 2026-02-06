@@ -214,6 +214,8 @@ export interface TransactionInterface<T extends TransactionType = TransactionTyp
   readonly gasLimit: bigint
   readonly to?: Address
   readonly value: bigint
+  readonly tokenId: bigint
+  readonly tokenValue: bigint
   readonly data: Uint8Array
   readonly v?: bigint
   readonly r?: bigint
@@ -375,6 +377,9 @@ export type LegacyTxData = {
    * The amount of Ether sent.
    */
   value?: BigIntLike
+
+  tokenId?: BigIntLike
+  tokenValue?: BigIntLike
 
   /**
    * This will contain the data of the message or the init of a contract.

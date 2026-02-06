@@ -88,6 +88,8 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
   public readonly nonce!: bigint
   public readonly gasLimit!: bigint
   public readonly value!: bigint
+  public readonly tokenId!: bigint
+  public readonly tokenValue!: bigint
   public readonly data!: Uint8Array
   public readonly to?: Address
 
@@ -382,6 +384,8 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
         gasLimit: this.gasLimit,
         to: this.to,
         value: this.value,
+        tokenId: this.tokenId,
+        tokenValue: this.tokenValue,
         data: this.data,
         v,
         r: bytesToBigInt(r),

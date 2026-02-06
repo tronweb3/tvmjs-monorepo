@@ -4,7 +4,7 @@ import { join } from 'path'
 import type { Block } from '@tvmjs/block'
 import { createBlock } from '@tvmjs/block'
 import { createTx } from '@tvmjs/tx'
-import { type Address, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
+import { type Address, BIGINT_0, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 // @ts-expect-error missing types
 import wrapper from 'solc/wrapper'
 import { utils } from 'tronweb'
@@ -57,8 +57,8 @@ export async function deployContract(vm: VM, contract: ContractData, opt?: any) 
     gasPrice: 100n,
     data: bytecode,
     nonce: await getAccountNonce(vm, caller),
-    tokenId,
-    tokenValue,
+    tokenId: tokenId ?? BIGINT_0,
+    tokenValue: tokenId ?? BIGINT_0,
   }
 
   let tx

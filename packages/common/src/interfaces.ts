@@ -138,6 +138,9 @@ export interface StateManagerInterface {
   putStorage(address: Address, key: Uint8Array, value: Uint8Array): Promise<void>
   clearStorage(address: Address): Promise<void>
 
+  // Token methods
+  tokenIdExists(tokenId: number): Promise<boolean>
+
   /*
    * Checkpointing Functionality
    */

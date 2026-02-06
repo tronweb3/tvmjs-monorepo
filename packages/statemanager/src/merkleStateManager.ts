@@ -4,6 +4,7 @@ import { MerklePatriciaTrie } from '@tvmjs/mpt'
 import { RLP } from '@tvmjs/rlp'
 import {
   Account,
+  BIGINT_0,
   EthereumJSErrorWithoutCode,
   bytesToUnprefixedHex,
   concatBytes,
@@ -65,6 +66,11 @@ export class MerkleStateManager implements StateManagerInterface {
   protected readonly _prefixCodeHashes: boolean
   protected readonly _prefixStorageTrieKeys: boolean
 
+  // _tokenIds only update once
+  protected _tokenIds: Map<number, bigint>
+  protected _tokenIdsCache: Map<number, bigint>
+  protected _tokenIdsCacheStack: Map<number, bigint>[]
+
   public readonly common: Common
 
   protected _checkpointCount: number
@@ -107,6 +113,10 @@ export class MerkleStateManager implements StateManagerInterface {
     this._prefixStorageTrieKeys = opts.prefixStorageTrieKeys ?? false
 
     this._caches = opts.caches
+
+    this._tokenIds = new Map()
+    this._tokenIdsCache = new Map()
+    this._tokenIdsCacheStack = []
   }
 
   /**
@@ -143,6 +153,16 @@ export class MerkleStateManager implements StateManagerInterface {
         }`,
       )
     }
+    if (account !== undefined) {
+      for (const _ in account.asset) {
+        const tokenId = Number(_)
+        const value = account.asset[tokenId]
+        if (!this._tokenIds.has(tokenId)) {
+          const total = this._tokenIdsCache.get(tokenId) ?? BIGINT_0
+          this._tokenIdsCache.set(tokenId, value + total)
+        }
+      }
+    }
     if (this._caches?.account === undefined) {
       const trie = this._trie
       if (account !== undefined) {
@@ -177,6 +197,22 @@ export class MerkleStateManager implements StateManagerInterface {
   async deleteAccount(address: Address) {
     if (this.DEBUG) {
       this._debug(`Delete account ${address}`)
+    }
+    const account = await this.getAccount(address)
+    if (account) {
+      for (const _ in account.asset) {
+        const tokenId = Number(_)
+        const value = account.asset[tokenId]
+        if (this._tokenIdsCache.has(tokenId)) {
+          const total = this._tokenIdsCache.get(tokenId) ?? BIGINT_0
+          const cur = total - value
+          if (cur > 0) {
+            this._tokenIdsCache.set(tokenId, cur)
+          } else {
+            this._tokenIdsCache.delete(tokenId)
+          }
+        }
+      }
     }
 
     this._caches?.deleteAccount(address)
@@ -439,6 +475,7 @@ export class MerkleStateManager implements StateManagerInterface {
   async checkpoint(): Promise<void> {
     this._trie.checkpoint()
     this._caches?.checkpoint()
+    this._tokenIdsCacheStack.push(new Map(this._tokenIdsCache))
     this._checkpointCount++
   }
 
@@ -456,6 +493,10 @@ export class MerkleStateManager implements StateManagerInterface {
       await this.flush()
       this.originalStorageCache.clear()
     }
+
+    this._tokenIdsCacheStack.pop()
+    this._tokenIdsCache.forEach((v, k) => this._tokenIds.set(k, v))
+    this._tokenIdsCache = new Map()
 
     if (this.DEBUG) {
       this._debug(`state checkpoint committed`)
@@ -479,6 +520,8 @@ export class MerkleStateManager implements StateManagerInterface {
       await this.flush()
       this.originalStorageCache.clear()
     }
+
+    this._tokenIdsCache = this._tokenIdsCacheStack.pop() ?? new Map()
   }
 
   /**
@@ -729,5 +772,17 @@ export class MerkleStateManager implements StateManagerInterface {
    */
   getAppliedKey(address: Uint8Array): Uint8Array {
     return this._trie['appliedKey'](address)
+  }
+
+  /**
+   * Checks if tokenid is exists
+   * @param tokenId - tokenId to check
+   */
+  async tokenIdExists(tokenId: number): Promise<boolean> {
+    if (this._tokenIds.has(tokenId)) return true
+
+    if (this._tokenIdsCache.has(tokenId)) return true
+
+    return false
   }
 }

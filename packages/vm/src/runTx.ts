@@ -10,6 +10,7 @@ import {
   EthereumJSErrorWithoutCode,
   KECCAK256_NULL,
   MAX_UINT64,
+  MIN_TOKEN_ID,
   SECP256K1_ORDER_DIV_2,
   bigIntMax,
   bytesToBigInt,
@@ -410,6 +411,52 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
         tx,
       )
       throw EthereumJSErrorWithoutCode(msg)
+    }
+  }
+
+  if (!opts.skipBalance) {
+    const { to, value, tokenId, tokenValue } = tx
+    if (value > BIGINT_0) {
+      if (to?.equals(caller)) {
+        throw EthereumJSErrorWithoutCode('Cannot transfer TRX to yourself.')
+      }
+    }
+
+    if (tokenValue > BIGINT_0) {
+      if (to?.equals(caller)) {
+        throw EthereumJSErrorWithoutCode('Cannot transfer asset to yourself.')
+      }
+    }
+
+    if (tokenId !== BIGINT_0 && tokenId <= MIN_TOKEN_ID) {
+      throw EthereumJSErrorWithoutCode(`tokenId must be > ${MIN_TOKEN_ID}`)
+    }
+
+    if (tokenId === BIGINT_0 && tokenValue > BIGINT_0) {
+      throw EthereumJSErrorWithoutCode(
+        `invalid arguments with tokenValue = ${tokenValue.toString()}, tokenId = ${tokenId.toString()}`,
+      )
+    }
+
+    if (tokenId !== BIGINT_0 && tokenValue > BIGINT_0) {
+      const tokenExists = state.tokenIdExists(Number(tokenId))
+      if (!tokenExists) {
+        throw EthereumJSErrorWithoutCode('No asset !')
+      }
+
+      if (fromAccount.asset && Object.keys(fromAccount.asset).length !== 0) {
+        if (fromAccount.asset[Number(tokenId)] === undefined) {
+          throw EthereumJSErrorWithoutCode('assetBalance must greater than 0.')
+        }
+        if (fromAccount.asset[Number(tokenId)] === BIGINT_0) {
+          throw EthereumJSErrorWithoutCode('assetBalance must greater than 0.')
+        }
+        if (fromAccount.asset[Number(tokenId)] < tokenValue) {
+          throw EthereumJSErrorWithoutCode('assetBalance is not sufficient.')
+        }
+      } else {
+        throw EthereumJSErrorWithoutCode('Owner no asset!')
+      }
     }
   }
 

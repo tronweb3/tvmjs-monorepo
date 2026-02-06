@@ -787,4 +787,8 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
     await this.commit()
     await this.flush()
   }
+  // TODO TRON implement token in rpc state manager
+  async tokenIdExists(_tokenId: number): Promise<boolean> {
+    throw EthereumJSErrorWithoutCode('Method not implemented.')
+  }
 }

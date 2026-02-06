@@ -68,6 +68,8 @@ export class Blob4844Tx implements TransactionInterface<typeof TransactionType.B
   public readonly nonce!: bigint
   public readonly gasLimit!: bigint
   public readonly value!: bigint
+  public readonly tokenId!: bigint
+  public readonly tokenValue!: bigint
   public readonly data!: Uint8Array
   public readonly to?: Address
   public readonly accessList: AccessListBytes

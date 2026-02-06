@@ -84,6 +84,8 @@ export const MAX_BLOCK_SIZE = 10_485_760 // 10 MiB
 export const SAFETY_MARGIN = 2_097_152 // 2 MiB
 export const MAX_RLP_BLOCK_SIZE = MAX_BLOCK_SIZE - SAFETY_MARGIN // 8 MiB
 
+export const MIN_TOKEN_ID = 1000000n
+
 /**
  * BigInt constants
  */

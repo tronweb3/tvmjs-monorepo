@@ -147,7 +147,7 @@ export function sharedConstructor(
 
   validateNotArray(txData) // is this necessary?
 
-  const { nonce, gasLimit, to, value, data, v, r, s } = txData
+  const { nonce, gasLimit, to, value, tokenId, tokenValue, data, v, r, s } = txData
 
   tx.txOptions = opts // TODO: freeze?
 
@@ -163,6 +163,8 @@ export function sharedConstructor(
   tx.gasLimit = bytesToBigInt(toBytes(gasLimit))
   tx.to = toB.length > 0 ? new Address(toB) : undefined
   tx.value = bytesToBigInt(toBytes(value))
+  tx.tokenId = bytesToBigInt(toBytes(tokenId))
+  tx.tokenValue = bytesToBigInt(toBytes(tokenValue))
   tx.data = toBytes(data === '' ? '0x' : data)
 
   // Set signature values (if the tx is signed)
