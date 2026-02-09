@@ -5,12 +5,11 @@ import {
   createAddressFromPrivateKey,
   createAddressFromString,
   hexToBytes,
-  toBytes,
 } from '@tvmjs/util'
 import { utils } from 'tronweb'
 import { assert, describe, it } from 'vitest'
 import { createVM } from '../../../src/constructors.ts'
-import { PK, compileSol, deployContract, getAccount, trigger, triggerConstant } from './utils.ts'
+import { PK, deployContract, getAccount, trigger } from './utils.ts'
 
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import type { Address } from '@tvmjs/util'
