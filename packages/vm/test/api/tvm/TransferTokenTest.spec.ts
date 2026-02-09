@@ -108,7 +108,6 @@ describe('TransferTokenTest', async () => {
       const parameter = encodeParamsV2ByABI(abiItem, [toTvmAddress.toString(), tokenId, 9n])
       return `0x${selector}${parameter.replace(/^0x/, '')}`
     })()
-    // setBalance(vm, toTvmAddress, 100n)
     await trigger(vm, {
       contractAddress,
       input,
@@ -122,13 +121,6 @@ describe('TransferTokenTest', async () => {
     assert.equal(contractAccount2?.asset![Number(tokenId)], 100n + sendTokenValue - 9n)
 
     const toTvmAccount = await getAccount(vm, toTvmAddress)
-    console.log(
-      'actual account',
-      toTvmAddress.toString(),
-      bytesToHex(keccak_256(toTvmAddress.bytes)),
-      tokenId,
-      toTvmAccount?.asset,
-    )
     assert.equal(toTvmAccount?.asset![Number(tokenId)], 9n)
   })
 })

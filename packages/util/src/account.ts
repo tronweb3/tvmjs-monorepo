@@ -151,7 +151,7 @@ export class Account {
   _codeSize: number | null = null
   _version: number | null = null
   _asset: {
-    [key: number]: bigint
+    [key: number | string]: bigint
   } | null = null
   _activePermissions: Permission[] | null = null
 
@@ -407,7 +407,11 @@ export class Account {
     if (
       (this._balance !== null && this.balance !== BIGINT_0) ||
       (this._nonce === null && this.nonce !== BIGINT_0) ||
-      (this._codeHash !== null && !equalsBytes(this.codeHash, KECCAK256_NULL))
+      (this._codeHash !== null && !equalsBytes(this.codeHash, KECCAK256_NULL)) ||
+      (this._asset !== null &&
+        Object.keys(this.asset || {}).some(
+          (tokenId: string) => this._asset?.[tokenId] !== BIGINT_0,
+        ))
     ) {
       return false
     }
@@ -415,7 +419,8 @@ export class Account {
     return (
       this.balance === BIGINT_0 &&
       this.nonce === BIGINT_0 &&
-      equalsBytes(this.codeHash, KECCAK256_NULL)
+      equalsBytes(this.codeHash, KECCAK256_NULL) &&
+      Object.keys(this.asset || {}).every((tokenId: string) => this._asset?.[tokenId] === BIGINT_0)
     )
   }
 }
