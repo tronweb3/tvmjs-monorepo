@@ -608,7 +608,7 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   /*
    * Execute message
    */
-  const { value, data, to } = tx
+  const { value, tokenId, tokenValue, data, to } = tx
 
   if (vm.DEBUG) {
     debug(
@@ -627,6 +627,8 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     gasLimit,
     to,
     value,
+    tokenId,
+    tokenValue,
     data,
     blobVersionedHashes,
     accessWitness: txAccesses,

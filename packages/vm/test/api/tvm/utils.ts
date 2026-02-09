@@ -31,11 +31,16 @@ interface TriggerConstantOption {
   caller: Address
   contractAddress: Address
   params?: any[]
-  abi: FunctionFragment
+  abi?: FunctionFragment
+  input?: string
   block?: Block
 }
 
-interface TriggerOption extends TriggerConstantOption {}
+interface TriggerOption extends TriggerConstantOption {
+  value?: bigint
+  tokenId?: bigint
+  tokenValue?: bigint
+}
 
 export const PK = `0x${'0'.repeat(63)}1` as const
 
@@ -102,20 +107,35 @@ export async function deployContract(vm: VM, contract: ContractData, opt?: any) 
 }
 
 export async function trigger(vm: VM, triggerOption: TriggerOption) {
-  const { caller, contractAddress, abi, params, block = createBlock({}) } = triggerOption
+  const {
+    caller,
+    contractAddress,
+    abi,
+    params,
+    block = createBlock({}),
+    value,
+    tokenId,
+    tokenValue,
+    input,
+  } = triggerOption
 
-  const iface = new utils.ethersUtils.Interface([abi])
-
-  const data = iface.encodeFunctionData(abi.name, params || [])
+  const data = (() => {
+    if (input) return input
+    const iface = new utils.ethersUtils.Interface([abi!])
+    return iface.encodeFunctionData(abi!.name, params || [])
+  })()
 
   const txData = {
     block,
     caller,
     to: contractAddress,
     data: hexToBytes(`0x${data.replace(/^0x/, '')}`),
-    gasLimit: 1_000_000_000n,
+    gasLimit: 1_000_000n,
     gasPrice: 100n,
     nonce: await getAccountNonce(vm, caller),
+    value,
+    tokenId,
+    tokenValue,
   }
 
   const tx = createTx(txData).sign(hexToBytes(PK))
@@ -132,7 +152,7 @@ export async function trigger(vm: VM, triggerOption: TriggerOption) {
     block: newBlock,
     generate: true,
     skipBlockValidation: true,
-    skipBalance: true,
+    skipBalance: false,
   })
   await vm.stateManager.commit()
 
@@ -140,11 +160,13 @@ export async function trigger(vm: VM, triggerOption: TriggerOption) {
 }
 
 export async function triggerConstant(vm: VM, triggerOption: TriggerConstantOption) {
-  const { caller, contractAddress, abi, params, block = createBlock({}) } = triggerOption
+  const { caller, contractAddress, abi, params, block = createBlock({}), input } = triggerOption
 
-  const iface = new utils.ethersUtils.Interface([abi])
-
-  const data = iface.encodeFunctionData(abi.name, params || [])
+  const data = (() => {
+    if (input) return input
+    const iface = new utils.ethersUtils.Interface([abi!])
+    return iface.encodeFunctionData(abi!.name, params || [])
+  })()
 
   const result = await vm.evm.runCall({
     block,
@@ -157,7 +179,7 @@ export async function triggerConstant(vm: VM, triggerOption: TriggerConstantOpti
     throw result.execResult.exceptionError
   }
 
-  return utils.abi.decodeParamsV2ByABI(abi, result.execResult.returnValue)
+  return utils.abi.decodeParamsV2ByABI(abi!, result.execResult.returnValue)
 }
 
 export async function getAccount(vm: VM, address: Address) {

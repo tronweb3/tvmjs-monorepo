@@ -76,6 +76,10 @@ interface EVMRunOpts {
    * The value in ether that is being sent to `opts.address`. Defaults to `0`
    */
   value?: bigint
+
+  // TRON add token related code
+  tokenId?: bigint
+  tokenValue?: bigint
   /**
    * The call depth. Defaults to `0`
    */

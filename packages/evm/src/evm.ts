@@ -988,6 +988,8 @@ export class EVM implements EVMInterface {
         gasLimit: opts.gasLimit ?? BigInt(0xffffff),
         to: opts.to,
         value,
+        tokenId: opts.tokenId,
+        tokenValue: opts.tokenValue,
         data: opts.data,
         code: opts.code,
         depth: opts.depth,
@@ -1255,11 +1257,10 @@ export class EVM implements EVMInterface {
       toAccount.asset[Number(message.tokenId)] = newBalance
     }
     // putAccount as the nonce may have changed for contract creation
-    const result = this.journal.putAccount(message.to, toAccount)
+    await this.journal.putAccount(message.to, toAccount)
     debug(
       `Added toAccount (${message.to.toString()}) tokenId (-> ${message.tokenId.toString()}) tokenValue (-> ${newBalance.toString()})`,
     )
-    return result
   }
 
   /**
