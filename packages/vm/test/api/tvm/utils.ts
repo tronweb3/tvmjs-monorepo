@@ -173,6 +173,7 @@ export async function triggerConstant(vm: VM, triggerOption: TriggerConstantOpti
     to: contractAddress,
     caller,
     data: hexToBytes(`0x${data.replace(/^0x/, '')}`),
+    gasPrice: 100n,
   })
 
   if (result.execResult.exceptionError) {

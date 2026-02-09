@@ -23,9 +23,6 @@ export function precompile09(opts: PrecompileInput): ExecResult {
   const signatures = extractBytesArray(words, words[1].intValueSafe() / DataWord.WORD_SIZE, data)
   const addresses = extractBytes32Array(words, words[2].intValueSafe() / DataWord.WORD_SIZE)
 
-  console.log('precompile09 hash:', hash)
-  console.log('precompile09 signatures:', signatures)
-  console.log('precompile09 addresses:', addresses)
   // check length
   const length = signatures.length
   const returnValue = new Uint8Array(DataWord.WORD_SIZE)

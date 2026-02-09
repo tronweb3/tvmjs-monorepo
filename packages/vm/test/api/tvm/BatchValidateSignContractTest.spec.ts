@@ -14,7 +14,7 @@ const batchValidateSign = async (hash: string, signatures: string[], addresses: 
   const contractAddress = (await deployContract(vm, {
     caller: OWNER_ADDRESS,
     bytecode: hexToBytes(`0x${bytecode}`),
-    gasLimit: 5_000_000_000n,
+    gasLimit: 5_000_000n,
   })) as Address
 
   const result = await triggerConstant(vm, {

@@ -234,7 +234,7 @@ describe('AllowTvmCompatibleEvmTest', () => {
     // @TODO TRON tx.gasprice is always 0
     assert.equal(
       JSON.stringify(result, (_, obj: any) => (typeof obj === 'bigint' ? obj.toString() : obj)),
-      JSON.stringify(['0']),
+      JSON.stringify(['100']),
     )
   })
 
