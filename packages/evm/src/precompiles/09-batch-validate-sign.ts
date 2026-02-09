@@ -36,7 +36,6 @@ export function precompile09(opts: PrecompileInput): ExecResult {
   for (let i = 0; i < length; ++i) {
     const address = addresses[i]
     const recoveredAddr = recoverAddrBySign(signatures[i], hash)
-    console.log(`precompile09 address[${i}]:`, address, signatures[i])
     if (DataWord.equalAddressByteArray(address, recoveredAddr)) {
       returnValue[i] = 1
     }
