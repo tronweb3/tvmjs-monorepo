@@ -1,4 +1,4 @@
-import { type GenesisState, parseGethGenesisState } from '@tvmjs/common'
+import { parseGethGenesisState } from '@tvmjs/common'
 // import { getGenesis } from '@tvmjs/genesis'
 // kiln genesis with deposit contract storage set
 import { kilnGethGenesis } from '@tvmjs/testdata'
