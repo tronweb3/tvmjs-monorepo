@@ -22,7 +22,7 @@ import { stripHexPrefix } from './internal.ts'
 import type { BigIntLike, BytesLike, NestedUint8Array, PrefixedHexString } from './types.ts'
 
 export interface Key {
-  address: Buffer
+  address: Uint8Array
   weight: number
 }
 
@@ -73,7 +73,7 @@ function permissionFromRlp(arr: any[]): Permission {
   return {
     type: bytesToInt(arr[0]) as PermissionType,
     id: bytesToInt(arr[1]),
-    permissionName: arr[2].toString(),
+    permissionName: new TextDecoder().decode(arr[2]),
     threshold: bytesToInt(arr[3]),
     parentId: bytesToInt(arr[4]),
     operations: arr[5],
@@ -248,6 +248,10 @@ export class Account {
   }
   set activePermissions(_activePermissions: Permission[] | null) {
     this._activePermissions = _activePermissions
+  }
+
+  updatePermissions({ activePermissions }: { activePermissions: Permission[] }): void {
+    this._activePermissions = activePermissions
   }
 
   getPermissionById(id: number): Permission | null {
