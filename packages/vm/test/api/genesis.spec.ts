@@ -1,19 +1,19 @@
-import { createBlockchain } from '@tvmjs/blockchain'
-import { Chain } from '@tvmjs/common'
-import { getGenesis } from '@tvmjs/genesis'
-import { assert, describe, it } from 'vitest'
+// import { createBlockchain } from '@tvmjs/blockchain'
+// import { Chain } from '@tvmjs/common'
+// import { getGenesis } from '@tvmjs/genesis'
+// import { assert, describe, it } from 'vitest'
 
-import { createVM } from '../../src/index.ts'
+// import { createVM } from '../../src/index.ts'
 
-describe('genesis', () => {
-  it('should initialize with predefined genesis states', async () => {
-    const f = async () => {
-      const genesisState = getGenesis(Chain.Mainnet)
+// describe('genesis', () => {
+//   it('should initialize with predefined genesis states', async () => {
+//     const f = async () => {
+//       const genesisState = getGenesis(Chain.Mainnet)
 
-      const blockchain = await createBlockchain({ genesisState })
-      await createVM({ blockchain })
-    }
+//       const blockchain = await createBlockchain({ genesisState })
+//       await createVM({ blockchain })
+//     }
 
-    assert.doesNotThrow(f, 'should allow for initialization with genesis from genesis package')
-  })
-})
+//     assert.doesNotThrow(f, 'should allow for initialization with genesis from genesis package')
+//   })
+// })

@@ -60,7 +60,6 @@
     "lru-cache": "11.0.2"
   },
   "devDependencies": {
-    "@tvmjs/genesis": "^10.1.0",
     "@types/benchmark": "^2.1.5",
     "@types/debug": "^4.1.12",
     "abstract-level": "^3.0.1",
