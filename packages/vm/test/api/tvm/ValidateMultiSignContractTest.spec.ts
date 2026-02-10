@@ -4,7 +4,6 @@ import {
   type Address,
   PermissionType,
   bigIntToBytes,
-  bytesToHex,
   concatBytes,
   createAccount,
   createAddressFromPrivateKey,
@@ -106,7 +105,7 @@ describe('ValidateMultiSignContractTest', async () => {
     await vm.stateManager.commit()
 
     const updatedAccount0 = await vm.stateManager.getAccount(address0)
-    assert.ok(updatedAccount0?.activePermissions)
+    assert.isNotNull(updatedAccount0?.activePermissions)
     assert.deepEqual(updatedAccount0?.activePermissions, tvmAccount0?.activePermissions)
   })
 
