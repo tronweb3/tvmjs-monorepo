@@ -11,7 +11,7 @@
  * (USE COMMON SENSE).
  */
 import { createBlock, createBlockFromRLP } from '@tvmjs/block'
-import { type EthashConsensus, createBlockchain } from '@tvmjs/blockchain'
+import { createBlockchain } from '@tvmjs/blockchain'
 // import { ConsensusAlgorithm } from '@tvmjs/common'
 // import { Ethash } from '@tvmjs/ethash'
 import { MerklePatriciaTrie } from '@tvmjs/mpt'
@@ -32,7 +32,7 @@ import { buildBlock, createVM, runBlock } from '../../../src/index.ts'
 import { setupPreConditions, verifyPostConditions } from '../../util.ts'
 
 import type { Block } from '@tvmjs/block'
-import type { Blockchain, ConsensusDict } from '@tvmjs/blockchain'
+import type { Blockchain, ConsensusDict, EthashConsensus } from '@tvmjs/blockchain'
 import type { Common, StateManagerInterface } from '@tvmjs/common'
 import type { PrefixedHexString } from '@tvmjs/util'
 

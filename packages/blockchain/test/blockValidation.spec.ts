@@ -6,11 +6,11 @@ import { RLP } from '@tvmjs/rlp'
 import { bytesToHex } from '@tvmjs/util'
 import { assert, describe, expect, it } from 'vitest'
 
-import { EthashConsensus, createBlockchain } from '../src/index.ts'
+import { createBlockchain } from '../src/index.ts'
 
 import { generateBlock } from './util.ts'
 
-import type { ConsensusDict } from '../src/index.ts'
+// import type { ConsensusDict } from '../src/index.ts'
 
 describe('[Blockchain]: Block validation tests', () => {
   it('should throw if an uncle is included before', async () => {
