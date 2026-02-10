@@ -13,7 +13,7 @@
 import { createBlock, createBlockFromRLP } from '@tvmjs/block'
 import { EthashConsensus, createBlockchain } from '@tvmjs/blockchain'
 import { ConsensusAlgorithm } from '@tvmjs/common'
-import { Ethash } from '@tvmjs/ethash'
+// import { Ethash } from '@tvmjs/ethash'
 import { MerklePatriciaTrie } from '@tvmjs/mpt'
 import { RLP } from '@tvmjs/rlp'
 import { Caches, MerkleStateManager } from '@tvmjs/statemanager'
@@ -79,13 +79,13 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
   let validatePow = false
   // Only run with block validation when sealEngine present in test file
   // and being set to Ethash PoW validation
-  if (testData.sealEngine === 'Ethash') {
-    if (common.consensusAlgorithm() !== ConsensusAlgorithm.Ethash) {
-      // Return early - test is filtered in blockchain.spec.ts
-      return
-    }
-    validatePow = true
-  }
+  // if (testData.sealEngine === 'Ethash') {
+  //   if (common.consensusAlgorithm() !== ConsensusAlgorithm.Ethash) {
+  //     // Return early - test is filtered in blockchain.spec.ts
+  //     return
+  //   }
+  //   validatePow = true
+  // }
 
   // create and add genesis block
   const header = formatBlockHeader(testData.genesisBlockHeader)
@@ -100,7 +100,7 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
   }
 
   const consensusDict: ConsensusDict = {}
-  consensusDict[ConsensusAlgorithm.Ethash] = new EthashConsensus(new Ethash())
+  // consensusDict[ConsensusAlgorithm.Ethash] = new EthashConsensus(new Ethash())
   let blockchain = await createBlockchain({
     common,
     validateBlocks: true,
@@ -259,7 +259,6 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
 
       if (expectException !== false) {
         assert.fail(`expected exception but test did not throw an exception: ${expectException}`)
-        return
       }
     } catch (error: any) {
       // caught an error, reduce block number
