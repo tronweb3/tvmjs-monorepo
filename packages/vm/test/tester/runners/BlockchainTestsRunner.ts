@@ -11,8 +11,8 @@
  * (USE COMMON SENSE).
  */
 import { createBlock, createBlockFromRLP } from '@tvmjs/block'
-import { EthashConsensus, createBlockchain } from '@tvmjs/blockchain'
-import { ConsensusAlgorithm } from '@tvmjs/common'
+import { type EthashConsensus, createBlockchain } from '@tvmjs/blockchain'
+// import { ConsensusAlgorithm } from '@tvmjs/common'
 // import { Ethash } from '@tvmjs/ethash'
 import { MerklePatriciaTrie } from '@tvmjs/mpt'
 import { RLP } from '@tvmjs/rlp'
@@ -76,7 +76,7 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
     common,
   })
 
-  let validatePow = false
+  const validatePow = false
   // Only run with block validation when sealEngine present in test file
   // and being set to Ethash PoW validation
   // if (testData.sealEngine === 'Ethash') {

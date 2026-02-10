@@ -21,7 +21,6 @@ import { buildBlock, createVM, runBlock } from '../../src/index.ts'
 
 import { setBalance } from './utils.ts'
 
-import type { Blockchain, ConsensusDict } from '@tvmjs/blockchain'
 import { SIGNER_A } from '@tvmjs/testdata'
 
 describe('BlockBuilder', () => {
