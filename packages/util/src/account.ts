@@ -410,7 +410,7 @@ export class Account {
     // helpful for determination in partial accounts
     if (
       (this._balance !== null && this.balance !== BIGINT_0) ||
-      (this._nonce === null && this.nonce !== BIGINT_0) ||
+      (this._nonce !== null && this.nonce !== BIGINT_0) ||
       (this._codeHash !== null && !equalsBytes(this.codeHash, KECCAK256_NULL)) ||
       (this._asset !== null &&
         Object.keys(this.asset || {}).some(

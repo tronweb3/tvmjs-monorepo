@@ -439,7 +439,7 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     }
 
     if (tokenId !== BIGINT_0 && tokenValue > BIGINT_0) {
-      const tokenExists = state.tokenIdExists(Number(tokenId))
+      const tokenExists = await state.tokenIdExists(Number(tokenId))
       if (!tokenExists) {
         throw EthereumJSErrorWithoutCode('No asset !')
       }
