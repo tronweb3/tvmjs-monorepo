@@ -71,7 +71,7 @@ STAGED_DIFF=$(git diff --cached -- ${STAGED_FILES})
 echo -e "${YELLOW}[1/2] Running security vulnerability scan...${NC}"
 
 SECURITY_PROMPT="$(cat <<EOF
-You are a senior TypeScript/JavaScript security engineer performing a pre-commit security review for the TronWeb official site which is built with react + vite.
+You are a senior TypeScript/JavaScript security engineer performing a pre-commit security review for the TVMJS project.
 
 ## Staged Files:
 ${FILE_LIST}
