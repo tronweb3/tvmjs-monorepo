@@ -121,3 +121,4 @@ __snapshots__
 .cspellcache
 
 .claude/review-reports/
+.claude/settings.local.json
