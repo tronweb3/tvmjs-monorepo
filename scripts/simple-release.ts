@@ -9,7 +9,7 @@
  *   tsx scripts/simple-release.ts 10.1.1-nightly.1 abc123 nightly
  */
 
-import { readFileSync, writeFileSync, unlinkSync } from 'fs'
+import { readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { execSync } from 'child_process'
 
@@ -43,19 +43,18 @@ interface PackageInfo {
   packageJson: PackageJson
 }
 
-function parseArgs(): { version: string; npmToken: string; tag: string } {
+function parseArgs(): { version: string; tag: string } {
   const args = process.argv.slice(2)
   
-  if (args.length !== 3) {
-    console.error('Usage: tsx scripts/simple-release.ts <version> <npm_token> <tag>')
-    console.error('Example: tsx scripts/simple-release.ts 10.1.1-nightly.1 abc123 nightly')
+  if (args.length !== 2) {
+    console.error('Usage: tsx scripts/simple-release.ts <version> <tag>')
+    console.error('Example: tsx scripts/simple-release.ts 10.1.1-nightly.1 nightly')
     process.exit(1)
   }
 
   return {
     version: args[0],
-    npmToken: args[1],
-    tag: args[2],
+    tag: args[1],
   }
 }
 
@@ -78,7 +77,7 @@ function updateDependencyVersion(
 
   const updated: Record<string, string> = { ...deps }
   for (const [depName, depVersion] of Object.entries(updated)) {
-    if (depName.startsWith('@ethereumjs/')) {
+    if (depName.startsWith('@tvmjs/')) {
       // Preserve the version prefix (^, ~, etc.) if present
       const prefixMatch = depVersion.match(/^([\^~])?/)
       const prefix = prefixMatch?.[1] || ''
@@ -123,7 +122,7 @@ function updatePackageVersions(
   console.log('\n✅ All package versions updated\n')
 }
 
-function publishPackages(packages: PackageInfo[], npmToken: string, tag: string): void {
+function publishPackages(packages: PackageInfo[], tag: string): void {
   console.log(`\n🚀 Publishing packages with tag "${tag}"...\n`)
 
   for (const pkg of packages) {
@@ -135,7 +134,6 @@ function publishPackages(packages: PackageInfo[], npmToken: string, tag: string)
         stdio: 'inherit',
         env: {
           ...process.env,
-          NPM_TOKEN: npmToken,
         },
       })
       
@@ -166,7 +164,7 @@ function revertChanges(): void {
 }
 
 async function main(): Promise<void> {
-  const { version, npmToken, tag } = parseArgs()
+  const { version, tag } = parseArgs()
 
   console.log('\n' + '='.repeat(60))
   console.log('Simple Release Script')
@@ -202,7 +200,7 @@ async function main(): Promise<void> {
     updatePackageVersions(packages, version)
 
     // Step 2: Publish packages
-    publishPackages(packages, npmToken, tag)
+    publishPackages(packages, tag)
 
     // Step 3: Revert changes
     revertChanges()
