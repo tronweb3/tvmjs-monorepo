@@ -922,4 +922,13 @@ export const tipsDict: EIPsDict = {
     minimumHardfork: Hardfork.Chainstart,
     requiredEIPs: [],
   },
+  /**
+   * Description : Precompile for secp256r1 Curve Support
+   * URL         : https://eips.ethereum.org/EIPS/eip-7951
+   * Status      : Draft
+   */
+  7951: {
+    minimumHardfork: Hardfork.Chainstart,
+    requiredEIPs: [],
+  },
 }

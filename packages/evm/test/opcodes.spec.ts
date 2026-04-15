@@ -25,14 +25,6 @@ describe('EVM -> getActiveOpcodes()', () => {
       'CHAINID',
       'istanbul opcode exposed (HF: istanbul)',
     )
-
-    common = new Common({ chain: Mainnet, hardfork: Hardfork.MuirGlacier })
-    evm = await createEVM({ common })
-    assert.strictEqual(
-      evm.getActiveOpcodes().get(CHAINID)!.name,
-      'CHAINID',
-      'istanbul opcode exposed (HF: > istanbul (muirGlacier)',
-    )
   })
 
   it('should switch DIFFICULTY opcode name to PREVRANDAO when >= Merge HF', async () => {

@@ -110,7 +110,7 @@ for (let address = precompileAddressStart; address <= precompileAddressEnd; addr
 
 describe('EIP-2537 BLS precompile availability tests', () => {
   it('BLS precompiles should not be available if EIP not activated', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.MuirGlacier })
+    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
     const evm = await createEVM({
       common,
     })
