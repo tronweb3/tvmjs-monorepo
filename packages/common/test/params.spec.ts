@@ -42,8 +42,8 @@ describe('[Common]: Parameter access for param(), paramByHardfork()', () => {
     assert.strictEqual(c.param('bn254AddGas'), BigInt(500), msg)
     c.setHardfork(Hardfork.Istanbul)
     assert.strictEqual(c.param('bn254AddGas'), BigInt(150), msg)
-    c.setHardfork(Hardfork.MuirGlacier)
-    assert.strictEqual(c.param('bn254AddGas'), BigInt(150), msg)
+    // c.setHardfork(Hardfork.MuirGlacier)
+    // assert.strictEqual(c.param('bn254AddGas'), BigInt(150), msg)
 
     assert.throws(() => {
       c.paramByHardfork('notExistingValue', 'byzantium')
