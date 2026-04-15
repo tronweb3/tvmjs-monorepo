@@ -1,8 +1,8 @@
-# EthereumJS - Developer Docs
+# TVM-JS - Developer Docs
 
 This guide provides an overview of the monorepo, development tools used, shared configuration and additionally covers some advanced topics.
 
-It is intended to be both an entrypoint for external contributors as well as a reference point for team members.
+TVM-JS is a TypeScript implementation of the TRON Virtual Machine (TVM), adapted from the EthereumJS monorepo. It is intended to be both an entrypoint for external contributors as well as a reference point for team members.
 
 ## Contents
 
@@ -21,17 +21,20 @@ It is intended to be both an entrypoint for external contributors as well as a r
   - [Shared Dependencies](#shared-dependencies)
 - [Additional Docs](#additional-docs)
   - [VM](#vm)
-  - [Client](#client)
+- [TRON-Specific Development](#tron-specific-development)
+  - [Custom Opcodes](#custom-opcodes)
+  - [TRC-10 Token Support](#trc-10-token-support)
+  - [Precompiles](#precompiles)
 
 ## Monorepo
 
 ### Structure
 
-The EthereumJS project uses [npm workspaces](https://docs.npmjs.com/cli/v7/using-npm/workspaces) to manage all the packages in our monorepo and link packages together.
+TVM-JS uses [npm workspaces](https://docs.npmjs.com/cli/v7/using-npm/workspaces) to manage all the packages in our monorepo and link packages together.
 
 #### Key Directories
 
-- `/packages` - Contains all EthereumJS packages
+- `/packages` - Contains all TVM-JS packages
 - `/config` - Shared configuration files and scripts
 - `packages/ethereum-tests` - Git submodule with Ethereum test vectors (legacy)
 - `packages/execution-spec-tests-fixtures` - Git submodule with selected Ethereum test vectors
@@ -120,13 +123,13 @@ We have a simple release script for lightweight in-between releases like nightly
 for e.g. external targeted testing and releases are not mentioned in CHANGELOG.md files.
 
 ```sh
-tsx scripts/simple-release.ts <version> <npm_token> <tag>
+tsx scripts/simple-release.ts <version> <tag>
 ```
 
 Example:
 
 ```sh
-tsx scripts/simple-release.ts 10.1.1-nightly.1 abc123 nightly
+tsx scripts/simple-release.ts 1.0.1-nightly.1 nightly
 ```
 
 #### Windows Users Note
@@ -272,7 +275,7 @@ npm link
 3. In your test project, link to the local package:
 ```sh
 cd path/to/your/project
-npm link @ethereumjs/package-name
+npm link @tvmjs/package-name
 ```
 
 4. When you make changes to your package, rebuild it for the changes to be reflected.
@@ -280,7 +283,7 @@ npm link @ethereumjs/package-name
 5. When done testing, unlink:
 ```sh
 # In your test project
-npm unlink --no-save @ethereumjs/package-name
+npm unlink --no-save @tvmjs/package-name
 
 # In the package directory
 npm unlink
@@ -298,8 +301,54 @@ There are selected additional developer docs available to get more deep on certa
 
 ### VM
 
-[VM Docs](./packages/vm/DEVELOPER.md) for testing, debugging and VM/EVM profiling.
+[VM Docs](./packages/vm/DEVELOPER.md) for testing, debugging and VM/TVM profiling.
 
-### Client
+---
 
-[Client Docs](./packages/client/DEVELOPER.md) for running Hive tests.
+## TRON-Specific Development
+
+This section documents TVM-JS extensions beyond the standard EthereumJS baseline.
+
+### Custom Opcodes
+
+TVM-JS adds the following TRON-specific opcodes in `packages/evm/src/opcodes/codes.ts`:
+
+| Opcode | Hex | Description |
+|--------|-----|-------------|
+| `CALLTOKEN` | `0xd0` | Transfer a TRC-10 token in a call |
+| `TOKENBALANCE` | `0xd1` | Query the TRC-10 token balance of an address |
+| `CALLTOKENVALUE` | `0xd2` | Get the token value of the current call |
+| `CALLTOKENID` | `0xd3` | Get the token ID of the current call |
+| `ISCONTRACT` | `0xd4` | Check whether an address is a contract |
+
+These opcodes are defined alongside the standard EVM opcode set and dispatched through the same interpreter loop.
+
+### TRC-10 Token Support
+
+Transactions in TVM-JS can carry an optional `tokenId` and `tokenValue` alongside the standard `value` (TRX) field. Token balance is tracked in the `asset` map on each account object within the state manager.
+
+Key files:
+
+- `packages/tx/src/` — transaction type definitions with `tokenId`/`tokenValue` fields
+- `packages/vm/src/runTx.ts` — token validation and transfer logic during transaction execution
+- `packages/statemanager/src/` — `tokenIdExists` and per-account asset tracking
+
+Rules enforced at transaction execution time:
+
+- `tokenId` must be greater than the minimum allowed token ID (`MIN_TOKEN_ID`)
+- If `tokenValue > 0`, `tokenId` must also be non-zero
+- The sender must hold sufficient token balance
+- The token must exist in the global token registry (`tokenIdExists`)
+
+### Precompiles
+
+TVM-JS includes TRON-specific precompiles in `packages/evm/src/precompiles/`:
+
+| Address | File | Description |
+|---------|------|-------------|
+| `0x09` | `09-batch-validate-sign.ts` | Batch signature validation |
+| `0x0a` | `0a-validate-multi-sign.ts` | Multi-signature validation |
+| `0x20003` | `20003-ripemd160.ts` | TRON-adjusted RIPEMD-160 |
+| `0x20009` | `20009-blake2f.ts` | TRON-adjusted BLAKE2F |
+
+When adding or modifying a precompile, register it in `packages/evm/src/precompiles/index.ts` and add corresponding tests under `packages/evm/test/`.
