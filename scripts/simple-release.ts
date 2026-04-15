@@ -3,10 +3,10 @@
  * Simple release script for in-between releases (nightly, alpha, etc.)
  * 
  * Usage:
- *   tsx scripts/simple-release.ts <version> <npm_token> <tag>
+ *   tsx scripts/simple-release.ts <version> <tag>
  * 
  * Example:
- *   tsx scripts/simple-release.ts 10.1.1-nightly.1 abc123 nightly
+ *   tsx scripts/simple-release.ts 10.1.1-nightly.1 nightly
  */
 
 import { readFileSync, writeFileSync } from 'fs'
