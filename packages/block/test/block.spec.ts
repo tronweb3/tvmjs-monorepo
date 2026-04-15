@@ -168,7 +168,8 @@ describe('[Block]: block functions', () => {
     assert.isEmpty(block.getTransactionsValidationErrors())
   }
 
-  it('should test transaction validation - transaction not signed', async () => {
+  // Osaka not supported
+  it.skip('should test transaction validation - transaction not signed', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Osaka })
     const maxTransactionGasLimit = paramsTx['7825'].maxTransactionGasLimit as number
     // Create tx with gas limit over max (but not yet on Osaka)

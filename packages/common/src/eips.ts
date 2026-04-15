@@ -683,12 +683,38 @@ export const tipsDict: EIPsDict = {
     requiredEIPs: [2929],
   },
   /**
+   * Description : EVM Object Format (EOF) v1
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-3540.md
+   * Status      : Review
+   */
+  3540: {
+    minimumHardfork: Hardfork.London,
+    requiredEIPs: [3541, 3860],
+  },
+  /**
    * Description : Reject new contracts starting with the 0xEF byte
    * URL         : https://eips.ethereum.org/EIPS/eip-3541
    * Status      : Final
    */
   3541: {
     minimumHardfork: Hardfork.Berlin,
+  },
+  /**
+   * Description : EOF - Code Validation
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-3670.md
+   * Status      : Review
+   */
+  3670: {
+    minimumHardfork: Hardfork.London,
+    requiredEIPs: [3540],
+  },
+  /**
+   * Description : Upgrade consensus to Proof-of-Stake
+   * URL         : https://eips.ethereum.org/EIPS/eip-3675
+   * Status      : Final
+   */
+  3675: {
+    minimumHardfork: Hardfork.London,
   },
   /**
    * Description : PUSH0 instruction
@@ -699,6 +725,66 @@ export const tipsDict: EIPsDict = {
     minimumHardfork: Hardfork.Chainstart,
   },
   /**
+   * Description : Limit and meter initcode
+   * URL         : https://eips.ethereum.org/EIPS/eip-3860
+   * Status      : Final
+   */
+  3860: {
+    minimumHardfork: Hardfork.SpuriousDragon,
+  },
+  /**
+   * Description : EOF - Static relative jumps
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-4200.md
+   * Status      : Review
+   */
+  4200: {
+    minimumHardfork: Hardfork.London,
+    requiredEIPs: [3540, 3670],
+  },
+  /**
+   * Description : EOF - Functions
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-4750.md
+   * Status      : Review
+   */
+  4750: {
+    minimumHardfork: Hardfork.London,
+    requiredEIPs: [3540, 3670, 5450],
+  },
+  /**
+   * Description : Beacon block root in the EVM
+   * URL         : https://eips.ethereum.org/EIPS/eip-4788
+   * Status      : Final
+   */
+  4788: {
+    minimumHardfork: Hardfork.Cancun,
+  },
+  /**
+   * Description : Shard Blob Transactions
+   * URL         : https://eips.ethereum.org/EIPS/eip-4844
+   * Status      : Final
+   */
+  4844: {
+    minimumHardfork: Hardfork.Paris,
+    requiredEIPs: [1559, 2718, 2930, 4895],
+  },
+  /**
+   * Description : Beacon chain push withdrawals as operations
+   * URL         : https://eips.ethereum.org/EIPS/eip-4895
+   * Status      : Final
+   */
+  4895: {
+    minimumHardfork: Hardfork.Paris,
+  },
+  /**
+   * Description : EOF - Stack Validation
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-5450.md
+   * Status      : Review
+   */
+  5450: {
+    minimumHardfork: Hardfork.London,
+    requiredEIPs: [3540, 3670, 4200, 4750],
+  },
+  /**
    * Description : MCOPY - Memory copying instruction
    * URL         : https://eips.ethereum.org/EIPS/eip-5656
    * Status      : Final
@@ -707,11 +793,133 @@ export const tipsDict: EIPsDict = {
     minimumHardfork: Hardfork.Shanghai,
   },
   /**
+   * Description : Supply validator deposits on chain
+   * URL         : https://eips.ethereum.org/EIPS/eip-6110
+   * Status      : Review
+   */
+  6110: {
+    minimumHardfork: Hardfork.Cancun,
+    requiredEIPs: [7685],
+  },
+  /**
+   * Description : EOF - JUMPF and non-returning functions
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-6206.md
+   * Status      : Review
+   */
+  6206: {
+    minimumHardfork: Hardfork.London,
+    requiredEIPs: [4750, 5450],
+  },
+  /**
    * Description : SELFDESTRUCT only in same transaction
    * URL         : https://eips.ethereum.org/EIPS/eip-6780
    * Status      : Final
    */
   6780: {
     minimumHardfork: Hardfork.London,
+  },
+  /**
+   * Description : Execution layer triggerable withdrawals (experimental)
+   * URL         : https://github.com/ethereum/EIPs/blob/3b5fcad6b35782f8aaeba7d4ac26004e8fbd720f/EIPS/eip-7002.md
+   * Status      : Review
+   */
+  7002: {
+    minimumHardfork: Hardfork.Paris,
+    requiredEIPs: [7685],
+  },
+  /**
+   * Description : Increase the MAX_EFFECTIVE_BALANCE -> Execution layer triggered consolidations (experimental)
+   * URL         : https://eips.ethereum.org/EIPS/eip-7251
+   * Status      : Draft
+   */
+  7251: {
+    minimumHardfork: Hardfork.Paris,
+    requiredEIPs: [7685],
+  },
+  /**
+   * Description : EOF - Data section access instructions
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-7480.md
+   * Status      : Review
+   */
+  7480: {
+    minimumHardfork: Hardfork.London,
+    requiredEIPs: [3540, 3670],
+  },
+  /**
+   * Description : EOF Contract Creation
+   * URL         : https://github.com/ethereum/EIPs/blob/dd32a34cfe4473bce143641bfffe4fd67e1987ab/EIPS/eip-7620.md
+   * Status      : Review
+   */
+  7620: {
+    minimumHardfork: Hardfork.London,
+    /* Note: per EIP these are the additionally required EIPs:
+      EIP 170 - (Max contract size) - Included in Spurious Dragon
+    */
+    requiredEIPs: [3540, 3541, 3670],
+  },
+  /**
+   * Description : General purpose execution layer requests
+   * URL         : https://eips.ethereum.org/EIPS/eip-7685
+   * Status      : Review
+   */
+  7685: {
+    // TODO: Set correct minimum hardfork
+    minimumHardfork: Hardfork.Cancun,
+    requiredEIPs: [3675],
+  },
+  /**
+   * Description : EVM Object Format (EOFv1) Meta
+   * URL         : https://github.com/ethereum/EIPs/blob/4153e95befd0264082de3c4c2fe3a85cc74d3152/EIPS/eip-7692.md
+   * Status      : Draft
+   */
+  7692: {
+    minimumHardfork: Hardfork.Cancun,
+    requiredEIPs: [3540, 3670, 4200, 4750, 5450, 6206, 7069, 7480, 7620, 7698],
+  },
+  /**
+   * Description : EOF - Creation transaction
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-7698.md
+   * Status      : Draft
+   */
+  7698: {
+    minimumHardfork: Hardfork.London,
+    requiredEIPs: [3540, 7620],
+  },
+  /**
+   * Description : Set EOA account code for one transaction
+   * URL         : https://github.com/ethereum/EIPs/blob/62419ca3f45375db00b04a368ea37c0bfb05386a/EIPS/eip-7702.md
+   * Status      : Review
+   */
+  7702: {
+    // TODO: Set correct minimum hardfork
+    minimumHardfork: Hardfork.Cancun,
+    requiredEIPs: [2718, 2929, 2930],
+  },
+  /**
+   * Description : SLOTNUM opcode
+   * URL         : https://eips.ethereum.org/EIPS/eip-7843
+   * Status      : Draft
+   */
+  7843: {
+    minimumHardfork: Hardfork.Cancun,
+    requiredEIPs: [],
+  },
+  /**
+   * Description : Blob base fee bounded by execution cost
+   * URL         : https://eips.ethereum.org/EIPS/eip-7918
+   * Status      : Last Call
+   */
+  7918: {
+    minimumHardfork: Hardfork.Paris,
+    requiredEIPs: [4844],
+  },
+  /**
+   * Description : RLP Execution Block Size Limit
+   * URL         : https://eips.ethereum.org/EIPS/eip-7934
+   * Status      : Last Call
+   */
+  7934: {
+    minimumHardfork: Hardfork.Chainstart,
+    requiredEIPs: [],
   },
 }

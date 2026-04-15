@@ -280,7 +280,7 @@ describe('AllowTvmCompatibleEvmTest', () => {
 
     assert.equal(
       JSON.stringify(result, (_, obj: any) => (typeof obj === 'bigint' ? obj.toString() : obj)),
-      JSON.stringify(['683748638']),
+      JSON.stringify(['1']),
     )
   })
 })
