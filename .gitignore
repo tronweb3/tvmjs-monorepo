@@ -120,5 +120,6 @@ __snapshots__
 # CSpell
 .cspellcache
 
-.claude/review-reports/
-.claude/settings.local.json
+.claude
+.githooks
+openspec
