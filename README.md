@@ -1,35 +1,63 @@
-# TVM-JS
+# TVMJS Monorepo
 
-A TypeScript implementation of the **TRON Virtual Machine (TVM)**, adapted from the [EthereumJS monorepo](https://github.com/ethereumjs/ethereumjs-monorepo) to support TRON-specific protocol behavior.
+A TypeScript implementation of the **TRON Virtual Machine (TVM)**, forked from the [EthereumJS monorepo](https://github.com/ethereumjs/ethereumjs-monorepo) and extended with TRON-specific protocol behavior.
+
+> **Note**: This project is a derivative work of EthereumJS, which is licensed under the [Mozilla Public License 2.0 (MPL-2.0)](https://mozilla.org/MPL/2.0/). All original EthereumJS source files retain their MPL-2.0 license. See the [License](#license) section for details.
 
 ## Overview
 
-TVM-JS is a monorepo of modular packages that together implement the full TRON execution environment in JavaScript/TypeScript. It supports TRON-specific opcodes, TRC-10 token transfers, precompiles, and account model extensions on top of the EthereumJS foundation.
+TVMJS is a monorepo of modular packages that together implement the full TRON execution environment in JavaScript/TypeScript. Built on top of the battle-tested EthereumJS foundation, it adds support for TRON-specific opcodes, TRC-10 token transfers, precompiled contracts, multi-signature validation, and the TRON account model.
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
-| [`evm`](./packages/evm) | Core EVM/TVM bytecode interpreter with TRON-specific opcodes and precompiles |
-| [`vm`](./packages/vm) | Execution context: runs transactions and blocks, manages state transitions |
-| [`tx`](./packages/tx) | Transaction types including TRON TRC-10 token transfers |
-| [`common`](./packages/common) | Chain/hardfork configuration shared across packages |
-| [`statemanager`](./packages/statemanager) | Account and storage state management |
-| [`blockchain`](./packages/blockchain) | Blockchain data structure and block management |
-| [`block`](./packages/block) | Block and block header types |
-| [`mpt`](./packages/mpt) | Merkle Patricia Trie implementation |
-| [`binarytree`](./packages/binarytree) | Binary tree data structure |
-| [`rlp`](./packages/rlp) | RLP encoding/decoding |
-| [`util`](./packages/util) | Shared utilities |
+| [`@tvmjs/evm`](./packages/evm) | Core TVM bytecode interpreter with TRON-specific opcodes and precompiles |
+| [`@tvmjs/vm`](./packages/vm) | Execution context: runs transactions and blocks, manages state transitions |
+| [`@tvmjs/tx`](./packages/tx) | Transaction types including TRC-10 token transfer fields |
+| [`@tvmjs/common`](./packages/common) | Chain/hardfork configuration shared across packages |
+| [`@tvmjs/statemanager`](./packages/statemanager) | Account and storage state management |
+| [`@tvmjs/blockchain`](./packages/blockchain) | Blockchain data structure and block management |
+| [`@tvmjs/block`](./packages/block) | Block and block header types |
+| [`@tvmjs/mpt`](./packages/mpt) | Merkle Patricia Trie implementation |
+| [`@tvmjs/binarytree`](./packages/binarytree) | Binary tree data structure |
+| [`@tvmjs/rlp`](./packages/rlp) | RLP encoding/decoding |
+| [`@tvmjs/util`](./packages/util) | Shared utilities, account types, and address helpers |
 
 ## TRON-Specific Features
 
-- **Custom opcodes**: `CALLTOKEN` (0xd0), `TOKENBALANCE` (0xd1), `CALLTOKENVALUE` (0xd2), `CALLTOKENID` (0xd3), `ISCONTRACT` (0xd4)
-- **TRC-10 token support**: native token transfers via `tokenId` and `tokenValue` transaction fields
-- **TRON precompiles**: `BatchValidateSign` (0x09), `ValidateMultiSign` (0x0a), and TRON-adjusted RIPEMD-160 (0x20003) / BLAKE2F (0x20009)
-- **Account asset model**: per-account TRC-10 token balances tracked alongside TRX
-- **TRON address generation**: TRON-compatible `CREATE2` address derivation
-- **Adjusted difficulty**: TRON consensus-compatible difficulty parameters
+### Custom Opcodes
+
+| Opcode | Code | Description |
+|--------|------|-------------|
+| `CALLTOKEN` | 0xd0 | Call contract with TRC-10 token transfer |
+| `TOKENBALANCE` | 0xd1 | Query TRC-10 token balance of an address |
+| `CALLTOKENVALUE` | 0xd2 | Get token value attached to current call |
+| `CALLTOKENID` | 0xd3 | Get token ID attached to current call |
+| `ISCONTRACT` | 0xd4 | Check if an address is a contract |
+
+### Precompiled Contracts
+
+| Address | Name | Description |
+|---------|------|-------------|
+| 0x09 | BatchValidateSign | Batch signature validation |
+| 0x0a | ValidateMultiSign | Multi-signature permission validation |
+| 0x20003 | RIPEMD-160 | TRON-specific RIPEMD-160 hash |
+| 0x20009 | BLAKE2F | TRON-specific BLAKE2F compression |
+
+### Account Model Extensions
+
+- **TRC-10 asset tracking**: per-account token balances stored alongside TRX balance
+- **Multi-signature permissions**: Owner / Active / Witness permission types with threshold-based validation
+- **TRON address generation**: `CREATE2` uses `0x41` prefix instead of `0xff`
+
+### Energy Model
+
+TRON uses an **energy** model (analogous to Ethereum's gas) with TRON-specific parameters:
+
+- `stackLimit`: 64 (vs Ethereum's 1024)
+- Custom energy costs for all TRON-specific opcodes
+- Contract deployment cost: `200 * code.length + base`
 
 ## Getting Started
 
@@ -53,8 +81,14 @@ npm run build --workspaces
 ### Run tests
 
 ```shell
+# Run all tests
+npm test
+
 # Run tests for a specific package
 cd packages/vm && npm test
+
+# Run TRON-specific tests
+npx vitest run packages/vm/test/api/tvm/
 ```
 
 ## Development
@@ -73,16 +107,30 @@ npm run clean         # Remove build artifacts
 ## Architecture
 
 ```
-packages/vm          ← top-level execution context
-  └─ packages/evm    ← bytecode interpreter (opcodes, gas, precompiles)
-       └─ packages/statemanager  ← account/storage state
-            └─ packages/mpt      ← Merkle Patricia Trie
-  └─ packages/tx     ← transaction types
-  └─ packages/block  ← block / block header
-  └─ packages/blockchain ← chain management
-  └─ packages/common ← shared chain config
+packages/vm          <- top-level execution context
+  |-- packages/evm    <- bytecode interpreter (opcodes, energy, precompiles)
+  |     \-- packages/statemanager  <- account/storage state
+  |           \-- packages/mpt     <- Merkle Patricia Trie
+  |-- packages/tx     <- transaction types (with tokenId/tokenValue)
+  |-- packages/block  <- block / block header
+  |-- packages/blockchain <- chain management
+  \-- packages/common <- shared chain config
 ```
+
+## Upstream
+
+This project is forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
+
+Key differences from upstream:
+
+- TRON energy model replaces Ethereum gas model
+- 5 new opcodes for TRC-10 token operations
+- TRON-specific precompiled contracts
+- Account model extended with asset balances and multi-sig permissions
+- `CREATE2` address derivation uses TRON's `0x41` prefix
 
 ## License
 
-[MIT](https://opensource.org/licenses/MIT)
+The original EthereumJS codebase is licensed under the [Mozilla Public License 2.0 (MPL-2.0)](https://mozilla.org/MPL/2.0/). As a derivative work, all files originating from EthereumJS retain the MPL-2.0 license. See individual package `LICENSE` files for details.
+
+TRON-specific modifications and additions are also distributed under the [MPL-2.0](https://mozilla.org/MPL/2.0/) license.

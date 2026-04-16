@@ -1,17 +1,16 @@
-# @ethereumjs/common `v10`
+# @tvmjs/common `v10`
 
 [![NPM Package][common-npm-badge]][common-npm-link]
 [![GitHub Issues][common-issues-badge]][common-issues-link]
 [![Actions Status][common-actions-badge]][common-actions-link]
 [![Code Coverage][common-coverage-badge]][common-coverage-link]
-[![Discord][discord-badge]][discord-link]
 
-| Resources common to all EthereumJS implementations. |
-| --------------------------------------------------- |
+| Resources common to all TVMJS implementations. Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
+| --- |
 
 ## Table of Contents
 
-- [@ethereumjs/common `v10`](#ethereumjscommon-v10)
+- [@tvmjs/common `v10`](#tvmjscommon-v10)
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
   - [Getting Started](#getting-started)
@@ -33,7 +32,7 @@
     - [Future Hardforks](#future-hardforks)
     - [Parameter Access](#parameter-access)
   - [Supported EIPs](#supported-eips)
-  - [EthereumJS](#ethereumjs)
+  - [Upstream](#upstream)
   - [License](#license)
 
 ## Installation
@@ -41,7 +40,7 @@
 To obtain the latest version, simply require the project using `npm`:
 
 ```shell
-npm install @ethereumjs/common
+npm install @tvmjs/common
 ```
 
 ## Getting Started
@@ -51,13 +50,13 @@ npm install @ethereumjs/common
 import (ESM, TypeScript):
 
 ```ts
-import { Chain, Common, Hardfork } from '@ethereumjs/common'
+import { Chain, Common, Hardfork } from '@tvmjs/common'
 ```
 
 require (CommonJS, Node.js):
 
 ```ts
-const { Common, Chain, Hardfork } = require('@ethereumjs/common')
+const { Common, Chain, Hardfork } = require('@tvmjs/common')
 ```
 
 ### Parameters
@@ -67,7 +66,7 @@ All parameters can be accessed through the `Common` class, instantiated with an 
 ```ts
 // ./examples/common.ts#L1-L7
 
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
 
 // With enums:
 const commonWithEnums = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })
@@ -100,7 +99,7 @@ console.log(`The current chain ID is ${commonWithCustomChainId.chainId()}`)
 
 ## Custom Cryptography Primitives (WASM)
 
-All EthereumJS packages use cryptographic primitives from the audited `ethereum-cryptography` library by default. These primitives, including `keccak256`, `sha256`, and elliptic curve signature methods, are all written in native JavaScript and therefore have the potential downside of being less performant than alternative cryptography modules written in other languages and then compiled to WASM. If cryptography performance is a bottleneck in your usage of the EthereumJS libraries, you can provide your own primitives to the `Common` constructor and they will be used in place of the defaults. Depending on how your preferred primitives are implemented, you may need to write wrapper methods around them so they conform to the interface exposed by the [`common.customCrypto` property](./src/types.ts).
+All TVMJS packages use cryptographic primitives from the audited `ethereum-cryptography` library by default. These primitives, including `keccak256`, `sha256`, and elliptic curve signature methods, are all written in native JavaScript and therefore have the potential downside of being less performant than alternative cryptography modules written in other languages and then compiled to WASM. If cryptography performance is a bottleneck in your usage of the TVMJS libraries, you can provide your own primitives to the `Common` constructor and they will be used in place of the defaults. Depending on how your preferred primitives are implemented, you may need to write wrapper methods around them so they conform to the interface exposed by the [`common.customCrypto` property](./src/types.ts).
 
 Note: replacing native JS crypto primitives with WASM based libraries comes with new security assumptions (additional external dependencies, unauditability of WASM code). It is therefore recommended to evaluate your usage context before applying!
 
@@ -111,8 +110,8 @@ The following is an example using the [@polkadot/wasm-crypto](https://github.com
 ```ts
 // ./examples/customCrypto.ts
 
-import { createBlock } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
+import { createBlock } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
 import { keccak256, waitReady } from '@polkadot/wasm-crypto'
 
 const main = async () => {
@@ -122,7 +121,7 @@ const main = async () => {
   const common = new Common({ chain: Mainnet, customCrypto: { keccak256 } })
   const block = createBlock({}, { common })
 
-  // Method invocations within EthereumJS library instantiations where the common
+  // Method invocations within TVMJS library instantiations where the common
   // instance above is passed will now use the custom keccak_256 implementation
   console.log(block.hash())
 }
@@ -138,7 +137,7 @@ The KZG library used for EIP-4844 Blob Transactions is initialized by `common` u
 ```ts
 // ./examples/initKzg.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
@@ -159,7 +158,7 @@ void main()
 
 We provide hybrid ESM/CJS builds for all our libraries. With the v10 breaking release round from Spring 2025 all libraries are "pure-JS" by default and we have eliminated all hard-wired WASM code. Additionally we have substantially lowered the bundle sizes, reduced the number of dependencies and cut out all usages of Node.js specific primitives (like the Node.js event emitter).
 
-It is easily possible to run a browser build of one of the EthereumJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
+It is easily possible to run a browser build of one of the TVMJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
 
 ## API
 
@@ -179,13 +178,13 @@ With the breaking releases from Summer 2023 we have started to ship our librarie
 If you use an ES6-style `import` in your code files from the ESM build will be used:
 
 ```ts
-import { EthereumJSClass } from '@ethereumjs/[PACKAGE_NAME]'
+import { TVMJSClass } from '@tvmjs/[PACKAGE_NAME]'
 ```
 
 If you use Node.js specific `require`, the CJS build will be used:
 
 ```ts
-const { EthereumJSClass } = require('@ethereumjs/[PACKAGE_NAME]')
+const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
 ```
 
 Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS can not provide.
@@ -203,7 +202,7 @@ The `Common` class has a public property `events` which contains an `EventEmitte
 The `chain` can be set in the constructor like this:
 
 ```ts
-import { Common, Mainnet } from '@ethereumjs/common'
+import { Common, Mainnet } from '@tvmjs/common'
 const common = new Common({ chain: Mainnet })
 ```
 
@@ -236,7 +235,7 @@ file, or to the `Chain` type in [./src/types.ts](./src/types.ts).
 Starting with the `v10` release series using custom chain configurations has been simplified and consolidated in a single API `createCustomCommon()`. This constructor can be used both to make simple chain ID adjustments and keep the rest of the config conforming to a given "base chain":
 
 ```ts
-import { createCustomCommon, Mainnet } from '@ethereumjs/common'
+import { createCustomCommon, Mainnet } from '@tvmjs/common'
  
 createCustomCommon({chainId: 123}, Mainnet)
 ```
@@ -248,8 +247,8 @@ Beyond that, it is possible to customize to a fully custom chain by passing in a
 ```ts
 // ./examples/customChain.ts
 
-import { Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { customChainConfig } from '@ethereumjs/testdata'
+import { Mainnet, createCustomCommon } from '@tvmjs/common'
+import { customChainConfig } from '@tvmjs/testdata'
 
 // Add custom chain config
 const common1 = createCustomCommon(customChainConfig, Mainnet)
@@ -266,9 +265,9 @@ common from such configuration in the following manner:
 ```ts
 // ./examples/fromGeth.ts
 
-import { createCommonFromGethGenesis } from '@ethereumjs/common'
-import { postMergeGethGenesis } from '@ethereumjs/testdata'
-import { hexToBytes } from '@ethereumjs/util'
+import { createCommonFromGethGenesis } from '@tvmjs/common'
+import { postMergeGethGenesis } from '@tvmjs/testdata'
+import { hexToBytes } from '@tvmjs/util'
 
 const genesisHash = hexToBytes('0x3b8fb240d288781d4aac94d3fd16809ee413bc99294a085798a589dae51ddd4a')
 // Load geth genesis JSON file into lets say `genesisJSON` and optional `chain` and `genesisHash`
@@ -291,7 +290,7 @@ The `hardfork` can be set in constructor like this:
 ```ts
 // ./examples/common.ts#L1-L4
 
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
 
 // With enums:
 const commonWithEnums = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })
@@ -389,21 +388,21 @@ The following EIPs are currently supported:
 - [EIP-7918](https://eips.ethereum.org/EIPS/eip-7918) - Blob base fee bounded by execution cost (Osaka)
 - [EIP-7928](https://eips.ethereum.org/EIPS/eip-7928) - Block Level Access Lists (Amsterdam) (IN DEVELOPMENT)
 
-## EthereumJS
+## Upstream
 
-The `EthereumJS` GitHub organization and its repositories are managed by members of the former Ethereum Foundation JavaScript team and the broader Ethereum community. If you want to join for work or carry out improvements on the libraries see the [developer docs](../../DEVELOPER.md) for an overview of current standards and tools and review our [code of conduct](../../CODE_OF_CONDUCT.md).
+This package is part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, a TypeScript implementation of the TRON Virtual Machine (TVM) forked from the [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo) monorepo. We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
 
+For development information, see the [developer docs](../../DEVELOPER.md) and our [code of conduct](../../CODE_OF_CONDUCT.md).
 ## License
 
 [MIT](https://opensource.org/licenses/MIT)
 
-[discord-badge]: https://img.shields.io/static/v1?logo=discord&label=discord&message=Join&color=blue
-[discord-link]: https://discord.gg/TNwARpR
+This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
 [common-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/common.svg
 [common-npm-link]: https://www.npmjs.com/package/@ethereumjs/common
 [common-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20common?label=issues
 [common-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+common"
-[common-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/Common/badge.svg
-[common-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22Common%22
+[common-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/common/badge.svg
+[common-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22common%22
 [common-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=common
 [common-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/common

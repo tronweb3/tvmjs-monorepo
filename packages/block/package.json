@@ -3,13 +3,13 @@
   "version": "10.1.0",
   "description": "Provides Block serialization and help functions",
   "keywords": ["ethereum", "block"],
-  "homepage": "https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/block#readme",
+  "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/block#readme",
   "bugs": {
-    "url": "https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+block%22"
+    "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+block%22"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ethereumjs/ethereumjs-monorepo.git"
+    "url": "https://github.com/tronweb3/tvmjs-monorepo.git"
   },
   "license": "MPL-2.0",
   "author": "mjbecze (mb@ethdev.com)",
