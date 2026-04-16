@@ -86,7 +86,8 @@ describe('trace tests', async () => {
     vm.evm.events!.removeListener('step', stepHandler)
     vm.events!.removeListener('afterTx', afterTxHandler)
   })
-  it('should produce a trace of the correct length', async () => {
+  // TRON does not support eip 7480
+  it.skip('should produce a trace of the correct length', async () => {
     const common = new Common({
       hardfork: Hardfork.Cancun,
       chain: Mainnet,
@@ -128,7 +129,8 @@ describe('trace tests', async () => {
     vm.evm.events!.removeListener('step', stepHandler)
     vm.events!.removeListener('afterTx', afterTxHandler)
   })
-  it('should execute an EOF contract with 2 code sections linked by CALLF', async () => {
+  // TRON does not support eip 7480
+  it.skip('should execute an EOF contract with 2 code sections linked by CALLF', async () => {
     const common = new Common({
       hardfork: Hardfork.Cancun,
       chain: Mainnet,

@@ -257,13 +257,12 @@ export class BlockHeader {
     // Now we have set all the values of this Header, we possibly have set a dummy
     // `difficulty` value (defaults to 0). If we have a `calcDifficultyFromHeader`
     // block option parameter, we instead set difficulty to this value.
-    // TRON doesn't support this
-    // if (
-    //   opts.calcDifficultyFromHeader &&
-    //   this.common.consensusAlgorithm() === ConsensusAlgorithm.Ethash
-    // ) {
-    //   this.difficulty = this.ethashCanonicalDifficulty(opts.calcDifficultyFromHeader)
-    // }
+    if (
+      opts.calcDifficultyFromHeader &&
+      this.common.consensusAlgorithm() === ConsensusAlgorithm.Ethash
+    ) {
+      this.difficulty = this.ethashCanonicalDifficulty(opts.calcDifficultyFromHeader)
+    }
 
     // Validate consensus format after block is sealed (if applicable) so extraData checks will pass
     if (skipValidateConsensusFormat === false) this._consensusFormatValidation()
