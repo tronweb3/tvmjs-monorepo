@@ -18,6 +18,8 @@ export default mergeConfig(
         'test/api/t8ntool/t8ntool.spec.ts',
         // test runners are ran only in ci
         'test/tester/state.spec.ts',
+        // Uses solc which depends on memorystream (Node.js util.inherits not available in browser)
+        'test/api/tvm/**',
         'test/tester/blockchain.spec.ts',
         'test/tester/executionSpecBlockchain.test.ts',
         'test/tester/executionSpecState.test.ts',
