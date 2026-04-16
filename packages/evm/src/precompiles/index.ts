@@ -218,7 +218,7 @@ const precompileEntries: PrecompileEntry[] = [
       param: Hardfork.Chainstart,
     },
     precompile: precompile09,
-    name: 'BATCH_VALIDATE_SIGNATURES (0xff)',
+    name: 'BATCH_VALIDATE_SIGNATURES (0x09)',
   },
   {
     address: BYTES_19 + '0a',
@@ -227,7 +227,7 @@ const precompileEntries: PrecompileEntry[] = [
       param: Hardfork.Chainstart,
     },
     precompile: precompile0a,
-    name: 'VALIDATE_MULTISIGN (0xfe)',
+    name: 'VALIDATE_MULTISIGN (0x0a)',
   },
   {
     address: '0000000000000000000000000000000000000100',

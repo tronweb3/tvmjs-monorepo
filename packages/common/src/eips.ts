@@ -877,15 +877,6 @@ export const tipsDict: EIPsDict = {
     requiredEIPs: [7685],
   },
   /**
-   * Description : EOF - Data section access instructions
-   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-7480.md
-   * Status      : Review
-   */
-  7480: {
-    minimumHardfork: Hardfork.London,
-    requiredEIPs: [3540, 3670],
-  },
-  /**
    * Description : EOF Contract Creation
    * URL         : https://github.com/ethereum/EIPs/blob/dd32a34cfe4473bce143641bfffe4fd67e1987ab/EIPS/eip-7620.md
    * Status      : Review
