@@ -1,13 +1,12 @@
-# @ethereumjs/statemanager `v10`
+# @tvmjs/statemanager `v10`
 
 [![NPM Package][statemanager-npm-badge]][statemanager-npm-link]
 [![GitHub Issues][statemanager-issues-badge]][statemanager-issues-link]
 [![Actions Status][statemanager-actions-badge]][statemanager-actions-link]
 [![Code Coverage][statemanager-coverage-badge]][statemanager-coverage-link]
-[![Discord][discord-badge]][discord-link]
 
-| Library to provide high level access to Ethereum State |
-| ------------------------------------------------------ |
+| Library to provide high level access to TRON-compatible state. Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
+| --- |
 
 - 🫧 Transparent state access from EVM/VM
 - 🌴 Tree-shakeable API
@@ -29,7 +28,7 @@
 - [Browser](#browser)
 - [API](#api)
 - [Development](#development)
-- [EthereumJS](#ethereumjs)
+- [Upstream](#upstream)
 - [License](#license)
 
 
@@ -38,19 +37,19 @@
 To obtain the latest version, simply require the project using `npm`:
 
 ```shell
-npm install @ethereumjs/statemanager
+npm install @tvmjs/statemanager
 ```
 
 ## Getting Started
 
 ### Overview
 
-The `StateManager` provides high-level access and manipulation methods to and for the Ethereum state, thinking in terms of accounts or contract code rather then the storage operations of the underlying data structure (e.g. a [Trie](../trie/)).
+The `StateManager` provides high-level access and manipulation methods to and for the TRON-compatible state, thinking in terms of accounts or contract code rather then the storage operations of the underlying data structure (e.g. a [Trie](../trie/)).
 
 This library includes several different implementations that all implement the `StateManager` interface which is accepted by the `vm` library. These include:
 
 - [`SimpleStateManager`](./src/simpleStateManager.ts) -a minimally functional (and dependency minimized) version of the state manager suitable for most basic EVM bytecode operations
-- [`MerkleStateManager`](./src/stateManager.ts) - a Merkle-Patricia Trie-based `MerkleStateManager` implementation that is used by the `@ethereumjs/client` and `@ethereumjs/vm`
+- [`MerkleStateManager`](./src/stateManager.ts) - a Merkle-Patricia Trie-based `MerkleStateManager` implementation that is used by the `@tvmjs/client` and `@tvmjs/vm`
 - [`RPCStateManager`](./src/rpcStateManager.ts) - a light-weight implementation that sources state and history data from an external JSON-RPC provider
 - [`StatefulVerkleStateManager`](./src/statefulVerkleStateManager.ts) - an experimental implementation of a stateful verkle state manager
 - [`StatelessVerkleStateManager`](./src/statelessVerkleStateManager.ts) - an experimental implementation of a "stateless" state manager that uses Verkle proofs to provide necessary state access for processing verkle-trie based blocks
@@ -59,7 +58,7 @@ It also includes a checkpoint/revert/commit mechanism to either persist or rever
 
 ### WASM Crypto Support
 
-This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing for underlying trie keys. See `@ethereumjs/common` [README](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
+This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing for underlying trie keys. See `@tvmjs/common` [README](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
 
 ## `MerkleStateManager`
 
@@ -68,8 +67,8 @@ This library by default uses JavaScript implementations for the basic standard c
 ```ts
 // ./examples/basicUsage.ts
 
-import { MerkleStateManager } from '@ethereumjs/statemanager'
-import { Account, Address, hexToBytes } from '@ethereumjs/util'
+import { MerkleStateManager } from '@tvmjs/statemanager'
+import { Account, Address, hexToBytes } from '@tvmjs/util'
 
 const main = async () => {
   const stateManager = new MerkleStateManager()
@@ -123,8 +122,8 @@ import {
   addMerkleStateProofData,
   fromMerkleStateProof,
   getMerkleStateProof,
-} from '@ethereumjs/statemanager'
-import { Address, hexToBytes } from '@ethereumjs/util'
+} from '@tvmjs/statemanager'
+import { Address, hexToBytes } from '@tvmjs/util'
 
 const main = async () => {
   // setup `stateManager` with some existing address
@@ -178,7 +177,7 @@ This state manager can be instantiated and used as follows:
 ```ts
 // ./examples/simple.ts
 
-import { Account, createAddressFromPrivateKey, randomBytes } from '@ethereumjs/util'
+import { Account, createAddressFromPrivateKey, randomBytes } from '@tvmjs/util'
 
 import { SimpleStateManager } from '../src/index.ts'
 
@@ -203,8 +202,8 @@ A simple example of usage:
 ```ts
 // ./examples/rpcStateManager.ts
 
-import { RPCStateManager } from '@ethereumjs/statemanager'
-import { createAddressFromString } from '@ethereumjs/util'
+import { RPCStateManager } from '@tvmjs/statemanager'
+import { createAddressFromString } from '@tvmjs/util'
 
 const main = async () => {
   try {
@@ -231,8 +230,8 @@ In order to have an EVM instance that supports the BLOCKHASH opcode (which requi
 ```ts
 // ./examples/evm.ts
 
-import { createEVM } from '@ethereumjs/evm'
-import { RPCBlockChain, RPCStateManager } from '@ethereumjs/statemanager'
+import { createEVM } from '@tvmjs/evm'
+import { RPCBlockChain, RPCStateManager } from '@tvmjs/statemanager'
 
 const main = async () => {
   try {
@@ -264,7 +263,7 @@ Note: Failing to provide the `RPCBlockChain` instance when instantiating the EVM
 
 #### Potential gotchas
 
-- The RPC State Manager cannot compute valid state roots when running blocks as it does not have access to the entire Ethereum state trie so can not compute correct state roots, either for the account trie or for storage tries.
+- The RPC State Manager cannot compute valid state roots when running blocks as it does not have access to the entire state trie so can not compute correct state roots, either for the account trie or for storage tries.
 - If you are replaying mainnet transactions and an account or account storage is touched by multiple transactions in a block, you must replay those transactions in order (with regard to their position in that block) or calculated gas will likely be different than actual gas consumed.
 
 #### Further reference
@@ -281,7 +280,7 @@ See [PRs around Verkle](https://github.com/search?q=repo%3Aethereumjs%2Fethereum
 
 We provide hybrid ESM/CJS builds for all our libraries. With the v10 breaking release round from Spring 2025, all libraries are "pure-JS" by default and we have eliminated all hard-wired WASM code. Additionally we have substantially lowered the bundle sizes, reduced the number of dependencies, and cut out all usages of Node.js-specific primitives (like the Node.js event emitter).
 
-It is easily possible to run a browser build of one of the EthereumJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
+It is easily possible to run a browser build of one of the TVMJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
 
 ## API
 
@@ -296,13 +295,13 @@ With the breaking releases from Summer 2023 we have started to ship our librarie
 If you use an ES6-style `import` in your code files from the ESM build will be used:
 
 ```ts
-import { EthereumJSClass } from '@ethereumjs/[PACKAGE_NAME]'
+import { TVMJSClass } from '@tvmjs/[PACKAGE_NAME]'
 ```
 
 If you use Node.js specific `require`, the CJS build will be used:
 
 ```ts
-const { EthereumJSClass } = require('@ethereumjs/[PACKAGE_NAME]')
+const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
 ```
 
 Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS can not provide.
@@ -311,21 +310,21 @@ Using ESM will give you additional advantages over CJS beyond browser usage like
 
 Developer documentation - currently mainly with information on testing and debugging - can be found [here](./DEVELOPER.md).
 
-## EthereumJS
+## Upstream
 
-The `EthereumJS` GitHub organization and its repositories are managed by members of the former Ethereum Foundation JavaScript team and the broader Ethereum community. If you want to join for work or carry out improvements on the libraries see the [developer docs](../../DEVELOPER.md) for an overview of current standards and tools and review our [code of conduct](../../CODE_OF_CONDUCT.md).
+This package is part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, a TypeScript implementation of the TRON Virtual Machine (TVM) forked from the [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo) monorepo. We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
 
+For development information, see the [developer docs](../../DEVELOPER.md) and our [code of conduct](../../CODE_OF_CONDUCT.md).
 ## License
 
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
-[discord-badge]: https://img.shields.io/static/v1?logo=discord&label=discord&message=Join&color=blue
-[discord-link]: https://discord.gg/TNwARpR
+This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
 [statemanager-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/statemanager.svg
 [statemanager-npm-link]: https://www.npmjs.com/package/@ethereumjs/statemanager
 [statemanager-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20statemanager?label=issues
 [statemanager-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+statemanager"
-[statemanager-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/StateManager/badge.svg
-[statemanager-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22Statemanager%22
+[statemanager-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/statemanager/badge.svg
+[statemanager-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22statemanager%22
 [statemanager-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=statemanager
 [statemanager-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/statemanager
