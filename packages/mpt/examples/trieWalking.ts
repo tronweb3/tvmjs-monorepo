@@ -1,4 +1,4 @@
-import { createMPT } from '@ethereumjs/mpt'
+import { createMPT } from '@tvmjs/mpt'
 import { utf8ToBytes } from '@tvmjs/util'
 
 async function main() {

@@ -1,5 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 /**
  * Offline mainnet block replay.
  * Loads pre-captured block JSON and state data, populates a MerkleStateManager,
@@ -21,11 +22,9 @@ import * as path from 'node:path'
  *     These mismatches also reproduce with the plain RPC script (runBlockWithRPC.ts),
  *     so this is a VM execution bug, not a data collection issue.
  */
-import { createBlockFromRPC } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
-import { MerkleStateManager } from '@ethereumjs/statemanager'
-import { createVM, runBlock } from '@ethereumjs/vm'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { createBlockFromRPC } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
+import { MerkleStateManager } from '@tvmjs/statemanager'
 import {
   Account,
   bytesToHex,
@@ -33,6 +32,7 @@ import {
   hexToBytes,
   setLengthLeft,
 } from '@tvmjs/util'
+import { createVM, runBlock } from '@tvmjs/vm'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
 interface StateData {

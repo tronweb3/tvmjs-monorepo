@@ -1,6 +1,6 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork } from '@ethereumjs/common'
-import { goerliChainConfig } from '@ethereumjs/testdata'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork } from '@tvmjs/common'
+import { goerliChainConfig } from '@tvmjs/testdata'
 
 const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
 

@@ -3,7 +3,7 @@ import {
   addMerkleStateProofData,
   fromMerkleStateProof,
   getMerkleStateProof,
-} from '@ethereumjs/statemanager'
+} from '@tvmjs/statemanager'
 import { Address, hexToBytes } from '@tvmjs/util'
 
 const main = async () => {

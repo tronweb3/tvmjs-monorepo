@@ -11,11 +11,11 @@ import * as path from 'node:path'
  *   block<number>.json       - Raw block JSON from eth_getBlockByNumber
  *   block<number>State.json  - Pre-state (accounts, code, storage)
  */
-import { createBlockFromRPC } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
-import { RPCStateManager } from '@ethereumjs/statemanager'
+import { createBlockFromRPC } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
+import { RPCStateManager } from '@tvmjs/statemanager'
 import { bytesToHex, fetchFromProvider, intToHex } from '@tvmjs/util'
-import { createVM, runBlock } from '@ethereumjs/vm'
+import { createVM, runBlock } from '@tvmjs/vm'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 

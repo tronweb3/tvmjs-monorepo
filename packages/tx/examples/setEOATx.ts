@@ -9,7 +9,7 @@
 // It will self-delegate. Note that in a 7702-tx, you are free to include any authorization item.
 // If the authorization item is valid (it has the correct nonce, and matches the chainId (or the chainId is 0))
 // then it will delegate the code of the account **who signed that authorization item** to the address in that authority item
-import { createEOACode7702Tx } from '@ethereumjs/tx'
+import { createEOACode7702Tx } from '@tvmjs/tx'
 import type { EOACode7702AuthorizationListItemUnsigned } from '@tvmjs/util'
 import {
   Address,

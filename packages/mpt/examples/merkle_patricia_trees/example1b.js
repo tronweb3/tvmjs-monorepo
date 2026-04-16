@@ -1,6 +1,6 @@
 /* Example 1b - Manually Creating and Updating a Secure Trie*/
 
-const { bytesToHex, bytesToUtf8, utf8ToBytes } = require('@ethereumjs/util')
+const { bytesToHex, bytesToUtf8, utf8ToBytes } = require('@tvmjs/util')
 const { keccak256 } = require('ethereum-cryptography/keccak')
 
 const { MerklePatriciaTrie } = require('../../dist/cjs/index.js')

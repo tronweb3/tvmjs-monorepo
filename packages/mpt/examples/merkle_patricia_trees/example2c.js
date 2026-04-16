@@ -1,6 +1,6 @@
 // Example 2c - Creating and looking up a leaf node
 
-const { bytesToUtf8, utf8ToBytes } = require('@ethereumjs/util')
+const { bytesToUtf8, utf8ToBytes } = require('@tvmjs/util')
 
 const { MerklePatriciaTrie } = require('../../dist/cjs/index.js')
 

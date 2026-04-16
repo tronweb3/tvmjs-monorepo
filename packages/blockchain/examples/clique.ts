@@ -1,8 +1,8 @@
-import { CliqueConsensus, createBlockchain } from '@ethereumjs/blockchain'
-import { Common, ConsensusAlgorithm, Hardfork } from '@ethereumjs/common'
-import { goerliChainConfig } from '@ethereumjs/testdata'
+import { CliqueConsensus, createBlockchain } from '@tvmjs/blockchain'
+import { Common, ConsensusAlgorithm, Hardfork } from '@tvmjs/common'
+import { goerliChainConfig } from '@tvmjs/testdata'
 
-import type { ConsensusDict } from '@ethereumjs/blockchain'
+import type { ConsensusDict } from '@tvmjs/blockchain'
 
 const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.London })
 

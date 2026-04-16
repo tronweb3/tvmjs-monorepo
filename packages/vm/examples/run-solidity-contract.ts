@@ -1,19 +1,19 @@
 import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { createVM, runTx } from '@ethereumjs/vm'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
 import { bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
+import { createVM, runTx } from '@tvmjs/vm'
 import solc from 'solc'
 import { decodeAbiParameters, encodeAbiParameters, encodeFunctionData } from 'viem'
 
 import { getAccountNonce, insertAccount } from './helpers/account-utils.ts'
 import { buildTransaction } from './helpers/tx-builder.ts'
 
-import type { VM } from '@ethereumjs/vm'
 import type { Address, PrefixedHexString } from '@tvmjs/util'
+import type { VM } from '@tvmjs/vm'
 
 const INITIAL_GREETING = 'Hello, World!'
 const SECOND_GREETING = 'Hola, Mundo!' // cspell:disable-line

@@ -4,8 +4,8 @@ import path from 'node:path'
 import { hrtime } from 'node:process'
 import { parseArgs } from 'node:util'
 
-import { createBlock, createBlockFromRLP } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
+import { createBlock, createBlockFromRLP } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
 import {
   bytesToHex,
   createAddressFromString,

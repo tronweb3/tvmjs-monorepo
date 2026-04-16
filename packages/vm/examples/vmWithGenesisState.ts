@@ -1,7 +1,7 @@
-import { Chain } from '@ethereumjs/common'
-import { getGenesis } from '@ethereumjs/genesis'
-import { createVM } from '@ethereumjs/vm'
+import { Chain } from '@tvmjs/common'
+import { getGenesis } from '@tvmjs/genesis'
 import { createAddressFromString } from '@tvmjs/util'
+import { createVM } from '@tvmjs/vm'
 
 const main = async () => {
   const genesisState = getGenesis(Chain.Mainnet)

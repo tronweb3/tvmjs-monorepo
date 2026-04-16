@@ -2,7 +2,7 @@
 // You can run them with tsx, as this project is developed in TypeScript.
 // Install the dependencies and run `npx tsx examples/transactions.ts`
 
-import { createLegacyTx, createLegacyTxFromBytesArray } from '@ethereumjs/tx'
+import { createLegacyTx, createLegacyTxFromBytesArray } from '@tvmjs/tx'
 import type { PrefixedHexString } from '@tvmjs/util'
 import { bytesToHex, hexToBytes, randomBytes } from '@tvmjs/util'
 

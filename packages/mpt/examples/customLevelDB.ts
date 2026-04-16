@@ -1,4 +1,4 @@
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
 import { KeyEncoding, ValueEncoding } from '@tvmjs/util'
 import { Level } from 'level'
 import { MemoryLevel } from 'memory-level'

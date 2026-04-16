@@ -1,5 +1,5 @@
-import { createCommonFromGethGenesis } from '@ethereumjs/common'
-import { postMergeGethGenesis } from '@ethereumjs/testdata'
+import { createCommonFromGethGenesis } from '@tvmjs/common'
+import { postMergeGethGenesis } from '@tvmjs/testdata'
 import { hexToBytes } from '@tvmjs/util'
 
 const genesisHash = hexToBytes('0x3b8fb240d288781d4aac94d3fd16809ee413bc99294a085798a589dae51ddd4a')

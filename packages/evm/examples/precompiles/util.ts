@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createEVM } from '@ethereumjs/evm'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createEVM } from '@tvmjs/evm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import type { PrefixedHexString } from '@tvmjs/util'
 

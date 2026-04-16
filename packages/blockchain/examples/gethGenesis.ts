@@ -1,6 +1,6 @@
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { createCommonFromGethGenesis, parseGethGenesisState } from '@ethereumjs/common'
-import { postMergeGethGenesis } from '@ethereumjs/testdata'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { createCommonFromGethGenesis, parseGethGenesisState } from '@tvmjs/common'
+import { postMergeGethGenesis } from '@tvmjs/testdata'
 import { bytesToHex } from '@tvmjs/util'
 
 const main = async () => {

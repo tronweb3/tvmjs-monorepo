@@ -1,6 +1,6 @@
 // Example 2d - Creating and looking up an extension node
 
-const { bytesToHex, utf8ToBytes } = require('@ethereumjs/util')
+const { bytesToHex, utf8ToBytes } = require('@tvmjs/util')
 
 const { MerklePatriciaTrie } = require('../../dist/cjs/index.js')
 

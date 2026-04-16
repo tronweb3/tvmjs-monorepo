@@ -4,10 +4,10 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 
-import { createBlock } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { Common, ConsensusType, Hardfork, Mainnet } from '@ethereumjs/common'
-import { MerkleStateManager } from '@ethereumjs/statemanager'
+import { createBlock } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Common, ConsensusType, Hardfork, Mainnet } from '@tvmjs/common'
+import { MerkleStateManager } from '@tvmjs/statemanager'
 import {
   createAccessList2930Tx,
   createBlob4844Tx,
@@ -15,7 +15,7 @@ import {
   createFeeMarket1559Tx,
   createLegacyTx,
   type AccessList,
-} from '@ethereumjs/tx'
+} from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -41,7 +41,7 @@ import {
   setLengthLeft,
   type PrefixedHexString,
 } from '@tvmjs/util'
-import { buildBlock, createVM, runBlock } from '@ethereumjs/vm'
+import { buildBlock, createVM, runBlock } from '@tvmjs/vm'
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
@@ -1293,7 +1293,7 @@ async function main() {
   const fixtureInfo = {
     hash: fixtureInfoHash,
     comment: 'ethereumjs generated stress fixture',
-    'filling-transition-tool': '@ethereumjs/vm buildBlock',
+    'filling-transition-tool': '@tvmjs/vm buildBlock',
     description,
     url: reference.info.url,
     'fixture-format': reference.info['fixture-format'],

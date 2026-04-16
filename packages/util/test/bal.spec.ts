@@ -1,6 +1,6 @@
 import { assert, describe, it } from 'vitest'
 
-import { RLP } from '@ethereumjs/rlp'
+import { RLP } from '@tvmjs/rlp'
 import {
   type BALJSONBlockAccessList,
   BlockLevelAccessList,

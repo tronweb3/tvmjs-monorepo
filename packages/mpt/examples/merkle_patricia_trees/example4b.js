@@ -1,7 +1,7 @@
 // Example 4b - Generating a Transaction Hash from Transaction Data
 
-const rlp = require('@ethereumjs/rlp')
-const { bytesToHex } = require('@ethereumjs/util')
+const rlp = require('@tvmjs/rlp')
+const { bytesToHex } = require('@tvmjs/util')
 const { keccak256 } = require('ethereum-cryptography/keccak')
 const https = require('https')
 

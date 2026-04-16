@@ -1,6 +1,6 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import type { LegacyTxData } from '@ethereumjs/tx'
-import { createLegacyTx } from '@ethereumjs/tx'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import type { LegacyTxData } from '@tvmjs/tx'
+import { createLegacyTx } from '@tvmjs/tx'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 const txData: LegacyTxData = {

@@ -1,6 +1,6 @@
-import { Block } from '@ethereumjs/block'
-import { Common } from '@ethereumjs/common'
-import { MerkleStateManager } from '@ethereumjs/statemanager'
+import { Block } from '@tvmjs/block'
+import { Common } from '@tvmjs/common'
+import { MerkleStateManager } from '@tvmjs/statemanager'
 import {
   Account,
   Address,
@@ -12,8 +12,8 @@ import {
 } from '@tvmjs/util'
 import { Mockchain } from './mockchain.ts'
 
-import { type RunBlockResult } from '@ethereumjs/vm'
 import { type PrefixedHexString } from '@tvmjs/util'
+import { type RunBlockResult } from '@tvmjs/vm'
 
 export interface BenchmarkType {
   [key: string]: Function

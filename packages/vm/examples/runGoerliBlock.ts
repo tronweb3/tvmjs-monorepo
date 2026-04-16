@@ -1,8 +1,8 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common } from '@ethereumjs/common'
-import { goerliBlocks, goerliChainConfig } from '@ethereumjs/testdata'
-import { createVM, runBlock } from '@ethereumjs/vm'
+import { createBlock } from '@tvmjs/block'
+import { Common } from '@tvmjs/common'
+import { goerliBlocks, goerliChainConfig } from '@tvmjs/testdata'
 import { bytesToHex } from '@tvmjs/util'
+import { createVM, runBlock } from '@tvmjs/vm'
 
 const main = async () => {
   const common = new Common({ chain: goerliChainConfig, hardfork: 'london' })

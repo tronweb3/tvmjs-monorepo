@@ -1,7 +1,7 @@
 // Example 3a - Generating a hash
 
-const rlp = require('@ethereumjs/rlp')
-const { bytesToHex, utf8ToBytes } = require('@ethereumjs/util')
+const rlp = require('@tvmjs/rlp')
+const { bytesToHex, utf8ToBytes } = require('@tvmjs/util')
 const { keccak256 } = require('ethereum-cryptography/keccak')
 
 const { MerklePatriciaTrie } = require('../../dist/cjs/index.js')

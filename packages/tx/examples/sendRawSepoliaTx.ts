@@ -1,6 +1,6 @@
-import { Common, Hardfork, Sepolia } from '@ethereumjs/common'
-import { createBlob4844Tx } from '@ethereumjs/tx'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { Common, Hardfork, Sepolia } from '@tvmjs/common'
+import { createBlob4844Tx } from '@tvmjs/tx'
 import type { PrefixedHexString } from '@tvmjs/util'
 import { Units, bytesToHex, getBlobs, hexToBytes, randomBytes } from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'

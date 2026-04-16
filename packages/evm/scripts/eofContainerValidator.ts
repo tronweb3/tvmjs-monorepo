@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { unprefixedHexToBytes } from '@tvmjs/util'
 import split from 'split'
 

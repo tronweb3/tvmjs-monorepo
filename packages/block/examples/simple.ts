@@ -1,7 +1,7 @@
-import { createBlockHeader } from '@ethereumjs/block'
+import { createBlockHeader } from '@tvmjs/block'
 import { bytesToHex } from '@tvmjs/util'
 
-import type { HeaderData } from '@ethereumjs/block'
+import type { HeaderData } from '@tvmjs/block'
 
 const headerData: HeaderData = {
   number: 15,

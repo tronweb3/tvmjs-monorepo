@@ -1,6 +1,6 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
 import { keccak256, waitReady } from '@polkadot/wasm-crypto'
+import { createBlock } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
 
 const main = async () => {
   // @polkadot/wasm-crypto specific initialization

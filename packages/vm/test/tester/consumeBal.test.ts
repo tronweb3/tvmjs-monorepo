@@ -2,10 +2,10 @@ import { assert, describe, it } from 'vitest'
 
 import path from 'path'
 
-import { createBlock } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { createBlock } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
 import {
   bytesToHex,
   createAddressFromString,

@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
 
 // With enums:
 const commonWithEnums = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })

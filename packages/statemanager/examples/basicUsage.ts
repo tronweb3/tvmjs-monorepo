@@ -1,4 +1,4 @@
-import { MerkleStateManager } from '@ethereumjs/statemanager'
+import { MerkleStateManager } from '@tvmjs/statemanager'
 import { Account, Address, hexToBytes } from '@tvmjs/util'
 
 const main = async () => {

@@ -1,4 +1,4 @@
-import { RPCStateManager } from '@ethereumjs/statemanager'
+import { RPCStateManager } from '@tvmjs/statemanager'
 import { createAddressFromString } from '@tvmjs/util'
 
 const main = async () => {

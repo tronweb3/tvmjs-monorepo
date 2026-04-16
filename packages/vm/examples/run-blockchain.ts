@@ -6,19 +6,19 @@
 // 4. Puts the blocks from ../utils/blockchain-mock-data "blocks" attribute into the Blockchain
 // 5. Runs the Blockchain on the VM.
 
-import { createBlock, createBlockFromRLP } from '@ethereumjs/block'
-import { EthashConsensus, createBlockchain } from '@ethereumjs/blockchain'
-import { Common, ConsensusAlgorithm, ConsensusType, Mainnet } from '@ethereumjs/common'
-import { Ethash } from '@ethereumjs/ethash'
-import { createVM, runBlock } from '@ethereumjs/vm'
+import { createBlock, createBlockFromRLP } from '@tvmjs/block'
+import { EthashConsensus, createBlockchain } from '@tvmjs/blockchain'
+import { Common, ConsensusAlgorithm, ConsensusType, Mainnet } from '@tvmjs/common'
+import { Ethash } from '@tvmjs/ethash'
 import { Address, bytesToHex, createAccount, hexToBytes, setLengthLeft } from '@tvmjs/util'
+import { createVM, runBlock } from '@tvmjs/vm'
 
 import { blockchainMockData } from './helpers/blockchain-mock-data.ts'
 
-import type { Block, HeaderData } from '@ethereumjs/block'
-import type { Blockchain, ConsensusDict } from '@ethereumjs/blockchain'
-import type { VM } from '@ethereumjs/vm'
+import type { Block, HeaderData } from '@tvmjs/block'
+import type { Blockchain, ConsensusDict } from '@tvmjs/blockchain'
 import type { PrefixedHexString } from '@tvmjs/util'
+import type { VM } from '@tvmjs/vm'
 
 async function setupPreConditions(vm: VM, data: any) {
   await vm.stateManager.checkpoint()

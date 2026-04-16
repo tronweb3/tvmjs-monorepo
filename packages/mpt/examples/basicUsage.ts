@@ -1,4 +1,4 @@
-import { createMPT } from '@ethereumjs/mpt'
+import { createMPT } from '@tvmjs/mpt'
 import { MapDB, bytesToUtf8, utf8ToBytes } from '@tvmjs/util'
 
 async function test() {

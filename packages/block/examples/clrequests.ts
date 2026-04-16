@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
 import { sha256 } from '@noble/hashes/sha2.js'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { CLRequestType, bytesToHex, createCLRequest, hexToBytes } from '@tvmjs/util'
 
 import { createBlock, genRequestsRoot } from '../src'

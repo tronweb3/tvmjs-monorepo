@@ -1,5 +1,5 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
+import { createBlock } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
 import { Address, hexToBytes } from '@tvmjs/util'
 
 import type { WithdrawalData } from '@tvmjs/util'

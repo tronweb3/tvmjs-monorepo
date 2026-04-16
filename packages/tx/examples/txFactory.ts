@@ -1,7 +1,7 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { Capability, createTx } from '@ethereumjs/tx'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Capability, createTx } from '@tvmjs/tx'
 
-import type { EIP1559CompatibleTx } from '@ethereumjs/tx'
+import type { EIP1559CompatibleTx } from '@tvmjs/tx'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
 

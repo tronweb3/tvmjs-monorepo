@@ -3,7 +3,7 @@ import {
   createMPTFromProof,
   createMerkleProof,
   updateMPTFromMerkleProof,
-} from '@ethereumjs/mpt'
+} from '@tvmjs/mpt'
 import { bytesToUtf8, utf8ToBytes } from '@tvmjs/util'
 
 async function main() {

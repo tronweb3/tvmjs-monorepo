@@ -1,5 +1,5 @@
-import { Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { createLegacyTxFromRLP } from '@ethereumjs/tx'
+import { Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { createLegacyTxFromRLP } from '@tvmjs/tx'
 import { hexToBytes, toBytes } from '@tvmjs/util'
 
 const txData = hexToBytes(

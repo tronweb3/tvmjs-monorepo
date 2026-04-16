@@ -1,4 +1,4 @@
-import { Hardfork } from '@ethereumjs/common'
+import { Hardfork } from '@tvmjs/common'
 import { runPrecompile } from './util.ts'
 
 const main = async () => {

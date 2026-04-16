@@ -1,8 +1,8 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createBlob4844Tx } from '@ethereumjs/tx'
 import { randomBytes } from '@noble/hashes/utils.js'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createBlob4844Tx } from '@tvmjs/tx'
 import { createAddressFromPrivateKey } from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
