@@ -3,13 +3,13 @@
   "version": "10.1.0",
   "description": "An Ethereum VM implementation",
   "keywords": ["ethereum", "VM"],
-  "homepage": "https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/vm#readme",
+  "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm#readme",
   "bugs": {
-    "url": "https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+vm%22"
+    "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+vm%22"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ethereumjs/ethereumjs-monorepo.git"
+    "url": "https://github.com/tronweb3/tvmjs-monorepo.git"
   },
   "license": "MPL-2.0",
   "author": "EthereumJS Team",
