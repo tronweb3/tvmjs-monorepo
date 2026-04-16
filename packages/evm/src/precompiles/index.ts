@@ -139,15 +139,15 @@ const precompileEntries: PrecompileEntry[] = [
     precompile: precompile08,
     name: 'BN254_PAIRING (0x08)',
   },
-  {
-    address: BYTES_19 + '0a',
-    check: {
-      type: PrecompileAvailabilityCheck.EIP,
-      param: 4844,
-    },
-    precompile: precompile0a,
-    name: 'KZG_POINT_EVALUATION (0x0a)',
-  },
+  // {
+  //   address: BYTES_19 + '0a',
+  //   check: {
+  //     type: PrecompileAvailabilityCheck.EIP,
+  //     param: 4844,
+  //   },
+  //   precompile: precompile0a,
+  //   name: 'KZG_POINT_EVALUATION (0x0a)',
+  // },
   {
     address: BYTES_19 + '0b',
     check: {
