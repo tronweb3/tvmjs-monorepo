@@ -1225,6 +1225,9 @@ export class EVM implements EVMInterface {
 
   protected async _reduceSenderTokenBalance(account: Account, message: Message): Promise<void> {
     const newBalance = this._getTokenBalance(account, message.tokenId) - message.tokenValue
+    if (newBalance < BIGINT_0) {
+      throw new EVMError(EVMError.errorMessages.INSUFFICIENT_TOKEN_BALANCE)
+    }
     if (account.asset && message.tokenId !== BIGINT_0) {
       account.asset[Number(message.tokenId)] = newBalance
     }

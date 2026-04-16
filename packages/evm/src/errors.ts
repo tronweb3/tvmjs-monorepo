@@ -19,6 +19,7 @@ const EVMErrorMessage = {
   REFUND_EXHAUSTED: 'refund exhausted',
   VALUE_OVERFLOW: 'value overflow',
   INSUFFICIENT_BALANCE: 'insufficient balance',
+  INSUFFICIENT_TOKEN_BALANCE: 'insufficient token balance',
   INVALID_BYTECODE_RESULT: 'invalid bytecode deployed',
   INITCODE_SIZE_VIOLATION: 'initcode exceeds max initcode size',
   INVALID_INPUT_LENGTH: 'invalid input length',

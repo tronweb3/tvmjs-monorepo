@@ -9,7 +9,7 @@ import { gasLimitCheck } from './util.ts'
 import type { ExecResult } from '../types.ts'
 import type { PrecompileInput } from './types.ts'
 
-// TRON RIPEMD160 precompile at address 0x03
+// TRON precompile at address 0x03
 
 export function precompile03(opts: PrecompileInput): ExecResult {
   const pName = getPrecompileName('03')
