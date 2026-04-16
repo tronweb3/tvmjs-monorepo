@@ -6,7 +6,7 @@ import { assert, describe, expect, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Prague })
+const common = new Common({ chain: Mainnet, hardfork: Hardfork.Tron })
 
 const pkey = hexToBytes(`0x${'20'.repeat(32)}`)
 const GWEI = BigInt(1000000000)

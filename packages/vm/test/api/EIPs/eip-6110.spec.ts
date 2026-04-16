@@ -40,7 +40,7 @@ const depositContractByteCode = hexToBytes(
 )
 const common = new Common({
   chain: Mainnet,
-  hardfork: Hardfork.Prague,
+  hardfork: Hardfork.Tron,
 })
 // Remove 7002 so won't trigger error
 common['_activatedEIPsCache'] = [

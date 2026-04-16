@@ -54,11 +54,12 @@ describe('EIP 2929: gas cost tests', () => {
     const unsignedTx = createLegacyTx({
       gasLimit: initialGas, // ensure we pass a lot of gas, so we do not run out of gas
       to: address, // call to the contract address,
+      gasPrice: BigInt(7),
     })
 
     const tx = unsignedTx.sign(SIGNER_A.privateKey)
 
-    const result = await runTx(vm, { tx, skipHardForkValidation: true })
+    const result = await runTx(vm, { tx, skipHardForkValidation: true, skipBalance: true })
 
     const totalGasUsed = initialGas - currentGas
     assert.strictEqual(true, totalGasUsed === BigInt(test.totalGasUsed) + BigInt(21000)) // Add tx upfront cost.
@@ -81,6 +82,7 @@ describe('EIP 2929: gas cost tests', () => {
       gasLimit: BigInt(21000 + 9000), // ensure we pass a lot of gas, so we do not run out of gas
       to: contractAddress, // call to the contract address,
       value: BigInt(1),
+      gasPrice: BigInt(7),
     })
 
     const tx = unsignedTx.sign(privateKey)

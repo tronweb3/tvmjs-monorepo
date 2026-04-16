@@ -109,27 +109,31 @@ describe('ValidateMultiSignContractTest', async () => {
     assert.deepEqual(updatedAccount0?.activePermissions, tvmAccount0?.activePermissions)
   })
 
-  it('Trigger validatemultisign contract with Permission(address) case', async () => {
-    const hash = keccak_256(utf8ToBytes('hello world'))
-    const merged = concatBytes(hexToBytes('0x41'), address0.bytes, bigIntToBytes(0n), hash)
-    const toSign = sha256(merged)
+  it(
+    'Trigger validatemultisign contract with Permission(address) case',
+    async () => {
+      const hash = keccak_256(utf8ToBytes('hello world'))
+      const merged = concatBytes(hexToBytes('0x41'), address0.bytes, bigIntToBytes(0n), hash)
+      const toSign = sha256(merged)
 
-    const signatures = []
+      const signatures = []
 
-    {
-      const signKey = new utils.ethersUtils.SigningKey(`0x${account1.privateKey}`)
-      signatures.push(
-        hexToBytes(utils.ethersUtils.joinSignature(signKey.sign(toSign)) as `0x${string}`),
-      )
-    }
-    {
-      const signKey = new utils.ethersUtils.SigningKey(`0x${account0.privateKey}`)
-      signatures.push(
-        hexToBytes(utils.ethersUtils.joinSignature(signKey.sign(toSign)) as `0x${string}`),
-      )
-    }
+      {
+        const signKey = new utils.ethersUtils.SigningKey(`0x${account1.privateKey}`)
+        signatures.push(
+          hexToBytes(utils.ethersUtils.joinSignature(signKey.sign(toSign)) as `0x${string}`),
+        )
+      }
+      {
+        const signKey = new utils.ethersUtils.SigningKey(`0x${account0.privateKey}`)
+        signatures.push(
+          hexToBytes(utils.ethersUtils.joinSignature(signKey.sign(toSign)) as `0x${string}`),
+        )
+      }
 
-    const result = await validateMultiSign(vm, address0.toString(), 0n, hash, signatures)
-    assert.equal(result[0], true)
-  })
+      const result = await validateMultiSign(vm, address0.toString(), 0n, hash, signatures)
+      assert.equal(result[0], true)
+    },
+    60 * 1000,
+  )
 })

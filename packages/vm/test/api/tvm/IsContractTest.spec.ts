@@ -243,6 +243,7 @@ contract isTestCtr {
       abi: abi.find((item: any) => item.name === 'killme'),
     })
 
+    // eip 6780 keeps account after selfdestruct
     const abiItem8 = abi.find((item: any) => item.name === 'isTest')
     const result8 = await triggerConstant(vm, {
       caller,
@@ -250,6 +251,6 @@ contract isTestCtr {
       contractAddress,
       params: [contractAddressOther.toString()],
     })
-    assert.equal(result8[0], false)
+    assert.equal(result8[0], true)
   })
 })

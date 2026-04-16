@@ -584,6 +584,15 @@ export const tipsDict: EIPsDict = {
     minimumHardfork: Hardfork.SpuriousDragon,
   },
   /**
+   * Description : SWAPN, DUPN and EXCHANGE instructions
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-663.md
+   * Status      : Review
+   */
+  663: {
+    minimumHardfork: Hardfork.Chainstart,
+    requiredEIPs: [3540, 5450],
+  },
+  /**
    * Constantinople HF Meta EIP
    */
   1013: {
@@ -698,6 +707,23 @@ export const tipsDict: EIPsDict = {
    */
   3541: {
     minimumHardfork: Hardfork.Berlin,
+  },
+  /**
+   * Description : Reject transactions from senders with deployed code
+   * URL         : https://eips.ethereum.org/EIPS/eip-3607
+   * Status      : Final
+   */
+  3607: {
+    minimumHardfork: Hardfork.Chainstart,
+  },
+  /**
+   * Description : Warm COINBASE
+   * URL         : https://eips.ethereum.org/EIPS/eip-3651
+   * Status      : Final
+   */
+  3651: {
+    minimumHardfork: Hardfork.London,
+    requiredEIPs: [2929],
   },
   /**
    * Description : EOF - Code Validation
@@ -826,6 +852,20 @@ export const tipsDict: EIPsDict = {
   7002: {
     minimumHardfork: Hardfork.Paris,
     requiredEIPs: [7685],
+  },
+  /**
+   * Description : Revamped CALL instructions
+   * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-7069.md
+   * Status      : Review
+   */
+  7069: {
+    minimumHardfork: Hardfork.Berlin,
+    /* Note: per EIP these are the additionally required EIPs:
+      EIP 150 - This is the entire Tangerine Whistle hardfork
+      EIP 211 - (RETURNDATASIZE / RETURNDATACOPY) - Included in Byzantium
+      EIP 214 - (STATICCALL) - Included in Byzantium
+    */
+    requiredEIPs: [2929],
   },
   /**
    * Description : Increase the MAX_EFFECTIVE_BALANCE -> Execution layer triggered consolidations (experimental)

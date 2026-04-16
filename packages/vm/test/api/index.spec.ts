@@ -34,7 +34,7 @@ describe('VM -> basic instantiation / boolean switches', () => {
       KECCAK256_RLP,
       'it has default trie',
     )
-    assert.strictEqual(vm.common.hardfork(), Hardfork.Prague, 'it has correct default HF')
+    assert.strictEqual(vm.common.hardfork(), Hardfork.Tron, 'it has correct default HF')
   })
 
   it('should be able to activate precompiles', async () => {
