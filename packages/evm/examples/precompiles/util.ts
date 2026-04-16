@@ -1,7 +1,7 @@
 import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
 import { createEVM } from '@ethereumjs/evm'
-import { bytesToHex, hexToBytes } from '@ethereumjs/util'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 /**
  * Generic utility function to run any precompile

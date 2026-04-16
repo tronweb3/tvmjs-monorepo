@@ -5,7 +5,7 @@ import {
   hexToBytes,
   PrefixedHexString,
   utf8ToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import { BranchMPTNode, ExtensionMPTNode, LeafMPTNode } from '../dist/esm/node/index.ts'
 import { MerklePatriciaTrie } from '../dist/esm/mpt.ts'

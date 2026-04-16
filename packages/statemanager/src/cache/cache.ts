@@ -1,4 +1,4 @@
-import { isDebugEnabled } from '@ethereumjs/util'
+import { isDebugEnabled } from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import type { Debugger } from 'debug'

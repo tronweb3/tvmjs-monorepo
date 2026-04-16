@@ -1,6 +1,6 @@
 import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
 import { type EVM, createEVM } from '@ethereumjs/evm'
-import { type PrefixedHexString, hexToBytes } from '@ethereumjs/util'
+import { type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 
 // CLZ (Count Leading Zeros) opcode (0x1e)
 // Demonstrates the CLZ opcode introduced in https://eips.ethereum.org/EIPS/eip-7939

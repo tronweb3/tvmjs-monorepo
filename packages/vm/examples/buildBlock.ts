@@ -1,8 +1,8 @@
 import { createBlock } from '@ethereumjs/block'
 import { Common, Mainnet } from '@ethereumjs/common'
 import { createLegacyTx } from '@ethereumjs/tx'
-import { Account, bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@ethereumjs/util'
 import { buildBlock, createVM } from '@ethereumjs/vm'
+import { Account, bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 
 const main = async () => {
   const common = new Common({ chain: Mainnet })

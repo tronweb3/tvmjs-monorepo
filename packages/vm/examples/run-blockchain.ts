@@ -10,15 +10,15 @@ import { createBlock, createBlockFromRLP } from '@ethereumjs/block'
 import { EthashConsensus, createBlockchain } from '@ethereumjs/blockchain'
 import { Common, ConsensusAlgorithm, ConsensusType, Mainnet } from '@ethereumjs/common'
 import { Ethash } from '@ethereumjs/ethash'
-import { Address, bytesToHex, createAccount, hexToBytes, setLengthLeft } from '@ethereumjs/util'
 import { createVM, runBlock } from '@ethereumjs/vm'
+import { Address, bytesToHex, createAccount, hexToBytes, setLengthLeft } from '@tvmjs/util'
 
 import { blockchainMockData } from './helpers/blockchain-mock-data.ts'
 
 import type { Block, HeaderData } from '@ethereumjs/block'
 import type { Blockchain, ConsensusDict } from '@ethereumjs/blockchain'
-import type { PrefixedHexString } from '@ethereumjs/util'
 import type { VM } from '@ethereumjs/vm'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 async function setupPreConditions(vm: VM, data: any) {
   await vm.stateManager.checkpoint()

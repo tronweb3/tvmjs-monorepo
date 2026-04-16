@@ -1,9 +1,9 @@
 import { createBlockFromJSONRPCProvider } from '@ethereumjs/block'
 import { Common, Mainnet } from '@ethereumjs/common'
 import { RPCStateManager } from '@ethereumjs/statemanager'
-import { bytesToHex } from '@ethereumjs/util'
 import { createVM, runBlock } from '@ethereumjs/vm'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { bytesToHex } from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
 const main = async () => {

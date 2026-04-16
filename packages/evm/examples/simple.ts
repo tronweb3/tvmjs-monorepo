@@ -1,5 +1,5 @@
 import { createEVM } from '@ethereumjs/evm'
-import { hexToBytes } from '@ethereumjs/util'
+import { hexToBytes } from '@tvmjs/util'
 
 const main = async () => {
   const evm = await createEVM()

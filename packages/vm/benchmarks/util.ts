@@ -9,11 +9,11 @@ import {
   hexToBytes,
   isHexString,
   toBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { Mockchain } from './mockchain.ts'
 
-import { type PrefixedHexString } from '@ethereumjs/util'
 import { type RunBlockResult } from '@ethereumjs/vm'
+import { type PrefixedHexString } from '@tvmjs/util'
 
 export interface BenchmarkType {
   [key: string]: Function

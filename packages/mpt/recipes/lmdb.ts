@@ -1,6 +1,6 @@
 import { Database, open } from 'lmdb'
 
-import type { BatchDBOp, DB } from '@ethereumjs/util'
+import type { BatchDBOp, DB } from '@tvmjs/util'
 
 export class LMDB implements DB {
   readonly _path: string

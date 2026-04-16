@@ -4,7 +4,7 @@ import {
   createMerkleProof,
   updateMPTFromMerkleProof,
 } from '@ethereumjs/mpt'
-import { bytesToUtf8, utf8ToBytes } from '@ethereumjs/util'
+import { bytesToUtf8, utf8ToBytes } from '@tvmjs/util'
 
 async function main() {
   const k1 = utf8ToBytes('keyOne')

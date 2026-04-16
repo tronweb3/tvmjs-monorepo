@@ -1,7 +1,7 @@
 import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
 import type { LegacyTxData } from '@ethereumjs/tx'
 import { createLegacyTx } from '@ethereumjs/tx'
-import { bytesToHex, hexToBytes } from '@ethereumjs/util'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 const txData: LegacyTxData = {
   nonce: '0x0',

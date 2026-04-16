@@ -14,12 +14,12 @@ import * as path from 'node:path'
 import { createBlockFromRPC } from '@ethereumjs/block'
 import { Common, Mainnet } from '@ethereumjs/common'
 import { RPCStateManager } from '@ethereumjs/statemanager'
-import { bytesToHex, fetchFromProvider, intToHex } from '@ethereumjs/util'
+import { bytesToHex, fetchFromProvider, intToHex } from '@tvmjs/util'
 import { createVM, runBlock } from '@ethereumjs/vm'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
-import type { Address } from '@ethereumjs/util'
+import type { Address } from '@tvmjs/util'
 
 /**
  * Wraps a function with retry logic for transient RPC failures (timeouts, etc.).

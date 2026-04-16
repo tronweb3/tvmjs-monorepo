@@ -40,7 +40,7 @@ import {
   hexToBytes,
   setLengthLeft,
   type PrefixedHexString,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { buildBlock, createVM, runBlock } from '@ethereumjs/vm'
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'

@@ -6,7 +6,7 @@ import {
   bytesToHex,
   createAddressFromString,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import type { ExecResult, PrecompileInput } from '@ethereumjs/evm'
 

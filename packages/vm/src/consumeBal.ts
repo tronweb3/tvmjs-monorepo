@@ -7,7 +7,7 @@ import {
   hexToBigInt,
   hexToBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import type { VM } from './vm.ts'
 
 export async function consumeBal(

@@ -24,15 +24,15 @@ import * as path from 'node:path'
 import { createBlockFromRPC } from '@ethereumjs/block'
 import { Common, Mainnet } from '@ethereumjs/common'
 import { MerkleStateManager } from '@ethereumjs/statemanager'
+import { createVM, runBlock } from '@ethereumjs/vm'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import {
   Account,
   bytesToHex,
   createAddressFromString,
   hexToBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
-import { createVM, runBlock } from '@ethereumjs/vm'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
 interface StateData {

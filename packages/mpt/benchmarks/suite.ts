@@ -5,7 +5,7 @@ import { logMem, mark, run } from 'micro-bmark' // cspell:disable-line
 import { MerklePatriciaTrie } from '../dist/cjs/index.js'
 import { keys } from './keys'
 
-import type { DB } from '@ethereumjs/util'
+import type { DB } from '@tvmjs/util'
 
 export function createSuite(db: DB<string, string>) {
   const trie = new MerklePatriciaTrie({ db })

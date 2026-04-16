@@ -2,7 +2,7 @@
  * Run with DEBUG=ethjs,trie:* to see debug log output
  */
 import { MerklePatriciaTrie, createMerkleProof, verifyMPTWithMerkleProof } from '@ethereumjs/mpt'
-import { utf8ToBytes } from '@ethereumjs/util'
+import { utf8ToBytes } from '@tvmjs/util'
 
 const trie_entries: [string, string | null][] = [
   ['do', 'verb'],

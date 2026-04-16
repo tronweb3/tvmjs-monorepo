@@ -4,15 +4,15 @@ import path from 'path'
 
 import { createBlock } from '@ethereumjs/block'
 import { createBlockchain } from '@ethereumjs/blockchain'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import {
   bytesToHex,
   createAddressFromString,
   hexToBigInt,
   hexToBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 import { consumeBal } from '../../src/consumeBal.ts'
 import { createVM } from '../../src/index.ts'

@@ -1,7 +1,7 @@
 import { Hardfork } from '@ethereumjs/common'
-import { type PrefixedHexString, bytesToHex, randomBytes, utf8ToBytes } from '@ethereumjs/util'
 import { p256 } from '@noble/curves/nist.js'
 import { sha256 } from '@noble/hashes/sha2.js'
+import { type PrefixedHexString, bytesToHex, randomBytes, utf8ToBytes } from '@tvmjs/util'
 import { runPrecompile } from './util.ts'
 
 const main = async () => {

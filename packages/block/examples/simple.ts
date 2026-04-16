@@ -1,5 +1,5 @@
 import { createBlockHeader } from '@ethereumjs/block'
-import { bytesToHex } from '@ethereumjs/util'
+import { bytesToHex } from '@tvmjs/util'
 
 import type { HeaderData } from '@ethereumjs/block'
 

@@ -4,7 +4,7 @@
 
 import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
 import { getOpcodesForHF, paramsEVM } from '@ethereumjs/evm'
-import { bytesToHex, hexToBytes } from '@ethereumjs/util'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul, params: paramsEVM })
 const opcodes = getOpcodesForHF(common).opcodes

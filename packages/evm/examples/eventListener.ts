@@ -1,5 +1,5 @@
 import { createEVM } from '@ethereumjs/evm'
-import { createAddressFromString, hexToBytes } from '@ethereumjs/util'
+import { createAddressFromString, hexToBytes } from '@tvmjs/util'
 
 const main = async () => {
   const evm = await createEVM()

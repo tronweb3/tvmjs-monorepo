@@ -1,5 +1,5 @@
 import { MerklePatriciaTrie, createMerkleProof, verifyMPTWithMerkleProof } from '@ethereumjs/mpt'
-import { bytesToUtf8, utf8ToBytes } from '@ethereumjs/util'
+import { bytesToUtf8, utf8ToBytes } from '@tvmjs/util'
 
 const trie = new MerklePatriciaTrie()
 

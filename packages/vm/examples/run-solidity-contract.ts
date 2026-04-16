@@ -4,16 +4,16 @@ import { fileURLToPath } from 'url'
 import { createBlock } from '@ethereumjs/block'
 import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
 import { createLegacyTx } from '@ethereumjs/tx'
-import { bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@ethereumjs/util'
 import { createVM, runTx } from '@ethereumjs/vm'
+import { bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 import solc from 'solc'
 import { decodeAbiParameters, encodeAbiParameters, encodeFunctionData } from 'viem'
 
 import { getAccountNonce, insertAccount } from './helpers/account-utils.ts'
 import { buildTransaction } from './helpers/tx-builder.ts'
 
-import type { Address, PrefixedHexString } from '@ethereumjs/util'
 import type { VM } from '@ethereumjs/vm'
+import type { Address, PrefixedHexString } from '@tvmjs/util'
 
 const INITIAL_GREETING = 'Hello, World!'
 const SECOND_GREETING = 'Hola, Mundo!' // cspell:disable-line

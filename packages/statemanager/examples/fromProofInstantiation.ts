@@ -4,7 +4,7 @@ import {
   fromMerkleStateProof,
   getMerkleStateProof,
 } from '@ethereumjs/statemanager'
-import { Address, hexToBytes } from '@ethereumjs/util'
+import { Address, hexToBytes } from '@tvmjs/util'
 
 const main = async () => {
   // setup `stateManager` with some existing address

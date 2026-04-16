@@ -4,7 +4,7 @@ import {
   bigIntToBytes,
   hexToBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import type { Log } from './types.ts'
 
 /** EIP-7708 system address (canonical SYSTEM_ADDRESS_BYTES from util) */
