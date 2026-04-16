@@ -1,6 +1,4 @@
 import { Hardfork } from '@tvmjs/common'
-import { Hardfork } from '@tvmjs/common'
-import { type Address, bytesToUnprefixedHex } from '@tvmjs/util'
 import { type Address, type PrefixedHexString, bytesToUnprefixedHex } from '@tvmjs/util'
 
 import { precompile0a } from './0a-validate-multi-sign.ts'

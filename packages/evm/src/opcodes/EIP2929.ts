@@ -1,4 +1,3 @@
-import { BIGINT_0 } from '@tvmjs/util'
 import { BIGINT_0, bytesToHex } from '@tvmjs/util'
 
 import type { Common } from '@tvmjs/common'

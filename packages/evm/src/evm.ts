@@ -1,5 +1,4 @@
 import { Hardfork } from '@tvmjs/common'
-import { Hardfork } from '@tvmjs/common'
 import type { BlockLevelAccessList, PrefixedHexString } from '@tvmjs/util'
 import {
   Account,

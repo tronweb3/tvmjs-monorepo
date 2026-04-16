@@ -1,5 +1,4 @@
 import type { ParamsDict } from '@tvmjs/common'
-import type { ParamsDict } from '@tvmjs/common'
 import { SYSTEM_ADDRESS } from '@tvmjs/util'
 
 export const paramsVM: ParamsDict = {

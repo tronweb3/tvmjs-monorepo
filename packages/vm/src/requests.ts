@@ -1,5 +1,4 @@
 import { Mainnet } from '@tvmjs/common'
-import { Mainnet } from '@tvmjs/common'
 import type { BlockLevelAccessList, PrefixedHexString } from '@tvmjs/util'
 import {
   CLRequest,
