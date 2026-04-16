@@ -2,7 +2,7 @@ import type { ChainConfig } from './types.ts'
 
 export const Mainnet: ChainConfig = {
   name: 'mainnet',
-  chainId: 683748638,
+  chainId: 1,
   defaultHardfork: 'tron',
   consensus: {
     type: 'pow',
@@ -28,6 +28,11 @@ export const Mainnet: ChainConfig = {
       name: 'homestead',
       block: 1150000,
       forkHash: '0x97c2c34c',
+    },
+    {
+      name: 'dao',
+      block: 1920000,
+      forkHash: '0x91d1f948',
     },
     {
       name: 'tangerineWhistle',
@@ -60,15 +65,33 @@ export const Mainnet: ChainConfig = {
       forkHash: '0x879d6e30',
     },
     {
+      name: 'berlin',
+      block: 12244000,
+      forkHash: '0x0eb440f6',
+    },
+    {
       name: 'london',
       block: 12965000,
       forkHash: '0xb715077d',
+    },
+    {
+      // The forkHash will remain same as mergeNetsplitBlock is post merge
+      // terminal block: https://etherscan.io/block/15537393
+      name: 'paris',
+      block: 15537394,
+      forkHash: '0xf0afd0e3',
     },
     {
       name: 'shanghai',
       block: null,
       timestamp: '1681338455',
       forkHash: '0xdce96c2d',
+    },
+    {
+      name: 'cancun',
+      block: null,
+      timestamp: '1710338135',
+      forkHash: '0x9f3d2254',
     },
     {
       name: 'tron',

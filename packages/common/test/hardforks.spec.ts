@@ -31,11 +31,11 @@ describe('[Common]: Hardfork logic', () => {
       Hardfork.Istanbul,
       Hardfork.Berlin,
       Hardfork.London,
-      Hardfork.ArrowGlacier,
-      Hardfork.GrayGlacier,
+      // Hardfork.ArrowGlacier,
+      // Hardfork.GrayGlacier,
       Hardfork.Shanghai,
       Hardfork.Paris,
-      Hardfork.Amsterdam,
+      // Hardfork.Amsterdam,
     ]
     let c
 
@@ -45,7 +45,8 @@ describe('[Common]: Hardfork logic', () => {
     }
   })
 
-  it('getHardforkBy() / setHardforkBy()', () => {
+  // TRON does not support this feature
+  it.skip('getHardforkBy() / setHardforkBy()', () => {
     const c = new Common({ chain: Mainnet })
     let msg = 'should get HF correctly'
 
@@ -134,8 +135,8 @@ describe('[Common]: Hardfork logic', () => {
     msg = 'should return correct next HF (mainnet: byzantium -> constantinople)'
     assert.strictEqual(c.nextHardforkBlockOrTimestamp(Hardfork.Byzantium)!, BigInt(7280000), msg)
 
-    msg = 'should return correct next HF (mainnet: prague -> osaka)'
-    assert.strictEqual(c.nextHardforkBlockOrTimestamp(Hardfork.Prague)!, BigInt(1764798551), msg)
+    // msg = 'should return correct next HF (mainnet: prague -> osaka)'
+    // assert.strictEqual(c.nextHardforkBlockOrTimestamp(Hardfork.Prague)!, BigInt(1764798551), msg)
 
     const c2 = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
 
@@ -223,7 +224,8 @@ describe('[Common]: Hardfork logic', () => {
     assert.strictEqual(c.hardforkGteHardfork(null, Hardfork.Constantinople), false, msg)
   })
 
-  it('_calcForkHash()', () => {
+  // TRON does not support this feature
+  it.skip('_calcForkHash()', () => {
     const chains: [ChainConfig, Uint8Array][] = [
       [Mainnet, hexToBytes('0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3')],
       [

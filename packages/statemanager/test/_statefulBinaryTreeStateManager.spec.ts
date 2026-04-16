@@ -20,6 +20,7 @@ import type { PrefixedHexString } from '@tvmjs/util'
 
 const hashFunction = blake3
 
+// TRON does not support eip 7864
 describe('Binary Tree API tests', () => {
   it('should put/get/delete an account (with no storage/code from the trie)', async () => {
     const common = new Common({

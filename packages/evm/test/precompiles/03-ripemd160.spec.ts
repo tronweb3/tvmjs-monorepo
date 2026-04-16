@@ -16,7 +16,7 @@ describe('Precompiles: RIPEMD160', () => {
     const evm = await createEVM({
       common,
     })
-    const addressStr = '0000000000000000000000000000000000000003'
+    const addressStr = '0000000000000000000000000000000000020003'
     const RIPEMD160 = getActivePrecompiles(common).get(addressStr)!
 
     const data = hexToBytes(`0x${input}`)

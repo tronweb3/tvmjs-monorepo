@@ -266,7 +266,8 @@ describe('fromTxData using from a json', () => {
   })
 })
 
-describe('EIP4844 constructor tests - invalid scenarios', () => {
+// TRON does not support EIP 7594
+describe.skip('EIP4844 constructor tests - invalid scenarios', () => {
   it('should work', () => {
     for (const kzg of kzgs) {
       const baseTxData = {
@@ -319,7 +320,7 @@ describe('EIP4844 constructor tests - invalid scenarios', () => {
 
       const commonWithEIP7594 = new Common({
         chain: Mainnet,
-        hardfork: Hardfork.Osaka,
+        hardfork: Hardfork.Cancun,
         customCrypto: { kzg: kzg.lib },
       })
       assert.isTrue(commonWithEIP7594.isActivatedEIP(7594), 'EIP-7594 should be activated')

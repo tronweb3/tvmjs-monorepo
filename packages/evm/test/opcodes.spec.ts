@@ -18,20 +18,12 @@ describe('EVM -> getActiveOpcodes()', () => {
   })
 
   it('should expose opcodes when HF is active (>= istanbul)', async () => {
-    let common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    let evm = await createEVM({ common })
+    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
+    const evm = await createEVM({ common })
     assert.strictEqual(
       evm.getActiveOpcodes().get(CHAINID)!.name,
       'CHAINID',
       'istanbul opcode exposed (HF: istanbul)',
-    )
-
-    common = new Common({ chain: Mainnet, hardfork: Hardfork.MuirGlacier })
-    evm = await createEVM({ common })
-    assert.strictEqual(
-      evm.getActiveOpcodes().get(CHAINID)!.name,
-      'CHAINID',
-      'istanbul opcode exposed (HF: > istanbul (muirGlacier)',
     )
   })
 

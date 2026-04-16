@@ -225,6 +225,14 @@ export const tronHardforksDict: HardforksDict = {
     eips: [606],
   },
   /**
+   * Description: DAO rescue hardfork
+   * URL        : https://eips.ethereum.org/EIPS/eip-779
+   * Status     : Final
+   */
+  dao: {
+    eips: [],
+  },
+  /**
    * Description: Hardfork with gas cost changes for IO-heavy operations
    * URL        : https://eips.ethereum.org/EIPS/eip-608
    * Status     : Final
@@ -281,12 +289,35 @@ export const tronHardforksDict: HardforksDict = {
     eips: [1559, 3198, 3529, 3541],
   },
   /**
+   * Description: Hardfork to upgrade the consensus mechanism to Proof-of-Stake
+   * URL        : https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/merge.md
+   * Status     : Final
+   */
+  paris: {
+    consensus: {
+      type: 'pos',
+      algorithm: 'casper',
+      casper: {},
+    },
+    eips: [3675, 4399],
+  },
+  /**
    * Description: Next feature hardfork after the merge hardfork having withdrawals, warm coinbase, push0, limit/meter initcode
    * URL        : https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/shanghai.md
    * Status     : Final
    */
   shanghai: {
     eips: [3651, 3855, 3860, 4895],
+  },
+  /**
+   * Description: Next feature hardfork after shanghai, includes proto-danksharding EIP 4844 blobs,
+   * transient storage opcodes, parent beacon block root availability in EVM, selfdestruct only in
+   * same transaction, and blob base fee opcode
+   * URL        : https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/cancun.md
+   * Status     : Final
+   */
+  cancun: {
+    eips: [1153, 4844, 4788, 5656, 6780, 7516],
   },
   tron: {
     eips: [],
