@@ -24,6 +24,8 @@
     }
   ],
   "words": [
+    "baljson",
+    "slotnum",
     "unpadding",
     "prehash",
     "viem",
@@ -438,6 +440,7 @@
     "RIPEMD",
     "journaling",
     "BLOBHASH",
+    "BALJSON",
     "coldaccountaccess",
     "warmstorageread",
     "coldsload",

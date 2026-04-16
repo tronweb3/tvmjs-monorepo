@@ -1,5 +1,7 @@
 import { Hardfork } from '@tvmjs/common'
+import { Hardfork } from '@tvmjs/common'
 import { type Address, bytesToUnprefixedHex } from '@tvmjs/util'
+import { type Address, type PrefixedHexString, bytesToUnprefixedHex } from '@tvmjs/util'
 
 import { precompile0a } from './0a-validate-multi-sign.ts'
 // import { precompile0a } from './0a-kzg-point-evaluation.ts'
@@ -281,16 +283,46 @@ const precompiles: Precompiles = {
   '0000000000000000000000000000000000020009': precompile20009,
 }
 
+/**
+ * Specifies a precompile to remove from the EVM.
+ * The address can be an `Address` instance or a `0x`-prefixed hex string.
+ */
 type DeletePrecompile = {
-  address: Address
+  address: Address | PrefixedHexString
 }
 
+/**
+ * Specifies a precompile to add to (or override in) the EVM.
+ * The address can be an `Address` instance or a `0x`-prefixed hex string.
+ */
 type AddPrecompile = {
-  address: Address
+  address: Address | PrefixedHexString
   function: PrecompileFunc
 }
 
+/**
+ * A custom precompile entry: either an addition/override or a deletion.
+ *
+ * ```ts
+ * // Add a custom precompile at a new address
+ * const add: CustomPrecompile = {
+ *   address: '0x0000000000000000000000000000000000ff0001',
+ *   function: myPrecompileImpl,
+ * }
+ * // Delete an existing precompile
+ * const del: CustomPrecompile = {
+ *   address: '0x0000000000000000000000000000000000000002',
+ * }
+ * ```
+ */
 type CustomPrecompile = AddPrecompile | DeletePrecompile
+
+function resolvePrecompileAddress(address: Address | PrefixedHexString): string {
+  if (typeof address === 'string') {
+    return address.slice(2).padStart(40, '0').toLowerCase()
+  }
+  return bytesToUnprefixedHex(address.bytes)
+}
 
 function getActivePrecompiles(
   common: Common,
@@ -299,9 +331,8 @@ function getActivePrecompiles(
   const precompileMap = new Map()
   if (customPrecompiles) {
     for (const precompile of customPrecompiles) {
-      // Using deprecated bytesToUnprefixedHex for performance: used as Map keys for precompile lookups.
       precompileMap.set(
-        bytesToUnprefixedHex(precompile.address.bytes),
+        resolvePrecompileAddress(precompile.address),
         'function' in precompile ? precompile.function : undefined,
       )
     }

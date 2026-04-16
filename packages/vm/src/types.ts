@@ -4,6 +4,7 @@ import type { EVMInterface, EVMMockBlockchainInterface, EVMOpts, EVMResult, Log 
 import type { AccessList, TypedTransaction } from '@tvmjs/tx'
 import type {
   BigIntLike,
+  BlockLevelAccessList,
   CLRequest,
   CLRequestType,
   PrefixedHexString,
@@ -367,6 +368,11 @@ export interface RunBlockResult extends Omit<ApplyBlockResult, 'bloom'> {
    * Any CL requests that were processed in the course of this block
    */
   requests?: CLRequest<CLRequestType>[]
+  /**
+   * The block level access list created during execution
+   * (if EIP-7928 is active)
+   */
+  blockLevelAccessList?: BlockLevelAccessList
 }
 
 export interface AfterBlockEvent extends RunBlockResult {
@@ -458,6 +464,12 @@ export interface RunTxResult extends EVMResult {
    * which consists of calldata cost, intrinsic cost and optionally the access list costs
    */
   totalGasSpent: bigint
+
+  /**
+   * The amount of gas accounted for at block level.
+   * On EIP-7778 this excludes tx-level refund subtraction.
+   */
+  blockGasSpent: bigint
 
   /**
    * The amount of gas as that was refunded during the transaction (i.e. `gasUsed = totalGasConsumed - gasRefund`)

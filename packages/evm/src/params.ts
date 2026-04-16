@@ -1,4 +1,6 @@
 import type { ParamsDict } from '@tvmjs/common'
+import type { ParamsDict } from '@tvmjs/common'
+import { SYSTEM_ADDRESS } from '@tvmjs/util'
 
 export const paramsEVM: ParamsDict = {
   /**
@@ -79,6 +81,7 @@ export const paramsEVM: ParamsDict = {
     numberGas: 2, // Base fee of the NUMBER opcode
     difficultyGas: 2, // Base fee of the DIFFICULTY opcode
     gaslimitGas: 2, // Base fee of the GASLIMIT opcode
+    slotnumGas: 2, // Base fee of the SLOTNUM opcode (EIP-7843)
     popGas: 2, // Base fee of the POP opcode
     mloadGas: 3, // Base fee of the MLOAD opcode
     mstoreGas: 3, // Base fee of the MSTORE opcode
@@ -215,9 +218,9 @@ export const paramsEVM: ParamsDict = {
   },
 
   /**
-.  * SWAPN, DUPN and EXCHANGE instructions
+.  * DUPN, SWAPN and EXCHANGE instructions
 .  */
-  663: {
+  8024: {
     // gasPrices
     dupnGas: 3, // Base fee of the DUPN opcode
     swapnGas: 3, // Base fee of the SWAPN opcode
@@ -286,7 +289,7 @@ export const paramsEVM: ParamsDict = {
     // evm
     historyStorageAddress: '0x0000F90827F1C53A10CB7A02335B175320002935', // The address where the historical blockhashes are stored
     historyServeWindow: 8192, // The amount of blocks to be served by the historical blockhash contract
-    systemAddress: '0xfffffffffffffffffffffffffffffffffffffffe', // The system address
+    systemAddress: SYSTEM_ADDRESS, // The system address
   },
   /**
 .  * BASEFEE opcode

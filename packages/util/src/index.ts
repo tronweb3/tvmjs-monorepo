@@ -19,6 +19,13 @@ export * from './units.ts'
 export * from './account.ts'
 
 /**
+ * Block level access list
+ *
+ * EXPERIMENTAL: DO NOT USE IN PRODUCTION!
+ */
+export * from './bal.ts'
+
+/**
  * Address type
  */
 export * from './address.ts'
@@ -49,9 +56,17 @@ export * from './bytes.ts'
 export * from './types.ts'
 
 /**
+ * Block level access list
+ *
+ * EXPERIMENTAL: DO NOT USE IN PRODUCTION!
+ */
+export * from './bal.ts'
+
+/**
  * Export ethjs-util methods
  */
 export * from './authorization.ts'
+export * from './env.ts'
 export * from './binaryTree.ts'
 export * from './blobs.ts'
 export {

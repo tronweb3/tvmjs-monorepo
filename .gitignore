@@ -122,3 +122,5 @@ __snapshots__
 
 .claude
 openspec
+# For local storage
+tmp/

@@ -4,7 +4,7 @@ import type {
   ParamsDict,
   StateManagerInterface,
 } from '@tvmjs/common'
-import type { Account, Address, PrefixedHexString } from '@tvmjs/util'
+import type { Account, Address, BlockLevelAccessList, PrefixedHexString } from '@tvmjs/util'
 import type { EventEmitter } from 'eventemitter3'
 import type { BinaryTreeAccessWitness } from './binaryTreeAccessWitness.ts'
 import type { EOFContainer } from './eof/container.ts'
@@ -27,6 +27,8 @@ export type AddOpcode = {
   gasFunction?: AsyncDynamicGasHandler | SyncDynamicGasHandler
   logicFunction: OpHandler
 }
+
+export type SelfdestructMap = Map<PrefixedHexString, PrefixedHexString>
 
 export type CustomOpcode = AddOpcode | DeleteOpcode
 
@@ -89,9 +91,9 @@ interface EVMRunOpts {
    */
   isStatic?: boolean
   /**
-   * Addresses to selfdestruct. Defaults to the empty set.
+   * Selfdestructed addresses mapped to their beneficiary. Defaults to the empty map.
    */
-  selfdestruct?: Set<PrefixedHexString>
+  selfdestruct?: SelfdestructMap
   /**
    * The address of the account that is executing this code (`address(this)`). Defaults to the zero address.
    */
@@ -178,11 +180,13 @@ export interface EVMInterface {
   }
   stateManager: StateManagerInterface
   precompiles: Map<string, PrecompileFunc>
+  getPrecompile?(address: Address | PrefixedHexString): PrecompileFunc | undefined
   runCall(opts: EVMRunCallOpts): Promise<EVMResult>
   runCode(opts: EVMRunCodeOpts): Promise<ExecResult>
   events?: EventEmitter<EVMEvent>
   binaryTreeAccessWitness?: BinaryTreeAccessWitness
   systemBinaryTreeAccessWitness?: BinaryTreeAccessWitness
+  blockLevelAccessList?: BlockLevelAccessList
 }
 
 export type EVMProfilerOpts = {
@@ -376,6 +380,12 @@ export interface EVMOpts {
   profiler?: EVMProfilerOpts
 
   /**
+   * If EIP-7928 is activated, a block-level access list can be provided here.
+   * If not provided, a new one will be created if EIP-7928 is activated
+   */
+  blockLevelAccessList?: BlockLevelAccessList
+
+  /**
    * When running the EVM with PoA consensus, the `cliqueSigner` function from the `@tvmjs/block` class
    * must be provided along with a `BlockHeader` so that the coinbase can be correctly retrieved when the
    * `Interpreter.getBlockCoinbase` method is called.
@@ -423,9 +433,9 @@ export interface ExecResult {
    */
   logs?: Log[]
   /**
-   * A set of accounts to selfdestruct
+   * Selfdestructed accounts mapped to their beneficiary
    */
-  selfdestruct?: Set<PrefixedHexString>
+  selfdestruct?: SelfdestructMap
   /**
    * Map of addresses which were created (used in EIP 6780)
    */
@@ -479,6 +489,7 @@ export type Block = {
     prevRandao: Uint8Array
     gasLimit: bigint
     baseFeePerGas?: bigint
+    slotNumber?: bigint
     getBlobGasPrice(): bigint | undefined
   }
 }

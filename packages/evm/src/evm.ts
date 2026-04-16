@@ -1,4 +1,6 @@
 import { Hardfork } from '@tvmjs/common'
+import { Hardfork } from '@tvmjs/common'
+import type { BlockLevelAccessList, PrefixedHexString } from '@tvmjs/util'
 import {
   Account,
   Address,
@@ -10,15 +12,18 @@ import {
   MAX_INTEGER,
   bigIntToBytes,
   bytesToUnprefixedHex,
+  createBlockLevelAccessList,
   createZeroAddress,
   equalsBytes,
   generateAddress,
   generateAddress2,
+  isDebugEnabled,
   short,
 } from '@tvmjs/util'
 import debugDefault from 'debug'
 import { EventEmitter } from 'eventemitter3'
 
+import { createEIP7708TransferLog } from './eip7708.ts'
 import { FORMAT } from './eof/constants.ts'
 import { isEOF } from './eof/util.ts'
 import { EVMError } from './errors.ts'
@@ -44,6 +49,7 @@ import {
   type EVMRunCallOpts,
   type EVMRunCodeOpts,
   type ExecResult,
+  type Log,
 } from './types.ts'
 
 import type { Common, StateManagerInterface } from '@tvmjs/common'
@@ -210,6 +216,8 @@ export class EVM implements EVMInterface {
   public readonly allowUnlimitedContractSize: boolean
   public readonly allowUnlimitedInitCodeSize: boolean
 
+  public readonly blockLevelAccessList?: BlockLevelAccessList
+
   protected readonly _customOpcodes?: CustomOpcode[]
   protected readonly _customPrecompiles?: CustomPrecompile[]
 
@@ -276,15 +284,19 @@ export class EVM implements EVMInterface {
       }
     }
 
+    if (this.common.isActivatedEIP(7928)) {
+      this.blockLevelAccessList = opts.blockLevelAccessList ?? createBlockLevelAccessList()
+    }
+
     this.events = new EventEmitter<EVMEvent>()
     this._optsCached = opts
 
     // Supported EIPs
     const supportedEIPs = [
-      663, 1153, 1559, 2537, 2565, 2718, 2929, 2930, 2935, 3198, 3529, 3540, 3541, 3607, 3651, 3670,
+      1153, 1559, 2537, 2565, 2718, 2929, 2930, 2935, 3198, 3529, 3540, 3541, 3607, 3651, 3670,
       3855, 3860, 4200, 4399, 4750, 4788, 4844, 4895, 5133, 5450, 5656, 6110, 6206, 6780, 7002,
       7069, 7251, 7480, 7516, 7594, 7620, 7685, 7691, 7692, 7698, 7702, 7709, 7823, 7825, 7934,
-      7939, 7951,
+      7939, 7951, 8024,
     ]
 
     for (const eip of this.common.eips()) {
@@ -342,9 +354,7 @@ export class EVM implements EVMInterface {
     this.performanceLogger = new EVMPerformanceLogger()
 
     // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    // Additional window check is to prevent vite browser bundling (and potentially other) to break
-    this.DEBUG =
-      typeof window === 'undefined' ? (process?.env?.DEBUG?.includes('ethjs') ?? false) : false
+    this.DEBUG = isDebugEnabled('ethjs')
   }
 
   /**
@@ -450,6 +460,17 @@ export class EVM implements EVMInterface {
       }
     }
 
+    // EIP-7928: Add codeAddress to BAL for DELEGATECALL/CALLCODE
+    // For these opcodes, `to` is the current contract but `codeAddress` is the target
+    // whose code is being executed. The target MUST be included in the BAL.
+    if (
+      this.common.isActivatedEIP(7928) &&
+      message.codeAddress !== undefined &&
+      message.codeAddress.toString() !== message.to.toString()
+    ) {
+      this.blockLevelAccessList!.addAddress(message.codeAddress.toString())
+    }
+
     // Load code
     await this._loadCode(message)
     let exit = false
@@ -465,13 +486,36 @@ export class EVM implements EVMInterface {
         debug(`Exit early on value transfer overflowed (CALL)`)
       }
     }
+
+    // EIP-7708: Create ETH transfer log for non-zero value transfers to a different account.
+    // CALLCODE always executes in the caller's context (to == caller), so it is a self-transfer.
+    // Self-transfers (caller == to) and DELEGATECALL do not emit a log.
+    let eip7708Log: Log | undefined
+    const isTransferToDifferentAccount = !equalsBytes(message.caller.bytes, message.to.bytes)
+    if (
+      this.common.isActivatedEIP(7708) &&
+      !message.delegatecall &&
+      message.value > BIGINT_0 &&
+      isTransferToDifferentAccount &&
+      errorMessage === undefined
+    ) {
+      eip7708Log = createEIP7708TransferLog(message.caller, message.to, message.value)
+      if (this.DEBUG) {
+        debug(
+          `EIP-7708: Created ETH transfer log from ${message.caller} to ${message.to} value=${message.value}`,
+        )
+      }
+    }
+
     if (exit) {
+      // Even on early exit, we may need to return the EIP-7708 log if value was transferred
       return {
         execResult: {
           gasRefund: message.gasRefund,
           executionGasUsed: message.gasLimit - gasLimit,
           exceptionError: errorMessage, // Only defined if addToBalance failed
           returnValue: new Uint8Array(0),
+          logs: eip7708Log ? [eip7708Log] : undefined,
         },
       }
     }
@@ -493,6 +537,10 @@ export class EVM implements EVMInterface {
       }
       result = await this.runPrecompile(message.code as PrecompileFunc, message.data, gasLimit)
 
+      if (eip7708Log !== undefined) {
+        result.logs = result.logs !== undefined ? [eip7708Log, ...result.logs] : [eip7708Log]
+      }
+
       if (this._optsCached.profiler?.enabled === true) {
         this.performanceLogger.stopTimer(timer!, Number(result.executionGasUsed), 'precompiles')
         if (callTimer !== undefined) {
@@ -504,11 +552,14 @@ export class EVM implements EVMInterface {
       if (this.DEBUG) {
         debug(`Start bytecode processing...`)
       }
-      result = await this.runInterpreter({
-        ...{ codeAddress: message.codeAddress },
-        ...message,
-        gasLimit,
-      } as Message)
+      result = await this.runInterpreter(
+        {
+          ...{ codeAddress: message.codeAddress },
+          ...message,
+          gasLimit,
+        } as Message,
+        { initialLogs: eip7708Log ? [eip7708Log] : undefined },
+      )
     }
 
     if (message.depth === 0) {
@@ -605,6 +656,9 @@ export class EVM implements EVMInterface {
       if (this.DEBUG) {
         debug(`Returning on address collision`)
       }
+      if (this.common.isActivatedEIP(7928)) {
+        this.blockLevelAccessList!.addAddress(message.to.toString())
+      }
       return {
         createdAddress: message.to,
         execResult: {
@@ -633,7 +687,13 @@ export class EVM implements EVMInterface {
     if (this.common.gteHardfork(Hardfork.SpuriousDragon)) {
       toAccount.nonce += BIGINT_1
     }
-
+    if (this.common.isActivatedEIP(7928)) {
+      this.blockLevelAccessList!.addNonceChange(
+        message.to.toString(),
+        toAccount.nonce,
+        this.blockLevelAccessList!.blockAccessIndex,
+      )
+    }
     // Add tx value to the `to` account
     let errorMessage
     try {
@@ -657,6 +717,23 @@ export class EVM implements EVMInterface {
       exit = true
       if (this.DEBUG) {
         debug(`Exit early on value transfer overflowed (CREATE)`)
+      }
+    }
+
+    // EIP-7708: Create ETH transfer log for contract creation with value
+    let eip7708CreateLog: Log | undefined
+    if (
+      this.common.isActivatedEIP(7708) &&
+      message.value > BIGINT_0 &&
+      message.to !== undefined &&
+      !equalsBytes(message.caller.bytes, message.to.bytes) &&
+      errorMessage === undefined
+    ) {
+      eip7708CreateLog = createEIP7708TransferLog(message.caller, message.to, message.value)
+      if (this.DEBUG) {
+        debug(
+          `EIP-7708: Created ETH transfer log for CREATE from ${message.caller} to ${message.to} value=${message.value}`,
+        )
       }
     }
 
@@ -689,6 +766,7 @@ export class EVM implements EVMInterface {
           gasRefund: message.gasRefund,
           exceptionError: errorMessage, // only defined if addToBalance failed
           returnValue: new Uint8Array(0),
+          logs: eip7708CreateLog ? [eip7708CreateLog] : undefined,
         },
       }
     }
@@ -698,7 +776,9 @@ export class EVM implements EVMInterface {
     }
 
     // run the message with the updated gas limit and add accessed gas used to the result
-    let result = await this.runInterpreter({ ...message, gasLimit, isCreate: true } as Message)
+    let result = await this.runInterpreter({ ...message, gasLimit, isCreate: true } as Message, {
+      initialLogs: eip7708CreateLog ? [eip7708CreateLog] : undefined,
+    })
     result.executionGasUsed += message.gasLimit - gasLimit
 
     // fee for size of the return value
@@ -833,6 +913,15 @@ export class EVM implements EVMInterface {
       }
 
       await this.stateManager.putCode(message.to, result.returnValue)
+
+      if (this.common.isActivatedEIP(7928)) {
+        this.blockLevelAccessList!.addCodeChange(
+          message.to.toString(),
+          result.returnValue,
+          this.blockLevelAccessList!.blockAccessIndex,
+        )
+      }
+
       if (this.DEBUG) {
         debug(`Code saved on new contract creation`)
       }
@@ -891,6 +980,7 @@ export class EVM implements EVMInterface {
       blobVersionedHashes: message.blobVersionedHashes ?? [],
       accessWitness: message.accessWitness,
       createdAddresses: message.createdAddresses,
+      initialLogs: opts.initialLogs,
     }
 
     const interpreter = new Interpreter(
@@ -926,7 +1016,7 @@ export class EVM implements EVMInterface {
       result = {
         ...result,
         logs: [],
-        selfdestruct: new Set(),
+        selfdestruct: new Map(),
         createdAddresses: new Set(),
       }
     }
@@ -976,10 +1066,19 @@ export class EVM implements EVMInterface {
         if (!callerAccount) {
           callerAccount = new Account()
         }
+        const originalBalance = callerAccount.balance
         if (callerAccount.balance < value) {
           // if skipBalance and balance less than value, set caller balance to `value` to ensure sufficient funds
           callerAccount.balance = value
           await this.journal.putAccount(caller, callerAccount)
+          if (this.common.isActivatedEIP(7928)) {
+            this.blockLevelAccessList!.addBalanceChange(
+              caller.toString(),
+              callerAccount.balance,
+              this.blockLevelAccessList!.blockAccessIndex,
+              originalBalance,
+            )
+          }
         }
       }
 
@@ -996,7 +1095,7 @@ export class EVM implements EVMInterface {
         isCompiled: opts.isCompiled,
         isStatic: opts.isStatic,
         salt: opts.salt,
-        selfdestruct: opts.selfdestruct ?? new Set(),
+        selfdestruct: opts.selfdestruct ?? new Map(),
         createdAddresses: opts.createdAddresses ?? new Set(),
         delegatecall: opts.delegatecall,
         blobVersionedHashes: opts.blobVersionedHashes,
@@ -1012,6 +1111,13 @@ export class EVM implements EVMInterface {
       }
       callerAccount.nonce++
       await this.journal.putAccount(message.caller, callerAccount)
+      if (this.common.isActivatedEIP(7928)) {
+        this.blockLevelAccessList!.addNonceChange(
+          message.caller.toString(),
+          callerAccount.nonce,
+          this.blockLevelAccessList!.blockAccessIndex,
+        )
+      }
       if (this.DEBUG) {
         debug(`Update fromAccount (caller) nonce (-> ${callerAccount.nonce}))`)
       }
@@ -1024,6 +1130,9 @@ export class EVM implements EVMInterface {
       this.journal.addWarmedAddress((await this._generateAddress(message)).bytes)
     }
 
+    if (this.common.isActivatedEIP(7928)) {
+      this.blockLevelAccessList?.checkpoint()
+    }
     await this.journal.checkpoint()
     if (this.common.isActivatedEIP(1153)) this.transientStorage.checkpoint()
     if (this.DEBUG) {
@@ -1066,7 +1175,7 @@ export class EVM implements EVMInterface {
     // (this only happens the Frontier/Chainstart fork)
     // then the error is dismissed
     if (err && err.error !== EVMError.errorMessages.CODESTORE_OUT_OF_GAS) {
-      result.execResult.selfdestruct = new Set()
+      result.execResult.selfdestruct = new Map()
       result.execResult.createdAddresses = new Set()
       result.execResult.gasRefund = BIGINT_0
     }
@@ -1080,12 +1189,18 @@ export class EVM implements EVMInterface {
       result.execResult.logs = []
       await this.journal.revert()
       if (this.common.isActivatedEIP(1153)) this.transientStorage.revert()
+      if (this.common.isActivatedEIP(7928)) {
+        this.blockLevelAccessList?.revert()
+      }
       if (this.DEBUG) {
         debug(`message checkpoint reverted`)
       }
     } else {
       await this.journal.commit()
       if (this.common.isActivatedEIP(1153)) this.transientStorage.commit()
+      if (this.common.isActivatedEIP(7928)) {
+        this.blockLevelAccessList?.commit()
+      }
       if (this.DEBUG) {
         debug(`message checkpoint committed`)
       }
@@ -1120,7 +1235,7 @@ export class EVM implements EVMInterface {
       caller: opts.caller,
       value: opts.value,
       depth: opts.depth,
-      selfdestruct: opts.selfdestruct ?? new Set(),
+      selfdestruct: opts.selfdestruct ?? new Map(),
       isStatic: opts.isStatic,
       blobVersionedHashes: opts.blobVersionedHashes,
     })
@@ -1129,11 +1244,22 @@ export class EVM implements EVMInterface {
   }
 
   /**
-   * Returns code for precompile at the given address, or undefined
-   * if no such precompile exists.
+   * Returns the precompile function registered at the given address,
+   * or `undefined` if no precompile is active there.
+   *
+   * Accepts either an `Address` instance or a `0x`-prefixed hex string.
+   *
+   * ```ts
+   * const evm = await createEVM({
+   *   customPrecompiles: [{ address: '0x000000000000000000000000000000000000ff01', function: myFn }],
+   * })
+   * const fn = evm.getPrecompile('0x000000000000000000000000000000000000ff01')
+   * ```
    */
-  getPrecompile(address: Address): PrecompileFunc | undefined {
-    // Using deprecated bytesToUnprefixedHex for performance: used as Map keys for precompile lookups.
+  getPrecompile(address: Address | PrefixedHexString): PrecompileFunc | undefined {
+    if (typeof address === 'string') {
+      return this.precompiles.get(address.slice(2).padStart(40, '0').toLowerCase())
+    }
     return this.precompiles.get(bytesToUnprefixedHex(address.bytes))
   }
 
@@ -1177,6 +1303,10 @@ export class EVM implements EVMInterface {
         ) {
           const address = new Address(message.code.slice(3, 24))
           message.code = await this.stateManager.getCode(address)
+          // EIP-7928: Track delegation target access in BAL
+          if (this.common.isActivatedEIP(7928)) {
+            this.blockLevelAccessList?.addAddress(address.toString())
+          }
           if (message.depth === 0) {
             this.journal.addAlwaysWarmAddress(address.toString())
           }
@@ -1204,9 +1334,20 @@ export class EVM implements EVMInterface {
   }
 
   protected async _reduceSenderBalance(account: Account, message: Message): Promise<void> {
+    const originalBalance = account.balance
     account.balance -= message.value
     if (account.balance < BIGINT_0) {
       throw new EVMError(EVMError.errorMessages.INSUFFICIENT_BALANCE)
+    }
+    // EIP-7928: Record the sender's reduced balance in BAL
+    // Per spec, CALL/CALLCODE senders must have their balance recorded
+    if (this.common.isActivatedEIP(7928)) {
+      this.blockLevelAccessList!.addBalanceChange(
+        message.caller.toString(),
+        account.balance,
+        this.blockLevelAccessList!.blockAccessIndex,
+        originalBalance,
+      )
     }
     const result = this.journal.putAccount(message.caller, account)
     if (this.DEBUG) {
@@ -1239,11 +1380,23 @@ export class EVM implements EVMInterface {
   }
 
   protected async _addToBalance(toAccount: Account, message: MessageWithTo): Promise<void> {
+    const originalBalance = toAccount.balance
     const newBalance = toAccount.balance + message.value
     if (newBalance > MAX_INTEGER) {
       throw new EVMError(EVMError.errorMessages.VALUE_OVERFLOW)
     }
     toAccount.balance = newBalance
+    if (this.common.isActivatedEIP(7928)) {
+      this.blockLevelAccessList!.addAddress(message.to.toString())
+      if (message.value !== BIGINT_0) {
+        this.blockLevelAccessList!.addBalanceChange(
+          message.to.toString(),
+          newBalance,
+          this.blockLevelAccessList!.blockAccessIndex,
+          originalBalance,
+        )
+      }
+    }
     // putAccount as the nonce may have changed for contract creation
     await this.journal.putAccount(message.to, toAccount)
     if (this.DEBUG) {
