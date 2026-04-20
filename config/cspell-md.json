@@ -61,7 +61,6 @@
     "libp2p",
     "forkchoice",
     "blockhash",
-    "Dockerfiles",
     "blockfetcher",
     "txpool",
     "subchain",
