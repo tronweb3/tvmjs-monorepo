@@ -4,7 +4,7 @@
  */
 import {
   Account,
-  Address,
+  type Address,
   BIGINT_0,
   MIN_TOKEN_ID,
   PermissionType,
@@ -231,7 +231,7 @@ describe('Review Findings - Account & Token Edge Cases', () => {
 
 describe('Review Findings - DataWord', () => {
   it('DataWord.parseArray correctly parses 32-byte words', async () => {
-    const { DataWord } = await import('../../../../../packages/evm/src/precompiles/dataWord.ts')
+    const { DataWord } = await import('../../../../evm/src/precompiles/dataWord.ts')
     const data = new Uint8Array(64)
     data[31] = 42 // first word = 42
     data[63] = 7 // second word = 7
@@ -243,7 +243,7 @@ describe('Review Findings - DataWord', () => {
   })
 
   it('DataWord.intValueSafe throws for values exceeding 4 bytes', async () => {
-    const { DataWord } = await import('../../../../../packages/evm/src/precompiles/dataWord.ts')
+    const { DataWord } = await import('../../../../evm/src/precompiles/dataWord.ts')
     const data = new Uint8Array(32)
     // Set 5 bytes of data (exceeds 4-byte safe limit)
     data[27] = 1
@@ -257,7 +257,7 @@ describe('Review Findings - DataWord', () => {
   })
 
   it('DataWord.equalAddressByteArray compares last 20 bytes', async () => {
-    const { DataWord } = await import('../../../../../packages/evm/src/precompiles/dataWord.ts')
+    const { DataWord } = await import('../../../../evm/src/precompiles/dataWord.ts')
     const addr1 = new Uint8Array(32)
     const addr2 = new Uint8Array(20)
 
@@ -271,7 +271,7 @@ describe('Review Findings - DataWord', () => {
   })
 
   it('DataWord.equalAddressByteArray returns false for short arrays', async () => {
-    const { DataWord } = await import('../../../../../packages/evm/src/precompiles/dataWord.ts')
+    const { DataWord } = await import('../../../../evm/src/precompiles/dataWord.ts')
     const short = new Uint8Array(10)
     const normal = new Uint8Array(20)
     assert.isFalse(DataWord.equalAddressByteArray(short, normal))
@@ -280,9 +280,7 @@ describe('Review Findings - DataWord', () => {
 
 describe('Review Findings - Precompile Utilities', () => {
   it('recoverAddrBySign returns empty array for invalid signature', async () => {
-    const { recoverAddrBySign } = await import(
-      '../../../../../packages/evm/src/precompiles/util.ts'
-    )
+    const { recoverAddrBySign } = await import('../../../../evm/src/precompiles/util.ts')
     const invalidSig = new Uint8Array(65) // all zeros
     const hash = new Uint8Array(32)
     const result = recoverAddrBySign(invalidSig, hash)
@@ -290,9 +288,7 @@ describe('Review Findings - Precompile Utilities', () => {
   })
 
   it('convertToTronAddress adds 0x41 prefix for 20-byte address', async () => {
-    const { convertToTronAddress } = await import(
-      '../../../../../packages/evm/src/precompiles/util.ts'
-    )
+    const { convertToTronAddress } = await import('../../../../evm/src/precompiles/util.ts')
     const addr = new Uint8Array(20)
     addr[0] = 0xab
     const result = convertToTronAddress(addr)
@@ -302,19 +298,15 @@ describe('Review Findings - Precompile Utilities', () => {
   })
 
   it('convertToTronAddress returns original if not 20 bytes', async () => {
-    const { convertToTronAddress } = await import(
-      '../../../../../packages/evm/src/precompiles/util.ts'
-    )
+    const { convertToTronAddress } = await import('../../../../evm/src/precompiles/util.ts')
     const addr = new Uint8Array(21)
     const result = convertToTronAddress(addr)
     assert.equal(result, addr) // same reference
   })
 
   it('extractBytesArray returns empty for offset beyond words', async () => {
-    const { extractBytesArray } = await import(
-      '../../../../../packages/evm/src/precompiles/util.ts'
-    )
-    const { DataWord } = await import('../../../../../packages/evm/src/precompiles/dataWord.ts')
+    const { extractBytesArray } = await import('../../../../evm/src/precompiles/util.ts')
+    const { DataWord } = await import('../../../../evm/src/precompiles/dataWord.ts')
     const data = new Uint8Array(32)
     const words = DataWord.parseArray(data)
     const result = extractBytesArray(words, 10, data) // offset=10, but only 1 word
