@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / importPublic
+[@tvmjs/util](../README.md) / importPublic
 
 # Function: importPublic()
 
 > **importPublic**(`publicKey`): `Uint8Array`
 
-Defined in: [packages/util/src/account.ts:572](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L572)
+Defined in: packages/util/src/account.ts:732
 
 Converts a public key to the Ethereum format.
 

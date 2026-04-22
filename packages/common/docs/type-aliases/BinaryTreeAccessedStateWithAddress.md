@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / BinaryTreeAccessedStateWithAddress
+[@tvmjs/common](../README.md) / BinaryTreeAccessedStateWithAddress
 
 # Type Alias: BinaryTreeAccessedStateWithAddress
 
 > **BinaryTreeAccessedStateWithAddress** = [`BinaryTreeAccessedState`](BinaryTreeAccessedState.md) & `object`
 
-Defined in: [interfaces.ts:99](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L99)
+Defined in: src/interfaces.ts:94
 
 ## Type Declaration
 

@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bigIntToUnpaddedBytes
+[@tvmjs/util](../README.md) / bigIntToUnpaddedBytes
 
 # Function: bigIntToUnpaddedBytes()
 
 > **bigIntToUnpaddedBytes**(`value`): `Uint8Array`
 
-Defined in: [packages/util/src/bytes.ts:374](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L374)
+Defined in: packages/util/src/bytes.ts:400
 
 Convert value from bigint to an unpadded Uint8Array
 (useful for RLP transport)

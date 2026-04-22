@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / EIPConfig
+[@tvmjs/common](../README.md) / EIPConfig
 
 # Type Alias: EIPConfig
 
 > **EIPConfig** = `object`
 
-Defined in: [types.ts:166](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L166)
+Defined in: src/types.ts:162
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [types.ts:166](https://github.com/ethereumjs/ethereumjs-monorepo/blo
 
 > **minimumHardfork**: [`Hardfork`](Hardfork.md)
 
-Defined in: [types.ts:167](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L167)
+Defined in: src/types.ts:163
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [types.ts:167](https://github.com/ethereumjs/ethereumjs-monorepo/blo
 
 > `optional` **requiredEIPs**: `number`[]
 
-Defined in: [types.ts:168](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L168)
+Defined in: src/types.ts:164

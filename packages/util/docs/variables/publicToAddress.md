@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / publicToAddress
+[@tvmjs/util](../README.md) / publicToAddress
 
 # Variable: publicToAddress()
 
 > `const` **publicToAddress**: (`pubKey`, `sanitize`) => `Uint8Array` = `pubToAddress`
 
-Defined in: [packages/util/src/account.ts:549](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L549)
+Defined in: packages/util/src/account.ts:709
 
 Returns the ethereum address of a given public key.
 Accepts "Ethereum public keys" and SEC1 encoded keys.

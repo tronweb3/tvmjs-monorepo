@@ -1,14 +1,14 @@
-[**@ethereumjs/vm**](../README.md)
+[**@tvmjs/vm**](../README.md)
 
 ***
 
-[@ethereumjs/vm](../README.md) / buildBlock
+[@tvmjs/vm](../README.md) / buildBlock
 
 # Function: buildBlock()
 
 > **buildBlock**(`vm`, `opts`): `Promise`\<[`BlockBuilder`](../classes/BlockBuilder.md)\>
 
-Defined in: [vm/src/buildBlock.ts:466](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/buildBlock.ts#L466)
+Defined in: vm/src/buildBlock.ts:462
 
 Build a block on top of the current state
 by adding one transaction at a time.

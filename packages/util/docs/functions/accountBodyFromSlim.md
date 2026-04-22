@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / accountBodyFromSlim
+[@tvmjs/util](../README.md) / accountBodyFromSlim
 
 # Function: accountBodyFromSlim()
 
 > **accountBodyFromSlim**(`body`): `Uint8Array`\<`ArrayBufferLike`\>[]
 
-Defined in: [packages/util/src/account.ts:601](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L601)
+Defined in: packages/util/src/account.ts:761
 
 ## Parameters
 

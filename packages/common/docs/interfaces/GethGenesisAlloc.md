@@ -1,12 +1,12 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / GethGenesisAlloc
+[@tvmjs/common](../README.md) / GethGenesisAlloc
 
 # Interface: GethGenesisAlloc
 
-Defined in: [gethGenesis.ts:58](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/gethGenesis.ts#L58)
+Defined in: src/gethGenesis.ts:58
 
 Interface for account allocation in Geth Genesis
 

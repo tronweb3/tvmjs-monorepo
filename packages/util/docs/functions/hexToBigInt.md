@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / hexToBigInt
+[@tvmjs/util](../README.md) / hexToBigInt
 
 # Function: hexToBigInt()
 
 > **hexToBigInt**(`input`): `bigint`
 
-Defined in: [packages/util/src/bytes.ts:499](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L499)
+Defined in: packages/util/src/bytes.ts:559
 
 ## Parameters
 

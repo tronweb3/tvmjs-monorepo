@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / TypeOutputReturnType
+[@tvmjs/util](../README.md) / TypeOutputReturnType
 
 # Type Alias: TypeOutputReturnType
 
 > **TypeOutputReturnType** = `object`
 
-Defined in: [packages/util/src/types.ts:70](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L70)
+Defined in: packages/util/src/types.ts:70
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [packages/util/src/types.ts:70](https://github.com/ethereumjs/ethere
 
 > **0**: `number`
 
-Defined in: [packages/util/src/types.ts:71](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L71)
+Defined in: packages/util/src/types.ts:71
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/util/src/types.ts:71](https://github.com/ethereumjs/ethere
 
 > **1**: `bigint`
 
-Defined in: [packages/util/src/types.ts:72](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L72)
+Defined in: packages/util/src/types.ts:72
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/util/src/types.ts:72](https://github.com/ethereumjs/ethere
 
 > **2**: `Uint8Array`
 
-Defined in: [packages/util/src/types.ts:73](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L73)
+Defined in: packages/util/src/types.ts:73
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [packages/util/src/types.ts:73](https://github.com/ethereumjs/ethere
 
 > **3**: [`PrefixedHexString`](PrefixedHexString.md)
 
-Defined in: [packages/util/src/types.ts:74](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L74)
+Defined in: packages/util/src/types.ts:74

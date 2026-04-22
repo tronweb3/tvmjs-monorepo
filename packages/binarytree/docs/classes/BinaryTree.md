@@ -1,14 +1,14 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / BinaryTree
+[@tvmjs/binarytree](../README.md) / BinaryTree
 
 # Class: BinaryTree
 
-Defined in: [binaryTree.ts:38](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L38)
+Defined in: binaryTree.ts:39
 
-The basic binary tree interface, use with `import { BinaryTree } from '@ethereumjs/binarytree'`.
+The basic binary tree interface, use with `import { BinaryTree } from '@tvmjs/binarytree'`.
 
 A BinaryTree object can be created with the constructor method:
 
@@ -20,7 +20,7 @@ A BinaryTree object can be created with the constructor method:
 
 > **new BinaryTree**(`opts`): `BinaryTree`
 
-Defined in: [binaryTree.ts:59](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L59)
+Defined in: binaryTree.ts:60
 
 Creates a new binary tree.
 
@@ -44,7 +44,7 @@ Note: in most cases, the static [createBinaryTree](../functions/createBinaryTree
 
 > **EMPTY\_TREE\_ROOT**: `Uint8Array`
 
-Defined in: [binaryTree.ts:43](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L43)
+Defined in: binaryTree.ts:44
 
 The root for an empty tree
 
@@ -54,7 +54,7 @@ The root for an empty tree
 
 > **checkpoint**(): `void`
 
-Defined in: [binaryTree.ts:652](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L652)
+Defined in: binaryTree.ts:652
 
 Creates a checkpoint that can later be reverted to or committed.
 After this is called, all changes can be reverted until `commit` is called.
@@ -69,7 +69,7 @@ After this is called, all changes can be reverted until `commit` is called.
 
 > **checkRoot**(`root`): `Promise`\<`boolean`\>
 
-Defined in: [binaryTree.ts:117](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L117)
+Defined in: binaryTree.ts:117
 
 Checks if a given root exists.
 
@@ -89,7 +89,7 @@ Checks if a given root exists.
 
 > **commit**(): `Promise`\<`void`\>
 
-Defined in: [binaryTree.ts:661](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L661)
+Defined in: binaryTree.ts:661
 
 Commits a checkpoint to disk, if current checkpoint is not nested.
 If nested, only sets the parent checkpoint as current checkpoint.
@@ -108,7 +108,7 @@ If not during a checkpoint phase
 
 > **createBinaryProof**(`key`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>[]\>
 
-Defined in: [binaryTree.ts:585](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L585)
+Defined in: binaryTree.ts:585
 
 Creates a proof from a tree and key that can be verified using BinaryTree.verifyBinaryProof.
 
@@ -130,7 +130,7 @@ a 32 byte binary tree key (31 byte stem + 1 byte suffix)
 
 > **createReadStream**(): `any`
 
-Defined in: [binaryTree.ts:603](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L603)
+Defined in: binaryTree.ts:603
 
 The `data` event is given an `Object` that has two properties; the `key` and the `value`. Both should be Uint8Arrays.
 
@@ -146,7 +146,7 @@ Returns a [stream](https://nodejs.org/dist/latest-v12.x/docs/api/stream.html#str
 
 > **createRootNode**(): `Promise`\<`void`\>
 
-Defined in: [binaryTree.ts:538](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L538)
+Defined in: binaryTree.ts:538
 
 Create empty root node for initializing an empty tree.
 
@@ -160,7 +160,7 @@ Create empty root node for initializing an empty tree.
 
 > **del**(`stem`, `suffixes`): `Promise`\<`void`\>
 
-Defined in: [binaryTree.ts:530](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L530)
+Defined in: binaryTree.ts:530
 
 Deletes a given `key` from the tree.
 
@@ -190,7 +190,7 @@ A Promise that resolves once the key is deleted.
 
 > **findPath**(`keyInBytes`): `Promise`\<`Path`\>
 
-Defined in: [binaryTree.ts:417](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L417)
+Defined in: binaryTree.ts:417
 
 Tries to find a path to the node for the given key.
 It returns a `Path` object containing:
@@ -218,7 +218,7 @@ A Promise that resolves to a Path object.
 
 > **flushCheckpoints**(): `void`
 
-Defined in: [binaryTree.ts:691](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L691)
+Defined in: binaryTree.ts:691
 
 Flushes all checkpoints, restoring the initial checkpoint state.
 
@@ -232,7 +232,7 @@ Flushes all checkpoints, restoring the initial checkpoint state.
 
 > **get**(`stem`, `suffixes`): `Promise`\<(`Uint8Array`\<`ArrayBufferLike`\> \| `null`)[]\>
 
-Defined in: [binaryTree.ts:137](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L137)
+Defined in: binaryTree.ts:137
 
 Gets values at a given binary tree `stem` and set of suffixes
 
@@ -263,7 +263,7 @@ If the stem is not found, will return an empty array.
 
 > **hasCheckpoints**(): `boolean`
 
-Defined in: [binaryTree.ts:644](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L644)
+Defined in: binaryTree.ts:644
 
 Is the tree during a checkpoint phase?
 
@@ -277,7 +277,7 @@ Is the tree during a checkpoint phase?
 
 > **persistRoot**(): `Promise`\<`void`\>
 
-Defined in: [binaryTree.ts:635](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L635)
+Defined in: binaryTree.ts:635
 
 Persists the root hash in the underlying database
 
@@ -291,7 +291,7 @@ Persists the root hash in the underlying database
 
 > **put**(`stem`, `suffixes`, `values`): `Promise`\<`void`\>
 
-Defined in: [binaryTree.ts:167](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L167)
+Defined in: binaryTree.ts:167
 
 Stores a given `value` at the given `key` or performs a deletion if `value` is null.
 
@@ -327,7 +327,7 @@ A Promise that resolves once the value is stored.
 
 > **revert**(): `Promise`\<`void`\>
 
-Defined in: [binaryTree.ts:677](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L677)
+Defined in: binaryTree.ts:677
 
 Reverts the tree to the state it was at when `checkpoint` was first called.
 If during a nested checkpoint, sets root to most recent checkpoint, and sets
@@ -343,7 +343,7 @@ parent checkpoint as current.
 
 > **root**(`value?`): `Uint8Array`
 
-Defined in: [binaryTree.ts:98](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L98)
+Defined in: binaryTree.ts:98
 
 Gets and/or Sets the current root of the `tree`
 
@@ -363,7 +363,7 @@ Gets and/or Sets the current root of the `tree`
 
 > **saveStack**(`putStack`): `Promise`\<`void`\>
 
-Defined in: [binaryTree.ts:570](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L570)
+Defined in: binaryTree.ts:570
 
 Saves a stack of nodes to the database.
 
@@ -385,7 +385,7 @@ an array of tuples of keys (the partial path of the node in the trie) and nodes 
 
 > **shallowCopy**(`includeCheckpoints`): `BinaryTree`
 
-Defined in: [binaryTree.ts:619](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L619)
+Defined in: binaryTree.ts:619
 
 Returns a copy of the underlying tree.
 
@@ -414,7 +414,7 @@ If true and during a checkpoint, the copy will contain the checkpointing metadat
 
 > **updateBranch**(`stemNode`, `nearestNode`, `pathToNode`, `pathToParent`): `object`[] \| `undefined`
 
-Defined in: [binaryTree.ts:353](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/binaryTree.ts#L353)
+Defined in: binaryTree.ts:353
 
 Helper method for updating or creating the parent internal node for a given stem node.
 If the nearest node is a stem node with a different stem, a new internal node is created

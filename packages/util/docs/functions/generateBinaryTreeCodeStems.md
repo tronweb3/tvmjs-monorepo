@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / generateBinaryTreeCodeStems
+[@tvmjs/util](../README.md) / generateBinaryTreeCodeStems
 
 # Function: generateBinaryTreeCodeStems()
 
 > **generateBinaryTreeCodeStems**(`numChunks`, `address`, `hashFunction`): `Uint8Array`\<`ArrayBufferLike`\>[]
 
-Defined in: [packages/util/src/binaryTree.ts:325](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L325)
+Defined in: packages/util/src/binaryTree.ts:325
 
 Helper method for generating the code stems necessary for putting code
 

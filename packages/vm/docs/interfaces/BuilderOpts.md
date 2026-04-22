@@ -1,12 +1,12 @@
-[**@ethereumjs/vm**](../README.md)
+[**@tvmjs/vm**](../README.md)
 
 ***
 
-[@ethereumjs/vm](../README.md) / BuilderOpts
+[@tvmjs/vm](../README.md) / BuilderOpts
 
 # Interface: BuilderOpts
 
-Defined in: [vm/src/types.ts:192](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L192)
+Defined in: vm/src/types.ts:187
 
 Options for the block builder.
 
@@ -39,7 +39,7 @@ Note that this option has no effect on networks other than PoW/Ethash networks
 
 > `optional` **cliqueSigner**: `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [vm/src/types.ts:207](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L207)
+Defined in: vm/src/types.ts:202
 
 Provide a clique signer's privateKey to seal this block.
 Will throw if provided on a non-PoA chain.
@@ -97,7 +97,7 @@ Default: true
 Defined in: block/dist/esm/types.d.ts:46
 
 Block parameters sorted by EIP can be found in the exported `paramsBlock` dictionary,
-which is internally passed to the associated `@ethereumjs/common` instance which
+which is internally passed to the associated `@tvmjs/common` instance which
 manages parameter selection based on the hardfork and EIP settings.
 
 This option allows providing a custom set of parameters. Note that parameters
@@ -121,7 +121,7 @@ params['1']['minGasLimit'] = 3000 // 5000
 
 > `optional` **putBlockIntoBlockchain**: `boolean`
 
-Defined in: [vm/src/types.ts:202](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L202)
+Defined in: vm/src/types.ts:197
 
 Whether to put the block into the vm's blockchain after building it.
 This is useful for completing a full cycle when building a block so

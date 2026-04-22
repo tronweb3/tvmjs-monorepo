@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / ParamsConfig
+[@tvmjs/common](../README.md) / ParamsConfig
 
 # Type Alias: ParamsConfig
 
 > **ParamsConfig** = `object`
 
-Defined in: [types.ts:171](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L171)
+Defined in: src/types.ts:167
 
 ## Index Signature
 

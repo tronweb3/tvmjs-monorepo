@@ -1,12 +1,12 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / EthersProvider
+[@tvmjs/util](../README.md) / EthersProvider
 
 # Interface: EthersProvider
 
-Defined in: [packages/util/src/provider.ts:81](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/provider.ts#L81)
+Defined in: packages/util/src/provider.ts:105
 
 A partial interface for an `ethers` `JSONRPCProvider`
 We only use the url string since we do raw `fetch` calls to
@@ -18,7 +18,7 @@ retrieve the necessary data
 
 > **\_getConnection**: () => `object`
 
-Defined in: [packages/util/src/provider.ts:82](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/provider.ts#L82)
+Defined in: packages/util/src/provider.ts:106
 
 #### Returns
 

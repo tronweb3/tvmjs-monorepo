@@ -1,12 +1,12 @@
-[**@ethereumjs/vm**](../README.md)
+[**@tvmjs/vm**](../README.md)
 
 ***
 
-[@ethereumjs/vm](../README.md) / EIP4844BlobTxReceipt
+[@tvmjs/vm](../README.md) / EIP4844BlobTxReceipt
 
 # Interface: EIP4844BlobTxReceipt
 
-Defined in: [vm/src/types.ts:61](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L61)
+Defined in: vm/src/types.ts:56
 
 Receipt type for Byzantium and beyond replacing the intermediary
 state root field with a status code field (EIP-658)
@@ -21,7 +21,7 @@ state root field with a status code field (EIP-658)
 
 > **bitvector**: `Uint8Array`
 
-Defined in: [vm/src/types.ts:32](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L32)
+Defined in: vm/src/types.ts:27
 
 Bloom bitvector
 
@@ -35,7 +35,7 @@ Bloom bitvector
 
 > **blobGasPrice**: `bigint`
 
-Defined in: [vm/src/types.ts:75](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L75)
+Defined in: vm/src/types.ts:70
 
 blob gas price for block transaction was included in
 
@@ -48,7 +48,7 @@ and is only provided as part of receipt metadata.
 
 > **blobGasUsed**: `bigint`
 
-Defined in: [vm/src/types.ts:68](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L68)
+Defined in: vm/src/types.ts:63
 
 blob gas consumed by a transaction
 
@@ -61,7 +61,7 @@ and is only provided as part of receipt metadata.
 
 > **cumulativeBlockGasUsed**: `bigint`
 
-Defined in: [vm/src/types.ts:28](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L28)
+Defined in: vm/src/types.ts:23
 
 Cumulative gas used in the block including this tx
 
@@ -75,7 +75,7 @@ Cumulative gas used in the block including this tx
 
 > **logs**: `Log`[]
 
-Defined in: [vm/src/types.ts:36](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L36)
+Defined in: vm/src/types.ts:31
 
 Logs emitted
 
@@ -89,7 +89,7 @@ Logs emitted
 
 > **status**: `0` \| `1`
 
-Defined in: [vm/src/types.ts:58](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L58)
+Defined in: vm/src/types.ts:53
 
 Status of transaction, `1` if successful, `0` if an exception occurred
 

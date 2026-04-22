@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / padToEven
+[@tvmjs/util](../README.md) / padToEven
 
 # Function: padToEven()
 
 > **padToEven**(`value`): `string`
 
-Defined in: [packages/util/src/internal.ts:63](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/internal.ts#L63)
+Defined in: packages/util/src/internal.ts:63
 
 Pads a `String` to have an even length
 

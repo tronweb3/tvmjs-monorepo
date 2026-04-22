@@ -1,8 +1,8 @@
-**@ethereumjs/mpt**
+**@tvmjs/mpt**
 
 ***
 
-# @ethereumjs/mpt
+# @tvmjs/mpt
 
 ## Classes
 

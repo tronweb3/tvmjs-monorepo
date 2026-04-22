@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / BatchDBOp
+[@tvmjs/util](../README.md) / BatchDBOp
 
 # Type Alias: BatchDBOp\<TKey, TValue\>
 
 > **BatchDBOp**\<`TKey`, `TValue`\> = [`PutBatch`](../interfaces/PutBatch.md)\<`TKey`, `TValue`\> \| [`DelBatch`](../interfaces/DelBatch.md)\<`TKey`\>
 
-Defined in: [packages/util/src/db.ts:4](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts#L4)
+Defined in: packages/util/src/db.ts:4
 
 ## Type Parameters
 

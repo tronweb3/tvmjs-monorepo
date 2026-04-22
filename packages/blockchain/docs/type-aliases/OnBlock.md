@@ -1,14 +1,14 @@
-[**@ethereumjs/blockchain**](../README.md)
+[**@tvmjs/blockchain**](../README.md)
 
 ***
 
-[@ethereumjs/blockchain](../README.md) / OnBlock
+[@tvmjs/blockchain](../README.md) / OnBlock
 
 # Type Alias: OnBlock()
 
 > **OnBlock** = (`block`, `reorg`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [types.ts:7](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/types.ts#L7)
+Defined in: types.ts:7
 
 ## Parameters
 

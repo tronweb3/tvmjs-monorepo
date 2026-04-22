@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / byteTypeToNibbleType
+[@tvmjs/mpt](../README.md) / byteTypeToNibbleType
 
 # Function: byteTypeToNibbleType()
 
 > **byteTypeToNibbleType**(`key`): [`Nibbles`](../type-aliases/Nibbles.md)
 
-Defined in: [packages/mpt/src/util/encoding.ts:131](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/util/encoding.ts#L131)
+Defined in: packages/mpt/src/util/encoding.ts:131
 
 Turns each byte into a single nibble, only extracting the lower nibble of each byte
 

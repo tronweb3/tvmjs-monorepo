@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / fromUtf8
+[@tvmjs/util](../README.md) / fromUtf8
 
 # Function: fromUtf8()
 
 > **fromUtf8**(`stringValue`): `string`
 
-Defined in: [packages/util/src/internal.ts:148](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/internal.ts#L148)
+Defined in: packages/util/src/internal.ts:148
 
 Should be called to get hex representation (prefixed by 0x) of utf8 string.
 Strips leading and trailing 0's.

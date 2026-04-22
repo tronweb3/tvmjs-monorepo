@@ -1,11 +1,11 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / CasperConfig
+[@tvmjs/common](../README.md) / CasperConfig
 
 # Type Alias: CasperConfig
 
 > **CasperConfig** = `object`
 
-Defined in: [types.ts:23](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L23)
+Defined in: src/types.ts:23

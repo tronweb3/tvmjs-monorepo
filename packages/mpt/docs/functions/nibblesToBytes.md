@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / nibblesToBytes
+[@tvmjs/mpt](../README.md) / nibblesToBytes
 
 # Function: nibblesToBytes()
 
 > **nibblesToBytes**(`nibbles`): `Uint8Array`\<`ArrayBuffer`\>
 
-Defined in: [packages/mpt/src/util/encoding.ts:37](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/util/encoding.ts#L37)
+Defined in: packages/mpt/src/util/encoding.ts:37
 
 ## Parameters
 

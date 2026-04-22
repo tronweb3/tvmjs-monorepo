@@ -1,14 +1,14 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / BinaryNodeType
+[@tvmjs/binarytree](../README.md) / BinaryNodeType
 
 # Variable: BinaryNodeType
 
 > **BinaryNodeType**: `object`
 
-Defined in: [node/types.ts:4](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L4)
+Defined in: node/types.ts:4
 
 ## Type Declaration
 

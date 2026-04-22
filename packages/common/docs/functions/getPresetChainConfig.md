@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / getPresetChainConfig
+[@tvmjs/common](../README.md) / getPresetChainConfig
 
 # Function: getPresetChainConfig()
 
 > **getPresetChainConfig**(`chain`): [`ChainConfig`](../interfaces/ChainConfig.md)
 
-Defined in: [utils.ts:308](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/utils.ts#L308)
+Defined in: src/utils.ts:308
 
 Return the preset chain config for one of the predefined chain configurations
 

@@ -1,11 +1,11 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / AccountState
+[@tvmjs/common](../README.md) / AccountState
 
 # Type Alias: AccountState
 
 > **AccountState** = \[`PrefixedHexString`, `PrefixedHexString`, [`StoragePair`](StoragePair.md)[], `PrefixedHexString`\]
 
-Defined in: [gethGenesis.ts:111](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/gethGenesis.ts#L111)
+Defined in: src/gethGenesis.ts:111

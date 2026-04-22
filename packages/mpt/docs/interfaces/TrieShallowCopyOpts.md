@@ -1,12 +1,12 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / TrieShallowCopyOpts
+[@tvmjs/mpt](../README.md) / TrieShallowCopyOpts
 
 # Interface: TrieShallowCopyOpts
 
-Defined in: [packages/mpt/src/types.ts:122](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L122)
+Defined in: packages/mpt/src/types.ts:122
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/mpt/src/types.ts:122](https://github.com/ethereumjs/ethere
 
 > `optional` **cacheSize**: `number`
 
-Defined in: [packages/mpt/src/types.ts:124](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L124)
+Defined in: packages/mpt/src/types.ts:124
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [packages/mpt/src/types.ts:124](https://github.com/ethereumjs/ethere
 
 > `optional` **keyPrefix**: `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [packages/mpt/src/types.ts:123](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L123)
+Defined in: packages/mpt/src/types.ts:123

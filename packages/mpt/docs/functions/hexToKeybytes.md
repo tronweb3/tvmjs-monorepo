@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / hexToKeybytes
+[@tvmjs/mpt](../README.md) / hexToKeybytes
 
 # Function: hexToKeybytes()
 
 > **hexToKeybytes**(`hex`): `Uint8Array`\<`ArrayBuffer`\>
 
-Defined in: [packages/mpt/src/util/encoding.ts:46](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/util/encoding.ts#L46)
+Defined in: packages/mpt/src/util/encoding.ts:46
 
 ## Parameters
 

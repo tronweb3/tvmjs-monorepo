@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / blobsToProofs
+[@tvmjs/util](../README.md) / blobsToProofs
 
 # Function: blobsToProofs()
 
 > **blobsToProofs**(`kzg`, `blobs`, `commitments`): `` `0x${string}` ``[]
 
-Defined in: [packages/util/src/blobs.ts:111](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/blobs.ts#L111)
+Defined in: packages/util/src/blobs.ts:111
 
 EIP-4844: Computes KZG proofs for each blob/commitment pair.
 

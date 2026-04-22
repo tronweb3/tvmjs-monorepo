@@ -1,8 +1,8 @@
-**@ethereumjs/vm**
+**@tvmjs/vm**
 
 ***
 
-# @ethereumjs/vm
+# @tvmjs/vm
 
 ## Classes
 

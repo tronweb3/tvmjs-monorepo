@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / stripHexPrefix
+[@tvmjs/util](../README.md) / stripHexPrefix
 
 # Function: stripHexPrefix()
 
 > **stripHexPrefix**(`str`): `string`
 
-Defined in: [packages/util/src/internal.ts:49](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/internal.ts#L49)
+Defined in: packages/util/src/internal.ts:49
 
 Removes '0x' from a given `String` if present
 

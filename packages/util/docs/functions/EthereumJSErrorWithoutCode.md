@@ -1,8 +1,8 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / EthereumJSErrorWithoutCode
+[@tvmjs/util](../README.md) / EthereumJSErrorWithoutCode
 
 # ~~Function: EthereumJSErrorWithoutCode()~~
 

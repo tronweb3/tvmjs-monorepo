@@ -1,13 +1,14 @@
-**@ethereumjs/util**
+**@tvmjs/util**
 
 ***
 
-# @ethereumjs/util
+# @tvmjs/util
 
 ## Classes
 
 - [Account](classes/Account.md)
 - [Address](classes/Address.md)
+- [BlockLevelAccessList](classes/BlockLevelAccessList.md)
 - [CLRequest](classes/CLRequest.md)
 - [EthereumJSError](classes/EthereumJSError.md)
 - [Lock](classes/Lock.md)
@@ -19,22 +20,33 @@
 ## Interfaces
 
 - [AccountData](interfaces/AccountData.md)
+- [BALJSONAccountChanges](interfaces/BALJSONAccountChanges.md)
+- [BALJSONBalanceChange](interfaces/BALJSONBalanceChange.md)
+- [BALJSONCodeChange](interfaces/BALJSONCodeChange.md)
+- [BALJSONNonceChange](interfaces/BALJSONNonceChange.md)
+- [BALJSONSlotChanges](interfaces/BALJSONSlotChanges.md)
+- [BALJSONStorageChange](interfaces/BALJSONStorageChange.md)
 - [BinaryTreeExecutionWitness](interfaces/BinaryTreeExecutionWitness.md)
 - [BinaryTreeStateDiff](interfaces/BinaryTreeStateDiff.md)
 - [DB](interfaces/DB.md)
 - [DelBatch](interfaces/DelBatch.md)
 - [EthersProvider](interfaces/EthersProvider.md)
 - [JSONRPCWithdrawal](interfaces/JSONRPCWithdrawal.md)
+- [Key](interfaces/Key.md)
 - [KZG](interfaces/KZG.md)
 - [PartialAccountData](interfaces/PartialAccountData.md)
+- [Permission](interfaces/Permission.md)
 - [PutBatch](interfaces/PutBatch.md)
 - [RequestJSON](interfaces/RequestJSON.md)
+- [SetLengthOpts](interfaces/SetLengthOpts.md)
 - [TransformableToBytes](interfaces/TransformableToBytes.md)
 
 ## Type Aliases
 
+- [Accesses](type-aliases/Accesses.md)
 - [AccountBodyBytes](type-aliases/AccountBodyBytes.md)
 - [AddressLike](type-aliases/AddressLike.md)
+- [BALJSONBlockAccessList](type-aliases/BALJSONBlockAccessList.md)
 - [BatchDBOp](type-aliases/BatchDBOp.md)
 - [BigIntLike](type-aliases/BigIntLike.md)
 - [BinaryTreeLeafBasicData](type-aliases/BinaryTreeLeafBasicData.md)
@@ -52,9 +64,11 @@
 - [EOACode7702AuthorizationListItemUnsigned](type-aliases/EOACode7702AuthorizationListItemUnsigned.md)
 - [EthereumJSErrorMetaData](type-aliases/EthereumJSErrorMetaData.md)
 - [EthereumJSErrorObject](type-aliases/EthereumJSErrorObject.md)
+- [FetchFromProviderOptions](type-aliases/FetchFromProviderOptions.md)
 - [KeyEncoding](type-aliases/KeyEncoding.md)
 - [NestedUint8Array](type-aliases/NestedUint8Array.md)
 - [NumericString](type-aliases/NumericString.md)
+- [PermissionType](type-aliases/PermissionType.md)
 - [PrefixedHexString](type-aliases/PrefixedHexString.md)
 - [RequestBytes](type-aliases/RequestBytes.md)
 - [ToBytesInputTypes](type-aliases/ToBytesInputTypes.md)
@@ -125,6 +139,8 @@
 - [MAX\_RLP\_BLOCK\_SIZE](variables/MAX_RLP_BLOCK_SIZE.md)
 - [MAX\_UINT64](variables/MAX_UINT64.md)
 - [MAX\_WITHDRAWALS\_PER\_PAYLOAD](variables/MAX_WITHDRAWALS_PER_PAYLOAD.md)
+- [MIN\_TOKEN\_ID](variables/MIN_TOKEN_ID.md)
+- [PermissionType](variables/PermissionType.md)
 - [publicToAddress](variables/publicToAddress.md)
 - [RIPEMD160\_ADDRESS\_STRING](variables/RIPEMD160_ADDRESS_STRING.md)
 - [RLP\_EMPTY\_STRING](variables/RLP_EMPTY_STRING.md)
@@ -132,6 +148,8 @@
 - [SECP256K1\_ORDER](variables/SECP256K1_ORDER.md)
 - [SECP256K1\_ORDER\_DIV\_2](variables/SECP256K1_ORDER_DIV_2.md)
 - [SHA256\_NULL](variables/SHA256_NULL.md)
+- [SYSTEM\_ADDRESS](variables/SYSTEM_ADDRESS.md)
+- [SYSTEM\_ADDRESS\_BYTES](variables/SYSTEM_ADDRESS_BYTES.md)
 - [TWO\_POW256](variables/TWO_POW256.md)
 - [TypeOutput](variables/TypeOutput.md)
 - [ValueEncoding](variables/ValueEncoding.md)
@@ -176,6 +194,9 @@
 - [createAddressFromPrivateKey](functions/createAddressFromPrivateKey.md)
 - [createAddressFromPublicKey](functions/createAddressFromPublicKey.md)
 - [createAddressFromString](functions/createAddressFromString.md)
+- [createBlockLevelAccessList](functions/createBlockLevelAccessList.md)
+- [createBlockLevelAccessListFromJSON](functions/createBlockLevelAccessListFromJSON.md)
+- [createBlockLevelAccessListFromRLP](functions/createBlockLevelAccessListFromRLP.md)
 - [createCLRequest](functions/createCLRequest.md)
 - [createContractAddress](functions/createContractAddress.md)
 - [createContractAddress2](functions/createContractAddress2.md)
@@ -213,6 +234,7 @@
 - [getBinaryTreeKeyForCodeChunk](functions/getBinaryTreeKeyForCodeChunk.md)
 - [getBinaryTreeKeyForStorageSlot](functions/getBinaryTreeKeyForStorageSlot.md)
 - [getBinaryTreeStem](functions/getBinaryTreeStem.md)
+- [getBlob](functions/getBlob.md)
 - [getBlobs](functions/getBlobs.md)
 - [getKeys](functions/getKeys.md)
 - [getProvider](functions/getProvider.md)
@@ -224,6 +246,7 @@
 - [intToBytes](functions/intToBytes.md)
 - [intToHex](functions/intToHex.md)
 - [intToUnpaddedBytes](functions/intToUnpaddedBytes.md)
+- [isDebugEnabled](functions/isDebugEnabled.md)
 - [isEOACode7702AuthorizationList](functions/isEOACode7702AuthorizationList.md)
 - [isEOACode7702AuthorizationListBytes](functions/isEOACode7702AuthorizationListBytes.md)
 - [isHexString](functions/isHexString.md)

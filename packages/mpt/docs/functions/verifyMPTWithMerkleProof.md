@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / verifyMPTWithMerkleProof
+[@tvmjs/mpt](../README.md) / verifyMPTWithMerkleProof
 
 # Function: verifyMPTWithMerkleProof()
 
 > **verifyMPTWithMerkleProof**(`trie`, `rootHash`, `key`, `proof`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\> \| `null`\>
 
-Defined in: [packages/mpt/src/proof/proof.ts:96](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/proof/proof.ts#L96)
+Defined in: packages/mpt/src/proof/proof.ts:96
 
 Verifies a proof by putting all of its nodes into a trie and attempting to get the proven key. An (EIP-1186)[https://eips.ethereum.org/EIPS/eip-1186] proof
 contains the encoded trie nodes from the root node to the leaf node storing state data.

@@ -1,11 +1,11 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / Sepolia
+[@tvmjs/common](../README.md) / Sepolia
 
 # Variable: Sepolia
 
 > `const` **Sepolia**: [`ChainConfig`](../interfaces/ChainConfig.md)
 
-Defined in: [chains.ts:162](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/chains.ts#L162)
+Defined in: src/chains.ts:116

@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / KeyEncoding
+[@tvmjs/util](../README.md) / KeyEncoding
 
 # Variable: KeyEncoding
 
 > **KeyEncoding**: `object`
 
-Defined in: [packages/util/src/db.ts:9](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts#L9)
+Defined in: packages/util/src/db.ts:9
 
 ## Type Declaration
 

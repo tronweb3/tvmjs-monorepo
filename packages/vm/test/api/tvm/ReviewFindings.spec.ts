@@ -4,6 +4,7 @@
  */
 import {
   Account,
+  Address,
   BIGINT_0,
   MIN_TOKEN_ID,
   PermissionType,
@@ -279,7 +280,9 @@ describe('Review Findings - DataWord', () => {
 
 describe('Review Findings - Precompile Utilities', () => {
   it('recoverAddrBySign returns empty array for invalid signature', async () => {
-    const { recoverAddrBySign } = await import('../../../../../packages/evm/src/precompiles/util.ts')
+    const { recoverAddrBySign } = await import(
+      '../../../../../packages/evm/src/precompiles/util.ts'
+    )
     const invalidSig = new Uint8Array(65) // all zeros
     const hash = new Uint8Array(32)
     const result = recoverAddrBySign(invalidSig, hash)
@@ -287,7 +290,9 @@ describe('Review Findings - Precompile Utilities', () => {
   })
 
   it('convertToTronAddress adds 0x41 prefix for 20-byte address', async () => {
-    const { convertToTronAddress } = await import('../../../../../packages/evm/src/precompiles/util.ts')
+    const { convertToTronAddress } = await import(
+      '../../../../../packages/evm/src/precompiles/util.ts'
+    )
     const addr = new Uint8Array(20)
     addr[0] = 0xab
     const result = convertToTronAddress(addr)
@@ -297,14 +302,18 @@ describe('Review Findings - Precompile Utilities', () => {
   })
 
   it('convertToTronAddress returns original if not 20 bytes', async () => {
-    const { convertToTronAddress } = await import('../../../../../packages/evm/src/precompiles/util.ts')
+    const { convertToTronAddress } = await import(
+      '../../../../../packages/evm/src/precompiles/util.ts'
+    )
     const addr = new Uint8Array(21)
     const result = convertToTronAddress(addr)
     assert.equal(result, addr) // same reference
   })
 
   it('extractBytesArray returns empty for offset beyond words', async () => {
-    const { extractBytesArray } = await import('../../../../../packages/evm/src/precompiles/util.ts')
+    const { extractBytesArray } = await import(
+      '../../../../../packages/evm/src/precompiles/util.ts'
+    )
     const { DataWord } = await import('../../../../../packages/evm/src/precompiles/dataWord.ts')
     const data = new Uint8Array(32)
     const words = DataWord.parseArray(data)
@@ -388,17 +397,21 @@ describe('Review Findings - Contract Deployment with Tokens', () => {
     // PUSH1 0x00 PUSH1 0x00 RETURN (returns empty)
     const bytecode = hexToBytes('0x60006000f3')
 
-    const contractAddress = await deployContract(vm, {
-      caller: OWNER_ADDRESS,
-      bytecode,
-      tokenId,
-      tokenValue: 100n,
-    }, { pk: PK, skipBalance: true })
+    const contractAddress = await deployContract(
+      vm,
+      {
+        caller: OWNER_ADDRESS,
+        bytecode,
+        tokenId,
+        tokenValue: 100n,
+      },
+      { pk: PK, skipBalance: true },
+    )
 
     assert.isNotNull(contractAddress)
 
     // Verify token was transferred to contract
-    const contractAccount = await getAccount(vm, contractAddress)
+    const contractAccount = await getAccount(vm, contractAddress as Address)
     assert.isNotNull(contractAccount)
     assert.equal(contractAccount!.getTokenBalance(tokenId), 100n)
 

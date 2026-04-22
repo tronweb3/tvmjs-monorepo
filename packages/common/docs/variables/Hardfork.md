@@ -1,16 +1,20 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / Hardfork
+[@tvmjs/common](../README.md) / Hardfork
 
 # Variable: Hardfork
 
 > **Hardfork**: `object`
 
-Defined in: [enums.ts:59](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/enums.ts#L59)
+Defined in: src/enums.ts:59
 
 ## Type Declaration
+
+### Amsterdam
+
+> `readonly` **Amsterdam**: `"amsterdam"` = `'amsterdam'`
 
 ### ArrowGlacier
 
@@ -111,3 +115,7 @@ Defined in: [enums.ts:59](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 ### TangerineWhistle
 
 > `readonly` **TangerineWhistle**: `"tangerineWhistle"` = `'tangerineWhistle'`
+
+### Tron
+
+> `readonly` **Tron**: `"tron"` = `'tron'`

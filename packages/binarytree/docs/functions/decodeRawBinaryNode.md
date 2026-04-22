@@ -1,14 +1,14 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / decodeRawBinaryNode
+[@tvmjs/binarytree](../README.md) / decodeRawBinaryNode
 
 # Function: decodeRawBinaryNode()
 
 > **decodeRawBinaryNode**(`raw`): [`BinaryNode`](../type-aliases/BinaryNode.md)
 
-Defined in: [node/util.ts:8](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/util.ts#L8)
+Defined in: node/util.ts:8
 
 ## Parameters
 

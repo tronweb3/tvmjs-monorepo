@@ -1,12 +1,12 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / Units
+[@tvmjs/util](../README.md) / Units
 
 # Class: Units
 
-Defined in: [packages/util/src/units.ts:25](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/units.ts#L25)
+Defined in: packages/util/src/units.ts:25
 
 ## Constructors
 
@@ -24,7 +24,7 @@ Defined in: [packages/util/src/units.ts:25](https://github.com/ethereumjs/ethere
 
 > `static` **ether**(`amount`): `bigint`
 
-Defined in: [packages/util/src/units.ts:41](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/units.ts#L41)
+Defined in: packages/util/src/units.ts:41
 
 Convert a number or bigint input of ether to wei
 
@@ -48,7 +48,7 @@ amount of units in wei
 
 > `static` **gwei**(`amount`): `bigint`
 
-Defined in: [packages/util/src/units.ts:52](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/units.ts#L52)
+Defined in: packages/util/src/units.ts:52
 
 Convert a number or bigint input of gwei to wei
 
@@ -72,7 +72,7 @@ amount of units in wei
 
 > `static` **validateInput**(`amount`): `void`
 
-Defined in: [packages/util/src/units.ts:26](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/units.ts#L26)
+Defined in: packages/util/src/units.ts:26
 
 #### Parameters
 

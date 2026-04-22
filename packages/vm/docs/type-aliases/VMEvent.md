@@ -1,14 +1,14 @@
-[**@ethereumjs/vm**](../README.md)
+[**@tvmjs/vm**](../README.md)
 
 ***
 
-[@ethereumjs/vm](../README.md) / VMEvent
+[@tvmjs/vm](../README.md) / VMEvent
 
 # Type Alias: VMEvent
 
 > **VMEvent** = `object`
 
-Defined in: [vm/src/types.ts:83](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L83)
+Defined in: vm/src/types.ts:78
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [vm/src/types.ts:83](https://github.com/ethereumjs/ethereumjs-monore
 
 > **afterBlock**: (`data`, `resolve?`) => `void`
 
-Defined in: [vm/src/types.ts:85](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L85)
+Defined in: vm/src/types.ts:80
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [vm/src/types.ts:85](https://github.com/ethereumjs/ethereumjs-monore
 
 > **afterTx**: (`data`, `resolve?`) => `void`
 
-Defined in: [vm/src/types.ts:87](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L87)
+Defined in: vm/src/types.ts:82
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [vm/src/types.ts:87](https://github.com/ethereumjs/ethereumjs-monore
 
 > **beforeBlock**: (`data`, `resolve?`) => `void`
 
-Defined in: [vm/src/types.ts:84](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L84)
+Defined in: vm/src/types.ts:79
 
 #### Parameters
 
@@ -82,7 +82,7 @@ Defined in: [vm/src/types.ts:84](https://github.com/ethereumjs/ethereumjs-monore
 
 > **beforeTx**: (`data`, `resolve?`) => `void`
 
-Defined in: [vm/src/types.ts:86](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L86)
+Defined in: vm/src/types.ts:81
 
 #### Parameters
 

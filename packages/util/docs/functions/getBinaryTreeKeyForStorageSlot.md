@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / getBinaryTreeKeyForStorageSlot
+[@tvmjs/util](../README.md) / getBinaryTreeKeyForStorageSlot
 
 # Function: getBinaryTreeKeyForStorageSlot()
 
 > **getBinaryTreeKeyForStorageSlot**(`address`, `storageKey`, `hashFunction`): `Uint8Array`\<`ArrayBuffer`\>
 
-Defined in: [packages/util/src/binaryTree.ts:226](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L226)
+Defined in: packages/util/src/binaryTree.ts:226
 
 Asynchronously calculates the BinaryTree tree key for the specified storage slot.
 

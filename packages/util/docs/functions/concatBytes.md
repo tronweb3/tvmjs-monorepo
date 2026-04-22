@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / concatBytes
+[@tvmjs/util](../README.md) / concatBytes
 
 # Function: concatBytes()
 
 > **concatBytes**(...`arrays`): `Uint8Array`\<`ArrayBuffer`\>
 
-Defined in: [packages/util/src/bytes.ts:431](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L431)
+Defined in: packages/util/src/bytes.ts:457
 
 This mirrors the functionality of the `ethereum-cryptography` export except
 it skips the check to validate that every element of `arrays` is indeed a `uint8Array`

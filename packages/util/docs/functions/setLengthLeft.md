@@ -1,17 +1,17 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / setLengthLeft
+[@tvmjs/util](../README.md) / setLengthLeft
 
 # Function: setLengthLeft()
 
-> **setLengthLeft**(`msg`, `length`): `Uint8Array`
+> **setLengthLeft**(`msg`, `length`, `opts`): `Uint8Array`
 
-Defined in: [packages/util/src/bytes.ts:153](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L153)
+Defined in: packages/util/src/bytes.ts:170
 
 Left Pads a `Uint8Array` with leading zeros till it has `length` bytes.
-Or it truncates the beginning if it exceeds.
+Throws if input length exceeds target length, unless allowTruncate option is true.
 
 ## Parameters
 
@@ -26,6 +26,12 @@ the value to pad
 `number`
 
 the number of bytes the output should be
+
+### opts
+
+[`SetLengthOpts`](../interfaces/SetLengthOpts.md) = `{}`
+
+options object with allowTruncate flag
 
 ## Returns
 

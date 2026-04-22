@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / nibbleTypeToByteType
+[@tvmjs/mpt](../README.md) / nibbleTypeToByteType
 
 # Function: nibbleTypeToByteType()
 
 > **nibbleTypeToByteType**(`arr`): `Uint8Array`
 
-Defined in: [packages/mpt/src/util/encoding.ts:115](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/util/encoding.ts#L115)
+Defined in: packages/mpt/src/util/encoding.ts:115
 
 Converts each nibble into a single byte
 

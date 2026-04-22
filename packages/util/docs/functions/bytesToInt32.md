@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bytesToInt32
+[@tvmjs/util](../README.md) / bytesToInt32
 
 # Function: bytesToInt32()
 
 > **bytesToInt32**(`bytes`, `littleEndian`): `number`
 
-Defined in: [packages/util/src/bytes.ts:449](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L449)
+Defined in: packages/util/src/bytes.ts:475
 
 ## Parameters
 

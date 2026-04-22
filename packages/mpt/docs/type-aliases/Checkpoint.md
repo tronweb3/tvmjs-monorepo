@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / Checkpoint
+[@tvmjs/mpt](../README.md) / Checkpoint
 
 # Type Alias: Checkpoint
 
 > **Checkpoint** = `object`
 
-Defined in: [packages/mpt/src/types.ts:144](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L144)
+Defined in: packages/mpt/src/types.ts:144
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [packages/mpt/src/types.ts:144](https://github.com/ethereumjs/ethere
 
 > **keyValueMap**: `Map`\<`string`, `Uint8Array` \| `undefined`\>
 
-Defined in: [packages/mpt/src/types.ts:147](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L147)
+Defined in: packages/mpt/src/types.ts:147
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/mpt/src/types.ts:147](https://github.com/ethereumjs/ethere
 
 > **root**: `Uint8Array`
 
-Defined in: [packages/mpt/src/types.ts:148](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L148)
+Defined in: packages/mpt/src/types.ts:148

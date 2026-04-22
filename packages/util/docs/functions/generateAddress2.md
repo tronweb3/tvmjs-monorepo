@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / generateAddress2
+[@tvmjs/util](../README.md) / generateAddress2
 
 # Function: generateAddress2()
 
 > **generateAddress2**(`from`, `salt`, `initCode`): `Uint8Array`
 
-Defined in: [packages/util/src/account.ts:473](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L473)
+Defined in: packages/util/src/account.ts:631
 
 Generates an address for a contract created using CREATE2.
 

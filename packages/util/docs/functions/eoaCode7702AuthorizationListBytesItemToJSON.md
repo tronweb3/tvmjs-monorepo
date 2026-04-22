@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / eoaCode7702AuthorizationListBytesItemToJSON
+[@tvmjs/util](../README.md) / eoaCode7702AuthorizationListBytesItemToJSON
 
 # Function: eoaCode7702AuthorizationListBytesItemToJSON()
 
 > **eoaCode7702AuthorizationListBytesItemToJSON**(`authorizationList`): [`EOACode7702AuthorizationListItem`](../type-aliases/EOACode7702AuthorizationListItem.md)
 
-Defined in: [packages/util/src/authorization.ts:32](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/authorization.ts#L32)
+Defined in: packages/util/src/authorization.ts:32
 
 Converts an authorization list to a JSON format
 

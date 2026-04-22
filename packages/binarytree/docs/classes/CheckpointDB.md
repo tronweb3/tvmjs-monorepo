@@ -1,12 +1,12 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / CheckpointDB
+[@tvmjs/binarytree](../README.md) / CheckpointDB
 
 # Class: CheckpointDB
 
-Defined in: [db/checkpoint.ts:16](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L16)
+Defined in: db/checkpoint.ts:11
 
 DB is a thin wrapper around the underlying levelup db,
 which validates inputs and sets encoding type.
@@ -21,7 +21,7 @@ which validates inputs and sets encoding type.
 
 > **new CheckpointDB**(`opts`): `CheckpointDB`
 
-Defined in: [db/checkpoint.ts:50](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L50)
+Defined in: db/checkpoint.ts:45
 
 Initialize a DB instance.
 
@@ -41,7 +41,7 @@ Initialize a DB instance.
 
 > **\_stats**: `object`
 
-Defined in: [db/checkpoint.ts:34](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L34)
+Defined in: db/checkpoint.ts:29
 
 #### cache
 
@@ -81,7 +81,7 @@ Defined in: [db/checkpoint.ts:34](https://github.com/ethereumjs/ethereumjs-monor
 
 > `readonly` **cacheSize**: `number`
 
-Defined in: [db/checkpoint.ts:19](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L19)
+Defined in: db/checkpoint.ts:14
 
 ***
 
@@ -89,7 +89,7 @@ Defined in: [db/checkpoint.ts:19](https://github.com/ethereumjs/ethereumjs-monor
 
 > **checkpoints**: [`Checkpoint`](../type-aliases/Checkpoint.md)[]
 
-Defined in: [db/checkpoint.ts:17](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L17)
+Defined in: db/checkpoint.ts:12
 
 ***
 
@@ -97,7 +97,7 @@ Defined in: [db/checkpoint.ts:17](https://github.com/ethereumjs/ethereumjs-monor
 
 > **db**: `DB`\<`string`, `string` \| `Uint8Array`\<`ArrayBufferLike`\>\>
 
-Defined in: [db/checkpoint.ts:18](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L18)
+Defined in: db/checkpoint.ts:13
 
 ## Methods
 
@@ -105,7 +105,7 @@ Defined in: [db/checkpoint.ts:18](https://github.com/ethereumjs/ethereumjs-monor
 
 > **batch**(`opStack`): `Promise`\<`void`\>
 
-Defined in: [db/checkpoint.ts:229](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L229)
+Defined in: db/checkpoint.ts:227
 
 #### Parameters
 
@@ -129,7 +129,7 @@ Defined in: [db/checkpoint.ts:229](https://github.com/ethereumjs/ethereumjs-mono
 
 > **checkpoint**(`root`): `void`
 
-Defined in: [db/checkpoint.ts:91](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L91)
+Defined in: db/checkpoint.ts:86
 
 Adds a new checkpoint to the stack
 
@@ -149,7 +149,7 @@ Adds a new checkpoint to the stack
 
 > **commit**(): `Promise`\<`void`\>
 
-Defined in: [db/checkpoint.ts:98](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L98)
+Defined in: db/checkpoint.ts:93
 
 Commits the latest checkpoint
 
@@ -163,7 +163,7 @@ Commits the latest checkpoint
 
 > **del**(`key`): `Promise`\<`void`\>
 
-Defined in: [db/checkpoint.ts:207](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L207)
+Defined in: db/checkpoint.ts:204
 
 #### Parameters
 
@@ -187,7 +187,7 @@ Defined in: [db/checkpoint.ts:207](https://github.com/ethereumjs/ethereumjs-mono
 
 > **get**(`key`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\> \| `undefined`\>
 
-Defined in: [db/checkpoint.ts:138](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L138)
+Defined in: db/checkpoint.ts:133
 
 #### Parameters
 
@@ -211,7 +211,7 @@ Defined in: [db/checkpoint.ts:138](https://github.com/ethereumjs/ethereumjs-mono
 
 > **hasCheckpoints**(): `boolean`
 
-Defined in: [db/checkpoint.ts:83](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L83)
+Defined in: db/checkpoint.ts:78
 
 Is the DB during a checkpoint phase?
 
@@ -225,7 +225,7 @@ Is the DB during a checkpoint phase?
 
 > **open**(): `Promise`\<`void`\>
 
-Defined in: [db/checkpoint.ts:291](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L291)
+Defined in: db/checkpoint.ts:289
 
 Opens the database -- if applicable
 
@@ -243,7 +243,7 @@ Opens the database -- if applicable
 
 > **put**(`key`, `value`): `Promise`\<`void`\>
 
-Defined in: [db/checkpoint.ts:183](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L183)
+Defined in: db/checkpoint.ts:179
 
 #### Parameters
 
@@ -271,7 +271,7 @@ Defined in: [db/checkpoint.ts:183](https://github.com/ethereumjs/ethereumjs-mono
 
 > **revert**(): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
 
-Defined in: [db/checkpoint.ts:130](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L130)
+Defined in: db/checkpoint.ts:125
 
 Reverts the latest checkpoint
 
@@ -285,7 +285,7 @@ Reverts the latest checkpoint
 
 > **setCheckpoints**(`checkpoints`): `void`
 
-Defined in: [db/checkpoint.ts:69](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L69)
+Defined in: db/checkpoint.ts:64
 
 Flush the checkpoints and use the given checkpoints instead.
 
@@ -305,7 +305,7 @@ Flush the checkpoints and use the given checkpoints instead.
 
 > **shallowCopy**(): `CheckpointDB`
 
-Defined in: [db/checkpoint.ts:283](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L283)
+Defined in: db/checkpoint.ts:281
 
 #### Returns
 
@@ -323,7 +323,7 @@ Defined in: [db/checkpoint.ts:283](https://github.com/ethereumjs/ethereumjs-mono
 
 > **stats**(`reset`): `object`
 
-Defined in: [db/checkpoint.ts:261](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/db/checkpoint.ts#L261)
+Defined in: db/checkpoint.ts:259
 
 #### Parameters
 

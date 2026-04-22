@@ -1,12 +1,12 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / HardforkByOpts
+[@tvmjs/common](../README.md) / HardforkByOpts
 
 # Interface: HardforkByOpts
 
-Defined in: [types.ts:161](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L161)
+Defined in: src/types.ts:157
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [types.ts:161](https://github.com/ethereumjs/ethereumjs-monorepo/blo
 
 > `optional` **blockNumber**: `BigIntLike`
 
-Defined in: [types.ts:162](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L162)
+Defined in: src/types.ts:158
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [types.ts:162](https://github.com/ethereumjs/ethereumjs-monorepo/blo
 
 > `optional` **timestamp**: `BigIntLike`
 
-Defined in: [types.ts:163](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L163)
+Defined in: src/types.ts:159

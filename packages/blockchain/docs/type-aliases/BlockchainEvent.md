@@ -1,14 +1,14 @@
-[**@ethereumjs/blockchain**](../README.md)
+[**@tvmjs/blockchain**](../README.md)
 
 ***
 
-[@ethereumjs/blockchain](../README.md) / BlockchainEvent
+[@tvmjs/blockchain](../README.md) / BlockchainEvent
 
 # Type Alias: BlockchainEvent
 
 > **BlockchainEvent** = `object`
 
-Defined in: [types.ts:9](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/types.ts#L9)
+Defined in: types.ts:9
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [types.ts:9](https://github.com/ethereumjs/ethereumjs-monorepo/blob/
 
 > **deletedCanonicalBlocks**: (`data`, `resolve?`) => `void`
 
-Defined in: [types.ts:10](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/types.ts#L10)
+Defined in: types.ts:10
 
 #### Parameters
 

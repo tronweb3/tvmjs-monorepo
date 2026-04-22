@@ -1,14 +1,14 @@
-[**@ethereumjs/vm**](../README.md)
+[**@tvmjs/vm**](../README.md)
 
 ***
 
-[@ethereumjs/vm](../README.md) / EVMProfilerOpts
+[@tvmjs/vm](../README.md) / EVMProfilerOpts
 
 # Type Alias: EVMProfilerOpts
 
 > **EVMProfilerOpts** = `object`
 
-Defined in: [vm/src/types.ts:78](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L78)
+Defined in: vm/src/types.ts:73
 
 ## Properties
 
@@ -16,4 +16,4 @@ Defined in: [vm/src/types.ts:78](https://github.com/ethereumjs/ethereumjs-monore
 
 > **enabled**: `boolean`
 
-Defined in: [vm/src/types.ts:79](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L79)
+Defined in: vm/src/types.ts:74

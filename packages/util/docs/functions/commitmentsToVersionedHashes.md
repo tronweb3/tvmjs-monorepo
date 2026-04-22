@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / commitmentsToVersionedHashes
+[@tvmjs/util](../README.md) / commitmentsToVersionedHashes
 
 # Function: commitmentsToVersionedHashes()
 
 > **commitmentsToVersionedHashes**(`commitments`): `` `0x${string}` ``[]
 
-Defined in: [packages/util/src/blobs.ts:147](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/blobs.ts#L147)
+Defined in: packages/util/src/blobs.ts:147
 
 EIP-4844: Generate an array of versioned hashes from corresponding kzg commitments
 

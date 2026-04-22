@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / isHexString
+[@tvmjs/util](../README.md) / isHexString
 
 # Function: isHexString()
 
 > **isHexString**(`value`, `length?`): `` value is `0x${string}` ``
 
-Defined in: [packages/util/src/internal.ts:36](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/internal.ts#L36)
+Defined in: packages/util/src/internal.ts:36
 
 Returns a boolean on whether or not the the input starts with '0x' and matches the optional length
 

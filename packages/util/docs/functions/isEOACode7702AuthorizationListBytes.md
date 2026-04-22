@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / isEOACode7702AuthorizationListBytes
+[@tvmjs/util](../README.md) / isEOACode7702AuthorizationListBytes
 
 # Function: isEOACode7702AuthorizationListBytes()
 
 > **isEOACode7702AuthorizationListBytes**(`input`): `input is EOACode7702AuthorizationListBytes`
 
-Defined in: [packages/util/src/types.ts:160](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L160)
+Defined in: packages/util/src/types.ts:160
 
 ## Parameters
 

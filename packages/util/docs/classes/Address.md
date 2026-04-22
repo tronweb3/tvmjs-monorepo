@@ -1,12 +1,12 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / Address
+[@tvmjs/util](../README.md) / Address
 
 # Class: Address
 
-Defined in: [packages/util/src/address.ts:24](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L24)
+Defined in: packages/util/src/address.ts:24
 
 Handling and generating Ethereum addresses
 
@@ -16,7 +16,7 @@ Handling and generating Ethereum addresses
 
 > **new Address**(`bytes`): `Address`
 
-Defined in: [packages/util/src/address.ts:27](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L27)
+Defined in: packages/util/src/address.ts:27
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [packages/util/src/address.ts:27](https://github.com/ethereumjs/ethe
 
 > `readonly` **bytes**: `Uint8Array`
 
-Defined in: [packages/util/src/address.ts:25](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L25)
+Defined in: packages/util/src/address.ts:25
 
 ## Methods
 
@@ -42,7 +42,7 @@ Defined in: [packages/util/src/address.ts:25](https://github.com/ethereumjs/ethe
 
 > **equals**(`address`): `boolean`
 
-Defined in: [packages/util/src/address.ts:37](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L37)
+Defined in: packages/util/src/address.ts:37
 
 Is address equal to another.
 
@@ -62,7 +62,7 @@ Is address equal to another.
 
 > **isPrecompileOrSystemAddress**(): `boolean`
 
-Defined in: [packages/util/src/address.ts:52](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L52)
+Defined in: packages/util/src/address.ts:52
 
 True if address is in the address range defined
 by EIP-1352
@@ -77,7 +77,7 @@ by EIP-1352
 
 > **isZero**(): `boolean`
 
-Defined in: [packages/util/src/address.ts:44](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L44)
+Defined in: packages/util/src/address.ts:44
 
 Is address zero.
 
@@ -91,7 +91,7 @@ Is address zero.
 
 > **toBytes**(): `Uint8Array`
 
-Defined in: [packages/util/src/address.ts:69](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L69)
+Defined in: packages/util/src/address.ts:69
 
 Returns a new Uint8Array representation of address.
 
@@ -105,7 +105,7 @@ Returns a new Uint8Array representation of address.
 
 > **toString**(): `` `0x${string}` ``
 
-Defined in: [packages/util/src/address.ts:62](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L62)
+Defined in: packages/util/src/address.ts:62
 
 Returns hex encoding of address.
 

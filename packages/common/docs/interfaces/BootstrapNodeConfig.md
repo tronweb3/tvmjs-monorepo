@@ -1,12 +1,12 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / BootstrapNodeConfig
+[@tvmjs/common](../README.md) / BootstrapNodeConfig
 
 # Interface: BootstrapNodeConfig
 
-Defined in: [types.ts:66](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L66)
+Defined in: src/types.ts:66
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [types.ts:66](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > `optional` **chainId**: `number`
 
-Defined in: [types.ts:70](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L70)
+Defined in: src/types.ts:70
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [types.ts:70](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > **comment**: `string`
 
-Defined in: [types.ts:73](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L73)
+Defined in: src/types.ts:73
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [types.ts:73](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > **id**: `string`
 
-Defined in: [types.ts:71](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L71)
+Defined in: src/types.ts:71
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [types.ts:71](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > **ip**: `string`
 
-Defined in: [types.ts:67](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L67)
+Defined in: src/types.ts:67
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [types.ts:67](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > **location**: `string`
 
-Defined in: [types.ts:72](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L72)
+Defined in: src/types.ts:72
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [types.ts:72](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > `optional` **network**: `string`
 
-Defined in: [types.ts:69](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L69)
+Defined in: src/types.ts:69
 
 ***
 
@@ -62,4 +62,4 @@ Defined in: [types.ts:69](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > **port**: `string` \| `number`
 
-Defined in: [types.ts:68](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L68)
+Defined in: src/types.ts:68

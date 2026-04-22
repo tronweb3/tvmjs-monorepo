@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / isZeroAddress
+[@tvmjs/util](../README.md) / isZeroAddress
 
 # Function: isZeroAddress()
 
 > **isZeroAddress**(`hexAddress`): `boolean`
 
-Defined in: [packages/util/src/account.ts:590](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L590)
+Defined in: packages/util/src/account.ts:750
 
 Checks if a given address is the zero address.
 

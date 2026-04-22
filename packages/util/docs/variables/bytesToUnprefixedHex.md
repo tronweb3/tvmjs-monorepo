@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bytesToUnprefixedHex
+[@tvmjs/util](../README.md) / bytesToUnprefixedHex
 
 # ~~Variable: bytesToUnprefixedHex()~~
 
-> `const` **bytesToUnprefixedHex**: (`bytes`) => `string` = `_bytesToUnprefixedHex`
+> `const` **bytesToUnprefixedHex**: (`bytes`) => `string` = `bytesToUnprefixedHexNoble`
 
-Defined in: [packages/util/src/bytes.ts:19](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L19)
+Defined in: packages/util/src/bytes.ts:18
 
 Convert byte array to hex string. Uses built-in function, when available.
 

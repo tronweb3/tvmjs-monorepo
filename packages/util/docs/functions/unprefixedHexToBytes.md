@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / unprefixedHexToBytes
+[@tvmjs/util](../README.md) / unprefixedHexToBytes
 
 # Function: unprefixedHexToBytes()
 
 > **unprefixedHexToBytes**(`hex`): `Uint8Array`
 
-Defined in: [packages/util/src/bytes.ts:32](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L32)
+Defined in: packages/util/src/bytes.ts:31
 
 ## Parameters
 

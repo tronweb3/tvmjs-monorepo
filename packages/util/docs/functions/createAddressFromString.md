@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / createAddressFromString
+[@tvmjs/util](../README.md) / createAddressFromString
 
 # Function: createAddressFromString()
 
 > **createAddressFromString**(`str`): [`Address`](../classes/Address.md)
 
-Defined in: [packages/util/src/address.ts:97](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L97)
+Defined in: packages/util/src/address.ts:97
 
 Returns an Address object from a hex-encoded string.
 

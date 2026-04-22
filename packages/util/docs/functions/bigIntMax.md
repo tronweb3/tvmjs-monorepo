@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bigIntMax
+[@tvmjs/util](../README.md) / bigIntMax
 
 # Function: bigIntMax()
 
 > **bigIntMax**(...`args`): `bigint`
 
-Defined in: [packages/util/src/bytes.ts:360](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L360)
+Defined in: packages/util/src/bytes.ts:386
 
 Calculates max bigint from an array of bigints
 

@@ -1,12 +1,12 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / Path
+[@tvmjs/mpt](../README.md) / Path
 
 # Interface: Path
 
-Defined in: [packages/mpt/src/types.ts:32](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L32)
+Defined in: packages/mpt/src/types.ts:32
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/mpt/src/types.ts:32](https://github.com/ethereumjs/ethereu
 
 > **node**: [`MPTNode`](../type-aliases/MPTNode.md) \| `null`
 
-Defined in: [packages/mpt/src/types.ts:33](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L33)
+Defined in: packages/mpt/src/types.ts:33
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [packages/mpt/src/types.ts:33](https://github.com/ethereumjs/ethereu
 
 > **remaining**: [`Nibbles`](../type-aliases/Nibbles.md)
 
-Defined in: [packages/mpt/src/types.ts:34](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L34)
+Defined in: packages/mpt/src/types.ts:34
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [packages/mpt/src/types.ts:34](https://github.com/ethereumjs/ethereu
 
 > **stack**: [`MPTNode`](../type-aliases/MPTNode.md)[]
 
-Defined in: [packages/mpt/src/types.ts:35](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L35)
+Defined in: packages/mpt/src/types.ts:35

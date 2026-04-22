@@ -1,8 +1,8 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / EthereumJSErrorMetaData
+[@tvmjs/util](../README.md) / EthereumJSErrorMetaData
 
 # Type Alias: EthereumJSErrorMetaData
 

@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / eoaCode7702RecoverAuthority
+[@tvmjs/util](../README.md) / eoaCode7702RecoverAuthority
 
 # Function: eoaCode7702RecoverAuthority()
 
 > **eoaCode7702RecoverAuthority**(`input`): [`Address`](../classes/Address.md)
 
-Defined in: [packages/util/src/authorization.ts:153](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/authorization.ts#L153)
+Defined in: packages/util/src/authorization.ts:163
 
 ## Parameters
 

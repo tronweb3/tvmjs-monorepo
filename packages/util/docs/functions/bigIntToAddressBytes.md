@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bigIntToAddressBytes
+[@tvmjs/util](../README.md) / bigIntToAddressBytes
 
 # Function: bigIntToAddressBytes()
 
 > **bigIntToAddressBytes**(`value`, `strict`): `Uint8Array`
 
-Defined in: [packages/util/src/bytes.ts:378](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L378)
+Defined in: packages/util/src/bytes.ts:404
 
 ## Parameters
 

@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / generateBinaryTreeChunkSuffixes
+[@tvmjs/util](../README.md) / generateBinaryTreeChunkSuffixes
 
 # Function: generateBinaryTreeChunkSuffixes()
 
 > **generateBinaryTreeChunkSuffixes**(`numChunks`): `number`[]
 
-Defined in: [packages/util/src/binaryTree.ts:304](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L304)
+Defined in: packages/util/src/binaryTree.ts:304
 
 Helper method to generate the suffixes for code chunks for putting code
 

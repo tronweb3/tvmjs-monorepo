@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / isValidPublic
+[@tvmjs/util](../README.md) / isValidPublic
 
 # Function: isValidPublic()
 
 > **isValidPublic**(`publicKey`, `sanitize`): `boolean`
 
-Defined in: [packages/util/src/account.ts:507](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L507)
+Defined in: packages/util/src/account.ts:667
 
 Checks if the public key satisfies the rules of the curve secp256k1
 and the requirements of Ethereum.

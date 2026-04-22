@@ -1,8 +1,8 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / DEFAULT\_ERROR\_CODE
+[@tvmjs/util](../README.md) / DEFAULT\_ERROR\_CODE
 
 # Variable: DEFAULT\_ERROR\_CODE
 

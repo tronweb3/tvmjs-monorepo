@@ -1,11 +1,11 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / EthashConfig
+[@tvmjs/common](../README.md) / EthashConfig
 
 # Type Alias: EthashConfig
 
 > **EthashConfig** = `object`
 
-Defined in: [types.ts:21](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L21)
+Defined in: src/types.ts:21

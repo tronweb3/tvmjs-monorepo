@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / MPTOptsWithDefaults
+[@tvmjs/mpt](../README.md) / MPTOptsWithDefaults
 
 # Type Alias: MPTOptsWithDefaults
 
 > **MPTOptsWithDefaults** = [`MPTOpts`](../interfaces/MPTOpts.md) & `object`
 
-Defined in: [packages/mpt/src/types.ts:114](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L114)
+Defined in: packages/mpt/src/types.ts:114
 
 ## Type Declaration
 

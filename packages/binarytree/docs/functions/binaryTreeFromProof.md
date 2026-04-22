@@ -1,14 +1,14 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / binaryTreeFromProof
+[@tvmjs/binarytree](../README.md) / binaryTreeFromProof
 
 # Function: binaryTreeFromProof()
 
 > **binaryTreeFromProof**(`proof`): `Promise`\<[`BinaryTree`](../classes/BinaryTree.md)\>
 
-Defined in: [proof.ts:14](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/proof.ts#L14)
+Defined in: proof.ts:14
 
 Saves the nodes from a proof into the tree.
 

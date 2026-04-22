@@ -1,11 +1,11 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / BIGINT\_100
+[@tvmjs/util](../README.md) / BIGINT\_100
 
 # Variable: BIGINT\_100
 
 > `const` **BIGINT\_100**: `bigint`
 
-Defined in: [packages/util/src/constants.ts:111](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/constants.ts#L111)
+Defined in: packages/util/src/constants.ts:120

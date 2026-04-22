@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / createAccountFromRLP
+[@tvmjs/util](../README.md) / createAccountFromRLP
 
 # Function: createAccountFromRLP()
 
 > **createAccountFromRLP**(`serialized`): [`Account`](../classes/Account.md)
 
-Defined in: [packages/util/src/account.ts:348](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L348)
+Defined in: packages/util/src/account.ts:506
 
 ## Parameters
 

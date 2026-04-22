@@ -1,12 +1,12 @@
-[**@ethereumjs/blockchain**](../README.md)
+[**@tvmjs/blockchain**](../README.md)
 
 ***
 
-[@ethereumjs/blockchain](../README.md) / CasperConsensus
+[@tvmjs/blockchain](../README.md) / CasperConsensus
 
 # Class: CasperConsensus
 
-Defined in: [consensus/casper.ts:10](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/consensus/casper.ts#L10)
+Defined in: consensus/casper.ts:10
 
 This class encapsulates Casper-related consensus functionality when used with the Blockchain class.
 
@@ -20,7 +20,7 @@ This class encapsulates Casper-related consensus functionality when used with th
 
 > **new CasperConsensus**(): `CasperConsensus`
 
-Defined in: [consensus/casper.ts:13](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/consensus/casper.ts#L13)
+Defined in: consensus/casper.ts:13
 
 #### Returns
 
@@ -32,7 +32,7 @@ Defined in: [consensus/casper.ts:13](https://github.com/ethereumjs/ethereumjs-mo
 
 > **algorithm**: `ConsensusAlgorithm`
 
-Defined in: [consensus/casper.ts:11](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/consensus/casper.ts#L11)
+Defined in: consensus/casper.ts:11
 
 #### Implementation of
 
@@ -44,7 +44,7 @@ Defined in: [consensus/casper.ts:11](https://github.com/ethereumjs/ethereumjs-mo
 
 > **genesisInit**(): `Promise`\<`void`\>
 
-Defined in: [consensus/casper.ts:17](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/consensus/casper.ts#L17)
+Defined in: consensus/casper.ts:17
 
 Initialize genesis for consensus mechanism
 
@@ -62,7 +62,7 @@ Initialize genesis for consensus mechanism
 
 > **newBlock**(): `Promise`\<`void`\>
 
-Defined in: [consensus/casper.ts:32](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/consensus/casper.ts#L32)
+Defined in: consensus/casper.ts:32
 
 Update consensus on new block
 
@@ -80,7 +80,7 @@ Update consensus on new block
 
 > **setup**(): `Promise`\<`void`\>
 
-Defined in: [consensus/casper.ts:19](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/consensus/casper.ts#L19)
+Defined in: consensus/casper.ts:19
 
 Set up consensus mechanism
 
@@ -98,7 +98,7 @@ Set up consensus mechanism
 
 > **validateConsensus**(): `Promise`\<`void`\>
 
-Defined in: [consensus/casper.ts:21](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/consensus/casper.ts#L21)
+Defined in: consensus/casper.ts:21
 
 Validate block consensus parameters
 
@@ -116,7 +116,7 @@ Validate block consensus parameters
 
 > **validateDifficulty**(`header`): `Promise`\<`void`\>
 
-Defined in: [consensus/casper.ts:23](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/consensus/casper.ts#L23)
+Defined in: consensus/casper.ts:23
 
 #### Parameters
 

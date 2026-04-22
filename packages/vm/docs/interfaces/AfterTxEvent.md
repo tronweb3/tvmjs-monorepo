@@ -1,12 +1,12 @@
-[**@ethereumjs/vm**](../README.md)
+[**@tvmjs/vm**](../README.md)
 
 ***
 
-[@ethereumjs/vm](../README.md) / AfterTxEvent
+[@tvmjs/vm](../README.md) / AfterTxEvent
 
 # Interface: AfterTxEvent
 
-Defined in: [vm/src/types.ts:494](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L494)
+Defined in: vm/src/types.ts:500
 
 Execution result of a transaction
 
@@ -20,7 +20,7 @@ Execution result of a transaction
 
 > `optional` **accessList**: `AccessList`
 
-Defined in: [vm/src/types.ts:476](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L476)
+Defined in: vm/src/types.ts:482
 
 EIP-2930 access list generated for the tx (see `reportAccessList` option)
 
@@ -34,7 +34,7 @@ EIP-2930 access list generated for the tx (see `reportAccessList` option)
 
 > **amountSpent**: `bigint`
 
-Defined in: [vm/src/types.ts:454](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L454)
+Defined in: vm/src/types.ts:454
 
 The amount of ether used by this transaction
 
@@ -48,7 +48,7 @@ The amount of ether used by this transaction
 
 > `optional` **blobGasUsed**: `bigint`
 
-Defined in: [vm/src/types.ts:491](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L491)
+Defined in: vm/src/types.ts:497
 
 This is the blob gas units times the fee per blob gas for 4844 transactions
 
@@ -58,11 +58,26 @@ This is the blob gas units times the fee per blob gas for 4844 transactions
 
 ***
 
+### blockGasSpent
+
+> **blockGasSpent**: `bigint`
+
+Defined in: vm/src/types.ts:472
+
+The amount of gas accounted for at block level.
+On EIP-7778 this excludes tx-level refund subtraction.
+
+#### Inherited from
+
+[`RunTxResult`](RunTxResult.md).[`blockGasSpent`](RunTxResult.md#blockgasspent)
+
+***
+
 ### bloom
 
 > **bloom**: `Bloom`
 
-Defined in: [vm/src/types.ts:449](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L449)
+Defined in: vm/src/types.ts:449
 
 Bloom filter resulted from transaction
 
@@ -76,7 +91,7 @@ Bloom filter resulted from transaction
 
 > `optional` **createdAddress**: `Address`
 
-Defined in: evm/dist/esm/types.d.ts:331
+Defined in: evm/dist/esm/types.d.ts:341
 
 Address of created account during transaction, if any
 
@@ -90,7 +105,7 @@ Address of created account during transaction, if any
 
 > **execResult**: `ExecResult`
 
-Defined in: evm/dist/esm/types.d.ts:335
+Defined in: evm/dist/esm/types.d.ts:345
 
 Contains the results from running the code, if any, as described in runCode
 
@@ -104,7 +119,7 @@ Contains the results from running the code, if any, as described in runCode
 
 > **gasRefund**: `bigint`
 
-Defined in: [vm/src/types.ts:471](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L471)
+Defined in: vm/src/types.ts:477
 
 The amount of gas as that was refunded during the transaction (i.e. `gasUsed = totalGasConsumed - gasRefund`)
 
@@ -118,7 +133,7 @@ The amount of gas as that was refunded during the transaction (i.e. `gasUsed = t
 
 > **minerValue**: `bigint`
 
-Defined in: [vm/src/types.ts:486](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L486)
+Defined in: vm/src/types.ts:492
 
 The value that accrues to the miner by this transaction
 
@@ -132,7 +147,7 @@ The value that accrues to the miner by this transaction
 
 > `optional` **preimages**: `Map`\<`` `0x${string}` ``, `Uint8Array`\<`ArrayBufferLike`\>\>
 
-Defined in: [vm/src/types.ts:481](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L481)
+Defined in: vm/src/types.ts:487
 
 Preimages mapping of the touched accounts from the tx (see `reportPreimages` option)
 
@@ -146,7 +161,7 @@ Preimages mapping of the touched accounts from the tx (see `reportPreimages` opt
 
 > **receipt**: [`TxReceipt`](../type-aliases/TxReceipt.md)
 
-Defined in: [vm/src/types.ts:459](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L459)
+Defined in: vm/src/types.ts:459
 
 The tx receipt
 
@@ -160,7 +175,7 @@ The tx receipt
 
 > **totalGasSpent**: `bigint`
 
-Defined in: [vm/src/types.ts:466](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L466)
+Defined in: vm/src/types.ts:466
 
 The amount of gas used in this transaction, which is paid for
 This contains the gas units that have been used on execution, plus the upfront cost,
@@ -176,6 +191,6 @@ which consists of calldata cost, intrinsic cost and optionally the access list c
 
 > **transaction**: `TypedTransaction`
 
-Defined in: [vm/src/types.ts:498](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L498)
+Defined in: vm/src/types.ts:504
 
 The transaction which just got finished

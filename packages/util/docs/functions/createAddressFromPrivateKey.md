@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / createAddressFromPrivateKey
+[@tvmjs/util](../README.md) / createAddressFromPrivateKey
 
 # Function: createAddressFromPrivateKey()
 
 > **createAddressFromPrivateKey**(`privateKey`): [`Address`](../classes/Address.md)
 
-Defined in: [packages/util/src/address.ts:120](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L120)
+Defined in: packages/util/src/address.ts:120
 
 Returns an address for a given private key.
 

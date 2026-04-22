@@ -1,11 +1,11 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / BytesLike
+[@tvmjs/util](../README.md) / BytesLike
 
 # Type Alias: BytesLike
 
 > **BytesLike** = `Uint8Array` \| `number`[] \| `number` \| `bigint` \| [`TransformableToBytes`](../interfaces/TransformableToBytes.md) \| [`PrefixedHexString`](PrefixedHexString.md)
 
-Defined in: [packages/util/src/types.ts:16](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L16)
+Defined in: packages/util/src/types.ts:16

@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / createAccount
+[@tvmjs/util](../README.md) / createAccount
 
 # Function: createAccount()
 
 > **createAccount**(`accountData`): [`Account`](../classes/Account.md)
 
-Defined in: [packages/util/src/account.ts:304](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L304)
+Defined in: packages/util/src/account.ts:434
 
 ## Parameters
 

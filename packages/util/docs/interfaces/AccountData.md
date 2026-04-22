@@ -1,20 +1,40 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / AccountData
+[@tvmjs/util](../README.md) / AccountData
 
 # Interface: AccountData
 
-Defined in: [packages/util/src/account.ts:24](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L24)
+Defined in: packages/util/src/account.ts:84
 
 ## Properties
+
+### activePermissions?
+
+> `optional` **activePermissions**: [`Permission`](Permission.md)[]
+
+Defined in: packages/util/src/account.ts:92
+
+***
+
+### asset?
+
+> `optional` **asset**: `object`
+
+Defined in: packages/util/src/account.ts:89
+
+#### Index Signature
+
+\[`key`: `number`\]: `bigint`
+
+***
 
 ### balance?
 
 > `optional` **balance**: [`BigIntLike`](../type-aliases/BigIntLike.md)
 
-Defined in: [packages/util/src/account.ts:26](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L26)
+Defined in: packages/util/src/account.ts:86
 
 ***
 
@@ -22,7 +42,7 @@ Defined in: [packages/util/src/account.ts:26](https://github.com/ethereumjs/ethe
 
 > `optional` **codeHash**: [`BytesLike`](../type-aliases/BytesLike.md)
 
-Defined in: [packages/util/src/account.ts:28](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L28)
+Defined in: packages/util/src/account.ts:88
 
 ***
 
@@ -30,7 +50,7 @@ Defined in: [packages/util/src/account.ts:28](https://github.com/ethereumjs/ethe
 
 > `optional` **nonce**: [`BigIntLike`](../type-aliases/BigIntLike.md)
 
-Defined in: [packages/util/src/account.ts:25](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L25)
+Defined in: packages/util/src/account.ts:85
 
 ***
 
@@ -38,4 +58,4 @@ Defined in: [packages/util/src/account.ts:25](https://github.com/ethereumjs/ethe
 
 > `optional` **storageRoot**: [`BytesLike`](../type-aliases/BytesLike.md)
 
-Defined in: [packages/util/src/account.ts:27](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L27)
+Defined in: packages/util/src/account.ts:87

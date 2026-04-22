@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bytesToHex
+[@tvmjs/util](../README.md) / bytesToHex
 
 # Function: bytesToHex()
 
 > **bytesToHex**(`bytes`): `` `0x${string}` ``
 
-Defined in: [packages/util/src/bytes.ts:43](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L43)
+Defined in: packages/util/src/bytes.ts:42
 
 Converts a Uint8Array to a [PrefixedHexString](../type-aliases/PrefixedHexString.md)
 

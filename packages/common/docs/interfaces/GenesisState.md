@@ -1,12 +1,12 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / GenesisState
+[@tvmjs/common](../README.md) / GenesisState
 
 # Interface: GenesisState
 
-Defined in: [gethGenesis.ts:142](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/gethGenesis.ts#L142)
+Defined in: src/gethGenesis.ts:142
 
 If you are using a custom chain [Common](../classes/Common.md), pass the genesis state.
 

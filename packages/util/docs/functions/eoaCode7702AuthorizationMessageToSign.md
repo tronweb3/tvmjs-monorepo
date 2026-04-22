@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / eoaCode7702AuthorizationMessageToSign
+[@tvmjs/util](../README.md) / eoaCode7702AuthorizationMessageToSign
 
 # Function: eoaCode7702AuthorizationMessageToSign()
 
 > **eoaCode7702AuthorizationMessageToSign**(`input`): `Uint8Array`\<`ArrayBuffer`\>
 
-Defined in: [packages/util/src/authorization.ts:89](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/authorization.ts#L89)
+Defined in: packages/util/src/authorization.ts:89
 
 Returns the bytes (RLP-encoded) to sign
 

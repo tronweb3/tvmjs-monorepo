@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / eoaCode7702SignAuthorization
+[@tvmjs/util](../README.md) / eoaCode7702SignAuthorization
 
 # Function: eoaCode7702SignAuthorization()
 
 > **eoaCode7702SignAuthorization**(`input`, `privateKey`, `ecSign?`): [`EOACode7702AuthorizationListBytesItem`](../type-aliases/EOACode7702AuthorizationListBytesItem.md)
 
-Defined in: [packages/util/src/authorization.ts:127](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/authorization.ts#L127)
+Defined in: packages/util/src/authorization.ts:127
 
 Signs an authorization list item and returns it in `bytes` format.
 To get the JSON format, use `authorizationListBytesToJSON([signed])[0] to convert it`
@@ -25,7 +25,7 @@ To get the JSON format, use `authorizationListBytesToJSON([signed])[0] to conver
 
 ### ecSign?
 
-(`msg`, `pk`, `ecSignOpts?`) => `Pick`\<`ReturnType`\<*typeof* `secp256k1.sign`\>, `"recovery"` \| `"r"` \| `"s"`\>
+(`msg`, `pk`, `ecSignOpts?`) => `Pick`\<`ReturnType`\<*typeof* `secp256k1.Signature.fromBytes`\>, `"recovery"` \| `"r"` \| `"s"`\>
 
 ## Returns
 

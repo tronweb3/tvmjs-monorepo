@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / RawBinaryTreeAccessedState
+[@tvmjs/common](../README.md) / RawBinaryTreeAccessedState
 
 # Type Alias: RawBinaryTreeAccessedState
 
 > **RawBinaryTreeAccessedState** = `object`
 
-Defined in: [interfaces.ts:82](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L82)
+Defined in: src/interfaces.ts:77
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [interfaces.ts:82](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **address**: `Address`
 
-Defined in: [interfaces.ts:83](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L83)
+Defined in: src/interfaces.ts:78
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [interfaces.ts:83](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **chunkIndex**: `number`
 
-Defined in: [interfaces.ts:85](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L85)
+Defined in: src/interfaces.ts:80
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [interfaces.ts:85](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **chunkKey**: `PrefixedHexString`
 
-Defined in: [interfaces.ts:86](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L86)
+Defined in: src/interfaces.ts:81
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [interfaces.ts:86](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **treeIndex**: `number` \| `bigint`
 
-Defined in: [interfaces.ts:84](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L84)
+Defined in: src/interfaces.ts:79

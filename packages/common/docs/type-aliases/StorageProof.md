@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / StorageProof
+[@tvmjs/common](../README.md) / StorageProof
 
 # Type Alias: StorageProof
 
 > **StorageProof** = `object`
 
-Defined in: [interfaces.ts:43](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L43)
+Defined in: src/interfaces.ts:38
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [interfaces.ts:43](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **key**: `PrefixedHexString`
 
-Defined in: [interfaces.ts:44](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L44)
+Defined in: src/interfaces.ts:39
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [interfaces.ts:44](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **proof**: `PrefixedHexString`[]
 
-Defined in: [interfaces.ts:45](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L45)
+Defined in: src/interfaces.ts:40
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [interfaces.ts:45](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **value**: `PrefixedHexString`
 
-Defined in: [interfaces.ts:46](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L46)
+Defined in: src/interfaces.ts:41

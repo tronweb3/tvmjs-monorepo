@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / getBinaryTreeKey
+[@tvmjs/util](../README.md) / getBinaryTreeKey
 
 # Function: getBinaryTreeKey()
 
 > **getBinaryTreeKey**(`stem`, `leaf`): `Uint8Array`\<`ArrayBuffer`\>
 
-Defined in: [packages/util/src/binaryTree.ts:116](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L116)
+Defined in: packages/util/src/binaryTree.ts:116
 
 ## Parameters
 

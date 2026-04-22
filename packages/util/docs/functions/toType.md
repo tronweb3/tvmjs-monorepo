@@ -1,8 +1,8 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / toType
+[@tvmjs/util](../README.md) / toType
 
 # Function: toType()
 
@@ -10,7 +10,7 @@
 
 > **toType**\<`T`\>(`input`, `outputType`): `null`
 
-Defined in: [packages/util/src/types.ts:83](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L83)
+Defined in: packages/util/src/types.ts:83
 
 Convert an input to a specified type.
 Input of null/undefined returns null/undefined regardless of the output type.
@@ -43,7 +43,7 @@ type to output
 
 > **toType**\<`T`\>(`input`, `outputType`): `undefined`
 
-Defined in: [packages/util/src/types.ts:84](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L84)
+Defined in: packages/util/src/types.ts:84
 
 Convert an input to a specified type.
 Input of null/undefined returns null/undefined regardless of the output type.
@@ -76,7 +76,7 @@ type to output
 
 > **toType**\<`T`\>(`input`, `outputType`): [`TypeOutputReturnType`](../type-aliases/TypeOutputReturnType.md)\[`T`\]
 
-Defined in: [packages/util/src/types.ts:85](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L85)
+Defined in: packages/util/src/types.ts:85
 
 Convert an input to a specified type.
 Input of null/undefined returns null/undefined regardless of the output type.

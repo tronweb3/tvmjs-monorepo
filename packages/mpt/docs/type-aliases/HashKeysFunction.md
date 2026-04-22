@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / HashKeysFunction
+[@tvmjs/mpt](../README.md) / HashKeysFunction
 
 # Type Alias: HashKeysFunction()
 
 > **HashKeysFunction** = (`msg`) => `Uint8Array`
 
-Defined in: [packages/mpt/src/types.ts:45](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L45)
+Defined in: packages/mpt/src/types.ts:45
 
 ## Parameters
 

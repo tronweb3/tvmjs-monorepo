@@ -1,12 +1,12 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / BinaryTreeStateDiff
+[@tvmjs/util](../README.md) / BinaryTreeStateDiff
 
 # Interface: BinaryTreeStateDiff
 
-Defined in: [packages/util/src/binaryTree.ts:42](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L42)
+Defined in: packages/util/src/binaryTree.ts:42
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/util/src/binaryTree.ts:42](https://github.com/ethereumjs/e
 
 > **stem**: `` `0x${string}` ``
 
-Defined in: [packages/util/src/binaryTree.ts:43](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L43)
+Defined in: packages/util/src/binaryTree.ts:43
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [packages/util/src/binaryTree.ts:43](https://github.com/ethereumjs/e
 
 > **suffixDiffs**: `object`[]
 
-Defined in: [packages/util/src/binaryTree.ts:44](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L44)
+Defined in: packages/util/src/binaryTree.ts:44
 
 #### currentValue
 

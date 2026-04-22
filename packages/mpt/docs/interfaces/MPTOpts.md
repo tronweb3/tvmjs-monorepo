@@ -1,12 +1,12 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / MPTOpts
+[@tvmjs/mpt](../README.md) / MPTOpts
 
 # Interface: MPTOpts
 
-Defined in: [packages/mpt/src/types.ts:47](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L47)
+Defined in: packages/mpt/src/types.ts:47
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/mpt/src/types.ts:47](https://github.com/ethereumjs/ethereu
 
 > `optional` **cacheSize**: `number`
 
-Defined in: [packages/mpt/src/types.ts:106](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L106)
+Defined in: packages/mpt/src/types.ts:106
 
 LRU cache for trie nodes to allow for faster node retrieval.
 
@@ -26,9 +26,9 @@ Default: 0 (deactivated)
 
 > `optional` **common**: [`CommonInterface`](CommonInterface.md)
 
-Defined in: [packages/mpt/src/types.ts:111](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L111)
+Defined in: packages/mpt/src/types.ts:111
 
-@ethereumjs/common `Common` instance (an alternative to passing in a `customHashingFunction`)
+@tvmjs/common `Common` instance (an alternative to passing in a `customHashingFunction`)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [packages/mpt/src/types.ts:111](https://github.com/ethereumjs/ethere
 
 > `optional` **db**: `DB`\<`string`, `string` \| `Uint8Array`\<`ArrayBufferLike`\>\>
 
-Defined in: [packages/mpt/src/types.ts:51](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L51)
+Defined in: packages/mpt/src/types.ts:51
 
 A database instance.
 
@@ -46,7 +46,7 @@ A database instance.
 
 > `optional` **keyPrefix**: `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [packages/mpt/src/types.ts:83](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L83)
+Defined in: packages/mpt/src/types.ts:83
 
 Add a prefix to the trie node keys
 
@@ -59,7 +59,7 @@ e.g. all storage tries being stored in the outer account state DB)
 
 > `optional` **root**: `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [packages/mpt/src/types.ts:56](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L56)
+Defined in: packages/mpt/src/types.ts:56
 
 A `Uint8Array` for the root of a previously stored trie
 
@@ -69,10 +69,10 @@ A `Uint8Array` for the root of a previously stored trie
 
 > `optional` **useKeyHashing**: `boolean`
 
-Defined in: [packages/mpt/src/types.ts:70](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L70)
+Defined in: packages/mpt/src/types.ts:70
 
 Create as a secure MerklePatriciaTrie where the keys are automatically hashed using the
-**keccak256** hash function or alternatively the custom hash function provided.
+**keccak_256** hash function or alternatively the custom hash function provided.
 Default: `false`
 
 This is the flavor of the MerklePatriciaTrie which is used in production Ethereum networks
@@ -88,7 +88,7 @@ instantiation with `useKeyHashing` set to `true`.
 
 > `optional` **useKeyHashingFunction**: [`HashKeysFunction`](../type-aliases/HashKeysFunction.md)
 
-Defined in: [packages/mpt/src/types.ts:75](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L75)
+Defined in: packages/mpt/src/types.ts:75
 
 Hash function used for hashing trie node and securing key.
 
@@ -98,7 +98,7 @@ Hash function used for hashing trie node and securing key.
 
 > `optional` **useNodePruning**: `boolean`
 
-Defined in: [packages/mpt/src/types.ts:99](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L99)
+Defined in: packages/mpt/src/types.ts:99
 
 Flag to prune the trie. When set to `true`, each time a value is overridden,
 unreachable nodes will be pruned (deleted) from the trie
@@ -109,7 +109,7 @@ unreachable nodes will be pruned (deleted) from the trie
 
 > `optional` **useRootPersistence**: `boolean`
 
-Defined in: [packages/mpt/src/types.ts:93](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L93)
+Defined in: packages/mpt/src/types.ts:93
 
 Store the root inside the database after every `write` operation
 
@@ -119,6 +119,6 @@ Store the root inside the database after every `write` operation
 
 > `optional` **valueEncoding**: `ValueEncoding`
 
-Defined in: [packages/mpt/src/types.ts:88](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L88)
+Defined in: packages/mpt/src/types.ts:88
 
 ValueEncoding of the database (the values which are `put`/`get` in the db are of this type). Defaults to `string`

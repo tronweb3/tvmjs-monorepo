@@ -1,12 +1,12 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / StorageDump
+[@tvmjs/common](../README.md) / StorageDump
 
 # Interface: StorageDump
 
-Defined in: [interfaces.ts:12](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/interfaces.ts#L12)
+Defined in: src/interfaces.ts:7
 
 ## Indexable
 

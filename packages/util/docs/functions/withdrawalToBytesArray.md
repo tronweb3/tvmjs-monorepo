@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / withdrawalToBytesArray
+[@tvmjs/util](../README.md) / withdrawalToBytesArray
 
 # Function: withdrawalToBytesArray()
 
 > **withdrawalToBytesArray**(`withdrawal`): [`WithdrawalBytes`](../type-aliases/WithdrawalBytes.md)
 
-Defined in: [packages/util/src/withdrawal.ts:36](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/withdrawal.ts#L36)
+Defined in: packages/util/src/withdrawal.ts:36
 
 Convert a withdrawal to a byte array
 

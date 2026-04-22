@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / genesisMPTStateRoot
+[@tvmjs/mpt](../README.md) / genesisMPTStateRoot
 
 # Function: genesisMPTStateRoot()
 
 > **genesisMPTStateRoot**(`genesisState`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\>\>
 
-Defined in: [packages/mpt/src/util/genesisState.ts:18](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/util/genesisState.ts#L18)
+Defined in: packages/mpt/src/util/genesisState.ts:12
 
 Derives the stateRoot of the genesis block based on genesis allocations
 

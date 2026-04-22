@@ -1,8 +1,8 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / EthereumJSError
+[@tvmjs/util](../README.md) / EthereumJSError
 
 # Class: EthereumJSError\<T\>
 

@@ -1,12 +1,12 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / BaseOpts
+[@tvmjs/common](../README.md) / BaseOpts
 
 # Interface: BaseOpts
 
-Defined in: [types.ts:98](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L98)
+Defined in: src/types.ts:94
 
 ## Extended by
 
@@ -19,7 +19,7 @@ Defined in: [types.ts:98](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > `optional` **customCrypto**: [`CustomCrypto`](CustomCrypto.md)
 
-Defined in: [types.ts:142](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L142)
+Defined in: src/types.ts:138
 
 This option can be used to replace the most common crypto primitives
 (keccak256 hashing e.g.) within the EthereumJS ecosystem libraries
@@ -36,7 +36,7 @@ and be made with eventual security implications considered.
 
 > `optional` **eips**: `number`[]
 
-Defined in: [types.ts:113](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L113)
+Defined in: src/types.ts:109
 
 Selected EIPs which can be activated, please use an array for instantiation
 (e.g. `eips: [ 2537, ]`)
@@ -51,7 +51,7 @@ Currently supported:
 
 > `optional` **hardfork**: `string`
 
-Defined in: [types.ts:104](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L104)
+Defined in: src/types.ts:100
 
 String identifier ('byzantium') for hardfork or [Hardfork](../variables/Hardfork.md) enum.
 
@@ -63,7 +63,7 @@ Default: Hardfork.London
 
 > `optional` **params**: [`ParamsDict`](../type-aliases/ParamsDict.md)
 
-Defined in: [types.ts:131](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L131)
+Defined in: src/types.ts:127
 
 Optionally pass in an EIP params dictionary, see one of the
 EthereumJS library `params.ts` files for an example (e.g. tx, evm).

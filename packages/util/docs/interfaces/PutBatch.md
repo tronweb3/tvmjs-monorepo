@@ -1,12 +1,12 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / PutBatch
+[@tvmjs/util](../README.md) / PutBatch
 
 # Interface: PutBatch\<TKey, TValue\>
 
-Defined in: [packages/util/src/db.ts:29](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts#L29)
+Defined in: packages/util/src/db.ts:29
 
 ## Type Parameters
 
@@ -24,7 +24,7 @@ Defined in: [packages/util/src/db.ts:29](https://github.com/ethereumjs/ethereumj
 
 > **key**: `TKey`
 
-Defined in: [packages/util/src/db.ts:34](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts#L34)
+Defined in: packages/util/src/db.ts:34
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/util/src/db.ts:34](https://github.com/ethereumjs/ethereumj
 
 > `optional` **opts**: [`EncodingOpts`](../type-aliases/EncodingOpts.md)
 
-Defined in: [packages/util/src/db.ts:36](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts#L36)
+Defined in: packages/util/src/db.ts:36
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/util/src/db.ts:36](https://github.com/ethereumjs/ethereumj
 
 > **type**: `"put"`
 
-Defined in: [packages/util/src/db.ts:33](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts#L33)
+Defined in: packages/util/src/db.ts:33
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [packages/util/src/db.ts:33](https://github.com/ethereumjs/ethereumj
 
 > **value**: `TValue`
 
-Defined in: [packages/util/src/db.ts:35](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts#L35)
+Defined in: packages/util/src/db.ts:35

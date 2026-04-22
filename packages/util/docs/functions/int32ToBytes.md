@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / int32ToBytes
+[@tvmjs/util](../README.md) / int32ToBytes
 
 # Function: int32ToBytes()
 
 > **int32ToBytes**(`value`, `littleEndian`): `Uint8Array`
 
-Defined in: [packages/util/src/bytes.ts:477](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L477)
+Defined in: packages/util/src/bytes.ts:503
 
 ## Parameters
 

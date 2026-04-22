@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / Chain
+[@tvmjs/common](../README.md) / Chain
 
 # Variable: Chain
 
 > **Chain**: `object`
 
-Defined in: [enums.ts:3](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/enums.ts#L3)
+Defined in: src/enums.ts:3
 
 ## Type Declaration
 

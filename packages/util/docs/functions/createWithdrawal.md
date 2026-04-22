@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / createWithdrawal
+[@tvmjs/util](../README.md) / createWithdrawal
 
 # Function: createWithdrawal()
 
 > **createWithdrawal**(`withdrawalData`): [`Withdrawal`](../classes/Withdrawal.md)
 
-Defined in: [packages/util/src/withdrawal.ts:106](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/withdrawal.ts#L106)
+Defined in: packages/util/src/withdrawal.ts:106
 
 Creates a validator withdrawal request to be submitted to the consensus layer
 

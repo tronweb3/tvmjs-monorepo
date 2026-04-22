@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / chunkifyBinaryTreeCode
+[@tvmjs/util](../README.md) / chunkifyBinaryTreeCode
 
 # Function: chunkifyBinaryTreeCode()
 
 > **chunkifyBinaryTreeCode**(`code`): `Uint8Array`\<`ArrayBufferLike`\>[]
 
-Defined in: [packages/util/src/binaryTree.ts:179](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L179)
+Defined in: packages/util/src/binaryTree.ts:179
 
 ## Parameters
 

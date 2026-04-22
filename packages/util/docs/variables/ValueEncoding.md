@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / ValueEncoding
+[@tvmjs/util](../README.md) / ValueEncoding
 
 # Variable: ValueEncoding
 
 > **ValueEncoding**: `object`
 
-Defined in: [packages/util/src/db.ts:17](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts#L17)
+Defined in: packages/util/src/db.ts:17
 
 ## Type Declaration
 

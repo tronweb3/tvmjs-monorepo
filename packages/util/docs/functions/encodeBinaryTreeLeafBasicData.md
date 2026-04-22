@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / encodeBinaryTreeLeafBasicData
+[@tvmjs/util](../README.md) / encodeBinaryTreeLeafBasicData
 
 # Function: encodeBinaryTreeLeafBasicData()
 
 > **encodeBinaryTreeLeafBasicData**(`account`): `Uint8Array`
 
-Defined in: [packages/util/src/binaryTree.ts:280](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L280)
+Defined in: packages/util/src/binaryTree.ts:280
 
 This function takes a `BinaryTreeLeafBasicData` object and encodes its properties
 (version, nonce, code size, and balance) into a compact `Uint8Array` format. Each

@@ -1,12 +1,12 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / Account
+[@tvmjs/util](../README.md) / Account
 
 # Class: Account
 
-Defined in: [packages/util/src/account.ts:81](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L81)
+Defined in: packages/util/src/account.ts:145
 
 Account class to load and maintain the  basic account objects.
 Supports partial loading and access required for stateless with null
@@ -21,9 +21,9 @@ witness access
 
 ### Constructor
 
-> **new Account**(`nonce`, `balance`, `storageRoot`, `codeHash`, `codeSize`, `version`): `Account`
+> **new Account**(`nonce`, `balance`, `storageRoot`, `codeHash`, `codeSize`, `version`, `asset`, `activePermissions`): `Account`
 
-Defined in: [packages/util/src/account.ts:163](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L163)
+Defined in: packages/util/src/account.ts:276
 
 This constructor assigns and validates the values.
 It is not recommended to use this constructor directly. Instead use the static
@@ -56,6 +56,14 @@ undefined get assigned with the defaults, but null args are retained as is
 
 `number` | `null`
 
+##### asset
+
+\{\[`key`: `number`\]: `bigint`; \} | `null`
+
+##### activePermissions
+
+[`Permission`](../interfaces/Permission.md)[] | `null`
+
 #### Returns
 
 `Account`
@@ -64,11 +72,27 @@ undefined get assigned with the defaults, but null args are retained as is
 
 ## Properties
 
+### \_activePermissions
+
+> **\_activePermissions**: [`Permission`](../interfaces/Permission.md)[] \| `null` = `null`
+
+Defined in: packages/util/src/account.ts:156
+
+***
+
+### \_asset
+
+> **\_asset**: \{\[`key`: `string` \| `number`\]: `bigint`; \} \| `null` = `null`
+
+Defined in: packages/util/src/account.ts:153
+
+***
+
 ### \_balance
 
 > **\_balance**: `bigint` \| `null` = `null`
 
-Defined in: [packages/util/src/account.ts:83](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L83)
+Defined in: packages/util/src/account.ts:147
 
 ***
 
@@ -76,7 +100,7 @@ Defined in: [packages/util/src/account.ts:83](https://github.com/ethereumjs/ethe
 
 > **\_codeHash**: `Uint8Array`\<`ArrayBufferLike`\> \| `null` = `null`
 
-Defined in: [packages/util/src/account.ts:85](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L85)
+Defined in: packages/util/src/account.ts:149
 
 ***
 
@@ -84,7 +108,7 @@ Defined in: [packages/util/src/account.ts:85](https://github.com/ethereumjs/ethe
 
 > **\_codeSize**: `number` \| `null` = `null`
 
-Defined in: [packages/util/src/account.ts:87](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L87)
+Defined in: packages/util/src/account.ts:151
 
 ***
 
@@ -92,7 +116,7 @@ Defined in: [packages/util/src/account.ts:87](https://github.com/ethereumjs/ethe
 
 > **\_nonce**: `bigint` \| `null` = `null`
 
-Defined in: [packages/util/src/account.ts:82](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L82)
+Defined in: packages/util/src/account.ts:146
 
 ***
 
@@ -100,7 +124,7 @@ Defined in: [packages/util/src/account.ts:82](https://github.com/ethereumjs/ethe
 
 > **\_storageRoot**: `Uint8Array`\<`ArrayBufferLike`\> \| `null` = `null`
 
-Defined in: [packages/util/src/account.ts:84](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L84)
+Defined in: packages/util/src/account.ts:148
 
 ***
 
@@ -108,9 +132,69 @@ Defined in: [packages/util/src/account.ts:84](https://github.com/ethereumjs/ethe
 
 > **\_version**: `number` \| `null` = `null`
 
-Defined in: [packages/util/src/account.ts:88](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L88)
+Defined in: packages/util/src/account.ts:152
 
 ## Accessors
+
+### activePermissions
+
+#### Get Signature
+
+> **get** **activePermissions**(): [`Permission`](../interfaces/Permission.md)[] \| `null`
+
+Defined in: packages/util/src/account.ts:242
+
+##### Returns
+
+[`Permission`](../interfaces/Permission.md)[] \| `null`
+
+#### Set Signature
+
+> **set** **activePermissions**(`_activePermissions`): `void`
+
+Defined in: packages/util/src/account.ts:249
+
+##### Parameters
+
+###### \_activePermissions
+
+[`Permission`](../interfaces/Permission.md)[] | `null`
+
+##### Returns
+
+`void`
+
+***
+
+### asset
+
+#### Get Signature
+
+> **get** **asset**(): \{\[`key`: `number`\]: `bigint`; \} \| `null`
+
+Defined in: packages/util/src/account.ts:224
+
+##### Returns
+
+\{\[`key`: `number`\]: `bigint`; \} \| `null`
+
+#### Set Signature
+
+> **set** **asset**(`_asset`): `void`
+
+Defined in: packages/util/src/account.ts:231
+
+##### Parameters
+
+###### \_asset
+
+\{\[`key`: `number`\]: `bigint`; \} | `null`
+
+##### Returns
+
+`void`
+
+***
 
 ### balance
 
@@ -118,7 +202,7 @@ Defined in: [packages/util/src/account.ts:88](https://github.com/ethereumjs/ethe
 
 > **get** **balance**(): `bigint`
 
-Defined in: [packages/util/src/account.ts:112](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L112)
+Defined in: packages/util/src/account.ts:180
 
 ##### Returns
 
@@ -128,7 +212,7 @@ Defined in: [packages/util/src/account.ts:112](https://github.com/ethereumjs/eth
 
 > **set** **balance**(`_balance`): `void`
 
-Defined in: [packages/util/src/account.ts:119](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L119)
+Defined in: packages/util/src/account.ts:187
 
 ##### Parameters
 
@@ -148,7 +232,7 @@ Defined in: [packages/util/src/account.ts:119](https://github.com/ethereumjs/eth
 
 > **get** **codeHash**(): `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [packages/util/src/account.ts:134](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L134)
+Defined in: packages/util/src/account.ts:202
 
 ##### Returns
 
@@ -158,7 +242,7 @@ Defined in: [packages/util/src/account.ts:134](https://github.com/ethereumjs/eth
 
 > **set** **codeHash**(`_codeHash`): `void`
 
-Defined in: [packages/util/src/account.ts:141](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L141)
+Defined in: packages/util/src/account.ts:209
 
 ##### Parameters
 
@@ -178,7 +262,7 @@ Defined in: [packages/util/src/account.ts:141](https://github.com/ethereumjs/eth
 
 > **get** **codeSize**(): `number`
 
-Defined in: [packages/util/src/account.ts:145](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L145)
+Defined in: packages/util/src/account.ts:213
 
 ##### Returns
 
@@ -188,7 +272,7 @@ Defined in: [packages/util/src/account.ts:145](https://github.com/ethereumjs/eth
 
 > **set** **codeSize**(`_codeSize`): `void`
 
-Defined in: [packages/util/src/account.ts:152](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L152)
+Defined in: packages/util/src/account.ts:220
 
 ##### Parameters
 
@@ -208,7 +292,7 @@ Defined in: [packages/util/src/account.ts:152](https://github.com/ethereumjs/eth
 
 > **get** **nonce**(): `bigint`
 
-Defined in: [packages/util/src/account.ts:101](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L101)
+Defined in: packages/util/src/account.ts:169
 
 ##### Returns
 
@@ -218,7 +302,7 @@ Defined in: [packages/util/src/account.ts:101](https://github.com/ethereumjs/eth
 
 > **set** **nonce**(`_nonce`): `void`
 
-Defined in: [packages/util/src/account.ts:108](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L108)
+Defined in: packages/util/src/account.ts:176
 
 ##### Parameters
 
@@ -238,7 +322,7 @@ Defined in: [packages/util/src/account.ts:108](https://github.com/ethereumjs/eth
 
 > **get** **storageRoot**(): `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [packages/util/src/account.ts:123](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L123)
+Defined in: packages/util/src/account.ts:191
 
 ##### Returns
 
@@ -248,7 +332,7 @@ Defined in: [packages/util/src/account.ts:123](https://github.com/ethereumjs/eth
 
 > **set** **storageRoot**(`_storageRoot`): `void`
 
-Defined in: [packages/util/src/account.ts:130](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L130)
+Defined in: packages/util/src/account.ts:198
 
 ##### Parameters
 
@@ -268,7 +352,7 @@ Defined in: [packages/util/src/account.ts:130](https://github.com/ethereumjs/eth
 
 > **get** **version**(): `number`
 
-Defined in: [packages/util/src/account.ts:90](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L90)
+Defined in: packages/util/src/account.ts:158
 
 ##### Returns
 
@@ -278,7 +362,7 @@ Defined in: [packages/util/src/account.ts:90](https://github.com/ethereumjs/ethe
 
 > **set** **version**(`_version`): `void`
 
-Defined in: [packages/util/src/account.ts:97](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L97)
+Defined in: packages/util/src/account.ts:165
 
 ##### Parameters
 
@@ -292,11 +376,47 @@ Defined in: [packages/util/src/account.ts:97](https://github.com/ethereumjs/ethe
 
 ## Methods
 
+### getPermissionById()
+
+> **getPermissionById**(`id`): [`Permission`](../interfaces/Permission.md) \| `null`
+
+Defined in: packages/util/src/account.ts:257
+
+#### Parameters
+
+##### id
+
+`number`
+
+#### Returns
+
+[`Permission`](../interfaces/Permission.md) \| `null`
+
+***
+
+### getTokenBalance()
+
+> **getTokenBalance**(`tokenId`): `bigint`
+
+Defined in: packages/util/src/account.ts:235
+
+#### Parameters
+
+##### tokenId
+
+`bigint`
+
+#### Returns
+
+`bigint`
+
+***
+
 ### isContract()
 
 > **isContract**(): `boolean`
 
-Defined in: [packages/util/src/account.ts:269](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L269)
+Defined in: packages/util/src/account.ts:394
 
 Returns a `Boolean` determining if the account is a contract.
 
@@ -310,7 +430,7 @@ Returns a `Boolean` determining if the account is a contract.
 
 > **isEmpty**(): `boolean`
 
-Defined in: [packages/util/src/account.ts:284](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L284)
+Defined in: packages/util/src/account.ts:409
 
 Returns a `Boolean` determining if the account is empty complying to the definition of
 account emptiness in [EIP-161](https://eips.ethereum.org/EIPS/eip-161):
@@ -326,7 +446,7 @@ account emptiness in [EIP-161](https://eips.ethereum.org/EIPS/eip-161):
 
 > **raw**(): `Uint8Array`\<`ArrayBufferLike`\>[]
 
-Defined in: [packages/util/src/account.ts:206](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L206)
+Defined in: packages/util/src/account.ts:323
 
 Returns an array of Uint8Arrays of the raw bytes for the account, in order.
 
@@ -340,7 +460,7 @@ Returns an array of Uint8Arrays of the raw bytes for the account, in order.
 
 > **serialize**(): `Uint8Array`
 
-Defined in: [packages/util/src/account.ts:218](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L218)
+Defined in: packages/util/src/account.ts:343
 
 Returns the RLP serialization of the account as a `Uint8Array`.
 
@@ -354,8 +474,28 @@ Returns the RLP serialization of the account as a `Uint8Array`.
 
 > **serializeWithPartialInfo**(): `Uint8Array`
 
-Defined in: [packages/util/src/account.ts:222](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L222)
+Defined in: packages/util/src/account.ts:347
 
 #### Returns
 
 `Uint8Array`
+
+***
+
+### updatePermissions()
+
+> **updatePermissions**(`__namedParameters`): `void`
+
+Defined in: packages/util/src/account.ts:253
+
+#### Parameters
+
+##### \_\_namedParameters
+
+###### activePermissions
+
+[`Permission`](../interfaces/Permission.md)[]
+
+#### Returns
+
+`void`

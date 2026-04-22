@@ -1,12 +1,12 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / ChainsConfig
+[@tvmjs/common](../README.md) / ChainsConfig
 
 # Interface: ChainsConfig
 
-Defined in: [types.ts:8](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L8)
+Defined in: src/types.ts:8
 
 ## Indexable
 

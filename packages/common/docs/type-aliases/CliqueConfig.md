@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / CliqueConfig
+[@tvmjs/common](../README.md) / CliqueConfig
 
 # Type Alias: CliqueConfig
 
 > **CliqueConfig** = `object`
 
-Defined in: [types.ts:16](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L16)
+Defined in: src/types.ts:16
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [types.ts:16](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > **epoch**: `number`
 
-Defined in: [types.ts:18](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L18)
+Defined in: src/types.ts:18
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [types.ts:18](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > **period**: `number`
 
-Defined in: [types.ts:17](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L17)
+Defined in: src/types.ts:17

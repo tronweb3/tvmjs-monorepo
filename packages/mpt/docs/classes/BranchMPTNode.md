@@ -1,12 +1,12 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / BranchMPTNode
+[@tvmjs/mpt](../README.md) / BranchMPTNode
 
 # Class: BranchMPTNode
 
-Defined in: [packages/mpt/src/node/branch.ts:5](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L5)
+Defined in: packages/mpt/src/node/branch.ts:5
 
 ## Constructors
 
@@ -14,7 +14,7 @@ Defined in: [packages/mpt/src/node/branch.ts:5](https://github.com/ethereumjs/et
 
 > **new BranchMPTNode**(): `BranchMPTNode`
 
-Defined in: [packages/mpt/src/node/branch.ts:9](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L9)
+Defined in: packages/mpt/src/node/branch.ts:9
 
 #### Returns
 
@@ -26,7 +26,7 @@ Defined in: [packages/mpt/src/node/branch.ts:9](https://github.com/ethereumjs/et
 
 > **\_branches**: [`BranchMPTNodeBranchValue`](../type-aliases/BranchMPTNodeBranchValue.md)[]
 
-Defined in: [packages/mpt/src/node/branch.ts:6](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L6)
+Defined in: packages/mpt/src/node/branch.ts:6
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [packages/mpt/src/node/branch.ts:6](https://github.com/ethereumjs/et
 
 > **\_value**: `Uint8Array`\<`ArrayBufferLike`\> \| `null`
 
-Defined in: [packages/mpt/src/node/branch.ts:7](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L7)
+Defined in: packages/mpt/src/node/branch.ts:7
 
 ## Methods
 
@@ -42,7 +42,7 @@ Defined in: [packages/mpt/src/node/branch.ts:7](https://github.com/ethereumjs/et
 
 > **getBranch**(`i`): [`BranchMPTNodeBranchValue`](../type-aliases/BranchMPTNodeBranchValue.md)
 
-Defined in: [packages/mpt/src/node/branch.ts:41](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L41)
+Defined in: packages/mpt/src/node/branch.ts:41
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [packages/mpt/src/node/branch.ts:41](https://github.com/ethereumjs/e
 
 > **getChildren**(): \[`number`, [`NodeReferenceOrRawMPTNode`](../type-aliases/NodeReferenceOrRawMPTNode.md)\][]
 
-Defined in: [packages/mpt/src/node/branch.ts:50](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L50)
+Defined in: packages/mpt/src/node/branch.ts:50
 
 #### Returns
 
@@ -72,7 +72,7 @@ Defined in: [packages/mpt/src/node/branch.ts:50](https://github.com/ethereumjs/e
 
 > **raw**(): [`BranchMPTNodeBranchValue`](../type-aliases/BranchMPTNodeBranchValue.md)[]
 
-Defined in: [packages/mpt/src/node/branch.ts:33](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L33)
+Defined in: packages/mpt/src/node/branch.ts:33
 
 #### Returns
 
@@ -84,7 +84,7 @@ Defined in: [packages/mpt/src/node/branch.ts:33](https://github.com/ethereumjs/e
 
 > **serialize**(): `Uint8Array`
 
-Defined in: [packages/mpt/src/node/branch.ts:37](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L37)
+Defined in: packages/mpt/src/node/branch.ts:37
 
 #### Returns
 
@@ -96,7 +96,7 @@ Defined in: [packages/mpt/src/node/branch.ts:37](https://github.com/ethereumjs/e
 
 > **setBranch**(`i`, `v`): `void`
 
-Defined in: [packages/mpt/src/node/branch.ts:29](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L29)
+Defined in: packages/mpt/src/node/branch.ts:29
 
 #### Parameters
 
@@ -118,7 +118,7 @@ Defined in: [packages/mpt/src/node/branch.ts:29](https://github.com/ethereumjs/e
 
 > **value**(`v?`): `Uint8Array`\<`ArrayBufferLike`\> \| `null`
 
-Defined in: [packages/mpt/src/node/branch.ts:21](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L21)
+Defined in: packages/mpt/src/node/branch.ts:21
 
 #### Parameters
 
@@ -136,7 +136,7 @@ Defined in: [packages/mpt/src/node/branch.ts:21](https://github.com/ethereumjs/e
 
 > `static` **fromArray**(`arr`): `BranchMPTNode`
 
-Defined in: [packages/mpt/src/node/branch.ts:14](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/node/branch.ts#L14)
+Defined in: packages/mpt/src/node/branch.ts:14
 
 #### Parameters
 

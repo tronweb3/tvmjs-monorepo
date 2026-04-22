@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / decodeBinaryTreeLeafBasicData
+[@tvmjs/util](../README.md) / decodeBinaryTreeLeafBasicData
 
 # Function: decodeBinaryTreeLeafBasicData()
 
 > **decodeBinaryTreeLeafBasicData**(`encodedBasicData`): [`BinaryTreeLeafBasicData`](../type-aliases/BinaryTreeLeafBasicData.md)
 
-Defined in: [packages/util/src/binaryTree.ts:245](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L245)
+Defined in: packages/util/src/binaryTree.ts:245
 
 This function extracts and decodes account header elements (version, nonce, code size, and balance)
 from an encoded `Uint8Array` representation of raw BinaryTree leaf-node basic data. Each component is sliced

@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / createAccountFromBytesArray
+[@tvmjs/util](../README.md) / createAccountFromBytesArray
 
 # Function: createAccountFromBytesArray()
 
 > **createAccountFromBytesArray**(`values`): [`Account`](../classes/Account.md)
 
-Defined in: [packages/util/src/account.ts:318](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L318)
+Defined in: packages/util/src/account.ts:452
 
 ## Parameters
 

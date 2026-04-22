@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / privateToAddress
+[@tvmjs/util](../README.md) / privateToAddress
 
 # Function: privateToAddress()
 
 > **privateToAddress**(`privateKey`): `Uint8Array`
 
-Defined in: [packages/util/src/account.ts:565](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L565)
+Defined in: packages/util/src/account.ts:725
 
 Returns the ethereum address of a given private key.
 

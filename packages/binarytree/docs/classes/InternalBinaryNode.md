@@ -1,12 +1,12 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / InternalBinaryNode
+[@tvmjs/binarytree](../README.md) / InternalBinaryNode
 
 # Class: InternalBinaryNode
 
-Defined in: [node/internalNode.ts:8](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L8)
+Defined in: node/internalNode.ts:8
 
 ## Constructors
 
@@ -14,7 +14,7 @@ Defined in: [node/internalNode.ts:8](https://github.com/ethereumjs/ethereumjs-mo
 
 > **new InternalBinaryNode**(`options`): `InternalBinaryNode`
 
-Defined in: [node/internalNode.ts:13](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L13)
+Defined in: node/internalNode.ts:13
 
 #### Parameters
 
@@ -32,7 +32,7 @@ Defined in: [node/internalNode.ts:13](https://github.com/ethereumjs/ethereumjs-m
 
 > **children**: ([`ChildBinaryNode`](../type-aliases/ChildBinaryNode.md) \| `null`)[]
 
-Defined in: [node/internalNode.ts:9](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L9)
+Defined in: node/internalNode.ts:9
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [node/internalNode.ts:9](https://github.com/ethereumjs/ethereumjs-mo
 
 > **type**: `0` = `BinaryNodeType.Internal`
 
-Defined in: [node/internalNode.ts:11](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L11)
+Defined in: node/internalNode.ts:11
 
 ## Methods
 
@@ -48,7 +48,7 @@ Defined in: [node/internalNode.ts:11](https://github.com/ethereumjs/ethereumjs-m
 
 > **getChild**(`index`): [`ChildBinaryNode`](../type-aliases/ChildBinaryNode.md) \| `null`
 
-Defined in: [node/internalNode.ts:70](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L70)
+Defined in: node/internalNode.ts:70
 
 #### Parameters
 
@@ -66,7 +66,7 @@ Defined in: [node/internalNode.ts:70](https://github.com/ethereumjs/ethereumjs-m
 
 > **raw**(): `Uint8Array`\<`ArrayBufferLike`\>[]
 
-Defined in: [node/internalNode.ts:101](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L101)
+Defined in: node/internalNode.ts:101
 
 Returns the raw serialized representation of this internal node as an array of Uint8Arrays.
 
@@ -95,7 +95,7 @@ When decoding, the stored child path (an RLP-encoded tuple) must be converted ba
 
 > **serialize**(): `Uint8Array`
 
-Defined in: [node/internalNode.ts:81](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L81)
+Defined in: node/internalNode.ts:81
 
 #### Returns
 
@@ -109,7 +109,7 @@ the RLP serialized node
 
 > **setChild**(`index`, `child`): `void`
 
-Defined in: [node/internalNode.ts:74](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L74)
+Defined in: node/internalNode.ts:74
 
 #### Parameters
 
@@ -131,7 +131,7 @@ Defined in: [node/internalNode.ts:74](https://github.com/ethereumjs/ethereumjs-m
 
 > `static` **create**(`children?`): `InternalBinaryNode`
 
-Defined in: [node/internalNode.ts:63](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L63)
+Defined in: node/internalNode.ts:63
 
 Generates a new Internal node
 
@@ -155,7 +155,7 @@ a new Internal node
 
 > `static` **fromRawNode**(`rawNode`): `InternalBinaryNode`
 
-Defined in: [node/internalNode.ts:17](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/internalNode.ts#L17)
+Defined in: node/internalNode.ts:17
 
 #### Parameters
 

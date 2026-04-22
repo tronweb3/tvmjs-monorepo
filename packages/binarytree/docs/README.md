@@ -1,8 +1,8 @@
-**@ethereumjs/binarytree**
+**@tvmjs/binarytree**
 
 ***
 
-# @ethereumjs/binarytree
+# @tvmjs/binarytree
 
 ## Classes
 

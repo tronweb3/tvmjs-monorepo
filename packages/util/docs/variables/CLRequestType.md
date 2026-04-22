@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / CLRequestType
+[@tvmjs/util](../README.md) / CLRequestType
 
 # Variable: CLRequestType
 
 > **CLRequestType**: `object`
 
-Defined in: [packages/util/src/request.ts:7](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/request.ts#L7)
+Defined in: packages/util/src/request.ts:7
 
 ## Type Declaration
 

@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / validateNoLeadingZeroes
+[@tvmjs/util](../README.md) / validateNoLeadingZeroes
 
 # Function: validateNoLeadingZeroes()
 
 > **validateNoLeadingZeroes**(`values`): `void`
 
-Defined in: [packages/util/src/bytes.ts:337](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L337)
+Defined in: packages/util/src/bytes.ts:363
 
 Checks provided Uint8Array for leading zeroes and throws if found.
 

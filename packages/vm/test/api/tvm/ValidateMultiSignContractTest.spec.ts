@@ -41,7 +41,7 @@ async function validateMultiSign(
     params: [address, permissionId, hash, signatures],
   })
 
-  return utils.abi.decodeParamsV2ByABI(abiItem, result.results[0].execResult.returnValue)
+  return utils.abi.decodeParamsV2ByABI(abiItem, result.results[0].execResult.returnValue) as any
 }
 
 describe('ValidateMultiSignContractTest', async () => {

@@ -1,14 +1,14 @@
-[**@ethereumjs/vm**](../README.md)
+[**@tvmjs/vm**](../README.md)
 
 ***
 
-[@ethereumjs/vm](../README.md) / encodeReceipt
+[@tvmjs/vm](../README.md) / encodeReceipt
 
 # Function: encodeReceipt()
 
 > **encodeReceipt**(`receipt`, `txType`): `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [vm/src/runBlock.ts:749](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/runBlock.ts#L749)
+Defined in: vm/src/runBlock.ts:803
 
 Returns the encoded tx receipt.
 

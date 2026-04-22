@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / ConsensusAlgorithm
+[@tvmjs/common](../README.md) / ConsensusAlgorithm
 
 # Variable: ConsensusAlgorithm
 
 > **ConsensusAlgorithm**: `object`
 
-Defined in: [enums.ts:97](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/enums.ts#L97)
+Defined in: src/enums.ts:99
 
 ## Type Declaration
 

@@ -1,12 +1,12 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / RequestJSON
+[@tvmjs/util](../README.md) / RequestJSON
 
 # Interface: RequestJSON
 
-Defined in: [packages/util/src/request.ts:15](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/request.ts#L15)
+Defined in: packages/util/src/request.ts:15
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/util/src/request.ts:15](https://github.com/ethereumjs/ethe
 
 > **data**: `` `0x${string}` ``
 
-Defined in: [packages/util/src/request.ts:17](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/request.ts#L17)
+Defined in: packages/util/src/request.ts:17
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [packages/util/src/request.ts:17](https://github.com/ethereumjs/ethe
 
 > **type**: `` `0x${string}` ``
 
-Defined in: [packages/util/src/request.ts:16](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/request.ts#L16)
+Defined in: packages/util/src/request.ts:16

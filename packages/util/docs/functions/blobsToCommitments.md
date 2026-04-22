@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / blobsToCommitments
+[@tvmjs/util](../README.md) / blobsToCommitments
 
 # Function: blobsToCommitments()
 
 > **blobsToCommitments**(`kzg`, `blobs`): `` `0x${string}` ``[]
 
-Defined in: [packages/util/src/blobs.ts:96](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/blobs.ts#L96)
+Defined in: packages/util/src/blobs.ts:96
 
 EIP-4844: Computes KZG commitments for a set of blobs.
 

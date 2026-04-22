@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / BinaryTreeLeafType
+[@tvmjs/util](../README.md) / BinaryTreeLeafType
 
 # Variable: BinaryTreeLeafType
 
 > **BinaryTreeLeafType**: `object`
 
-Defined in: [packages/util/src/binaryTree.ts:76](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L76)
+Defined in: packages/util/src/binaryTree.ts:76
 
 ## Type Declaration
 

@@ -1,14 +1,14 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / ChildBinaryNode
+[@tvmjs/binarytree](../README.md) / ChildBinaryNode
 
 # Type Alias: ChildBinaryNode
 
 > **ChildBinaryNode** = `object`
 
-Defined in: [node/types.ts:22](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L22)
+Defined in: node/types.ts:22
 
 ## Dev
 
@@ -28,7 +28,7 @@ The path to the child node, in bits.
 
 > **hash**: `Uint8Array`
 
-Defined in: [node/types.ts:23](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L23)
+Defined in: node/types.ts:23
 
 ***
 
@@ -36,4 +36,4 @@ Defined in: [node/types.ts:23](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **path**: `number`[]
 
-Defined in: [node/types.ts:24](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L24)
+Defined in: node/types.ts:24

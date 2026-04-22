@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / verifyMerkleRangeProof
+[@tvmjs/mpt](../README.md) / verifyMerkleRangeProof
 
 # Function: verifyMerkleRangeProof()
 
 > **verifyMerkleRangeProof**(`rootHash`, `firstKeyRaw`, `lastKeyRaw`, `keysRaw`, `values`, `proof`, `useKeyHashingFunction`): `Promise`\<`boolean`\>
 
-Defined in: [packages/mpt/src/proof/range.ts:420](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/proof/range.ts#L420)
+Defined in: packages/mpt/src/proof/range.ts:420
 
 Checks whether the given leaf nodes and edge proof can prove the given trie leaves range is matched with the specific root.
 
@@ -66,7 +66,7 @@ proof node list, if all-elements-proof where no proof is needed, proof should be
 
 ### useKeyHashingFunction
 
-[`HashKeysFunction`](../type-aliases/HashKeysFunction.md) = `keccak256`
+[`HashKeysFunction`](../type-aliases/HashKeysFunction.md) = `keccak_256`
 
 ## Returns
 

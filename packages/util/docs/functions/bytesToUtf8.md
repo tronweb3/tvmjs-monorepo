@@ -1,21 +1,34 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bytesToUtf8
+[@tvmjs/util](../README.md) / bytesToUtf8
 
 # Function: bytesToUtf8()
 
-> **bytesToUtf8**(`data`): `string`
+> **bytesToUtf8**(`bytes`): `string`
 
-Defined in: node\_modules/ethereum-cryptography/esm/utils.d.ts:5
+Defined in: packages/util/src/bytes.ts:533
 
 ## Parameters
 
-### data
+### bytes
 
 `Uint8Array`
+
+The input Uint8Array to convert.
 
 ## Returns
 
 `string`
+
+The UTF-8 string.
+
+## Notice
+
+Converts a Uint8Array to a UTF-8 string.
+Implementation copied from ethereum-cryptography https://github.com/ethereum/js-ethereum-cryptography/blob/31f980b2847545d33268f2510ba38a3836202a44/src/utils.ts#L22-L27
+
+## Throws
+
+If the input is not a Uint8Array.

@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bitsToBytes
+[@tvmjs/util](../README.md) / bitsToBytes
 
 # Function: bitsToBytes()
 
 > **bitsToBytes**(`bits`): `Uint8Array`
 
-Defined in: [packages/util/src/bytes.ts:527](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L527)
+Defined in: packages/util/src/bytes.ts:587
 
 Converts an array of bits into a Uint8Array.
 The input bits are grouped into sets of 8, with the first bit in each group being the most significant.

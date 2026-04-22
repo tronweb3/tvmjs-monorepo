@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / zeroAddress
+[@tvmjs/util](../README.md) / zeroAddress
 
 # Function: zeroAddress()
 
 > **zeroAddress**(): `` `0x${string}` ``
 
-Defined in: [packages/util/src/account.ts:583](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L583)
+Defined in: packages/util/src/account.ts:743
 
 Returns the zero address.
 

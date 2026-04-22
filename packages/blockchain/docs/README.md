@@ -1,8 +1,8 @@
-**@ethereumjs/blockchain**
+**@tvmjs/blockchain**
 
 ***
 
-# @ethereumjs/blockchain
+# @tvmjs/blockchain
 
 ## Classes
 

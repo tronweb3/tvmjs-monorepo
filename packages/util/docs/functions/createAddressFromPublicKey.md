@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / createAddressFromPublicKey
+[@tvmjs/util](../README.md) / createAddressFromPublicKey
 
 # Function: createAddressFromPublicKey()
 
 > **createAddressFromPublicKey**(`pubKey`): [`Address`](../classes/Address.md)
 
-Defined in: [packages/util/src/address.ts:108](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/address.ts#L108)
+Defined in: packages/util/src/address.ts:108
 
 Returns an address for a given public key.
 

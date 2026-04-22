@@ -1,12 +1,12 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / CommonInterface
+[@tvmjs/mpt](../README.md) / CommonInterface
 
 # Interface: CommonInterface
 
-Defined in: [packages/mpt/src/types.ts:26](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L26)
+Defined in: packages/mpt/src/types.ts:26
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/mpt/src/types.ts:26](https://github.com/ethereumjs/ethereu
 
 > **customCrypto**: `object`
 
-Defined in: [packages/mpt/src/types.ts:27](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L27)
+Defined in: packages/mpt/src/types.ts:27
 
 #### keccak256()?
 

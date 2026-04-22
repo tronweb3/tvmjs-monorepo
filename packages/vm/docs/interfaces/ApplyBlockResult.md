@@ -1,12 +1,12 @@
-[**@ethereumjs/vm**](../README.md)
+[**@tvmjs/vm**](../README.md)
 
 ***
 
-[@ethereumjs/vm](../README.md) / ApplyBlockResult
+[@tvmjs/vm](../README.md) / ApplyBlockResult
 
 # Interface: ApplyBlockResult
 
-Defined in: [vm/src/types.ts:328](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L328)
+Defined in: vm/src/types.ts:323
 
 Result of applyBlock
 
@@ -16,7 +16,7 @@ Result of applyBlock
 
 > **bloom**: `Bloom`
 
-Defined in: [vm/src/types.ts:332](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L332)
+Defined in: vm/src/types.ts:327
 
 The Bloom filter
 
@@ -26,7 +26,7 @@ The Bloom filter
 
 > **gasUsed**: `bigint`
 
-Defined in: [vm/src/types.ts:336](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L336)
+Defined in: vm/src/types.ts:331
 
 The gas used after executing the block
 
@@ -36,7 +36,7 @@ The gas used after executing the block
 
 > `optional` **preimages**: `Map`\<`` `0x${string}` ``, `Uint8Array`\<`ArrayBufferLike`\>\>
 
-Defined in: [vm/src/types.ts:352](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L352)
+Defined in: vm/src/types.ts:347
 
 Preimages mapping of the touched accounts from the block (see reportPreimages option)
 
@@ -46,7 +46,7 @@ Preimages mapping of the touched accounts from the block (see reportPreimages op
 
 > **receipts**: [`TxReceipt`](../type-aliases/TxReceipt.md)[]
 
-Defined in: [vm/src/types.ts:344](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L344)
+Defined in: vm/src/types.ts:339
 
 Receipts generated for transactions in the block
 
@@ -56,7 +56,7 @@ Receipts generated for transactions in the block
 
 > **receiptsRoot**: `Uint8Array`
 
-Defined in: [vm/src/types.ts:340](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L340)
+Defined in: vm/src/types.ts:335
 
 The receipt root after executing the block
 
@@ -66,6 +66,6 @@ The receipt root after executing the block
 
 > **results**: [`RunTxResult`](RunTxResult.md)[]
 
-Defined in: [vm/src/types.ts:348](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/src/types.ts#L348)
+Defined in: vm/src/types.ts:343
 
 Results of executing the transactions in the block

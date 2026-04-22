@@ -1,14 +1,14 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / isStemBinaryNode
+[@tvmjs/binarytree](../README.md) / isStemBinaryNode
 
 # Function: isStemBinaryNode()
 
 > **isStemBinaryNode**(`node`): `node is StemBinaryNode`
 
-Defined in: [node/util.ts:36](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/util.ts#L36)
+Defined in: node/util.ts:36
 
 ## Parameters
 

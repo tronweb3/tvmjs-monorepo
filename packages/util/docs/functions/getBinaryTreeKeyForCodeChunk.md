@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / getBinaryTreeKeyForCodeChunk
+[@tvmjs/util](../README.md) / getBinaryTreeKeyForCodeChunk
 
 # Function: getBinaryTreeKeyForCodeChunk()
 
 > **getBinaryTreeKeyForCodeChunk**(`address`, `chunkId`, `hashFunction`): `Uint8Array`\<`ArrayBuffer`\>
 
-Defined in: [packages/util/src/binaryTree.ts:169](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L169)
+Defined in: packages/util/src/binaryTree.ts:169
 
 Asynchronously calculates the BinaryTree tree key for the specified code chunk ID.
 

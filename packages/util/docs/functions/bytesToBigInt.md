@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bytesToBigInt
+[@tvmjs/util](../README.md) / bytesToBigInt
 
 # Function: bytesToBigInt()
 
 > **bytesToBigInt**(`bytes`, `littleEndian`): `bigint`
 
-Defined in: [packages/util/src/bytes.ts:59](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L59)
+Defined in: packages/util/src/bytes.ts:60
 
 Converts a Uint8Array to a bigint
 

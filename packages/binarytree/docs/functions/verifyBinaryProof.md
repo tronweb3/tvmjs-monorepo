@@ -1,14 +1,14 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / verifyBinaryProof
+[@tvmjs/binarytree](../README.md) / verifyBinaryProof
 
 # Function: verifyBinaryProof()
 
 > **verifyBinaryProof**(`rootHash`, `key`, `proof`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\> \| `null`\>
 
-Defined in: [proof.ts:34](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/proof.ts#L34)
+Defined in: proof.ts:34
 
 Verifies a proof.
 

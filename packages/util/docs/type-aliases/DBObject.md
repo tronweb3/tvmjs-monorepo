@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / DBObject
+[@tvmjs/util](../README.md) / DBObject
 
 # Type Alias: DBObject
 
 > **DBObject** = `object`
 
-Defined in: [packages/util/src/db.ts:1](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts#L1)
+Defined in: packages/util/src/db.ts:1
 
 ## Index Signature
 

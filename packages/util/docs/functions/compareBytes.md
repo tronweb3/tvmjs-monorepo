@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / compareBytes
+[@tvmjs/util](../README.md) / compareBytes
 
 # Function: compareBytes()
 
 > **compareBytes**(`value1`, `value2`): `number`
 
-Defined in: [packages/util/src/bytes.ts:407](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L407)
+Defined in: packages/util/src/bytes.ts:433
 
 Compares two Uint8Arrays and returns a number indicating their order in a sorted array.
 

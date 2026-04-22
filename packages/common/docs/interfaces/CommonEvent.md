@@ -1,12 +1,12 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / CommonEvent
+[@tvmjs/common](../README.md) / CommonEvent
 
 # Interface: CommonEvent
 
-Defined in: [types.ts:12](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L12)
+Defined in: src/types.ts:12
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [types.ts:12](https://github.com/ethereumjs/ethereumjs-monorepo/blob
 
 > **hardforkChanged**: \[`string`\]
 
-Defined in: [types.ts:13](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L13)
+Defined in: src/types.ts:13

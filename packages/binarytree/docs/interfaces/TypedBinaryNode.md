@@ -1,12 +1,12 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / TypedBinaryNode
+[@tvmjs/binarytree](../README.md) / TypedBinaryNode
 
 # Interface: TypedBinaryNode
 
-Defined in: [node/types.ts:10](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L10)
+Defined in: node/types.ts:10
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [node/types.ts:10](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **0**: [`InternalBinaryNode`](../classes/InternalBinaryNode.md)
 
-Defined in: [node/types.ts:11](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L11)
+Defined in: node/types.ts:11
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [node/types.ts:11](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **1**: `StemBinaryNode`
 
-Defined in: [node/types.ts:12](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L12)
+Defined in: node/types.ts:12

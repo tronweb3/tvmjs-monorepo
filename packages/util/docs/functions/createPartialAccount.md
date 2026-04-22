@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / createPartialAccount
+[@tvmjs/util](../README.md) / createPartialAccount
 
 # Function: createPartialAccount()
 
 > **createPartialAccount**(`partialAccountData`): [`Account`](../classes/Account.md)
 
-Defined in: [packages/util/src/account.ts:324](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/account.ts#L324)
+Defined in: packages/util/src/account.ts:482
 
 ## Parameters
 

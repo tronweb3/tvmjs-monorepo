@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / createWithdrawalFromBytesArray
+[@tvmjs/util](../README.md) / createWithdrawalFromBytesArray
 
 # Function: createWithdrawalFromBytesArray()
 
 > **createWithdrawalFromBytesArray**(`withdrawalArray`): [`Withdrawal`](../classes/Withdrawal.md)
 
-Defined in: [packages/util/src/withdrawal.ts:127](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/withdrawal.ts#L127)
+Defined in: packages/util/src/withdrawal.ts:127
 
 Creates a validator withdrawal request to be submitted to the consensus layer from
 an RLP list

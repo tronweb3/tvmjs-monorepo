@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bigIntToHex
+[@tvmjs/util](../README.md) / bigIntToHex
 
 # Function: bigIntToHex()
 
 > **bigIntToHex**(`num`): `` `0x${string}` ``
 
-Defined in: [packages/util/src/bytes.ts:352](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L352)
+Defined in: packages/util/src/bytes.ts:378
 
 Converts a bigint to a `0x` prefixed hex string
 

@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / blobsToCellsAndProofs
+[@tvmjs/util](../README.md) / blobsToCellsAndProofs
 
 # Function: blobsToCellsAndProofs()
 
 > **blobsToCellsAndProofs**(`kzg`, `blobs`): \[`` `0x${string}` ``[], `` `0x${string}` ``[], `number`[]\]
 
-Defined in: [packages/util/src/blobs.ts:179](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/blobs.ts#L179)
+Defined in: packages/util/src/blobs.ts:179
 
 EIP-7594: Computes extended cells and corresponding proofs for the given blobs.
 

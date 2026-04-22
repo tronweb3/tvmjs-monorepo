@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / toRPCSig
+[@tvmjs/util](../README.md) / toRPCSig
 
 # Function: toRPCSig()
 
 > **toRPCSig**(`v`, `r`, `s`, `chainId?`): `string`
 
-Defined in: [packages/util/src/signature.ts:68](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/signature.ts#L68)
+Defined in: packages/util/src/signature.ts:68
 
 Convert signature parameters into the format of `eth_sign` RPC method.
 NOTE: Accepts `v === 0 | v === 1` for EIP1559 transactions

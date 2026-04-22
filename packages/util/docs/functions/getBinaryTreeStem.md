@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / getBinaryTreeStem
+[@tvmjs/util](../README.md) / getBinaryTreeStem
 
 # Function: getBinaryTreeStem()
 
 > **getBinaryTreeStem**(`hashFunction`, `address`, `treeIndex`): `Uint8Array`
 
-Defined in: [packages/util/src/binaryTree.ts:23](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/binaryTree.ts#L23)
+Defined in: packages/util/src/binaryTree.ts:23
 
 ## Parameters
 

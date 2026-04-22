@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / createMPTFromProof
+[@tvmjs/mpt](../README.md) / createMPTFromProof
 
 # Function: createMPTFromProof()
 
 > **createMPTFromProof**(`proof`, `trieOpts?`): `Promise`\<[`MerklePatriciaTrie`](../classes/MerklePatriciaTrie.md)\>
 
-Defined in: [packages/mpt/src/constructors.ts:62](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/constructors.ts#L62)
+Defined in: packages/mpt/src/constructors.ts:64
 
 Create a trie from a given (EIP-1186)[https://eips.ethereum.org/EIPS/eip-1186] proof. A proof contains the encoded trie nodes
 from the root node to the leaf node storing state data.

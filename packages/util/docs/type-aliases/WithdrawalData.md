@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / WithdrawalData
+[@tvmjs/util](../README.md) / WithdrawalData
 
 # Type Alias: WithdrawalData
 
 > **WithdrawalData** = `object`
 
-Defined in: [packages/util/src/withdrawal.ts:12](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/withdrawal.ts#L12)
+Defined in: packages/util/src/withdrawal.ts:12
 
 Flexible input data type for EIP-4895 withdrawal data with amount in Gwei to
 match CL representation and for eventual ssz withdrawalsRoot
@@ -19,7 +19,7 @@ match CL representation and for eventual ssz withdrawalsRoot
 
 > **address**: [`AddressLike`](AddressLike.md)
 
-Defined in: [packages/util/src/withdrawal.ts:15](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/withdrawal.ts#L15)
+Defined in: packages/util/src/withdrawal.ts:15
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [packages/util/src/withdrawal.ts:15](https://github.com/ethereumjs/e
 
 > **amount**: [`BigIntLike`](BigIntLike.md)
 
-Defined in: [packages/util/src/withdrawal.ts:16](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/withdrawal.ts#L16)
+Defined in: packages/util/src/withdrawal.ts:16
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [packages/util/src/withdrawal.ts:16](https://github.com/ethereumjs/e
 
 > **index**: [`BigIntLike`](BigIntLike.md)
 
-Defined in: [packages/util/src/withdrawal.ts:13](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/withdrawal.ts#L13)
+Defined in: packages/util/src/withdrawal.ts:13
 
 ***
 
@@ -43,4 +43,4 @@ Defined in: [packages/util/src/withdrawal.ts:13](https://github.com/ethereumjs/e
 
 > **validatorIndex**: [`BigIntLike`](BigIntLike.md)
 
-Defined in: [packages/util/src/withdrawal.ts:14](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/withdrawal.ts#L14)
+Defined in: packages/util/src/withdrawal.ts:14

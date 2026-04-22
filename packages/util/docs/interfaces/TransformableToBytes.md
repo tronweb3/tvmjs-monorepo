@@ -1,12 +1,12 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / TransformableToBytes
+[@tvmjs/util](../README.md) / TransformableToBytes
 
 # Interface: TransformableToBytes
 
-Defined in: [packages/util/src/types.ts:39](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L39)
+Defined in: packages/util/src/types.ts:39
 
 ## Methods
 
@@ -14,7 +14,7 @@ Defined in: [packages/util/src/types.ts:39](https://github.com/ethereumjs/ethere
 
 > `optional` **toBytes**(): `Uint8Array`
 
-Defined in: [packages/util/src/types.ts:40](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/types.ts#L40)
+Defined in: packages/util/src/types.ts:40
 
 #### Returns
 

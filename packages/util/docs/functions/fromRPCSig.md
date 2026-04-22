@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / fromRPCSig
+[@tvmjs/util](../README.md) / fromRPCSig
 
 # Function: fromRPCSig()
 
 > **fromRPCSig**(`sig`): `object`
 
-Defined in: [packages/util/src/signature.ts:116](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/signature.ts#L116)
+Defined in: packages/util/src/signature.ts:116
 
 Convert signature format of the `eth_sign` RPC method to signature parameters
 

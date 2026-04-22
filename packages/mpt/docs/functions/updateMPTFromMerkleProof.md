@@ -1,14 +1,14 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / updateMPTFromMerkleProof
+[@tvmjs/mpt](../README.md) / updateMPTFromMerkleProof
 
 # Function: updateMPTFromMerkleProof()
 
 > **updateMPTFromMerkleProof**(`trie`, `proof`, `shouldVerifyRoot`): `Promise`\<`Uint8Array`\<`ArrayBufferLike`\> \| `undefined`\>
 
-Defined in: [packages/mpt/src/proof/proof.ts:56](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/proof/proof.ts#L56)
+Defined in: packages/mpt/src/proof/proof.ts:56
 
 Updates a trie from a proof by putting all the nodes in the proof into the trie. Pass shouldVerifyRoot as true to check
 that root key of proof matches root of trie and throw if not.

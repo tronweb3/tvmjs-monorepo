@@ -1,14 +1,14 @@
-[**@ethereumjs/common**](../README.md)
+[**@tvmjs/common**](../README.md)
 
 ***
 
-[@ethereumjs/common](../README.md) / EIPsDict
+[@tvmjs/common](../README.md) / EIPsDict
 
 # Type Alias: EIPsDict
 
 > **EIPsDict** = `object`
 
-Defined in: [types.ts:181](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common/src/types.ts#L181)
+Defined in: src/types.ts:177
 
 ## Index Signature
 

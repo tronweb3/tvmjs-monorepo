@@ -1,14 +1,14 @@
-[**@ethereumjs/util**](../README.md)
+[**@tvmjs/util**](../README.md)
 
 ***
 
-[@ethereumjs/util](../README.md) / bytesToInt
+[@tvmjs/util](../README.md) / bytesToInt
 
 # Function: bytesToInt()
 
 > **bytesToInt**(`bytes`): `number`
 
-Defined in: [packages/util/src/bytes.ts:83](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/bytes.ts#L83)
+Defined in: packages/util/src/bytes.ts:85
 
 Converts a Uint8Array to a number.
 

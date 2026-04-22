@@ -1,14 +1,14 @@
-[**@ethereumjs/blockchain**](../README.md)
+[**@tvmjs/blockchain**](../README.md)
 
 ***
 
-[@ethereumjs/blockchain](../README.md) / createBlockchain
+[@tvmjs/blockchain](../README.md) / createBlockchain
 
 # Function: createBlockchain()
 
 > **createBlockchain**(`opts`): `Promise`\<[`Blockchain`](../classes/Blockchain.md)\>
 
-Defined in: [constructors.ts:22](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/src/constructors.ts#L22)
+Defined in: constructors.ts:27
 
 ## Parameters
 

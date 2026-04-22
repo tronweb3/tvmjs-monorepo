@@ -1,11 +1,11 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / Nibbles
+[@tvmjs/mpt](../README.md) / Nibbles
 
 # Type Alias: Nibbles
 
 > **Nibbles** = `number`[]
 
-Defined in: [packages/mpt/src/types.ts:9](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L9)
+Defined in: packages/mpt/src/types.ts:9

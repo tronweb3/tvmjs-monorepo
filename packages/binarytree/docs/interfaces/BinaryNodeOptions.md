@@ -1,12 +1,12 @@
-[**@ethereumjs/binarytree**](../README.md)
+[**@tvmjs/binarytree**](../README.md)
 
 ***
 
-[@ethereumjs/binarytree](../README.md) / BinaryNodeOptions
+[@tvmjs/binarytree](../README.md) / BinaryNodeOptions
 
 # Interface: BinaryNodeOptions
 
-Defined in: [node/types.ts:36](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L36)
+Defined in: node/types.ts:36
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [node/types.ts:36](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **0**: `InternalBinaryNodeOptions`
 
-Defined in: [node/types.ts:37](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L37)
+Defined in: node/types.ts:37
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [node/types.ts:37](https://github.com/ethereumjs/ethereumjs-monorepo
 
 > **1**: `StemBinaryNodeOptions`
 
-Defined in: [node/types.ts:38](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/binarytree/src/node/types.ts#L38)
+Defined in: node/types.ts:38

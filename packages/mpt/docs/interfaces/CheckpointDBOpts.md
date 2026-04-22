@@ -1,12 +1,12 @@
-[**@ethereumjs/mpt**](../README.md)
+[**@tvmjs/mpt**](../README.md)
 
 ***
 
-[@ethereumjs/mpt](../README.md) / CheckpointDBOpts
+[@tvmjs/mpt](../README.md) / CheckpointDBOpts
 
 # Interface: CheckpointDBOpts
 
-Defined in: [packages/mpt/src/types.ts:127](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L127)
+Defined in: packages/mpt/src/types.ts:127
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/mpt/src/types.ts:127](https://github.com/ethereumjs/ethere
 
 > `optional` **cacheSize**: `number`
 
-Defined in: [packages/mpt/src/types.ts:141](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L141)
+Defined in: packages/mpt/src/types.ts:141
 
 Cache size (default: 0)
 
@@ -24,7 +24,7 @@ Cache size (default: 0)
 
 > **db**: `DB`\<`string`, `string` \| `Uint8Array`\<`ArrayBufferLike`\>\>
 
-Defined in: [packages/mpt/src/types.ts:131](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L131)
+Defined in: packages/mpt/src/types.ts:131
 
 A database instance.
 
@@ -34,6 +34,6 @@ A database instance.
 
 > `optional` **valueEncoding**: `ValueEncoding`
 
-Defined in: [packages/mpt/src/types.ts:136](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/mpt/src/types.ts#L136)
+Defined in: packages/mpt/src/types.ts:136
 
 ValueEncoding of the database (the values which are `put`/`get` in the db are of this type). Defaults to `string`
