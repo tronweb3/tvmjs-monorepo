@@ -15,6 +15,7 @@ const txData: LegacyTxData = {
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
 const tx = createLegacyTx(txData, { common })
 
+// WARNING: The private key in this example is for demonstration only. Never use in production.
 const privateKey = hexToBytes('0xe331b6d69882b4cb4ea581d88e0b604039a3de5967688d3dcffdd2270c0fd109')
 
 const signedTx = tx.sign(privateKey)
