@@ -55,13 +55,13 @@
     "@tvmjs/mpt": "1.0.0",
     "@tvmjs/tx": "1.0.0",
     "@tvmjs/util": "1.0.0",
-    "@noble/curves": "^2.0.1",
-    "@noble/hashes": "^2.0.1"
+    "@noble/curves": "2.0.1",
+    "@noble/hashes": "2.0.1"
   },
   "devDependencies": {
     "@tvmjs/testdata": "1.0.0",
-    "@paulmillr/trusted-setups": "^0.2.0",
-    "micro-eth-signer": "^0.15.0"
+    "@paulmillr/trusted-setups": "0.2.0",
+    "micro-eth-signer": "0.15.0"
   },
   "engines": {
     "node": ">=20"

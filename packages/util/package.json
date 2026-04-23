@@ -95,13 +95,13 @@
   },
   "dependencies": {
     "@tvmjs/rlp": "1.0.0",
-    "@noble/curves": "^2.0.1",
-    "@noble/hashes": "^2.0.1"
+    "@noble/curves": "2.0.1",
+    "@noble/hashes": "2.0.1"
   },
   "devDependencies": {
-    "@paulmillr/trusted-setups": "^0.2.0",
+    "@paulmillr/trusted-setups": "0.2.0",
     "kzg-wasm": "1.0.0",
-    "micro-eth-signer": "^0.15.0"
+    "micro-eth-signer": "0.15.0"
   },
   "engines": {
     "node": ">=20"

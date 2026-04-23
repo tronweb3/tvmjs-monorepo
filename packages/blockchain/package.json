@@ -55,12 +55,12 @@
     "@tvmjs/mpt": "1.0.0",
     "@tvmjs/rlp": "1.0.0",
     "@tvmjs/util": "1.0.0",
-    "debug": "^4.4.0",
-    "eventemitter3": "^5.0.1",
+    "debug": "4.4.0",
+    "eventemitter3": "5.0.1",
     "lru-cache": "11.0.2"
   },
   "devDependencies": {
-    "@types/debug": "^4.1.12"
+    "@types/debug": "4.1.12"
   },
   "engines": {
     "node": ">=20"

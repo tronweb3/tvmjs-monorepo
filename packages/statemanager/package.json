@@ -52,14 +52,14 @@
     "@tvmjs/rlp": "1.0.0",
     "@tvmjs/mpt": "1.0.0",
     "@tvmjs/util": "1.0.0",
-    "@js-sdsl/ordered-map": "^4.4.2",
-    "@noble/hashes": "^2.0.1",
-    "debug": "^4.4.0",
+    "@js-sdsl/ordered-map": "4.4.2",
+    "@noble/hashes": "2.0.1",
+    "debug": "4.4.0",
     "lru-cache": "11.0.2"
   },
   "devDependencies": {
     "@tvmjs/block": "1.0.0",
-    "@types/debug": "^4.1.12",
+    "@types/debug": "4.1.12",
     "micro-eth-signer": "0.15.0"
   }
 }

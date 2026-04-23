@@ -64,11 +64,11 @@
   },
   "dependencies": {
     "@tvmjs/util": "1.0.0",
-    "eventemitter3": "^5.0.1"
+    "eventemitter3": "5.0.1"
   },
   "devDependencies": {
-    "@noble/curves": "^2.0.1",
-    "@polkadot/util": "^13.4.3",
-    "@polkadot/wasm-crypto": "^7.4.1"
+    "@noble/curves": "2.0.1",
+    "@polkadot/util": "13.4.3",
+    "@polkadot/wasm-crypto": "7.5.1"
   }
 }
