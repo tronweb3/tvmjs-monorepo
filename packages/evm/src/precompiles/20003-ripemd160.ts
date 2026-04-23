@@ -10,7 +10,7 @@ import type { ExecResult } from '../types.ts'
 import type { PrecompileInput } from './types.ts'
 
 export function precompile20003(opts: PrecompileInput): ExecResult {
-  const pName = getPrecompileName('03')
+  const pName = getPrecompileName('20003')
   const data = opts.data
 
   let gasUsed = opts.common.param('ripemd160Gas')
