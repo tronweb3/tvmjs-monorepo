@@ -6,6 +6,19 @@ import type { RunTxResult } from '../../../src/types.ts'
 import { setBalance } from '../utils.ts'
 import { deployContract } from './utils.ts'
 
+// pragma solidity ^0.4.16;
+//
+// contract subContract {
+//   constructor () payable {}
+// }
+//
+// contract TestOverflowContract {
+//
+//   function testOverflow() payable {
+//     subContract sc = (new subContract).value(10 ether)();
+//   }
+// }
+
 describe('ChargeTest', async () => {
   it('testOverflow', async () => {
     const account = utils.accounts.generateAccount()
