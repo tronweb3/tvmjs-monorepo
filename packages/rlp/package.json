@@ -1,6 +1,6 @@
 {
   "name": "@tvmjs/rlp",
-  "version": "10.1.0",
+  "version": "1.0.0",
   "description": "Recursive Length Prefix Encoding Module",
   "keywords": ["rlp", "ethereum"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/rlp#readme",

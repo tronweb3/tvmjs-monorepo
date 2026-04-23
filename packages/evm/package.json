@@ -1,6 +1,6 @@
 {
   "name": "@tvmjs/evm",
-  "version": "10.1.0",
+  "version": "1.0.0",
   "description": "JavaScript Ethereum Virtual Machine (EVM) implementation",
   "keywords": ["ethereum", "EVM", "JavaScript", "TypeScript"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm#readme",
@@ -54,10 +54,10 @@
     "visualize:bundle": "npx vite build --config=./vite.config.bundler.ts --emptyOutDir=false --outDir ."
   },
   "dependencies": {
-    "@tvmjs/binarytree": "^10.1.0",
-    "@tvmjs/common": "^10.1.0",
-    "@tvmjs/statemanager": "^10.1.0",
-    "@tvmjs/util": "^10.1.0",
+    "@tvmjs/binarytree": "1.0.0",
+    "@tvmjs/common": "1.0.0",
+    "@tvmjs/statemanager": "1.0.0",
+    "@tvmjs/util": "1.0.0",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "debug": "^4.4.0",
