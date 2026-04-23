@@ -23,7 +23,7 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "devDependencies": {
-    "@tvmjs/block": "^10.1.0",
-    "@tvmjs/util": "^10.1.0"
+    "@tvmjs/block": "1.0.0",
+    "@tvmjs/util": "1.0.0"
   }
 }

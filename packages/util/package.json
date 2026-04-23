@@ -1,6 +1,6 @@
 {
   "name": "@tvmjs/util",
-  "version": "10.1.0",
+  "version": "1.0.0",
   "description": "A collection of utility functions for Ethereum",
   "keywords": ["ethereum", "utilities", "utils"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/util#readme",
@@ -94,7 +94,7 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@tvmjs/rlp": "^10.1.0",
+    "@tvmjs/rlp": "1.0.0",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1"
   },

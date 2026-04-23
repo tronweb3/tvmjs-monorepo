@@ -1,6 +1,6 @@
 {
   "name": "@tvmjs/binarytree",
-  "version": "10.1.0",
+  "version": "1.0.0",
   "description": "Implementation of binary trees as used in Ethereum.",
   "keywords": ["binary", "tree", "trie", "ethereum"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/binarytree#readme",
@@ -54,8 +54,8 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@tvmjs/rlp": "^10.1.0",
-    "@tvmjs/util": "^10.1.0",
+    "@tvmjs/rlp": "1.0.0",
+    "@tvmjs/util": "1.0.0",
     "@noble/hashes": "^2.0.1",
     "debug": "^4.4.0",
     "lru-cache": "11.0.2"
