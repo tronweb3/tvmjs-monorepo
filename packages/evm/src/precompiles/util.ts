@@ -122,7 +122,9 @@ export function recoverAddrBySign(sign: Uint8Array, hash: Uint8Array) {
 export function convertToTronAddress(address: Uint8Array): Uint8Array {
   if (address.length === 20) {
     const newAddress = new Uint8Array(21)
-    newAddress[0] = isMainnet() ? 0x41 : 0xa0
+    // 0xa0 is no longer used
+    // newAddress[0] = isMainnet() ? 0x41 : 0xa0
+    newAddress[0] = 0x41
     newAddress.set(address, 1)
     return newAddress
   }
@@ -130,5 +132,6 @@ export function convertToTronAddress(address: Uint8Array): Uint8Array {
 }
 
 export function isMainnet(): boolean {
-  return process.env.IS_TESTNET !== '1'
+  // return process.env.IS_TESTNET !== '1'
+  return true
 }
