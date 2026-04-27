@@ -187,15 +187,16 @@ Currently the following hardfork rules are supported:
 - `petersburg`
 - `istanbul`
 - `muirGlacier` (only `mainnet`)
-- `berlin` (`v5.2.0`+)
-- `london` (`v5.4.0`+)
-- `arrowGlacier` (only `mainnet`) (`v5.6.0`+)
+- `berlin`
+- `london`
+- `arrowGlacier` (only `mainnet`)
 - `merge`
-- `shanghai` (`v2.0.0`+)
-- `cancun` (`v2.0.0`+)
-- `prague` (`v10`+)
+- `shanghai`
+- `cancun`
+- `prague`
+- `tron`
 
-Default: `prague` (taken from `Common.DEFAULT_HARDFORK`)
+Default: `tron` (taken from `Common.DEFAULT_HARDFORK`)
 
 A specific hardfork EVM ruleset can be activated by passing in the hardfork
 along the `Common` instance to the outer `@tvmjs/vm` instance.
@@ -263,7 +264,7 @@ Currently supported EIPs:
 
 ## Precompiles
 
-This library supports all EVM precompiles up to the `Prague` hardfork.
+This library supports all EVM precompiles up to the `tron` hardfork.
 
 In our `examples` folder we provide a helper function for simple direct precompile runs in the `precompiles` folder.
 
@@ -621,8 +622,6 @@ This layered architecture provides separation of concerns while allowing for the
 ## Profiling the EVM
 
 The TVMJS EVM comes with built-in profiling capabilities to detect performance bottlenecks and to generally support the targeted evolution of the JavaScript EVM performance.
-
-While the EVM has a dedicated `profiler` setting to activate, the profiler is most useful when run through the TVMJS [client](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/client) since this gives the most realistic conditions providing both real-world txs and a meaningful state size.
 
 To repeatedly run the EVM profiler within the client sync the client on mainnet or a larger testnet to the desired block. Then the profiler should be run without sync (to not distort the results) by using the `--executeBlocks` and the `--vmProfileBlocks` (or `--vmProfileTxs`) flags in conjunction like:
 

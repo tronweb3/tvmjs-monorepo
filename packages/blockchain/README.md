@@ -108,7 +108,7 @@ If you need a persistent data store for your use case you can consider using the
 
 ### Consensus
 
-Starting with v6 there is a dedicated consensus class for each type of supported consensus, `Ethash`, `Clique` and `Casper` (PoS, this one is rather the do-nothing part of `Casper` and letting the respective consensus/beacon client do the hard work! 🙂). Each consensus class adheres to a common interface `Consensus` implementing the following five methods in a consensus-specific way:
+There is a dedicated consensus class for each type of supported consensus, `Ethash`, `Clique` and `Casper` (PoS, this one is rather the do-nothing part of `Casper` and letting the respective consensus/beacon client do the hard work! 🙂). Each consensus class adheres to a common interface `Consensus` implementing the following five methods in a consensus-specific way:
 
 - `genesisInit(genesisBlock: Block): Promise<void>`
 - `setup(): Promise<void>`
@@ -118,7 +118,7 @@ Starting with v6 there is a dedicated consensus class for each type of supported
 
 #### Custom Consensus Algorithms
 
-Also part of V6, you can also create a custom consensus class implementing the above interface and pass it into the `Blockchain` constructor using the `consensus` option at instantiation. See [this test script](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/blockchain/test/customConsensus.spec.ts) for a complete example of how write and use a custom consensus implementation.
+You can also create a custom consensus class implementing the above interface and pass it into the `Blockchain` constructor using the `consensus` option at instantiation. See [this test script](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/blockchain/test/customConsensus.spec.ts) for a complete example of how write and use a custom consensus implementation.
 
 Note, if you construct a blockchain with a custom consensus implementation, transition checks for switching from PoW to PoS are disabled so defining a merge hardfork will have no impact on the consensus mechanism defined for the chain.
 
@@ -166,7 +166,7 @@ The genesis block from the initialized `Blockchain` can be retrieved via the `Bl
 
 ### EIP-1559 Support
 
-This library supports the handling of `EIP-1559` blocks and transactions starting with the `v5.3.0` release.
+This library supports the handling of `EIP-1559` blocks and transactions.
 
 ### EIP-4844 Shard Blob Transactions Support
 
@@ -182,7 +182,7 @@ This library supports blocks including the [EIP-7685](https://eips.ethereum.org/
 
 ## Browser
 
-We provide hybrid ESM/CJS builds for all our libraries. With the v10 breaking release round from Spring 2025, all libraries are "pure-JS" by default and we have eliminated all hard-wired WASM code. Additionally we have substantially lowered the bundle sizes, reduced the number of dependencies, and cut out all usages of Node.js-specific primitives (like the Node.js event emitter).
+We provide hybrid ESM/CJS builds for all our libraries. All libraries are "pure-JS" by default and we have eliminated all hard-wired WASM code. Additionally we have substantially lowered the bundle sizes, reduced the number of dependencies, and cut out all usages of Node.js-specific primitives (like the Node.js event emitter).
 
 It is easily possible to run a browser build of one of the TVMJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
 
@@ -253,4 +253,3 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-

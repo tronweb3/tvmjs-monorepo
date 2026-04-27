@@ -393,11 +393,3 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MIT](https://opensource.org/licenses/MIT)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-[common-npm-badge]: https://img.shields.io/npm/v/@tvmjs/common.svg
-[common-npm-link]: https://www.npmjs.com/package/@tvmjs/common
-[common-issues-badge]: https://img.shields.io/github/issues/tronweb3/tvmjs-monorepo/package:%20common?label=issues
-[common-issues-link]: https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+common"
-[common-actions-badge]: https://github.com/tronweb3/tvmjs-monorepo/workflows/common/badge.svg
-[common-actions-link]: https://github.com/tronweb3/tvmjs-monorepo/actions?query=workflow%3A%22common%22
-[common-coverage-badge]: https://codecov.io/gh/tronweb3/tvmjs-monorepo/branch/master/graph/badge.svg?flag=common
-[common-coverage-link]: https://codecov.io/gh/tronweb3/tvmjs-monorepo/tree/master/packages/common

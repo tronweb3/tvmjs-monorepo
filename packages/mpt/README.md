@@ -152,7 +152,7 @@ For further proof usage documentation see additional documentation section below
 
 ### Walking a Trie
 
-Starting with the v6 release there is a new API for walking and iterating a trie by using an async walk generator, which now enables to walk tries without altering the walk controller and also now enables to walk a sparse (not completely filled) trie.
+There is a new API for walking and iterating a trie by using an async walk generator, which now enables to walk tries without altering the walk controller and also now enables to walk a sparse (not completely filled) trie.
 
 The new walk functionality can be used like the following:
 
@@ -432,4 +432,3 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-
