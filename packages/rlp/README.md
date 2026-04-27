@@ -1,9 +1,4 @@
-# @tvmjs/rlp `v10`
-
-[![NPM Package][rlp-npm-badge]][rlp-npm-link]
-[![GitHub Issues][rlp-issues-badge]][rlp-issues-link]
-[![Actions Status][rlp-actions-badge]][rlp-actions-link]
-[![Code Coverage][rlp-coverage-badge]][rlp-coverage-link]
+# @tvmjs/rlp `1.0.0`
 
 | [Recursive Length Prefix](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp) encoding for Node.js and the browser. Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -78,11 +73,3 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-[rlp-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/rlp.svg
-[rlp-npm-link]: https://www.npmjs.com/package/@ethereumjs/rlp
-[rlp-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20rlp?label=issues
-[rlp-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+rlp"
-[rlp-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/actions/workflows/static-build.yml/badge.svg
-[rlp-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22rlp%22
-[rlp-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=rlp
-[rlp-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/rlp

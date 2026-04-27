@@ -1,9 +1,4 @@
-# @tvmjs/binarytree `v10` (EXPERIMENTAL)
-
-[![NPM Package][binarytree-npm-badge]][binarytree-npm-link]
-[![GitHub Issues][binarytree-issues-badge]][binarytree-issues-link]
-[![Actions Status][binarytree-actions-badge]][binarytree-actions-link]
-[![Code Coverage][binarytree-coverage-badge]][binarytree-coverage-link]
+# @tvmjs/binarytree `1.0.0` (EXPERIMENTAL)
 
 | Implementation of Binary Trees as specified in [EIP-7864](https://eips.ethereum.org/EIPS/eip-7864). Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -35,11 +30,4 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MIT](https://opensource.org/licenses/MIT)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-[binarytree-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/binarytree.svg
-[binarytree-npm-link]: https://www.npmjs.com/package/@ethereumjs/binarytree
-[binarytree-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20binarytree?label=issues
-[binarytree-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+binarytree"
-[binarytree-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/binarytree/badge.svg
-[binarytree-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22binarytree%22
-[binarytree-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=binarytree
-[binarytree-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/binarytree
+

@@ -1,9 +1,4 @@
-# @tvmjs/blockchain `v10`
-
-[![NPM Package][blockchain-npm-badge]][blockchain-npm-link]
-[![GitHub Issues][blockchain-issues-badge]][blockchain-issues-link]
-[![Actions Status][blockchain-actions-badge]][blockchain-actions-link]
-[![Code Coverage][blockchain-coverage-badge]][blockchain-coverage-link]
+# @tvmjs/blockchain `1.0.0`
 
 | A module to store and interact with TRON-compatible blocks. Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -105,11 +100,11 @@ More examples can be found in the [examples](./examples/) folder.
 
 ### Block Storage
 
-For storing blocks different backends can be used. The database needs to conform to the [DB](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts) interface provided in the `@tvmjs/util` package (since this is used in other places as well).
+For storing blocks different backends can be used. The database needs to conform to the [DB](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/util/src/db.ts) interface provided in the `@tvmjs/util` package (since this is used in other places as well).
 
-By default the blockchain package uses a [MapDB](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/mapDB.ts) non-persistent data storage which is also generically provided in the `@tvmjs/util` package.
+By default the blockchain package uses a [MapDB](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/util/src/mapDB.ts) non-persistent data storage which is also generically provided in the `@tvmjs/util` package.
 
-If you need a persistent data store for your use case you can consider using the wrapper we have written within our [client](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/client/src/execution/level.ts) library.
+If you need a persistent data store for your use case you can consider using the wrapper we have written within our [client](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/client/src/execution/level.ts) library.
 
 ### Consensus
 
@@ -123,7 +118,7 @@ Starting with v6 there is a dedicated consensus class for each type of supported
 
 #### Custom Consensus Algorithms
 
-Also part of V6, you can also create a custom consensus class implementing the above interface and pass it into the `Blockchain` constructor using the `consensus` option at instantiation. See [this test script](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/blockchain/test/customConsensus.spec.ts) for a complete example of how write and use a custom consensus implementation.
+Also part of V6, you can also create a custom consensus class implementing the above interface and pass it into the `Blockchain` constructor using the `consensus` option at instantiation. See [this test script](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/blockchain/test/customConsensus.spec.ts) for a complete example of how write and use a custom consensus implementation.
 
 Note, if you construct a blockchain with a custom consensus implementation, transition checks for switching from PoW to PoS are disabled so defining a merge hardfork will have no impact on the consensus mechanism defined for the chain.
 
@@ -131,7 +126,7 @@ Note, if you construct a blockchain with a custom consensus implementation, tran
 
 ### Genesis State
 
-Genesis state for the 4 supported networks (mainnet, sepolia, hoodi, holesky) is stored in an auxiliary package [@tvmjs/genesis](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/genesis), from which it can be included if needed (for most - especially VM - use cases it is not necessary), see PR [#2844](https://github.com/ethereumjs/ethereumjs-monorepo/pull/2844).
+Genesis state for the 4 supported networks (mainnet, sepolia, hoodi, holesky) is stored in an auxiliary package [@tvmjs/genesis](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/genesis), from which it can be included if needed (for most - especially VM - use cases it is not necessary), see PR [#2844](https://github.com/tronweb3/tvmjs-monorepo/pull/2844).
 
 
 ### Custom genesis from a Geth genesis config
@@ -179,7 +174,7 @@ This library supports the blob transaction type introduced with [EIP-4844](https
 
 The blockchain library now allows for blob transactions to be validated and included in a chain where EIP-4844 activated either by hardfork or standalone EIP.
 
-**Note:** Working with blob transactions needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
+**Note:** Working with blob transactions needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
 
 ### EIP-7685 Requests Support
 
@@ -258,11 +253,4 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-[blockchain-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/blockchain.svg
-[blockchain-npm-link]: https://www.npmjs.com/package/@ethereumjs/blockchain
-[blockchain-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20blockchain?label=issues
-[blockchain-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+blockchain"
-[blockchain-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/blockchain/badge.svg
-[blockchain-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22blockchain%22
-[blockchain-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=blockchain
-[blockchain-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/blockchain
+

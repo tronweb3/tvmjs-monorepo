@@ -1,9 +1,4 @@
-# @tvmjs/evm `v10`
-
-[![NPM Package][evm-npm-badge]][evm-npm-link]
-[![GitHub Issues][evm-issues-badge]][evm-issues-link]
-[![Actions Status][evm-actions-badge]][evm-actions-link]
-[![Code Coverage][evm-coverage-badge]][evm-coverage-link]
+# @tvmjs/evm `1.0.0`
 
 | TypeScript implementation of the TRON Virtual Machine (TVM). Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -45,9 +40,7 @@ To obtain the latest version, simply require the project using `npm`:
 npm install @tvmjs/evm
 ```
 
-This package provides the core TRON Virtual Machine (TVM) implementation which is capable of executing EVM-compatible bytecode. The package has been extracted from the [@tvmjs/vm](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/vm) package along the VM `v6` release.
-
-**Note:** Starting with the Dencun hardfork `EIP-4844` related functionality has become an integrated part of the EVM functionality with the activation of the point evaluation precompile. For this precompile to work a separate installation of the KZG library is necessary (we decided not to bundle due to large bundle sizes), see [KZG Setup](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
+This package provides the core TRON Virtual Machine (TVM) implementation which is capable of executing EVM-compatible bytecode. The package has been extracted from the [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) package along the VM `v6` release.
 
 ## Getting Started
 
@@ -125,7 +118,7 @@ Additionally, this example shows how to use events to listen to the inner workin
 
 ### WASM Crypto Support
 
-This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification (for included txs). See `@tvmjs/common` [README](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common) for instructions on how to replace them with, e.g., a more performant WASM implementation by using a shared `common` instance.
+This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification (for included txs). See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace them with, e.g., a more performant WASM implementation by using a shared `common` instance.
 
 ## Examples
 
@@ -165,7 +158,7 @@ Using ESM will give you additional advantages over CJS beyond browser usage like
 
 ### VM/EVM Relation
 
-This package contains the inner TRON Virtual Machine (TVM) core functionality which was included in the [@tvmjs/vm](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/vm) package up to v5 and has been extracted along the v6 release.
+This package contains the inner TRON Virtual Machine (TVM) core functionality which was included in the [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) package up to v5 and has been extracted along the v6 release.
 
 This will make it easier to customize the inner EVM, which can now be passed as an optional argument to the outer `VM` instance.
 
@@ -267,12 +260,6 @@ Currently supported EIPs:
 - [EIP-7692](https://eips.ethereum.org/EIPS/eip-7692) - EVM Object Format (EOF) v1 (`experimental`)
 - [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) - Set EOA account code (Prague)
 - [EIP-7709](https://eips.ethereum.org/EIPS/eip-7709) - Read BLOCKHASH from storage and update cost (Verkle)
-
-### EIP-4844 Shard Blob Transactions Support (Cancun)
-
-This library supports the blob transaction type introduced with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844). EIP-4844 comes with a dedicated opcode `BLOBHASH` and has added a new point evaluation precompile at address `0x0a`.
-
-**Note:** Usage of the point evaluation precompile needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
 
 ## Precompiles
 
@@ -396,17 +383,17 @@ Pass an array of `CustomPrecompile` entries to the `customPrecompiles` option wh
 ```ts
 // ./examples/precompiles/customPrecompile.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createEVM } from '@ethereumjs/evm'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createEVM } from '@tvmjs/evm'
 import {
   bigIntToBytes,
   bytesToBigInt,
   bytesToHex,
   createAddressFromString,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
-import type { ExecResult, PrecompileInput } from '@ethereumjs/evm'
+import type { ExecResult, PrecompileInput } from '@tvmjs/evm'
 
 // Custom precompile that adds two 32-byte big-endian unsigned integers (mod 2^256).
 const ADDITION_GAS = 15n
@@ -461,7 +448,7 @@ void main()
 
 ```
 
-The address for custom precompiles can be specified as either an `Address` instance or a `0x`-prefixed hex string. All relevant types (`CustomPrecompile`, `AddPrecompile`, `DeletePrecompile`, `PrecompileFunc`, `PrecompileInput`) are exported from `@ethereumjs/evm`.
+The address for custom precompiles can be specified as either an `Address` instance or a `0x`-prefixed hex string. All relevant types (`CustomPrecompile`, `AddPrecompile`, `DeletePrecompile`, `PrecompileFunc`, `PrecompileInput`) are exported from `@tvmjs/evm`.
 
 You can use `evm.getPrecompile(address)` to retrieve a registered precompile function at any address (works for both built-in and custom precompiles):
 
@@ -635,7 +622,7 @@ This layered architecture provides separation of concerns while allowing for the
 
 The TVMJS EVM comes with built-in profiling capabilities to detect performance bottlenecks and to generally support the targeted evolution of the JavaScript EVM performance.
 
-While the EVM has a dedicated `profiler` setting to activate, the profiler is most useful when run through the TVMJS [client](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/client) since this gives the most realistic conditions providing both real-world txs and a meaningful state size.
+While the EVM has a dedicated `profiler` setting to activate, the profiler is most useful when run through the TVMJS [client](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/client) since this gives the most realistic conditions providing both real-world txs and a meaningful state size.
 
 To repeatedly run the EVM profiler within the client sync the client on mainnet or a larger testnet to the desired block. Then the profiler should be run without sync (to not distort the results) by using the `--executeBlocks` and the `--vmProfileBlocks` (or `--vmProfileTxs`) flags in conjunction like:
 
@@ -667,7 +654,7 @@ Happy EVM Profiling! 🎉 🤩
 
 ## Development
 
-See [@tvmjs/vm](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/vm) README.
+See [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) README.
 
 ## Upstream
 
@@ -679,11 +666,3 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-[evm-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/evm.svg
-[evm-npm-link]: https://www.npmjs.com/package/@ethereumjs/evm
-[evm-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20evm?label=issues
-[evm-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+evm"
-[evm-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/evm/badge.svg
-[evm-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22evm%22
-[evm-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=evm
-[evm-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/evm

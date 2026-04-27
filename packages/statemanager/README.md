@@ -1,9 +1,4 @@
-# @tvmjs/statemanager `v10`
-
-[![NPM Package][statemanager-npm-badge]][statemanager-npm-link]
-[![GitHub Issues][statemanager-issues-badge]][statemanager-issues-link]
-[![Actions Status][statemanager-actions-badge]][statemanager-actions-link]
-[![Code Coverage][statemanager-coverage-badge]][statemanager-coverage-link]
+# @tvmjs/statemanager `1.0.0`
 
 | Library to provide high level access to TRON-compatible state. Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -58,7 +53,7 @@ It also includes a checkpoint/revert/commit mechanism to either persist or rever
 
 ### WASM Crypto Support
 
-This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing for underlying trie keys. See `@tvmjs/common` [README](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
+This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing for underlying trie keys. See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
 
 ## `MerkleStateManager`
 
@@ -320,11 +315,3 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-[statemanager-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/statemanager.svg
-[statemanager-npm-link]: https://www.npmjs.com/package/@ethereumjs/statemanager
-[statemanager-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20statemanager?label=issues
-[statemanager-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+statemanager"
-[statemanager-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/statemanager/badge.svg
-[statemanager-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22statemanager%22
-[statemanager-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=statemanager
-[statemanager-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/statemanager

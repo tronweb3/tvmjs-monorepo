@@ -1,15 +1,10 @@
-# @tvmjs/vm `v10`
-
-[![NPM Package][vm-npm-badge]][vm-npm-link]
-[![GitHub Issues][vm-issues-badge]][vm-issues-link]
-[![Actions Status][vm-actions-badge]][vm-actions-link]
-[![Code Coverage][vm-coverage-badge]][vm-coverage-link]
+# @tvmjs/vm `1.0.0`
 
 | Execution context for the TVM (TRON Virtual Machine) implementation. Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
 
 TRON-compatible execution context for
-[@tvmjs/evm](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/evm)
+[@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm)
 to build and run blocks and txs and update state.
 
 - 🦄 All hardforks up till **Osaka**
@@ -65,7 +60,7 @@ To obtain the latest version, simply require the project using `npm`:
 npm install @tvmjs/vm
 ```
 
-**Note:** Starting with the Dencun hardfork `EIP-4844` related functionality has become an integrated part of the EVM functionality with the activation of the point evaluation precompile. For this precompile to work a separate installation of the KGZ library is necessary (we decided not to bundle due to large bundle sizes), see [KZG Setup](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
+**Note:** Starting with the Dencun hardfork `EIP-4844` related functionality has become an integrated part of the EVM functionality with the activation of the point evaluation precompile. For this precompile to work a separate installation of the KGZ library is necessary (we decided not to bundle due to large bundle sizes), see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
 
 ## Usage
 
@@ -103,18 +98,18 @@ Additionally to the `VM.runTx()` method there is an API method `VM.runBlock()` w
 
 ### Running an RPC Mainnet Block
 
-It is possible to fetch a real mainnet block via JSON-RPC and execute it locally using the VM together with the `RPCStateManager` from the `@ethereumjs/statemanager` package, which fetches account and storage data on demand from a remote provider.
+It is possible to fetch a real mainnet block via JSON-RPC and execute it locally using the VM together with the `RPCStateManager` from the `@tvmjs/statemanager` package, which fetches account and storage data on demand from a remote provider.
 
 > **Note:** Running recent mainnet blocks will generate **thousands of RPC requests** (one for each account/storage access during EVM execution). Make sure your RPC provider can handle the load and be mindful of rate limits and quotas.
 
 ```ts
 // ./examples/runBlockWithRPC.ts
 
-import { createBlockFromJSONRPCProvider } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
-import { RPCStateManager } from '@ethereumjs/statemanager'
-import { bytesToHex } from '@ethereumjs/util'
-import { createVM, runBlock } from '@ethereumjs/vm'
+import { createBlockFromJSONRPCProvider } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
+import { RPCStateManager } from '@tvmjs/statemanager'
+import { bytesToHex } from '@tvmjs/util'
+import { createVM, runBlock } from '@tvmjs/vm'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
@@ -255,7 +250,7 @@ void main()
 
 ### WASM Crypto Support
 
-This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification (for included txs). See `@tvmjs/common` [README](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
+This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification (for included txs). See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
 
 ## Examples
 
@@ -298,7 +293,7 @@ Using ESM will give you additional advantages over CJS beyond browser usage like
 
 ### VM/EVM Relation
 
-Starting with the `VM` v6 version the inner TVM core previously included in this library has been extracted to an own package [@tvmjs/evm](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/evm).
+Starting with the `VM` v6 version the inner TVM core previously included in this library has been extracted to an own package [@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm).
 
 It is still possible to access all `EVM` functionality through the `evm` property of the initialized `vm` object, e.g.:
 
@@ -315,7 +310,7 @@ Note that it's now also possible to pass in an own or customized `EVM` instance 
 
 With `VM` v7 a previously needed EEI interface for EVM/VM communication is not needed any more and the API has been simplified, also see the respective EVM README section. Most of the EEI related logic is now either handled internally or more generic functionality being taken over by the `@tvmjs/statemanager` package, with the `EVM` now taking in both an (optional) `stateManager` and `blockchain` argument for the constructor (which the `VM` passes over by default).
 
-With `VM` v6 the previously included `StateManager` has been extracted to its own package [@tvmjs/statemanager](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/statemanager). The `StateManager` package provides a unified state interface and it is now also possible to provide a modified or custom `StateManager` to the VM via the optional `stateManager` constructor option.
+With `VM` v6 the previously included `StateManager` has been extracted to its own package [@tvmjs/statemanager](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/statemanager). The `StateManager` package provides a unified state interface and it is now also possible to provide a modified or custom `StateManager` to the VM via the optional `stateManager` constructor option.
 
 ## Setup
 
@@ -399,17 +394,17 @@ void main()
 
 ```
 
-For a list with supported EIPs see the [@tvmjs/evm](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/evm) documentation.
+For a list with supported EIPs see the [@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm) documentation.
 
 ### EIP-4844 Shard Blob Transactions Support (Cancun)
 
 This library supports the blob transaction type introduced with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844). EIP-4844 comes with a dedicated opcode `BLOBHASH` and has added a new point evaluation precompile at address `0x0a`.
 
-**Note:** Usage of the point evaluation precompile needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
+**Note:** Usage of the point evaluation precompile needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
 
 ### EIP-7702 EAO Code Transactions Support (Prague)
 
-This library support the execution of [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) EOA code transactions (see tx library for full documentation) with `runTx()` or the wrapping `runBlock()` execution methods, see [this test setup](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/vm/test/api/EIPs/eip-7702.spec.ts) for a more complete example setup on how to run code from an EOA.
+This library support the execution of [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) EOA code transactions (see tx library for full documentation) with `runTx()` or the wrapping `runBlock()` execution methods, see [this test setup](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/vm/test/api/EIPs/eip-7702.spec.ts) for a more complete example setup on how to run code from an EOA.
 
 ### EIP-7685 Requests Support (Prague)
 
@@ -451,7 +446,7 @@ vm.events.on('afterTx', (event) => {
 })
 ```
 
-Please note that there are additional EVM-specific events in the [@tvmjs/evm](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/evm) package.
+Please note that there are additional EVM-specific events in the [@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm) package.
 
 ### Asynchronous event handlers
 
@@ -495,7 +490,7 @@ The following loggers are currently available:
 | `vm:tx:gas` |  Transaction gas logger                                            |
 | `vm:state`  | StateManager logger                                                |
 
-Note that there are additional EVM-specific loggers in the [@tvmjs/evm](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/evm) package.
+Note that there are additional EVM-specific loggers in the [@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm) package.
 
 Here are some examples for useful logger combinations.
 
@@ -572,11 +567,3 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-[vm-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/vm.svg
-[vm-npm-link]: https://www.npmjs.com/package/@ethereumjs/vm
-[vm-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20vm?label=issues
-[vm-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+vm"
-[vm-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/vm/badge.svg
-[vm-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22vm%22
-[vm-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=vm
-[vm-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/vm

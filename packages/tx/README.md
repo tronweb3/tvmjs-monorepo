@@ -1,9 +1,4 @@
-# @tvmjs/tx `v10`
-
-[![NPM Package][tx-npm-badge]][tx-npm-link]
-[![GitHub Issues][tx-issues-badge]][tx-issues-link]
-[![Actions Status][tx-actions-badge]][tx-actions-link]
-[![Code Coverage][tx-coverage-badge]][tx-coverage-link]
+# @tvmjs/tx `1.0.0`
 
 | Implements schema and functions for TRON-compatible transaction types (including TRC-10 token transfers). Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -61,11 +56,11 @@ All types of transaction objects are frozen with `Object.freeze()` which gives y
 
 ### WASM Crypto Support
 
-This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification. See `@tvmjs/common` [README](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
+This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification. See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
 
 ## Chain and Hardfork Support
 
-To use a chain other than the default Mainnet chain, or a different hardfork than the default [`@tvmjs/common`](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common) hardfork (`Hardfork.Prague`), provide a `common` object in the constructor of the tx.
+To use a chain other than the default Mainnet chain, or a different hardfork than the default [`@tvmjs/common`](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/common) hardfork (`Hardfork.Prague`), provide a `common` object in the constructor of the tx.
 
 Base default HF (determined by `Common`): `Hardfork.Prague`
 
@@ -196,7 +191,7 @@ This library supports the blob transaction type introduced with [EIP-4844](https
 Additionally it is able to process blobs in the "PeerDAS way" - introduced with [EIP-7594](https://eips.ethereum.org/EIPS/eip-7594) along the
 `osaka` hardfork and generate cell proofs instead of blob proofs.
 
-**Note:** This functionality needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
+**Note:** This functionality needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
 
 #### Example
 
@@ -297,7 +292,7 @@ You can either pass in blobs as the initial `blobsData` (the data you want to st
 
 The `kzgProofs` field is used for both blob proofs (EIP-4844) and cell proofs (EIP-7594). Note that the amount of proofs increases by a factor of 128 when EIP-7594 is activated, since proofs are then computed per cell instead of per blob (128 cells per blob).
 
-For manually deriving commitments, proofs and versioned hashes, there are dedicated helpers available in the [@tvmjs/util](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/util) package.
+For manually deriving commitments, proofs and versioned hashes, there are dedicated helpers available in the [@tvmjs/util](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/util) package.
 
 #### Serialization
 
@@ -609,11 +604,3 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-[tx-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/tx.svg
-[tx-npm-link]: https://www.npmjs.com/package/@ethereumjs/tx
-[tx-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20tx?label=issues
-[tx-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+tx"
-[tx-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/tx/badge.svg
-[tx-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22tx%22
-[tx-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=tx
-[tx-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx

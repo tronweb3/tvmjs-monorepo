@@ -1,9 +1,4 @@
-# @tvmjs/util `v10`
-
-[![NPM Package][util-npm-badge]][util-npm-link]
-[![GitHub Issues][util-issues-badge]][util-issues-link]
-[![Actions Status][util-actions-badge]][util-actions-link]
-[![Code Coverage][util-coverage-badge]][util-coverage-link]
+# @tvmjs/util `1.0.0`
 
 | A collection of utility functions for TRON/TVM. Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -151,7 +146,7 @@ console.log(`BigInt constants (performance), e.g. BIGINT_2EXP96: ${BIGINT_2EXP96
 
 ## Module: [db](src/db.ts)
 
-DB interface for database abstraction (Blockchain, Trie), see e.g. [@tvmjs/trie recipes](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/trie/recipes/level.ts)) for usage.
+DB interface for database abstraction (Blockchain, Trie), see e.g. [@tvmjs/trie recipes](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/trie/recipes/level.ts)) for usage.
 
 ## Module: [genesis](src/genesis.ts)
 
@@ -163,7 +158,7 @@ Internalized simple helper methods like `isHexString`. Note that methods from th
 
 ## Module: [kzg](src/kzg.ts)
 
-KZG interface (used for 4844 blob txs), see [@tvmjs/tx](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) README for main usage instructions.
+KZG interface (used for 4844 blob txs), see [@tvmjs/tx](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) README for main usage instructions.
 
 ## Module: [mapDB](src/mapDB.ts)
 
@@ -177,7 +172,7 @@ Module with a compact generic request class for [EIP-7685](https://eips.ethereum
 - [EIP-7002](https://eips.ethereum.org/EIPS/eip-7002): `WithdrawalRequest` (Prague Hardfork)
 - [EIP-7251](https://eips.ethereum.org/EIPS/eip-7251): `ConsolidationRequest` (Prague Hardfork)
 
-These request types are mainly used within the [@tvmjs/block](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/block) library where applied usage instructions are provided in the README.
+These request types are mainly used within the [@tvmjs/block](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/block) library where applied usage instructions are provided in the README.
 
 ## Module: [signature](src/signature.ts)
 
@@ -286,11 +281,3 @@ For development information, see the [developer docs](../../DEVELOPER.md) and ou
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
 This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.
-[util-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/util.svg
-[util-npm-link]: https://www.npmjs.org/package/@ethereumjs/util
-[util-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20util?label=issues
-[util-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+util"
-[util-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/util/badge.svg
-[util-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22util%22
-[util-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=util
-[util-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/util
