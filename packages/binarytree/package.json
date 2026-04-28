@@ -1,8 +1,8 @@
 {
   "name": "@tvmjs/binarytree",
   "version": "1.0.0",
-  "description": "Implementation of binary trees as used in Ethereum.",
-  "keywords": ["binary", "tree", "trie", "ethereum"],
+  "description": "Implementation of binary trees as used in the TRON Virtual Machine (TVM).",
+  "keywords": ["binary", "tree", "trie", "ethereum", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/binarytree#readme",
   "bugs": {
     "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+binarytree%22"
@@ -17,7 +17,8 @@
     {
       "name": "Gabriel Rocheleau",
       "url": "https://github.com/gabrocheleau"
-    }
+    },
+    "TVMJS Team"
   ],
   "type": "module",
   "sideEffects": false,

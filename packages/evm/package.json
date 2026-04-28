@@ -1,8 +1,8 @@
 {
   "name": "@tvmjs/evm",
   "version": "1.0.0",
-  "description": "JavaScript Ethereum Virtual Machine (EVM) implementation",
-  "keywords": ["ethereum", "EVM", "JavaScript", "TypeScript"],
+  "description": "JavaScript TRON Virtual Machine (TVM) implementation.",
+  "keywords": ["ethereum", "EVM", "JavaScript", "TypeScript", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm#readme",
   "bugs": {
     "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+evm%22"
@@ -13,7 +13,7 @@
   },
   "license": "MPL-2.0",
   "author": "EthereumJS Team",
-  "contributors": ["Alex Beregszaszi <alex@rtfs.hu>"],
+  "contributors": ["Alex Beregszaszi <alex@rtfs.hu>", "TVMJS Team"],
   "type": "module",
   "sideEffects": false,
   "main": "dist/cjs/index.js",

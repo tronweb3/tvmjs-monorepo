@@ -1,6 +1,6 @@
 # @tvmjs/binarytree `1.0.0` (EXPERIMENTAL)
 
-| Implementation of Binary Trees as specified in [EIP-7864](https://eips.ethereum.org/EIPS/eip-7864). Part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
+| Implementation of Binary Trees as specified in [EIP-7864](https://eips.ethereum.org/EIPS/eip-7864). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
 
 > Binary Trees are a novel cryptographic data structure proposed for use in Ethereum to optimize state storage and proof verification. Unlike Merkle Patricia Tries, Binary Trees use a strict binary branching structure, allowing smaller proof sizes. By reducing storage overhead and improving proof efficiency, Binary Trees aim to enhance Ethereum’s scalability while maintaining robust security guarantees.
@@ -22,7 +22,7 @@ npm install @tvmjs/binarytree
 ```
 ## Upstream
 
-This package is part of the [TVMJS](https://github.com/tvmjs/tvm-js) project, a TypeScript implementation of the TRON Virtual Machine (TVM) forked from the [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo) monorepo. We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
+This package is part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, a TypeScript implementation of the TRON Virtual Machine (TVM) forked from the [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo) monorepo. We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
 
 For development information, see the [developer docs](../../DEVELOPER.md) and our [code of conduct](../../CODE_OF_CONDUCT.md).
 ## License

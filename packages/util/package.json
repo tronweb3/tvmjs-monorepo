@@ -1,8 +1,8 @@
 {
   "name": "@tvmjs/util",
   "version": "1.0.0",
-  "description": "A collection of utility functions for Ethereum",
-  "keywords": ["ethereum", "utilities", "utils"],
+  "description": "A collection of utility functions for the TRON Virtual Machine (TVM).",
+  "keywords": ["ethereum", "utilities", "utils", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/util#readme",
   "bugs": {
     "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+util%22"
@@ -28,7 +28,7 @@
       "url": "https://github.com/MrChico"
     },
     {
-      "name": "Dũng Trần",
+      "name": "D\u0169ng Tr\u1ea7n",
       "email": "tad88.dev@gmail.com",
       "url": "https://github.com/tad88dev"
     },
@@ -55,7 +55,8 @@
       "name": "Alexander Sinyagin",
       "email": "sinyagin.alexander@gmail.com",
       "url": "https://github.com/asinyagin"
-    }
+    },
+    "TVMJS Team"
   ],
   "type": "module",
   "sideEffects": false,

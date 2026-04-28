@@ -1,8 +1,8 @@
 {
   "name": "@tvmjs/blockchain",
   "version": "1.0.0",
-  "description": "A module to store and interact with blocks",
-  "keywords": ["ethereum", "blockchain"],
+  "description": "A module to store and interact with TRON blocks and the TVM blockchain.",
+  "keywords": ["ethereum", "blockchain", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/blockchain#readme",
   "bugs": {
     "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+blockchain%22"
@@ -64,5 +64,6 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "contributors": ["TVMJS Team"]
 }

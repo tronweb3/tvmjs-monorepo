@@ -1,7 +1,7 @@
 {
   "name": "@tvmjs/common",
   "version": "1.0.0",
-  "description": "Resources common to all Ethereum implementations",
+  "description": "Common configuration and resources for the TRON Virtual Machine (TVM) implementation.",
   "keywords": [
     "ethereum",
     "ethereumjs",
@@ -9,7 +9,9 @@
     "parameters",
     "genesis",
     "networks",
-    "bootstrap"
+    "bootstrap",
+    "tron",
+    "tvm"
   ],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common#readme",
   "bugs": {
@@ -70,5 +72,6 @@
     "@noble/curves": "2.0.1",
     "@polkadot/util": "13.4.3",
     "@polkadot/wasm-crypto": "7.5.1"
-  }
+  },
+  "contributors": ["TVMJS Team"]
 }

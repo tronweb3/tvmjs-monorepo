@@ -1,8 +1,8 @@
 {
   "name": "@tvmjs/tx",
   "version": "1.0.0",
-  "description": "Implementation of the various Ethereum Transaction Types",
-  "keywords": ["ethereum", "transactions"],
+  "description": "Implementation of TRON transaction types for the TVM.",
+  "keywords": ["ethereum", "transactions", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx#readme",
   "bugs": {
     "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+tx%22"
@@ -18,7 +18,8 @@
       "name": "Alex Beregszaszi",
       "email": "alex@rtfs.hu",
       "url": "https://github.com/axic"
-    }
+    },
+    "TVMJS Team"
   ],
   "type": "module",
   "sideEffects": false,

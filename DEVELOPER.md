@@ -64,7 +64,7 @@ To focus on a single package (e.g., VM):
 1. Navigate to the package directory: `cd packages/vm`
 2. Run tests: `npm run test`
 3. Run a specific test: `npx vitest test/path/to/test.spec.ts`
-4. Build just that package: `npm run build --workspace=@ethereumjs/vm`
+4. Build just that package: `npm run build --workspace=@tvmjs/vm`
 
 ### Releases
 

@@ -1,8 +1,8 @@
 {
   "name": "@tvmjs/vm",
   "version": "1.0.0",
-  "description": "An Ethereum VM implementation",
-  "keywords": ["ethereum", "VM"],
+  "description": "A TRON Virtual Machine (TVM) implementation.",
+  "keywords": ["ethereum", "VM", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm#readme",
   "bugs": {
     "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+vm%22"
@@ -13,7 +13,7 @@
   },
   "license": "MPL-2.0",
   "author": "EthereumJS Team",
-  "contributors": ["mjbecze <mjbecze@gmail.com>", "Alex Beregszaszi <alex@rtfs.hu>"],
+  "contributors": ["mjbecze <mjbecze@gmail.com>", "Alex Beregszaszi <alex@rtfs.hu>", "TVMJS Team"],
   "type": "module",
   "sideEffects": false,
   "main": "dist/cjs/index.js",
