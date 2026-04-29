@@ -1775,7 +1775,7 @@ export const handlers: Map<number, OpHandler> = new Map([
         runState.stack.push(BIGINT_1)
       } else {
         const size = await runState.interpreter.getExternalCodeSize(address)
-        runState.stack.push(BigInt(size))
+        runState.stack.push(size > 0 ? BIGINT_1 : BIGINT_0)
       }
     },
   ],
