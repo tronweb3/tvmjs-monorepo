@@ -54,10 +54,10 @@ describe('Stack', () => {
 
   it('should throw on overflow', () => {
     const s = new Stack()
-    for (let i = 0; i < 64; i++) {
+    for (let i = 0; i < 1024; i++) {
       s.push(BigInt(i))
     }
-    assert.throws(() => s.push(BigInt(64)))
+    assert.throws(() => s.push(BigInt(1024)))
   })
 
   it('overflow limit should be configurable', () => {
@@ -161,7 +161,7 @@ describe('Stack', () => {
     const evm = await createEVM()
 
     for (let pushN = 0x60; pushN <= 0x7f; pushN++) {
-      const expectedStack = new Stack(64)
+      const expectedStack = new Stack(1024)
       expectedStack.push(bytesToBigInt(setLengthRight(new Uint8Array([0x01]), pushN - 0x5f)))
 
       const resWithoutJumps = await evm.runCall({

@@ -40,7 +40,7 @@ describe('EIP 3855 tests', () => {
     }
     vm.evm.events!.on('step', handler)
 
-    const depth = Number(common.param('stackLimit'))
+    const depth = 1024 // TRON: code stack max length is 1024
 
     const result = await vm.evm.runCode!({
       code: hexToBytes(`0x${'5F'.repeat(depth)}00`),
@@ -60,7 +60,7 @@ describe('EIP 3855 tests', () => {
   it('should correctly use push0 to create a stack with stack limit + 1 length', async () => {
     const vm = await createVM({ common })
 
-    const depth = Number(common.param('stackLimit')!) + 1
+    const depth = 1025 // TRON: opcode stack max length is 1024
 
     const result = await vm.evm.runCode!({
       code: hexToBytes(`0x${'5F'.repeat(depth)}`),

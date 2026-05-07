@@ -14,7 +14,7 @@ export class Stack {
     // It is possible to initialize the array with `maxHeight` items. However,
     // this makes the constructor 10x slower and there do not seem to be any observable performance gains
     this._store = []
-    this._maxHeight = maxHeight ?? 64
+    this._maxHeight = maxHeight ?? 1024
   }
 
   get length() {
