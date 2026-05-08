@@ -10,14 +10,14 @@ import {
   hexToBytes,
   utf8ToBytes,
 } from '@tvmjs/util'
-import { VM, createVM } from '@tvmjs/vm'
+import { type VM, createVM } from '@tvmjs/vm'
 import { utils } from 'tronweb'
 import { concat } from 'tronweb/utils'
 import { assert, describe, it } from 'vitest'
 
 const precomileContractAddr = '000000000000000000000000000000000000000a'
 
-describe('Precompiles: VALIDATE-MULTI_SIGN', (st) => {
+describe('Precompiles: VALIDATE-MULTI_SIGN', () => {
   it('address do not exist', async () => {
     const common = new Common({ chain: Mainnet })
     const FUNC = getActivePrecompiles(common).get(precomileContractAddr)!
@@ -29,7 +29,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', (st) => {
     const result = await FUNC({
       data,
       gasLimit: 0xffffn,
-      common: common,
+      common,
       _EVM: await createEVM({ common }),
     })
     // console.log(result)
@@ -39,7 +39,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', (st) => {
 
   it('weight not enough', async () => {
     const common = new Common({ chain: Mainnet })
-    const vm = await createVM({ common: common })
+    const vm = await createVM({ common })
 
     const FUNC = getActivePrecompiles(common).get(precomileContractAddr)!
 
@@ -48,7 +48,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', (st) => {
     const result = await FUNC({
       data,
       gasLimit: 0xffffn,
-      common: common,
+      common,
       _EVM: vm.evm,
     })
 
@@ -58,7 +58,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', (st) => {
 
   it('wrong sign', async () => {
     const common = new Common({ chain: Mainnet })
-    const vm = await createVM({ common: common })
+    const vm = await createVM({ common })
 
     const FUNC = getActivePrecompiles(common).get(precomileContractAddr)!
 
@@ -67,7 +67,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', (st) => {
     const result = await FUNC({
       data,
       gasLimit: 0xffffn,
-      common: common,
+      common,
       _EVM: vm.evm,
     })
     // console.log(result)
@@ -78,7 +78,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', (st) => {
 
   it('valid success', async () => {
     const common = new Common({ chain: Mainnet })
-    const vm = await createVM({ common: common })
+    const vm = await createVM({ common })
 
     const input = await prepareAccount(vm, 3)
 
@@ -153,12 +153,13 @@ async function prepareAccount(vm: VM, index: number): Promise<`0x${string}`> {
     case 1:
       signatures.push(sign(toSign, `0x${account1.privateKey}`))
       break
-    case 2:
+    case 2: {
       signatures.push(sign(toSign, `0x${account1.privateKey}`))
       const sig2 = sign(toSign, `0x${account2.privateKey}`)
       sig2[0] = sig2[0] > 0 ? sig2[0] - 1 : sig2[0] + 1
       signatures.push(sig2)
       break
+    }
     default:
       signatures.push(sign(toSign, `0x${account1.privateKey}`))
       signatures.push(sign(toSign, `0x${account2.privateKey}`))

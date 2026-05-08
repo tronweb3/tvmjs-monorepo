@@ -17,7 +17,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
     const result = await FUNC({
       data,
       gasLimit: 0xffffn,
-      common: common,
+      common,
       _EVM: await createEVM({ common }),
     })
 
@@ -41,7 +41,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
     const result = await FUNC({
       data,
       gasLimit: 0xffffffffn,
-      common: common,
+      common,
       _EVM: await createEVM({ common }),
     })
 
@@ -62,7 +62,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
     const result = await FUNC({
       data,
       gasLimit: 0xffffn,
-      common: common,
+      common,
       _EVM: await createEVM({ common }),
     })
 
@@ -86,7 +86,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
     const result = await FUNC({
       data,
       gasLimit: 0xffffn,
-      common: common,
+      common,
       _EVM: await createEVM({ common }),
     })
 
