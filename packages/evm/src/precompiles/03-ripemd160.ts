@@ -22,7 +22,7 @@ export function precompile03(opts: PrecompileInput): ExecResult {
     return OOGResult(opts.gasLimit)
   }
 
-  const hash = sha256(sha256(data))
+  const hash = sha256(sha256(data).slice(0, 20))
   if (opts._debug !== undefined) {
     opts._debug(`${pName} return hash=${bytesToHex(hash)}`)
   }

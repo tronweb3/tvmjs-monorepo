@@ -1,11 +1,12 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { bytesToHex, utf8ToBytes } from '@tvmjs/util'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createEVM, getActivePrecompiles } from '../../src/index.ts'
 
-const input = utf8ToBytes('test')
-const expected = '0x165402a607b46bad4395cf6c0b22caa3b0aa26f922d79656b455e8fb544c4d7c'
+const input =
+  '38d18acb67d25c8bb9942764b62f18e17054f66a817bd4295423adf9ed98873e000000000000000000000000000000000000000000000000000000000000001b38d18acb67d25c8bb9942764b62f18e17054f66a817bd4295423adf9ed98873e789d1dd423d25f0772d2748d60f7e4b81bb14d086eba8e8e8efb6dcff8a4ae02'
+const expected = '0000000000000000000000009215b8d9882ff46f0dfde6684d78e831467f65e6'
 
 describe('Precompiles: RIPEMD160', () => {
   it('RIPEMD160', async () => {
@@ -15,17 +16,21 @@ describe('Precompiles: RIPEMD160', () => {
     const evm = await createEVM({
       common,
     })
-    const addressStr = '0000000000000000000000000000000000000003'
+    const addressStr = '0000000000000000000000000000000000020003'
     const RIPEMD160 = getActivePrecompiles(common).get(addressStr)!
 
-    const data = input
+    const data = hexToBytes(`0x${input}`)
     let result = await RIPEMD160({
       data,
       gasLimit: BigInt(0xffff),
       common,
       _EVM: evm,
     })
-    assert.deepEqual(bytesToHex(result.returnValue), expected, 'should generate expected value')
+    assert.deepEqual(
+      bytesToHex(result.returnValue),
+      `0x${expected}`,
+      'should generate expected value',
+    )
 
     result = await RIPEMD160({
       data,
