@@ -30,7 +30,7 @@ export class DataWord {
     const firstNonZero = this._data.findIndex((ele) => ele !== 0)
     let bytesOccupied = 0
     if (firstNonZero !== -1) {
-      bytesOccupied = DataWord.WORD_SIZE - firstNonZero + 1
+      bytesOccupied = DataWord.WORD_SIZE - firstNonZero
     }
 
     const intValue = this.intValue()
