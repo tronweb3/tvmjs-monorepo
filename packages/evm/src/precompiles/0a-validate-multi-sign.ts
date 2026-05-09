@@ -1,6 +1,6 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import type { Permission } from '@tvmjs/util'
-import { Address, bigIntToBytes, bytesToHex, concatBytes } from '@tvmjs/util'
+import { Address, bigIntToBytes, bytesToHex, concatBytes, setLengthLeft } from '@tvmjs/util'
 
 import { OOGResult } from '../evm.ts'
 import type { ExecResult } from '../types.ts'
@@ -28,7 +28,9 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
   const data = words[2].data
 
   const tronAddr = convertToTronAddress(addr)
-  const combine = concatBytes(tronAddr, bigIntToBytes(BigInt(permissionId)), data)
+  // permission id must be 4 bytes
+  const permissionIdBytes = setLengthLeft(bigIntToBytes(BigInt(permissionId)), 4)
+  const combine = concatBytes(tronAddr, permissionIdBytes, data)
 
   const hash = sha256(combine)
 

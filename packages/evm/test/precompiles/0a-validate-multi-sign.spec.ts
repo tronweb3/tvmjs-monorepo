@@ -5,14 +5,15 @@ import {
   PermissionType,
   type PrefixedHexString,
   bigIntToBytes,
+  concatBytes,
   createAccount,
   createAddressFromString,
   hexToBytes,
+  setLengthLeft,
   utf8ToBytes,
 } from '@tvmjs/util'
 import { type VM, createVM } from '@tvmjs/vm'
 import { utils } from 'tronweb'
-import { concat } from 'tronweb/utils'
 import { assert, describe, it } from 'vitest'
 
 const precomileContractAddr = '000000000000000000000000000000000000000a'
@@ -146,8 +147,12 @@ async function prepareAccount(vm: VM, index: number): Promise<`0x${string}`> {
   await vm.stateManager.putAccount(address, account)
 
   const dataToSign = sha256(utf8ToBytes('test'))
-  const merged = concat([hexToBytes(`0x${account0.address.hex}`), bigIntToBytes(2n), dataToSign])
-  const toSign = sha256(hexToBytes(merged as `0x${string}`))
+  const merged = concatBytes(
+    hexToBytes(`0x${account0.address.hex}`),
+    setLengthLeft(bigIntToBytes(2n), 4),
+    dataToSign,
+  )
+  const toSign = sha256(merged)
   const signatures = []
   switch (index) {
     case 1:
