@@ -8,6 +8,7 @@ import {
   createAccount,
   createAddressFromPrivateKey,
   hexToBytes,
+  setLengthLeft,
   utf8ToBytes,
 } from '@tvmjs/util'
 import { utils } from 'tronweb'
@@ -113,7 +114,12 @@ describe('ValidateMultiSignContractTest', async () => {
     'Trigger validatemultisign contract with Permission(address) case',
     async () => {
       const hash = keccak_256(utf8ToBytes('hello world'))
-      const merged = concatBytes(hexToBytes('0x41'), address0.bytes, bigIntToBytes(0n), hash)
+      const merged = concatBytes(
+        hexToBytes('0x41'),
+        address0.bytes,
+        setLengthLeft(bigIntToBytes(0n), 4),
+        hash,
+      )
       const toSign = sha256(merged)
 
       const signatures = []
