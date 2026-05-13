@@ -1,5 +1,5 @@
 import type { Address } from '@tvmjs/util'
-import { createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
+import { bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 import { utils } from 'tronweb'
 import { assert, describe, it } from 'vitest'
 import { createVM } from '../../../src/constructors.ts'
@@ -252,5 +252,17 @@ contract isTestCtr {
       params: [contractAddressOther.toString()],
     })
     assert.equal(result8[0], true)
+
+    // ISCONTRACT on zero address must return false
+    // TVM will set toAddress(contractAddress) to zero address if it is not set
+    // In this case, ISCONTRACT on zero address will return true because it is the same as toAddress
+    // This has been fixed
+    const res = await vm.evm.runCode({
+      code: hexToBytes(`0x6000d460005260206000f3`),
+    })
+    assert.equal(
+      bytesToHex(res.returnValue),
+      '0x0000000000000000000000000000000000000000000000000000000000000000',
+    )
   })
 })
