@@ -11,7 +11,7 @@ export class DataWord {
   }
 
   static parseArray(data: Uint8Array): DataWord[] {
-    const len = data.length / DataWord.WORD_SIZE
+    const len = Math.floor(data.length / DataWord.WORD_SIZE)
     const words = new Array(len)
 
     for (let i = 0; i < len; ++i) {

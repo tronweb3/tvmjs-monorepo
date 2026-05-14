@@ -1,7 +1,7 @@
 import { Common, Mainnet } from '@tvmjs/common'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
-import { createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { EVMError, createEVM, getActivePrecompiles } from '../../src/index.ts'
 
 describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
   it('static call test 1', async () => {
@@ -92,6 +92,46 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
 
     assert.deepEqual(result.executionGasUsed, 21000n, 'should use petersburg gas costs')
     assert.deepEqual(result.returnValue, getError())
+  })
+
+  it('returns no error if bytes length is not aligned', async () => {
+    const common = new Common({ chain: Mainnet })
+    const addressStr = '0000000000000000000000000000000000000009'
+    const FUNC = getActivePrecompiles(common).get(addressStr)!
+
+    const input = `0x${'00'.repeat(97)}` as `0x${string}`
+
+    const data = hexToBytes(input)
+
+    const result = await FUNC({
+      data,
+      gasLimit: 0xffffn,
+      common,
+      _EVM: await createEVM({ common }),
+    })
+
+    assert.deepEqual(result.executionGasUsed, 0n, 'should use petersburg gas costs')
+    assert.deepEqual(result.returnValue, getError())
+  })
+
+  it('returns error if bytes length is not enough to read', async () => {
+    const common = new Common({ chain: Mainnet })
+    const addressStr = '0000000000000000000000000000000000000009'
+    const FUNC = getActivePrecompiles(common).get(addressStr)!
+
+    const input = `0x${'00'.repeat(32)}` as `0x${string}`
+
+    const data = hexToBytes(input)
+
+    const result = await FUNC({
+      data,
+      gasLimit: 0xffffn,
+      common,
+      _EVM: await createEVM({ common }),
+    })
+
+    assert.deepEqual(result.executionGasUsed, 0xffffn, 'should exhaust gas limit')
+    assert.deepEqual(result.exceptionError, new EVMError(EVMError.errorMessages.UNKNOWN))
   })
 })
 

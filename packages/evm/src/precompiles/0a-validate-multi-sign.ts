@@ -2,6 +2,7 @@ import { sha256 } from '@noble/hashes/sha2.js'
 import type { Permission } from '@tvmjs/util'
 import { Address, bigIntToBytes, bytesToHex, concatBytes, setLengthLeft } from '@tvmjs/util'
 
+import { EVMError } from '../errors.ts'
 import { OOGResult } from '../evm.ts'
 import type { ExecResult } from '../types.ts'
 import { DataWord } from './dataWord.ts'
@@ -14,82 +15,93 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
 
   const ENGERYPERSIGN = opts.common.param('validatemultisignGas')
   const MAX_SIZE = 5
-  const cnt = Math.floor((Math.floor(rawData.length / DataWord.WORD_SIZE) - 5) / 5)
+  const cnt = Math.max(Math.floor((Math.floor(rawData.length / DataWord.WORD_SIZE) - 5) / 5), 0)
   const gasUsed = BigInt(cnt) * ENGERYPERSIGN
 
   if (opts.gasLimit < gasUsed) {
     return OOGResult(opts.gasLimit)
   }
+  try {
+    const words = DataWord.parseArray(rawData)
 
-  const words = DataWord.parseArray(rawData)
+    const addr = words[0].getLast20Bytes()
+    const permissionId = words[1].intValueSafe()
+    const data = words[2].data
 
-  const addr = words[0].getLast20Bytes()
-  const permissionId = words[1].intValueSafe()
-  const data = words[2].data
+    const tronAddr = convertToTronAddress(addr)
+    // permission id must be 4 bytes
+    const permissionIdBytes = setLengthLeft(bigIntToBytes(BigInt(permissionId)), 4)
+    const combine = concatBytes(tronAddr, permissionIdBytes, data)
 
-  const tronAddr = convertToTronAddress(addr)
-  // permission id must be 4 bytes
-  const permissionIdBytes = setLengthLeft(bigIntToBytes(BigInt(permissionId)), 4)
-  const combine = concatBytes(tronAddr, permissionIdBytes, data)
+    const hash = sha256(combine)
 
-  const hash = sha256(combine)
+    const signatures = extractBytesArray(
+      words,
+      words[3].intValueSafe() / DataWord.WORD_SIZE,
+      rawData,
+    )
 
-  const signatures = extractBytesArray(words, words[3].intValueSafe() / DataWord.WORD_SIZE, rawData)
-
-  if (signatures.length === 0 || signatures.length > MAX_SIZE) {
-    return {
-      executionGasUsed: gasUsed,
-      returnValue: new Uint8Array(DataWord.WORD_SIZE),
+    if (signatures.length === 0 || signatures.length > MAX_SIZE) {
+      return {
+        executionGasUsed: gasUsed,
+        returnValue: new Uint8Array(DataWord.WORD_SIZE),
+      }
     }
-  }
 
-  const address = new Address(addr)
-  const account = await vm.stateManager.getAccount(address)
+    const address = new Address(addr)
+    const account = await vm.stateManager.getAccount(address)
 
-  if (account) {
-    try {
-      const permission = account.getPermissionById(permissionId)
-      if (permission) {
-        let totalWeight = 0
-        const executedSignList = new Set()
-        for (const sign of signatures) {
-          const signHexStr = bytesToHex(sign)
-          if (executedSignList.has(signHexStr)) {
-            continue
+    if (account) {
+      try {
+        const permission = account.getPermissionById(permissionId)
+        if (permission) {
+          let totalWeight = 0
+          const executedSignList = new Set()
+          for (const sign of signatures) {
+            const signHexStr = bytesToHex(sign)
+            if (executedSignList.has(signHexStr)) {
+              continue
+            }
+            const recoveredAddr = recoverAddrBySign(sign, hash)
+
+            const weight = getWeight(permission, recoveredAddr)
+            if (weight === 0) {
+              return {
+                executionGasUsed: gasUsed,
+                returnValue: new Uint8Array(DataWord.WORD_SIZE),
+              }
+            }
+
+            totalWeight += weight
+            executedSignList.add(signHexStr)
           }
-          const recoveredAddr = recoverAddrBySign(sign, hash)
 
-          const weight = getWeight(permission, recoveredAddr)
-          if (weight === 0) {
+          if (totalWeight >= permission.threshold) {
+            const returnValue = new Uint8Array(DataWord.WORD_SIZE)
+            returnValue[DataWord.WORD_SIZE - 1] = 1
             return {
               executionGasUsed: gasUsed,
-              returnValue: new Uint8Array(DataWord.WORD_SIZE),
+              returnValue,
             }
           }
-
-          totalWeight += weight
-          executedSignList.add(signHexStr)
         }
-
-        if (totalWeight >= permission.threshold) {
-          const returnValue = new Uint8Array(DataWord.WORD_SIZE)
-          returnValue[DataWord.WORD_SIZE - 1] = 1
-          return {
-            executionGasUsed: gasUsed,
-            returnValue,
-          }
-        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
     }
-  }
 
-  const returnData = new Uint8Array(DataWord.WORD_SIZE)
+    const returnData = new Uint8Array(DataWord.WORD_SIZE)
 
-  return {
-    executionGasUsed: gasUsed,
-    returnValue: returnData,
+    return {
+      executionGasUsed: gasUsed,
+      returnValue: returnData,
+    }
+  } catch {
+    return {
+      executionGasUsed: opts.gasLimit,
+      returnValue: new Uint8Array(),
+      exceptionError: new EVMError(EVMError.errorMessages.UNKNOWN),
+    }
   }
 }
 
