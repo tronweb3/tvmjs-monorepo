@@ -1233,6 +1233,8 @@ export class EVM implements EVMInterface {
       to: opts.to ?? createZeroAddress(),
       caller: opts.caller,
       value: opts.value,
+      tokenId: opts.tokenId,
+      tokenValue: opts.tokenValue,
       depth: opts.depth,
       selfdestruct: opts.selfdestruct ?? new Map(),
       isStatic: opts.isStatic,
