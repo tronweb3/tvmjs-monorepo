@@ -21,7 +21,7 @@ describe('AllowTvmCompatibleEvmTest', () => {
 
     }
   }*/
-  it('testEthRipemd160', async () => {
+  it.skip('testEthRipemd160', async () => {
     // const contractName = 'testEthRipemd160'
     const address = OWNER_ADDRESS
     const abi = JSON.parse(
@@ -109,7 +109,7 @@ describe('AllowTvmCompatibleEvmTest', () => {
       return F(rounds, h, m, t, f);
     }
   }*/
-  it('testBlake2f', async () => {
+  it.skip('testBlake2f', async () => {
     // const contractName = 'testBlake2f'
     const address = OWNER_ADDRESS
     const abi = JSON.parse(

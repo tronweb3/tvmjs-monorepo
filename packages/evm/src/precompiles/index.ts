@@ -20,8 +20,8 @@ import { precompile09 } from './09-batch-validate-sign.ts'
 import { precompile10 } from './10-bls12-map-fp-to-g1.ts'
 import { precompile11 } from './11-bls12-map-fp2-to-g2.ts'
 import { precompile100 } from './100-p256verify.ts'
-import { precompile20003 } from './20003-ripemd160.ts'
-import { precompile20009 } from './20009-blake2f.ts'
+// import { precompile20003 } from './20003-ripemd160.ts'
+// import { precompile20009 } from './20009-blake2f.ts'
 import { MCLBLS, NobleBLS } from './bls12_381/index.ts'
 import { NobleBN254, RustBN254 } from './bn254/index.ts'
 
@@ -238,24 +238,24 @@ const precompileEntries: PrecompileEntry[] = [
     precompile: precompile100,
     name: 'P256VERIFY (0x100)',
   },
-  {
-    address: '0000000000000000000000000000000000020003',
-    check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Chainstart,
-    },
-    precompile: precompile20003,
-    name: 'RIPEMD160 (0x20003)',
-  },
-  {
-    address: '0000000000000000000000000000000000020009',
-    check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Istanbul,
-    },
-    precompile: precompile20009,
-    name: 'BLAKE2f (0x20009)',
-  },
+  // {
+  //   address: '0000000000000000000000000000000000020003',
+  //   check: {
+  //     type: PrecompileAvailabilityCheck.Hardfork,
+  //     param: Hardfork.Chainstart,
+  //   },
+  //   precompile: precompile20003,
+  //   name: 'RIPEMD160 (0x20003)',
+  // },
+  // {
+  //   address: '0000000000000000000000000000000000020009',
+  //   check: {
+  //     type: PrecompileAvailabilityCheck.Hardfork,
+  //     param: Hardfork.Istanbul,
+  //   },
+  //   precompile: precompile20009,
+  //   name: 'BLAKE2f (0x20009)',
+  // },
 ]
 
 const precompiles: Precompiles = {
@@ -277,8 +277,8 @@ const precompiles: Precompiles = {
   [BYTES_19 + '10']: precompile10,
   [BYTES_19 + '11']: precompile11,
   '0000000000000000000000000000000000000100': precompile100,
-  '0000000000000000000000000000000000020003': precompile20003,
-  '0000000000000000000000000000000000020009': precompile20009,
+  // '0000000000000000000000000000000000020003': precompile20003,
+  // '0000000000000000000000000000000000020009': precompile20009,
 }
 
 /**
