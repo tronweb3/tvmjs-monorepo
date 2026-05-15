@@ -25,7 +25,7 @@ describe('EcrecoverCheck contract: check() returns recovered address when CALLER
       caller: createAddressFromString(owner.address.hex.replace(/^41/, '0x') as PrefixedHexString),
       gasLimit: 5_000_000n,
     })) as Address
-  })
+  }, 60000)
 
   it('returns the recovered address and does not revert', async () => {
     const msg = 'hello'

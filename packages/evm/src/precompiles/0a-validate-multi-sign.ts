@@ -57,12 +57,16 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
         if (permission) {
           let totalWeight = 0
           const executedSignList = new Set()
+          const executedAddrList = new Set()
           for (const sign of signatures) {
             const signHexStr = bytesToHex(sign)
             if (executedSignList.has(signHexStr)) {
               continue
             }
             const recoveredAddr = recoverAddrBySign(sign, hash)
+            if (executedAddrList.has(bytesToHex(recoveredAddr))) {
+              continue
+            }
 
             const weight = getWeight(permission, recoveredAddr)
             if (weight === 0) {
@@ -73,6 +77,7 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
             }
 
             totalWeight += weight
+            executedAddrList.add(bytesToHex(recoveredAddr))
             executedSignList.add(signHexStr)
           }
 
