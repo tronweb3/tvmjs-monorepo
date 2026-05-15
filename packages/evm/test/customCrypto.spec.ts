@@ -56,7 +56,7 @@ describe('custom crypto', () => {
     })
     assert.strictEqual(
       bytesToHex(result.returnValue),
-      '0x00000000000000000000000063304c5c6884567b84b18f5bc5774d829a32d25d',
+      '0x00000000000000000000004163304c5c6884567b84b18f5bc5774d829a32d25d',
       'used custom ecrecover hashing function',
     )
   })

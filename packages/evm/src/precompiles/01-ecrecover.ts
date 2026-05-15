@@ -12,7 +12,7 @@ import {
 import { OOGResult } from '../evm.ts'
 
 import { getPrecompileName } from './index.ts'
-import { gasLimitCheck } from './util.ts'
+import { convertToTronAddress, gasLimitCheck } from './util.ts'
 
 import type { ExecResult } from '../types.ts'
 import type { PrecompileInput } from './types.ts'
@@ -66,7 +66,7 @@ export function precompile01(opts: PrecompileInput): ExecResult {
       returnValue: new Uint8Array(0),
     }
   }
-  const address = setLengthLeft(publicToAddress(publicKey), 32)
+  const address = setLengthLeft(convertToTronAddress(publicToAddress(publicKey)), 32)
   if (opts._debug !== undefined) {
     opts._debug(`${pName} return address=${bytesToHex(address)}`)
   }

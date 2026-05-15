@@ -10,7 +10,7 @@ const _hash = '852daa74cc3c31fe64542bb9b8764cfb91cc30f9acf9389071ffb44a9eefde46'
 const _v = '000000000000000000000000000000000000000000000000000000000000001b'
 const _r = 'b814eaab5953337fed2cf504a5b887cddd65a54b7429d7b191ff1331ca0726b1'
 const _s = '264de2660d307112075c15f08ba9c25c9a0cc6f8119aff3e7efb0a942773abb0'
-const address = '0xa6fb229e9b0a4e4ef52ea6991adcfc59207c7711'
+const address = '0x41a6fb229e9b0a4e4ef52ea6991adcfc59207c7711'
 
 describe('Precompiles: ECRECOVER', () => {
   it('ECRECOVER', async () => {
@@ -32,7 +32,7 @@ describe('Precompiles: ECRECOVER', () => {
       _EVM: evm,
     })
     assert.deepEqual(
-      bytesToHex(result.returnValue.slice(-20)),
+      bytesToHex(result.returnValue.slice(-21)),
       address,
       'should recover expected address',
     )
