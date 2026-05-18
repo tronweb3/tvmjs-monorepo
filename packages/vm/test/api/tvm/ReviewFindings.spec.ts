@@ -358,8 +358,8 @@ describe('Review Findings - Energy/Gas Parameters', () => {
 
     assert.equal(common.param('calltokenGas'), 40n)
     assert.equal(common.param('tokenbalanceGas'), 20n)
-    assert.equal(common.param('calltokenvalueGas'), 0n)
-    assert.equal(common.param('calltokenidGas'), 0n)
+    assert.equal(common.param('calltokenvalueGas'), 2n)
+    assert.equal(common.param('calltokenidGas'), 2n)
     assert.equal(common.param('iscontractGas'), 20n)
     assert.equal(common.param('batchvalidatesignGas'), 1500n)
     assert.equal(common.param('validatemultisignGas'), 1500n)
