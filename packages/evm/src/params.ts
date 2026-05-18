@@ -109,8 +109,8 @@ export const paramsEVM: ParamsDict = {
     extcodehashGas: 400, // Base fee of the EXTCODEHASH opcode
     calltokenGas: 40, // Base fee of the CALLTOKEN opcode
     tokenbalanceGas: 20, // Base fee of the TOKENBALANCE opcode
-    calltokenvalueGas: 0, // Base fee of the CALLTOKENVALUE opcode
-    calltokenidGas: 0, // Base fee of the CALLTOKENID opcode
+    calltokenvalueGas: 2, // Base fee of the CALLTOKENVALUE opcode
+    calltokenidGas: 2, // Base fee of the CALLTOKENID opcode
     iscontractGas: 20, // Base fee of the ISCONTRACT opcode
     batchvalidatesignGas: 1500, // Gas cost per BATCHVALIDATESIGN opcode
     validatemultisignGas: 1500, // Gas cost per VALIDATEMULTISIGN opcode
