@@ -1747,6 +1747,10 @@ export const handlers: Map<number, OpHandler> = new Map([
       const tokenIdBigInt = runState.stack.pop()
       const addressBigInt = runState.stack.pop()
       const address = createAddressFromStackBigInt(addressBigInt)
+
+      if (!runState.stateManager.tokenIdExists(Number(tokenIdBigInt))) {
+        throw new EVMError(EVMError.errorMessages.UNKNOWN)
+      }
       const balance = await runState.interpreter.getExternalTokenBalance(address, tokenIdBigInt)
       runState.stack.push(balance)
     },
