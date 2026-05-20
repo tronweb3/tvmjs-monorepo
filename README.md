@@ -42,8 +42,9 @@ TVMJS is a monorepo of modular packages that together implement the full TRON ex
 |---------|------|-------------|
 | 0x09 | BatchValidateSign | Batch signature validation |
 | 0x0a | ValidateMultiSign | Multi-signature permission validation |
-| 0x20003 | RIPEMD-160 | TRON-specific RIPEMD-160 hash |
-| 0x20009 | BLAKE2F | TRON-specific BLAKE2F compression |
+| 0x03 | RIPEMD-160 | TRON-specific RIPEMD-160 hash(Double hash) |
+| 0x20003 | RIPEMD-160 | EVM-specific RIPEMD-160 hash |
+| 0x20009 | BLAKE2F | EVM-specific BLAKE2F compression |
 
 ### Account Model Extensions
 
@@ -63,12 +64,13 @@ TRON uses an **energy** model (analogous to Ethereum's gas) with TRON-specific p
 
 ### Prerequisites
 
-- Node.js >= 18
-- npm >= 8
+- Node.js >= 20
+- npm >= 10
 
 ### Install
 
 ```shell
+npx playwright install chromium
 npm install
 ```
 
@@ -81,11 +83,11 @@ npm run build --workspaces
 ### Run tests
 
 ```shell
-# Run all tests
+# Run all tests except packages/vm
 npm test
 
-# Run tests for a specific package
-cd packages/vm && npm test
+# Run tests for the vm package
+cd packages/vm && npm run test:API && npm run test:browser
 
 # Run TRON-specific tests
 npx vitest run packages/vm/test/api/tvm/
