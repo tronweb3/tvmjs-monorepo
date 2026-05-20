@@ -472,7 +472,11 @@ export class Interpreter {
       const [offset, length] = this._runState.stack.peek(2)
       error = new Uint8Array(0)
       if (length !== BIGINT_0) {
-        error = this._runState.memory.read(Number(offset), Number(length))
+        try {
+          error = this._runState.memory.read(Number(offset), Number(length))
+        } catch {
+          error = new Uint8Array(0)
+        }
       }
     }
 
