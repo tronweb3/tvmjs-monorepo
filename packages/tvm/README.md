@@ -511,7 +511,7 @@ recommended not to do that.
 
 ## Understanding the TVM
 
-If you want to understand your TVM runs we have added a hierarchically structured list of debug loggers for your convenience which can be activated in arbitrary combinations. We also use these loggers internally for development and testing. These loggers use the [debug](https://github.com/visionmedia/debug) library and can be activated on the CLI with `DEBUG=ethjs,[Logger Selection] node [Your Script to Run].js` and produce output like the following:
+If you want to understand your TVM runs we have added a hierarchically structured list of debug loggers for your convenience which can be activated in arbitrary combinations. We also use these loggers internally for development and testing. These loggers use the [debug](https://github.com/visionmedia/debug) library and can be activated on the CLI with `DEBUG=tvmjs,[Logger Selection] node [Your Script to Run].js` and produce output like the following:
 
 ![TVMJS TVM Debug Logger](./debug.png?raw=true)
 
@@ -531,37 +531,37 @@ Here are some examples of useful logger combinations.
 Run one specific logger:
 
 ```shell
-DEBUG=ethjs,tvm tsx test.ts
+DEBUG=tvmjs,tvm tsx test.ts
 ```
 
 Run all loggers currently available:
 
 ```shell
-DEBUG=ethjs,tvm:*,tvm:*:* tsx test.ts
+DEBUG=tvmjs,tvm:*,tvm:*:* tsx test.ts
 ```
 
 Run only the gas loggers:
 
 ```shell
-DEBUG=ethjs,tvm:*:gas tsx test.ts
+DEBUG=tvmjs,tvm:*:gas tsx test.ts
 ```
 
 Excluding the ops logger:
 
 ```shell
-DEBUG=ethjs,tvm:*,tvm:*:*,-tvm:ops tsx test.ts
+DEBUG=tvmjs,tvm:*,tvm:*:*,-tvm:ops tsx test.ts
 ```
 
 Run some specific loggers including a logger specifically logging the `SSTORE` executions from the TVM (this is from the screenshot above):
 
 ```shell
-DEBUG=ethjs,tvm,tvm:ops:sstore,tvm:*:gas tsx test.ts
+DEBUG=tvmjs,tvm,tvm:ops:sstore,tvm:*:gas tsx test.ts
 ```
 
-`ethjs` **must** be included in the `DEBUG` environment variables to enable **any** logs.
+`tvmjs` **must** be included in the `DEBUG` environment variables to enable **any** logs.
 Additional log selections can be added with a comma separated list (no spaces). Logs with extensions can be enabled with a colon `:`, and `*` can be used to include all extensions.
 
-`DEBUG=ethjs,tvm:journal,tvm:ops:* npx vitest test/runCall.spec.ts`
+`DEBUG=tvmjs,tvm:journal,tvm:ops:* npx vitest test/runCall.spec.ts`
 
 ### Internal Structure
 

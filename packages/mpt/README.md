@@ -343,7 +343,7 @@ npm run profiling
 
 This library uses the [debug](https://github.com/visionmedia/debug) debugging utility package.
 
-The `Trie` class features optional debug logging. Individual debug selections can be activated on the CL with `DEBUG=ethjs,[Logger Selection]`.
+The `Trie` class features optional debug logging. Individual debug selections can be activated on the CL with `DEBUG=tvmjs,[Logger Selection]`.
 
 The following options are available:
 
@@ -373,43 +373,43 @@ To observe the logging in action at different levels:
 Run with minimal logging:
 
 ```shell
-DEBUG=ethjs,mpt npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt npx vitest test/util/log.spec.ts
 ```
 
 Run with **put** method logging:
 
 ```shell
-DEBUG=ethjs,mpt:put npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt:put npx vitest test/util/log.spec.ts
 ```
 
 Run with **mpt** + **put**/**get**/**del** logging:
 
 ```shell
-DEBUG=ethjs,mpt,mpt:put,mpt:get,mpt:del npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt,mpt:put,mpt:get,mpt:del npx vitest test/util/log.spec.ts
 ```
 
 Run with **findPath** debug logging:
 
 ```shell
-DEBUG=ethjs,mpt:find_path npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt:find_path npx vitest test/util/log.spec.ts
 ```
 
 Run with **findPath** verbose logging:
 
 ```shell
-DEBUG=ethjs,mpt:find_path:* npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt:find_path:* npx vitest test/util/log.spec.ts
 ```
 
 Run with max logging:
 
 ```shell
-DEBUG=ethjs,mpt:* npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt:* npx vitest test/util/log.spec.ts
 ```
 
-`ethjs` **must** be included in the `DEBUG` environment variables to enable **any** logs.
+`tvmjs` **must** be included in the `DEBUG` environment variables to enable **any** logs.
 Additional log selections can be added with a comma separated list (no spaces). Logs with extensions can be enabled with a colon `:`, and `*` can be used to include all extensions.
 
-`DEBUG=ethjs,mpt:put,mpt:find_path:* npx vitest test/proof.spec.ts`
+`DEBUG=tvmjs,mpt:put,mpt:find_path:* npx vitest test/proof.spec.ts`
 
 ## References
 

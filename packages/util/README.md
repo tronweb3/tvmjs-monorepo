@@ -249,9 +249,9 @@ const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
 
 Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS can not provide.
 
-### ethjs-util methods
+### tvmjs-util methods
 
-The following methods are available by an internalized version of the [ethjs-util](https://github.com/ethjs/ethjs-util) package (`MIT` license), see [internal.ts](src/internal.ts). The original package is not maintained any more and the original functionality will be replaced by own implementations over time (starting with the `v7.1.3` release, October 2021).
+The following methods are available by an internalized version of the [tvmjs-util](https://github.com/tvmjs/tvmjs-util) package (`MIT` license), see [internal.ts](src/internal.ts). The original package is not maintained any more and the original functionality will be replaced by own implementations over time (starting with the `v7.1.3` release, October 2021).
 
 - arrayContainsArray
 - getBinarySize

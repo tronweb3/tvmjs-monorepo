@@ -477,7 +477,7 @@ event handlers.
 
 ## Understanding the VM
 
-If you want to understand your VM runs we have added a hierarchically structured list of debug loggers for your convenience which can be activated in arbitrary combinations. We also use these loggers internally for development and testing. These loggers use the [debug](https://github.com/visionmedia/debug) library and can be activated on the CL with `DEBUG=ethjs,[Logger Selection] node [Your Script to Run].js` and produce output like the following:
+If you want to understand your VM runs we have added a hierarchically structured list of debug loggers for your convenience which can be activated in arbitrary combinations. We also use these loggers internally for development and testing. These loggers use the [debug](https://github.com/visionmedia/debug) library and can be activated on the CL with `DEBUG=tvmjs,[Logger Selection] node [Your Script to Run].js` and produce output like the following:
 
 ![TVMJS VM Debug Logger](./debug.png?raw=true)
 
@@ -497,31 +497,31 @@ Here are some examples for useful logger combinations.
 Run one specific logger:
 
 ```shell
-DEBUG=ethjs,vm:tx tsx test.ts
+DEBUG=tvmjs,vm:tx tsx test.ts
 ```
 
 Run all loggers currently available:
 
 ```shell
-DEBUG=ethjs,vm:*,vm:*:* tsx test.ts
+DEBUG=tvmjs,vm:*,vm:*:* tsx test.ts
 ```
 
 Run only the gas loggers:
 
 ```shell
-DEBUG=ethjs,vm:*:gas tsx test.ts
+DEBUG=tvmjs,vm:*:gas tsx test.ts
 ```
 
 Excluding the state logger:
 
 ```shell
-DEBUG=ethjs,vm:*,vm:*:*,-vm:state tsx test.ts
+DEBUG=tvmjs,vm:*,vm:*:*,-vm:state tsx test.ts
 ```
 
 Run some specific loggers including a logger specifically logging the `SSTORE` executions from the VM (this is from the screenshot above):
 
 ```shell
-DEBUG=ethjs,vm:tx,vm:tvm,vm:ops:sstore,vm:*:gas tsx test.ts
+DEBUG=tvmjs,vm:tx,vm:tvm,vm:ops:sstore,vm:*:gas tsx test.ts
 ```
 
 ## Internal Structure

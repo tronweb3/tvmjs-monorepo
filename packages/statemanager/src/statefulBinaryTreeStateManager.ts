@@ -85,8 +85,8 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
   private keccakFunction: Function
 
   constructor(opts: StatefulBinaryTreeStateManagerOpts) {
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    this.DEBUG = isDebugEnabled('ethjs')
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
 
     this._checkpointCount = 0
 

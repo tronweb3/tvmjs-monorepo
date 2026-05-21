@@ -112,7 +112,7 @@ export class Blockchain implements BlockchainInterface {
    * {@link BlockchainOptions}.
    */
   constructor(opts: BlockchainOptions = {}) {
-    this.DEBUG = isDebugEnabled('ethjs')
+    this.DEBUG = isDebugEnabled('tvmjs')
     this._debug = debugDefault('blockchain:#')
 
     if (opts.common) {

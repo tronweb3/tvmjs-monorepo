@@ -34,10 +34,10 @@ The following is an example for a logger run:
 Run with the clique logger:
 
 ```shell
-DEBUG=ethjs,statemanager:merkle,statemanager:cache:* tsx test.ts
+DEBUG=tvmjs,statemanager:merkle,statemanager:cache:* tsx test.ts
 ```
 
-`ethjs` **must** be included in the `DEBUG` environment variables to enable **any** logs.
+`tvmjs` **must** be included in the `DEBUG` environment variables to enable **any** logs.
 Additional log selections can be added with a comma separated list (no spaces). Logs with extensions can be enabled with a colon `:`, and `*` can be used to include all extensions.
 
-`DEBUG=ethjs,statemanager:cache:*,trie,statemanager:merkle npx vitest test/statemanager.spec.ts`
+`DEBUG=tvmjs,statemanager:cache:*,trie,statemanager:merkle npx vitest test/statemanager.spec.ts`

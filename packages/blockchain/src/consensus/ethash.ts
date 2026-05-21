@@ -24,7 +24,7 @@ export class EthashConsensus implements Consensus {
   private _debug: Debugger
 
   constructor(ethash: MinimalEthashInterface) {
-    this.DEBUG = isDebugEnabled('ethjs')
+    this.DEBUG = isDebugEnabled('tvmjs')
     this._debug = debugDefault('blockchain:ethash')
 
     this.algorithm = ConsensusAlgorithm.Ethash

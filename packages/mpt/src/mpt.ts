@@ -114,7 +114,7 @@ export class MerklePatriciaTrie {
     const valueEncoding =
       opts?.db !== undefined ? (opts.valueEncoding ?? ValueEncoding.String) : ValueEncoding.Bytes
 
-    this.DEBUG = isDebugEnabled('ethjs')
+    this.DEBUG = isDebugEnabled('tvmjs')
     this.debug = this.DEBUG
       ? (message: string, namespaces: string[] = []) => {
           let logger = this._debug

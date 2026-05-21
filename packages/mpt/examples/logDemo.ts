@@ -1,5 +1,5 @@
 /**
- * Run with DEBUG=ethjs,trie:* to see debug log output
+ * Run with DEBUG=tvmjs,trie:* to see debug log output
  */
 import { MerklePatriciaTrie, createMerkleProof, verifyMPTWithMerkleProof } from '@tvmjs/mpt'
 import { utf8ToBytes } from '@tvmjs/util'

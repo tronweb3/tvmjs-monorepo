@@ -38,8 +38,8 @@ export class RPCStateManager implements StateManagerInterface {
   public readonly common: Common
 
   constructor(opts: RPCStateManagerOpts) {
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    this.DEBUG = isDebugEnabled('ethjs')
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
 
     this._debug = debugDefault('statemanager:rpc')
     if (typeof opts.provider === 'string' && opts.provider.startsWith('http')) {

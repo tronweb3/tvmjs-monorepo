@@ -63,7 +63,7 @@ export * from './types.ts'
 export * from './bal.ts'
 
 /**
- * Export ethjs-util methods
+ * Export tvmjs-util methods
  */
 export * from './authorization.ts'
 export * from './env.ts'

@@ -352,8 +352,8 @@ export class TVM implements TVMInterface {
 
     this.performanceLogger = new TVMPerformanceLogger()
 
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    this.DEBUG = isDebugEnabled('ethjs')
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
   }
 
   /**

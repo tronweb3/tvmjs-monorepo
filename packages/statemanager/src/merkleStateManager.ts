@@ -92,8 +92,8 @@ export class MerkleStateManager implements StateManagerInterface {
    * Instantiate the StateManager interface.
    */
   constructor(opts: MerkleStateManagerOpts = {}) {
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    this.DEBUG = isDebugEnabled('ethjs')
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
 
     this._debug = debugDefault('statemanager:merkle')
 

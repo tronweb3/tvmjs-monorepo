@@ -15,26 +15,26 @@ describe('isDebugEnabled', () => {
 
   it('returns false when globalThis.process is undefined (browser/worker)', () => {
     ;(globalThis as any).process = undefined
-    assert.isFalse(isDebugEnabled('ethjs'))
+    assert.isFalse(isDebugEnabled('tvmjs'))
   })
 
   it('returns false when DEBUG is not set', () => {
     ;(globalThis as any).process = { env: {} }
-    assert.isFalse(isDebugEnabled('ethjs'))
+    assert.isFalse(isDebugEnabled('tvmjs'))
   })
 
   it('returns true when DEBUG includes the namespace', () => {
-    ;(globalThis as any).process = { env: { DEBUG: 'ethjs' } }
-    assert.isTrue(isDebugEnabled('ethjs'))
+    ;(globalThis as any).process = { env: { DEBUG: 'tvmjs' } }
+    assert.isTrue(isDebugEnabled('tvmjs'))
   })
 
   it('returns false when DEBUG does not include the namespace', () => {
     ;(globalThis as any).process = { env: { DEBUG: 'other' } }
-    assert.isFalse(isDebugEnabled('ethjs'))
+    assert.isFalse(isDebugEnabled('tvmjs'))
   })
 
   it('handles partial namespace matches (namespace substring present)', () => {
-    ;(globalThis as any).process = { env: { DEBUG: 'ethjs:tvm,other' } }
-    assert.isTrue(isDebugEnabled('ethjs'))
+    ;(globalThis as any).process = { env: { DEBUG: 'tvmjs:tvm,other' } }
+    assert.isTrue(isDebugEnabled('tvmjs'))
   })
 })

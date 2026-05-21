@@ -223,7 +223,7 @@ It is also possible to only run the tests from the skip lists:
 The following command shows an example of how to get coverage for a set of the official spec test files:
 
 ```bash
-DEBUG=ethjs,dummy:* VITE_CUSTOM_TESTS_PATH=../execution-spec-tests/fusaka-devnet-5/state_tests/osaka/eip7951_p256verify_precompiles  VITE_FORK=Osaka npx vitest watch --coverage --coverage.reporter=html --ui --coverage.allowExternal --coverage.include=tvm/src/precompiles/0c-bls12-g1msm.ts [--coverage.include=tvm/src/precompiles/index.ts] test/tester/state.spec.ts
+DEBUG=tvmjs,dummy:* VITE_CUSTOM_TESTS_PATH=../execution-spec-tests/fusaka-devnet-5/state_tests/osaka/eip7951_p256verify_precompiles  VITE_FORK=Osaka npx vitest watch --coverage --coverage.reporter=html --ui --coverage.allowExternal --coverage.include=tvm/src/precompiles/0c-bls12-g1msm.ts [--coverage.include=tvm/src/precompiles/index.ts] test/tester/state.spec.ts
 ```
 
 This can be useful to identify gaps in the coverage of the official spec tests and see where additional tests are needed.

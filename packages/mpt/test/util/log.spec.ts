@@ -12,7 +12,7 @@ describe('Run MerklePatriciaTrie script with DEBUG enabled', async () => {
     ['ether', null],
     ['dog', 'puppy'],
   ]
-  process.env.DEBUG = 'ethjs'
+  process.env.DEBUG = 'tvmjs'
   const trie = new MerklePatriciaTrie({
     useRootPersistence: true,
   })

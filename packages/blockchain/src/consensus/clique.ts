@@ -121,8 +121,8 @@ export class CliqueConsensus implements Consensus {
 
   DEBUG: boolean // Guard for debug logs
   constructor() {
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    this.DEBUG = isDebugEnabled('ethjs')
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
 
     this.algorithm = ConsensusAlgorithm.Clique
   }

@@ -48,7 +48,7 @@
     "chaindata",
     "leveldb",
     "Gitter",
-    "ethjs",
+    "tvmjs",
     "ruleset",
     "polkadot",
     "stabilizations",

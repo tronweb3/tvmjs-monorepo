@@ -21,7 +21,7 @@ import type { BlockData } from '@tvmjs/block'
 import type { Chain } from '@tvmjs/common'
 import type { BlockchainOptions, DBOp } from './index.ts'
 
-const DEBUG = isDebugEnabled('ethjs')
+const DEBUG = isDebugEnabled('tvmjs')
 const debug = debugDefault('blockchain:#')
 
 export async function createBlockchain(opts: BlockchainOptions = {}) {

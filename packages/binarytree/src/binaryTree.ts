@@ -73,7 +73,7 @@ export class BinaryTree {
       this.root(opts.root)
     }
 
-    this.DEBUG = isDebugEnabled('ethjs')
+    this.DEBUG = isDebugEnabled('tvmjs')
     this.debug = this.DEBUG
       ? (message: string, namespaces: string[] = []) => {
           let log = this._debug
