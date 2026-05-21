@@ -5,8 +5,8 @@ import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@tvmjs/evm'
 import { SIGNER_A } from '@tvmjs/testdata'
+import type { InterpreterStep } from '@tvmjs/tvm'
 import type { TypedTransaction } from '@tvmjs/tx'
 import type { PrefixedHexString } from '@tvmjs/util'
 

@@ -1,6 +1,6 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { Common, Mainnet } from '@tvmjs/common'
-import { createEVM, getActivePrecompiles } from '@tvmjs/evm'
+import { createEVM, getActivePrecompiles } from '@tvmjs/tvm'
 import {
   PermissionType,
   type PrefixedHexString,

@@ -1,5 +1,5 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { getActivePrecompiles } from '@tvmjs/evm'
+import { getActivePrecompiles } from '@tvmjs/tvm'
 import { hexToBytes } from '@tvmjs/util'
 import { assert, beforeAll, describe, it } from 'vitest'
 

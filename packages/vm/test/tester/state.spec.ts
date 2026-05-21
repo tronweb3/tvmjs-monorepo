@@ -26,7 +26,7 @@ import {
   NobleBLS,
   NobleBN254,
   RustBN254,
-} from '@tvmjs/evm'
+} from '@tvmjs/tvm'
 import { initRustBN } from 'rustbn-wasm'
 import {
   DEFAULT_FORK_CONFIG,

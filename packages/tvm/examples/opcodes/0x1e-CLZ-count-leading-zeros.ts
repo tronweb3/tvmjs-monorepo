@@ -1,5 +1,5 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { type EVM, createEVM } from '@tvmjs/evm'
+import { type EVM, createEVM } from '@tvmjs/tvm'
 import { type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 
 // CLZ (Count Leading Zeros) opcode (0x1e)

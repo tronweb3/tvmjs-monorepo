@@ -1,6 +1,6 @@
 import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
-import { EVM, createEVM } from '@tvmjs/evm'
 import { testnetMergeChainConfig } from '@tvmjs/testdata'
+import { EVM, createEVM } from '@tvmjs/tvm'
 import { Account, KECCAK256_RLP, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 

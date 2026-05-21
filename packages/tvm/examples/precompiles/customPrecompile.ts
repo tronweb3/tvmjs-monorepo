@@ -1,5 +1,5 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/evm'
+import { createEVM } from '@tvmjs/tvm'
 import {
   bigIntToBytes,
   bytesToBigInt,
@@ -8,7 +8,7 @@ import {
   setLengthLeft,
 } from '@tvmjs/util'
 
-import type { ExecResult, PrecompileInput } from '@tvmjs/evm'
+import type { ExecResult, PrecompileInput } from '@tvmjs/tvm'
 
 // Custom precompile that adds two 32-byte big-endian unsigned integers (mod 2^256).
 const ADDITION_GAS = 15n

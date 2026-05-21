@@ -1,4 +1,4 @@
-import { createEVM } from '@tvmjs/evm'
+import { createEVM } from '@tvmjs/tvm'
 import { createAddressFromString, hexToBytes } from '@tvmjs/util'
 
 const main = async () => {

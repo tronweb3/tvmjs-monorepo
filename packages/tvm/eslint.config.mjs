@@ -7,7 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 export default [
   ...rootConfig,
   {
-    ignores: ['./ethereumjs-evm-bundle.es.js'],
+    ignores: ['./tvmjs-tvm-bundle.es.js'],
   },
   {
     languageOptions: {

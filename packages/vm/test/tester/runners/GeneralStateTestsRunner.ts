@@ -12,9 +12,9 @@
  */
 import { Block } from '@tvmjs/block'
 import { createBlockchain } from '@tvmjs/blockchain'
-import { type InterpreterStep } from '@tvmjs/evm'
 import { MerklePatriciaTrie } from '@tvmjs/mpt'
 import { Caches, MerkleStateManager } from '@tvmjs/statemanager'
+import { type InterpreterStep } from '@tvmjs/tvm'
 import { Account, bytesToHex, createAddressFromString, toBytes } from '@tvmjs/util'
 import type { assert } from 'vitest'
 

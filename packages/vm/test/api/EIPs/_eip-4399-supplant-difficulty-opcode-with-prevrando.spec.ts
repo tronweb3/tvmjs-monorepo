@@ -6,7 +6,7 @@ import { assert, describe, it } from 'vitest'
 
 import { createVM } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@tvmjs/evm'
+import type { InterpreterStep } from '@tvmjs/tvm'
 
 describe('EIP-4399 -> 0x44 (DIFFICULTY) should return PREVRANDAO', () => {
   it('should return the right values', async () => {

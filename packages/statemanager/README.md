@@ -225,7 +225,7 @@ In order to have an EVM instance that supports the BLOCKHASH opcode (which requi
 ```ts
 // ./examples/evm.ts
 
-import { createEVM } from '@tvmjs/evm'
+import { createEVM } from '@tvmjs/tvm'
 import { RPCBlockChain, RPCStateManager } from '@tvmjs/statemanager'
 
 const main = async () => {

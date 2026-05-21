@@ -6,7 +6,7 @@ import { runPrecompile } from './util.ts'
 
 const main = async () => {
   // P256VERIFY precompile (address 0x100)
-  // Demonstrates signing SHA-256("ethereumjs-evm-p256verify-example") with a private key
+  // Demonstrates signing SHA-256("tvmjs-tvm-p256verify-example") with a private key
   //
   // Input format (see EIP-7951):
   // - 32 bytes: msgHash
@@ -15,7 +15,7 @@ const main = async () => {
   // - 32 bytes: qx (public key x)
   // - 32 bytes: qy (public key y)
 
-  const message = 'ethereumjs-evm-p256verify-example'
+  const message = 'tvmjs-tvm-p256verify-example'
   const messageHash = sha256(utf8ToBytes(message))
 
   const privateKey = p256.utils.randomSecretKey()

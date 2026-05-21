@@ -1,5 +1,5 @@
-import { createEVM } from '@tvmjs/evm'
 import { RPCBlockChain, RPCStateManager } from '@tvmjs/statemanager'
+import { createEVM } from '@tvmjs/tvm'
 
 const main = async () => {
   try {

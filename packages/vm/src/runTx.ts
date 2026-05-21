@@ -5,7 +5,7 @@ import {
   type EVM,
   type Log,
   createEIP7708SelfdestructLog,
-} from '@tvmjs/evm'
+} from '@tvmjs/tvm'
 import { Capability, isBlob4844Tx } from '@tvmjs/tx'
 import {
   Account,

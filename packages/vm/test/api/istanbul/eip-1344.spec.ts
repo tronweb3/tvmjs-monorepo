@@ -1,5 +1,5 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { EVMError } from '@tvmjs/evm'
+import { EVMError } from '@tvmjs/tvm'
 import { bytesToBigInt, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 

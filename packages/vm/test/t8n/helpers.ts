@@ -1,7 +1,7 @@
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
-import type { InterpreterStep } from '@tvmjs/evm'
+import type { InterpreterStep } from '@tvmjs/tvm'
 import { bytesToHex } from '@tvmjs/util'
 import type { AfterTxEvent } from '../../src/types.ts'
 import type { VM } from '../../src/vm.ts'

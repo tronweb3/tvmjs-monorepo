@@ -5,7 +5,7 @@ import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@tvmjs/evm'
+import type { InterpreterStep } from '@tvmjs/tvm'
 import type { Address } from '@tvmjs/util'
 
 const pkey = hexToBytes(`0x${'20'.repeat(32)}`)

@@ -30,7 +30,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
 ### Chores
 
-- Rename package namespace from `@ethereumjs/evm` to `@tvmjs/evm`; update all internal imports
+- Rename package namespace from `@ethereumjs/evm` to `@tvmjs/tvm`; update all internal imports
 - Bump package version to `1.0.0`
 - Lock all dependency versions by removing `^` and `~` prefixes
 

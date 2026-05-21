@@ -1,6 +1,6 @@
 import type { Block, BlockOptions, HeaderData } from '@tvmjs/block'
 import type { Common, ParamsDict, StateManagerInterface } from '@tvmjs/common'
-import type { EVMInterface, EVMMockBlockchainInterface, EVMOpts, EVMResult, Log } from '@tvmjs/evm'
+import type { EVMInterface, EVMMockBlockchainInterface, EVMOpts, EVMResult, Log } from '@tvmjs/tvm'
 import type { AccessList, TypedTransaction } from '@tvmjs/tx'
 import type {
   BigIntLike,
@@ -102,7 +102,7 @@ export interface VMOpts {
    * - `hardfork`: `mainnet` hardforks up to the `Paris` hardfork
    * - `eips`: `2537` (usage e.g. `eips: [ 2537, ]`)
    *
-   * Note: check the associated `@tvmjs/evm` instance options
+   * Note: check the associated `@tvmjs/tvm` instance options
    * documentation for supported EIPs.
    *
    * ### Default Setup

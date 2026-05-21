@@ -1,9 +1,9 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { createBlock, genRequestsRoot } from '@tvmjs/block'
 import { ConsensusType, Hardfork } from '@tvmjs/common'
-import { type EVM, type EVMInterface } from '@tvmjs/evm'
 import { MerklePatriciaTrie } from '@tvmjs/mpt'
 import { RLP } from '@tvmjs/rlp'
+import { type EVM, type EVMInterface } from '@tvmjs/tvm'
 import { TransactionType } from '@tvmjs/tx'
 import {
   Account,

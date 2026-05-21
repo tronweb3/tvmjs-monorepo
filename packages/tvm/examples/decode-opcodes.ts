@@ -3,7 +3,7 @@
 // 1. Takes binary EVM code and decodes it into opcodes
 
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { getOpcodesForHF, paramsEVM } from '@tvmjs/evm'
+import { getOpcodesForHF, paramsEVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul, params: paramsEVM })

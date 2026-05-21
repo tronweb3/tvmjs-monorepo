@@ -12,7 +12,7 @@ import { assert, describe, it } from 'vitest'
 import { SIGNER_A } from '@tvmjs/testdata'
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@tvmjs/evm'
+import type { InterpreterStep } from '@tvmjs/tvm'
 
 const common = new Common({
   eips: [2718, 2929, 2930],

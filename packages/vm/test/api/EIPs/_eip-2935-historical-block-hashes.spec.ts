@@ -26,7 +26,7 @@ import { buildBlock, createVM, paramsVM, runBlock, runTx } from '../../../src/in
 
 import type { Block } from '@tvmjs/block'
 import type { ChainConfig } from '@tvmjs/common'
-import type { EVM } from '@tvmjs/evm'
+import type { EVM } from '@tvmjs/tvm'
 import type { LegacyTxData } from '@tvmjs/tx'
 import type { PrefixedHexString } from '@tvmjs/util'
 import type { VM } from '../../../src/index.ts'

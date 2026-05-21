@@ -4,7 +4,7 @@
 | --- |
 
 TRON-compatible execution context for
-[@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm)
+[@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm)
 to build and run blocks and txs and update state.
 
 - 🦄 All hardforks up till **Osaka**
@@ -293,7 +293,7 @@ Using ESM will give you additional advantages over CJS beyond browser usage like
 
 ### VM/EVM Relation
 
-Starting with the `VM` v6 version the inner TVM core previously included in this library has been extracted to an own package [@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm).
+Starting with the `VM` v6 version the inner TVM core previously included in this library has been extracted to an own package [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm).
 
 It is still possible to access all `EVM` functionality through the `evm` property of the initialized `vm` object, e.g.:
 
@@ -319,7 +319,7 @@ Beside the default Proof-of-Stake setup coming with the `Common` library default
 
 ### Hardforks
 
-For hardfork support see the [Hardfork Support](../evm#hardfork-support) section from the underlying `@tvmjs/evm` instance.
+For hardfork support see the [Hardfork Support](../evm#hardfork-support) section from the underlying `@tvmjs/tvm` instance.
 
 An explicit HF in the `VM` - which is then passed on to the inner `EVM` - can be set with:
 
@@ -394,7 +394,7 @@ void main()
 
 ```
 
-For a list with supported EIPs see the [@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm) documentation.
+For a list with supported EIPs see the [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm) documentation.
 
 ### EIP-4844 Shard Blob Transactions Support (Cancun)
 
@@ -446,7 +446,7 @@ vm.events.on('afterTx', (event) => {
 })
 ```
 
-Please note that there are additional EVM-specific events in the [@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm) package.
+Please note that there are additional EVM-specific events in the [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm) package.
 
 ### Asynchronous event handlers
 
@@ -490,7 +490,7 @@ The following loggers are currently available:
 | `vm:tx:gas` |  Transaction gas logger                                            |
 | `vm:state`  | StateManager logger                                                |
 
-Note that there are additional EVM-specific loggers in the [@tvmjs/evm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm) package.
+Note that there are additional EVM-specific loggers in the [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm) package.
 
 Here are some examples for useful logger combinations.
 
@@ -546,7 +546,7 @@ The VM processes state changes at several levels:
   - Transfers gas fees to the fee recipient (recipient receives all pre EIP-1559, base fee is burned post EIP-1559).
   - Generates a transaction receipt.
   - Manages state checkpoints and commits/reverts changes for the transaction.
-- **[`vm.evm.runCall`](../evm/src/evm.ts)** (within `@tvmjs/evm`): Executes the EVM code for a transaction (message call or contract creation).
+- **[`vm.evm.runCall`](../evm/src/evm.ts)** (within `@tvmjs/tvm`): Executes the EVM code for a transaction (message call or contract creation).
   - Steps through EVM opcodes.
   - Manages memory, stack, and storage changes.
   - Handles exceptions and gas consumption during execution.

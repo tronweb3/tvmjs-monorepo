@@ -1,11 +1,11 @@
 {
-  "name": "@tvmjs/evm",
+  "name": "@tvmjs/tvm",
   "version": "1.0.0",
   "description": "JavaScript TRON Virtual Machine (TVM) implementation.",
   "keywords": ["ethereum", "EVM", "JavaScript", "TypeScript", "tron", "tvm"],
-  "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/evm#readme",
+  "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm#readme",
   "bugs": {
-    "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+evm%22"
+    "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+tvm%22"
   },
   "repository": {
     "type": "git",
@@ -36,7 +36,7 @@
     "coverage": "DEBUG=ethjs npx vitest run -c ../../config/vitest.config.coverage.mts",
     "coverage:istanbul": "DEBUG=ethjs npx vitest run -c ../../config/vitest.config.coverage.istanbul.mts",
     "docs:build": "typedoc --options typedoc.mjs",
-    "examples": "tsx ../../scripts/examples-runner.ts -- evm && tsx ../../scripts/examples-runner.ts -- evm precompiles && tsx ../../scripts/examples-runner.ts -- evm opcodes",
+    "examples": "tsx ../../scripts/examples-runner.ts -- tvm && tsx ../../scripts/examples-runner.ts -- tvm precompiles && tsx ../../scripts/examples-runner.ts -- tvm opcodes",
     "examples:build": "npx embedme README.md",
     "formatTest": "node ./scripts/formatTest",
     "lint": "npm run biome && eslint  --config ./eslint.config.mjs .",

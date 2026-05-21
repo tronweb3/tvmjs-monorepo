@@ -3,8 +3,8 @@
 // TODO: reactivate by moving to EVM
 
 /**import { Chain, Common, Hardfork } from '@tvmjs/common'
-import { EVMErrorMessage } from '@tvmjs/evm'
-import { F, precompile09 } from '@tvmjs/evm/dist/precompiles/09-blake2f'
+import { EVMErrorMessage } from '@tvmjs/tvm'
+import { F, precompile09 } from '@tvmjs/tvm/dist/precompiles/09-blake2f'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 

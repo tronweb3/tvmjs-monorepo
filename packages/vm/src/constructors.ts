@@ -1,6 +1,6 @@
 import { Common, Mainnet } from '@tvmjs/common'
-import { EVMMockBlockchain, createEVM, getActivePrecompiles } from '@tvmjs/evm'
 import { MerkleStateManager } from '@tvmjs/statemanager'
+import { EVMMockBlockchain, createEVM, getActivePrecompiles } from '@tvmjs/tvm'
 import {
   Account,
   Address,

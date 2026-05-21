@@ -1,4 +1,4 @@
-# @tvmjs/evm `1.0.0`
+# @tvmjs/tvm `1.0.0`
 
 | TypeScript implementation of the TRON Virtual Machine (TVM). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -37,7 +37,7 @@
 To obtain the latest version, simply require the project using `npm`:
 
 ```shell
-npm install @tvmjs/evm
+npm install @tvmjs/tvm
 ```
 
 This package provides the core TRON Virtual Machine (TVM) implementation which is capable of executing EVM-compatible bytecode. The package has been extracted from the [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) package along the VM `v6` release.
@@ -51,7 +51,7 @@ The following is the simplest example for an EVM instantiation with reasonable d
 ```ts
 // ./examples/simple.ts
 
-import { createEVM } from '@tvmjs/evm'
+import { createEVM } from '@tvmjs/tvm'
 import { hexToBytes } from '@tvmjs/util'
 
 const main = async () => {
@@ -72,7 +72,7 @@ If you want the EVM to run against a specific state, you need an `@tvmjs/statema
 
 import { createBlockchain } from '@tvmjs/blockchain'
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/evm'
+import { createEVM } from '@tvmjs/tvm'
 import { MerkleStateManager } from '@tvmjs/statemanager'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
@@ -209,7 +209,7 @@ If you want to activate an EIP not currently active on the hardfork your `common
 // ./examples/eips.ts
 
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/evm'
+import { createEVM } from '@tvmjs/tvm'
 
 const main = async () => {
   const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7702] })
@@ -300,7 +300,7 @@ Starting with `v10` the EVM supports the BLS precompiles introduced with [EIP-25
 An alternative WASM implementation (using [bls-wasm](https://github.com/herumi/bls-wasm)) can be optionally used like this if needed for performance reasons:
 
 ```ts
-import { EVM, MCLBLS } from '@tvmjs/evm'
+import { EVM, MCLBLS } from '@tvmjs/tvm'
 
 const common = new Common({ chain: Chain.Mainnet, hardfork: Hardfork.Prague })
 await mcl.init(mcl.BLS12_381)
@@ -385,7 +385,7 @@ Pass an array of `CustomPrecompile` entries to the `customPrecompiles` option wh
 // ./examples/precompiles/customPrecompile.ts
 
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/evm'
+import { createEVM } from '@tvmjs/tvm'
 import {
   bigIntToBytes,
   bytesToBigInt,
@@ -394,7 +394,7 @@ import {
   setLengthLeft,
 } from '@tvmjs/util'
 
-import type { ExecResult, PrecompileInput } from '@tvmjs/evm'
+import type { ExecResult, PrecompileInput } from '@tvmjs/tvm'
 
 // Custom precompile that adds two 32-byte big-endian unsigned integers (mod 2^256).
 const ADDITION_GAS = 15n
@@ -449,7 +449,7 @@ void main()
 
 ```
 
-The address for custom precompiles can be specified as either an `Address` instance or a `0x`-prefixed hex string. All relevant types (`CustomPrecompile`, `AddPrecompile`, `DeletePrecompile`, `PrecompileFunc`, `PrecompileInput`) are exported from `@tvmjs/evm`.
+The address for custom precompiles can be specified as either an `Address` instance or a `0x`-prefixed hex string. All relevant types (`CustomPrecompile`, `AddPrecompile`, `DeletePrecompile`, `PrecompileFunc`, `PrecompileInput`) are exported from `@tvmjs/tvm`.
 
 You can use `evm.getPrecompile(address)` to retrieve a registered precompile function at any address (works for both built-in and custom precompiles):
 

@@ -8,7 +8,7 @@ import { MCLBLS, createEVM, getActivePrecompiles } from '../../src/index.ts'
 
 import type { PrefixedHexString } from '@tvmjs/util'
 
-// BLS tests, run this from `./packages/evm` using `npx vitest run ./test/precompiles/eip-2537-bls.spec.ts`
+// BLS tests, run this from `./packages/tvm` using `npx vitest run ./test/precompiles/eip-2537-bls.spec.ts`
 
 const dir = './test/precompiles/bls'
 const files = readdirSync(dir)

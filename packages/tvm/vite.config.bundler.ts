@@ -12,8 +12,8 @@ export default defineConfig({
     },
     lib: {
       entry: './src/',
-      name: '@tvmjs/evm',
-      fileName: (format) => `ethereumjs-evm-bundle.${format}.js`,
+      name: '@tvmjs/tvm',
+      fileName: (format) => `tvmjs-tvm-bundle.${format}.js`,
       // only build for es
       formats: ['es'],
     },

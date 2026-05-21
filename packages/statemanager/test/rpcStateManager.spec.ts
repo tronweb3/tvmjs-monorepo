@@ -1,8 +1,8 @@
 import { createBlockFromJSONRPCProvider, createBlockFromRPC } from '@tvmjs/block'
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/evm'
-import type { EVMMockBlockchainInterface, EVMRunCallOpts } from '@tvmjs/evm'
 import { verifyMerkleProof } from '@tvmjs/mpt'
+import { createEVM } from '@tvmjs/tvm'
+import type { EVMMockBlockchainInterface, EVMRunCallOpts } from '@tvmjs/tvm'
 import { createFeeMarket1559Tx, createTxFromRPC } from '@tvmjs/tx'
 import {
   Address,

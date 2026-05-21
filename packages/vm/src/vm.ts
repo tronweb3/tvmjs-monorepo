@@ -1,11 +1,11 @@
-import { createEVM } from '@tvmjs/evm'
+import { createEVM } from '@tvmjs/tvm'
 import { EventEmitter } from 'eventemitter3'
 
 import { createVM } from './constructors.ts'
 import { paramsVM } from './params.ts'
 
 import type { Common, StateManagerInterface } from '@tvmjs/common'
-import type { EVMInterface, EVMMockBlockchainInterface } from '@tvmjs/evm'
+import type { EVMInterface, EVMMockBlockchainInterface } from '@tvmjs/tvm'
 import { isDebugEnabled } from '@tvmjs/util'
 import type { BigIntLike } from '@tvmjs/util'
 import type { VMEvent, VMOpts } from './types.ts'

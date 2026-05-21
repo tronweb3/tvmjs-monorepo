@@ -12,7 +12,7 @@ TVMJS is a monorepo of modular packages that together implement the full TRON ex
 
 | Package | Description |
 |---------|-------------|
-| [`@tvmjs/evm`](./packages/evm) | Core TVM bytecode interpreter with TRON-specific opcodes and precompiles |
+| [`@tvmjs/tvm`](./packages/tvm) | Core TVM bytecode interpreter with TRON-specific opcodes and precompiles |
 | [`@tvmjs/vm`](./packages/vm) | Execution context: runs transactions and blocks, manages state transitions |
 | [`@tvmjs/tx`](./packages/tx) | Transaction types including TRC-10 token transfer fields |
 | [`@tvmjs/common`](./packages/common) | Chain/hardfork configuration shared across packages |
@@ -110,7 +110,7 @@ npm run clean         # Remove build artifacts
 
 ```
 packages/vm          <- top-level execution context
-  |-- packages/evm    <- bytecode interpreter (opcodes, energy, precompiles)
+  |-- packages/tvm    <- bytecode interpreter (opcodes, energy, precompiles)
   |     \-- packages/statemanager  <- account/storage state
   |           \-- packages/mpt     <- Merkle Patricia Trie
   |-- packages/tx     <- transaction types (with tokenId/tokenValue)

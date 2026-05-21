@@ -1,4 +1,4 @@
-import type { EVMPerformanceLogOutput } from '@tvmjs/evm'
+import type { EVMPerformanceLogOutput } from '@tvmjs/tvm'
 
 /**
  * Emit EVM profile logs

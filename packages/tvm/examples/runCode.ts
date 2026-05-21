@@ -1,19 +1,16 @@
 import { createBlockchain } from '@tvmjs/blockchain'
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/evm'
-import { MerkleStateManager } from '@tvmjs/statemanager'
+import { createEVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 import type { PrefixedHexString } from '@tvmjs/util'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
-  const stateManager = new MerkleStateManager()
+  const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
   const blockchain = await createBlockchain()
 
   const evm = await createEVM({
     common,
-    stateManager,
     blockchain,
   })
 
@@ -29,13 +26,16 @@ const main = async () => {
     console.log(`Opcode: ${data.opcode.name}\tStack: ${data.stack}`)
   })
 
-  const results = await evm.runCode({
-    code: hexToBytes(('0x' + code.join('')) as PrefixedHexString),
-    gasLimit: BigInt(0xffff),
-  })
-
-  console.log(`Returned: ${bytesToHex(results.returnValue)}`)
-  console.log(`gasUsed: ${results.executionGasUsed.toString()}`)
+  evm
+    .runCode({
+      code: hexToBytes(('0x' + code.join('')) as PrefixedHexString),
+      gasLimit: BigInt(0xffff),
+    })
+    .then((results) => {
+      console.log(`Returned: ${bytesToHex(results.returnValue)}`)
+      console.log(`gasUsed: ${results.executionGasUsed.toString()}`)
+    })
+    .catch(console.error)
 }
 
 void main()

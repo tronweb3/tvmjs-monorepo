@@ -5,7 +5,7 @@ import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@tvmjs/evm'
+import type { InterpreterStep } from '@tvmjs/tvm'
 import type { PrefixedHexString } from '@tvmjs/util'
 
 const address = new Address(hexToBytes(`0x${'11'.repeat(20)}`))

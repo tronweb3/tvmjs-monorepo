@@ -2,7 +2,7 @@ import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { EVMError, type InterpreterStep } from '@tvmjs/evm'
+import { EVMError, type InterpreterStep } from '@tvmjs/tvm'
 import { createVM } from '../../../src/index.ts'
 
 describe('EIP 3855 tests', () => {

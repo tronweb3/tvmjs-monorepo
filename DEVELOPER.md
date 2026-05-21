@@ -311,7 +311,7 @@ This section documents TVM-JS extensions beyond the standard EthereumJS baseline
 
 ### Custom Opcodes
 
-TVM-JS adds the following TRON-specific opcodes in `packages/evm/src/opcodes/codes.ts`:
+TVM-JS adds the following TRON-specific opcodes in `packages/tvm/src/opcodes/codes.ts`:
 
 | Opcode | Hex | Description |
 |--------|-----|-------------|
@@ -342,7 +342,7 @@ Rules enforced at transaction execution time:
 
 ### Precompiles
 
-TVM-JS includes TRON-specific precompiles in `packages/evm/src/precompiles/`:
+TVM-JS includes TRON-specific precompiles in `packages/tvm/src/precompiles/`:
 
 | Address | File | Description |
 |---------|------|-------------|
@@ -351,4 +351,4 @@ TVM-JS includes TRON-specific precompiles in `packages/evm/src/precompiles/`:
 | `0x20003` | `20003-ripemd160.ts` | TRON-adjusted RIPEMD-160 |
 | `0x20009` | `20009-blake2f.ts` | TRON-adjusted BLAKE2F |
 
-When adding or modifying a precompile, register it in `packages/evm/src/precompiles/index.ts` and add corresponding tests under `packages/evm/test/`.
+When adding or modifying a precompile, register it in `packages/tvm/src/precompiles/index.ts` and add corresponding tests under `packages/tvm/test/`.
