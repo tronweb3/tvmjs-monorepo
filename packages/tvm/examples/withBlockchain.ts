@@ -1,7 +1,7 @@
 import { createBlockchain } from '@tvmjs/blockchain'
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { MerkleStateManager } from '@tvmjs/statemanager'
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 import type { PrefixedHexString } from '@tvmjs/util'
@@ -11,7 +11,7 @@ const main = async () => {
   const stateManager = new MerkleStateManager()
   const blockchain = await createBlockchain()
 
-  const evm = await createEVM({
+  const evm = await createTVM({
     common,
     stateManager,
     blockchain,

@@ -1,6 +1,6 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { Common, Mainnet } from '@tvmjs/common'
-import { createEVM, getActivePrecompiles } from '@tvmjs/tvm'
+import { createTVM, getActivePrecompiles } from '@tvmjs/tvm'
 import {
   PermissionType,
   type PrefixedHexString,
@@ -31,7 +31,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: await createEVM({ common }),
+      _EVM: await createTVM({ common }),
     })
     // console.log(result)
     assert.deepEqual(result.executionGasUsed, 4500n, 'should use petersburg gas costs')

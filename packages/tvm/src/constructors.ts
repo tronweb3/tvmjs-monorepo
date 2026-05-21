@@ -14,7 +14,7 @@ import type { EVMOpts } from './index.ts'
  * @param createOpts The EVM options
  * @returns A new EVM
  */
-export async function createEVM(createOpts?: EVMOpts) {
+export async function createTVM(createOpts?: EVMOpts) {
   const opts = createOpts ?? ({} as EVMOpts)
 
   opts.bn254 = new NobleBN254()

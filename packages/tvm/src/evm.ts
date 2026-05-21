@@ -161,7 +161,7 @@ export function defaultBlock(): Block {
  *
  * An EVM instance can be created with the constructor method:
  *
- * - {@link createEVM}
+ * - {@link createTVM}
  */
 export class EVM implements EVMInterface {
   protected static supportedHardforks = [
@@ -262,7 +262,7 @@ export class EVM implements EVMInterface {
    *
    * @deprecated The direct usage of this constructor is replaced since
    * non-finalized async initialization lead to side effects. Please
-   * use the async {@link createEVM} constructor instead (same API).
+   * use the async {@link createTVM} constructor instead (same API).
    *
    * @param opts The EVM options
    * @param bn128 Initialized bn128 WASM object for precompile usage (internal)
@@ -1251,7 +1251,7 @@ export class EVM implements EVMInterface {
    * Accepts either an `Address` instance or a `0x`-prefixed hex string.
    *
    * ```ts
-   * const evm = await createEVM({
+   * const evm = await createTVM({
    *   customPrecompiles: [{ address: '0x000000000000000000000000000000000000ff01', function: myFn }],
    * })
    * const fn = evm.getPrecompile('0x000000000000000000000000000000000000ff01')

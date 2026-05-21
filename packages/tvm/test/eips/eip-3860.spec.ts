@@ -9,7 +9,7 @@ import {
 } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM } from '../../src/index.ts'
+import { createTVM } from '../../src/index.ts'
 
 const pkey = hexToBytes(`0x${'20'.repeat(32)}`)
 const sender = new Address(privateToAddress(pkey))
@@ -21,7 +21,7 @@ describe('EIP 3860 tests', () => {
       hardfork: Hardfork.London,
       eips: [3860],
     })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
 
@@ -61,10 +61,10 @@ describe('EIP 3860 tests', () => {
       eips: [],
     })
     const caller = createAddressFromString('0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b')
-    const evm = await createEVM({
+    const evm = await createTVM({
       common: commonWith3860,
     })
-    const evmWithout3860 = await createEVM({
+    const evmWithout3860 = await createTVM({
       common: commonWithout3860,
     })
     const contractFactory = createAddressFromString('0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b')
@@ -105,10 +105,10 @@ describe('EIP 3860 tests', () => {
       eips: [],
     })
     const caller = createAddressFromString('0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b')
-    const evm = await createEVM({
+    const evm = await createTVM({
       common: commonWith3860,
     })
-    const evmWithout3860 = await createEVM({
+    const evmWithout3860 = await createTVM({
       common: commonWithout3860,
     })
     const contractFactory = createAddressFromString('0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b')
@@ -142,7 +142,7 @@ describe('EIP 3860 tests', () => {
       hardfork: Hardfork.London,
       eips: [3860],
     })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
       allowUnlimitedInitCodeSize: true,
     })
@@ -176,12 +176,12 @@ describe('EIP 3860 tests', () => {
     })
     const caller = createAddressFromString('0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b')
     for (const code of ['F0', 'F5']) {
-      const evm = await createEVM({
+      const evm = await createTVM({
         common: commonWith3860,
 
         allowUnlimitedInitCodeSize: true,
       })
-      const evmDisabled = await createEVM({
+      const evmDisabled = await createTVM({
         common: commonWith3860,
         allowUnlimitedInitCodeSize: false,
       })

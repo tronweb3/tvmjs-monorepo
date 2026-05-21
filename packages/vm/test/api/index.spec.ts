@@ -1,6 +1,6 @@
 import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
 import { testnetMergeChainConfig } from '@tvmjs/testdata'
-import { EVM, createEVM } from '@tvmjs/tvm'
+import { EVM, createTVM } from '@tvmjs/tvm'
 import { Account, KECCAK256_RLP, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -55,7 +55,7 @@ describe('VM -> Default EVM / Custom EVM Opts', () => {
 
   it('should throw if evm and evmOpts are both used', async () => {
     try {
-      await createVM({ evmOpts: {}, evm: await createEVM() })
+      await createVM({ evmOpts: {}, evm: await createTVM() })
       assert.fail('should throw')
     } catch {
       assert.isTrue(true, 'correctly thrown')

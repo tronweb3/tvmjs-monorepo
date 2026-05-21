@@ -51,11 +51,11 @@ The following is the simplest example for an EVM instantiation with reasonable d
 ```ts
 // ./examples/simple.ts
 
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import { hexToBytes } from '@tvmjs/util'
 
 const main = async () => {
-  const evm = await createEVM()
+  const evm = await createTVM()
   const res = await evm.runCode({ code: hexToBytes('0x6001') }) // PUSH1 01 -- simple bytecode to push 1 onto the stack
   console.log(res.executionGasUsed) // 3n
 }
@@ -72,7 +72,7 @@ If you want the EVM to run against a specific state, you need an `@tvmjs/statema
 
 import { createBlockchain } from '@tvmjs/blockchain'
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import { MerkleStateManager } from '@tvmjs/statemanager'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
@@ -83,7 +83,7 @@ const main = async () => {
   const stateManager = new MerkleStateManager()
   const blockchain = await createBlockchain()
 
-  const evm = await createEVM({
+  const evm = await createTVM({
     common,
     stateManager,
     blockchain,
@@ -209,11 +209,11 @@ If you want to activate an EIP not currently active on the hardfork your `common
 // ./examples/eips.ts
 
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 
 const main = async () => {
   const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7702] })
-  const evm = await createEVM({ common })
+  const evm = await createTVM({ common })
   console.log(
     `EIP 7702 is active in isolation on top of the Cancun HF - ${evm.common.isActivatedEIP(7702)}`,
   )
@@ -305,7 +305,7 @@ import { EVM, MCLBLS } from '@tvmjs/tvm'
 const common = new Common({ chain: Chain.Mainnet, hardfork: Hardfork.Prague })
 await mcl.init(mcl.BLS12_381)
 const mclbls = new MCLBLS(mcl)
-const evm = await createEVM({ common, bls })
+const evm = await createTVM({ common, bls })
 ```
 
 ### EIP-7823/EIP-7883 MODEXP Precompile (Osaka)
@@ -385,7 +385,7 @@ Pass an array of `CustomPrecompile` entries to the `customPrecompiles` option wh
 // ./examples/precompiles/customPrecompile.ts
 
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import {
   bigIntToBytes,
   bytesToBigInt,
@@ -414,7 +414,7 @@ const main = async () => {
   const ADDRESS = '0x000000000000000000000000000000000000ff01'
 
   // Register the custom precompile with a hex string address
-  const evm = await createEVM({
+  const evm = await createTVM({
     common,
     customPrecompiles: [{ address: ADDRESS, function: additionPrecompile }],
   })
@@ -461,7 +461,7 @@ const custom = evm.getPrecompile('0x000000000000000000000000000000000000ff01') /
 To **override** a built-in precompile, register a custom precompile at the same address. To **delete** a precompile, pass an entry with only the `address` field (no `function`):
 
 ```ts
-const evm = await createEVM({
+const evm = await createTVM({
   customPrecompiles: [
     { address: '0x0000000000000000000000000000000000000002' }, // deletes SHA256
   ],

@@ -5,7 +5,7 @@ import { assert, describe, it } from 'vitest'
 
 import { EOFContainerMode, validateEOF } from '../../src/eof/container.ts'
 import { ContainerSectionType } from '../../src/eof/verify.ts'
-import { createEVM } from '../../src/index.ts'
+import { createTVM } from '../../src/index.ts'
 
 import { getCommon } from './eof-utils.ts'
 
@@ -15,7 +15,7 @@ const testDir = path.resolve('../ethereum-tests/EOFTests')
 
 async function getEVM() {
   const common = getCommon()
-  const evm = createEVM({
+  const evm = createTVM({
     common,
   })
   return evm

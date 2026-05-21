@@ -9,7 +9,7 @@ import {
 } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM, getActivePrecompiles } from '../src/index.ts'
+import { createTVM, getActivePrecompiles } from '../src/index.ts'
 
 describe('custom crypto', () => {
   it('should use custom sha256 function', async () => {
@@ -22,7 +22,7 @@ describe('custom crypto', () => {
     }
     const msg = Uint8Array.from([0, 1, 2, 3])
     const common = new Common({ chain: Mainnet, customCrypto })
-    const evm = await createEVM({ common })
+    const evm = await createTVM({ common })
     const addressStr = '0000000000000000000000000000000000000002'
     const SHA256 = getActivePrecompiles(common).get(addressStr)!
     const result = await SHA256({
@@ -45,7 +45,7 @@ describe('custom crypto', () => {
     }
     const msg = concatBytes(randomBytes(32), setLengthLeft(intToBytes(27), 32), randomBytes(32))
     const common = new Common({ chain: Mainnet, customCrypto })
-    const evm = await createEVM({ common })
+    const evm = await createTVM({ common })
     const addressStr = '0000000000000000000000000000000000000001'
     const ECRECOVER = getActivePrecompiles(common).get(addressStr)!
     const result = await ECRECOVER({

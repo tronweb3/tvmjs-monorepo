@@ -9,7 +9,7 @@ import {
 } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM } from '../src/index.ts'
+import { createTVM } from '../src/index.ts'
 import { Stack } from '../src/stack.ts'
 
 import { createAccount } from './utils.ts'
@@ -107,7 +107,7 @@ describe('Stack', () => {
   it('stack items should not change if they are DUPed', async () => {
     const caller = new Address(hexToBytes('0x00000000000000000000000000000000000000ee'))
     const addr = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
-    const evm = await createEVM()
+    const evm = await createTVM()
     const account = createAccount(BigInt(0), BigInt(0))
     const code = '0x60008080808060013382F15060005260206000F3'
     const expectedReturnValue = setLengthLeft(bigIntToBytes(BigInt(0)), 32)
@@ -158,7 +158,7 @@ describe('Stack', () => {
   })
 
   it('stack should return the padded value', async () => {
-    const evm = await createEVM()
+    const evm = await createTVM()
 
     for (let pushN = 0x60; pushN <= 0x7f; pushN++) {
       const expectedStack = new Stack(1024)

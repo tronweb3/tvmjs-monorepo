@@ -1,5 +1,5 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import {
   bigIntToBytes,
   bytesToBigInt,
@@ -28,7 +28,7 @@ const main = async () => {
   const ADDRESS = '0x000000000000000000000000000000000000ff01'
 
   // Register the custom precompile with a hex string address
-  const evm = await createEVM({
+  const evm = await createTVM({
     common,
     customPrecompiles: [{ address: ADDRESS, function: additionPrecompile }],
   })

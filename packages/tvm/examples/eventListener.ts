@@ -1,8 +1,8 @@
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import { createAddressFromString, hexToBytes } from '@tvmjs/util'
 
 const main = async () => {
-  const evm = await createEVM()
+  const evm = await createTVM()
 
   evm.events.on('beforeMessage', (event) => {
     console.log('synchronous listener to beforeMessage', event)

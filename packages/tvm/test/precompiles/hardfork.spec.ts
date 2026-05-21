@@ -2,7 +2,7 @@ import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { Address, createZeroAddress, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 describe('Precompiles: hardfork availability', () => {
   it('Test BN254PAIRING availability', async () => {
@@ -20,7 +20,7 @@ describe('Precompiles: hardfork availability', () => {
       assert.isTrue(true, 'BN254PAIRING available in petersburg')
     }
 
-    let evm = await createEVM({
+    let evm = await createTVM({
       common: commonByzantium,
     })
     let result = await evm.runCall({
@@ -41,7 +41,7 @@ describe('Precompiles: hardfork availability', () => {
       assert.isTrue(true, 'BN254PAIRING available in petersburg')
     }
 
-    evm = await createEVM({
+    evm = await createTVM({
       common: commonPetersburg,
     })
     result = await evm.runCall({
@@ -63,7 +63,7 @@ describe('Precompiles: hardfork availability', () => {
       assert.isTrue(true, 'BN254PAIRING not available in homestead')
     }
 
-    evm = await createEVM({
+    evm = await createTVM({
       common: commonHomestead,
     })
 

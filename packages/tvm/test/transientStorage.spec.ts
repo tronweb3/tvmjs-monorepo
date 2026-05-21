@@ -8,7 +8,7 @@ import {
 } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM } from '../src/index.ts'
+import { createTVM } from '../src/index.ts'
 import { TransientStorage } from '../src/transientStorage.ts'
 
 describe('Transient Storage', () => {
@@ -186,7 +186,7 @@ describe('Transient Storage', () => {
   })
 
   it('should cleanup after a message create', async () => {
-    const evm = await createEVM()
+    const evm = await createTVM()
     // PUSH 1 PUSH 1 TSTORE
     const code = hexToBytes('0x600160015D')
     const keyBuf = setLengthLeft(new Uint8Array([1]), 32)
@@ -203,7 +203,7 @@ describe('Transient Storage', () => {
   })
 
   it('should cleanup after a message call', async () => {
-    const evm = await createEVM()
+    const evm = await createTVM()
     const contractAddress = createZeroAddress()
     // PUSH 1 PUSH 1 TSTORE
     const code = hexToBytes('0x600160015D')

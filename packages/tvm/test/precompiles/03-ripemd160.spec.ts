@@ -2,7 +2,7 @@ import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { bytesToHex, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 const input = utf8ToBytes('test')
 const expected = '0x165402a607b46bad4395cf6c0b22caa3b0aa26f922d79656b455e8fb544c4d7c'
@@ -12,7 +12,7 @@ describe('Precompiles: RIPEMD160', () => {
     // Test reference: https://github.com/ethereum/go-ethereum/blob/e206d3f8975bd98cc86d14055dca40f996bacc60/core/vm/contracts_test.go#L217
 
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
     const addressStr = '0000000000000000000000000000000000000003'

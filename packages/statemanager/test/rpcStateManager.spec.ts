@@ -1,7 +1,7 @@
 import { createBlockFromJSONRPCProvider, createBlockFromRPC } from '@tvmjs/block'
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { verifyMerkleProof } from '@tvmjs/mpt'
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import type { EVMMockBlockchainInterface, EVMRunCallOpts } from '@tvmjs/tvm'
 import { createFeeMarket1559Tx, createTxFromRPC } from '@tvmjs/tx'
 import {
@@ -326,7 +326,7 @@ describe('blockchain', () =>
     const blockchain = new RPCBlockChain(provider) as unknown as EVMMockBlockchainInterface
     const blockTag = 1n
     const state = new RPCStateManager({ provider, blockTag })
-    const evm = await createEVM({ blockchain, stateManager: state })
+    const evm = await createTVM({ blockchain, stateManager: state })
     // Bytecode for returning the blockhash of the block previous to `blockTag`
     const code = '0x600143034060005260206000F3'
     const contractAddress = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))

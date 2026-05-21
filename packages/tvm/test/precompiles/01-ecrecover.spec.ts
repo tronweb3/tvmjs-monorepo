@@ -3,7 +3,7 @@ import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { bytesToHex, bytesToUnprefixedHex, hexToBytes, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 const prefix = bytesToUnprefixedHex(utf8ToBytes('\x19Ethereum Signed Message:\n32'))
 const _hash = '852daa74cc3c31fe64542bb9b8764cfb91cc30f9acf9389071ffb44a9eefde46'
@@ -17,7 +17,7 @@ describe('Precompiles: ECRECOVER', () => {
     // Test reference: https://github.com/ethereum/go-ethereum/issues/3731#issuecomment-293866868
 
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
     const addressStr = '0000000000000000000000000000000000000001'

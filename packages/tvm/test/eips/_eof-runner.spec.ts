@@ -1,13 +1,13 @@
 import { Account, Address, type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { EOFContainer, createEVM } from '../../src/index.ts'
+import { EOFContainer, createTVM } from '../../src/index.ts'
 
 import { getCommon } from './eof-utils.ts'
 
 async function getEVM() {
   const common = getCommon()
-  const evm = createEVM({
+  const evm = createTVM({
     common,
   })
   return evm

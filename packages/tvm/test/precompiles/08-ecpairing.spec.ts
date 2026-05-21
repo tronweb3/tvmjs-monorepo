@@ -2,12 +2,12 @@ import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 describe('Precompiles: BN254PAIRING', () => {
   it('BN254PAIRING', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
     const addressStr = '0000000000000000000000000000000000000008'

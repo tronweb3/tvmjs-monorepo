@@ -1,7 +1,7 @@
 import { Common, Mainnet } from '@tvmjs/common'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
-import { EVMError, createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { EVMError, createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
   it('static call test 1', async () => {
@@ -18,7 +18,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: await createEVM({ common }),
+      _EVM: await createTVM({ common }),
     })
 
     assert.deepEqual(result.executionGasUsed, 21000n, 'should use petersburg gas costs')
@@ -42,7 +42,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
       data,
       gasLimit: 0xffffffffn,
       common,
-      _EVM: await createEVM({ common }),
+      _EVM: await createTVM({ common }),
     })
 
     assert.deepEqual(result.executionGasUsed, 148500n, 'should use petersburg gas costs')
@@ -63,7 +63,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: await createEVM({ common }),
+      _EVM: await createTVM({ common }),
     })
 
     assert.deepEqual(result.executionGasUsed, 21000n, 'should use petersburg gas costs')
@@ -87,7 +87,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: await createEVM({ common }),
+      _EVM: await createTVM({ common }),
     })
 
     assert.deepEqual(result.executionGasUsed, 21000n, 'should use petersburg gas costs')
@@ -107,7 +107,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: await createEVM({ common }),
+      _EVM: await createTVM({ common }),
     })
 
     assert.deepEqual(result.executionGasUsed, 0n, 'should use petersburg gas costs')
@@ -127,7 +127,7 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: await createEVM({ common }),
+      _EVM: await createTVM({ common }),
     })
 
     assert.deepEqual(result.executionGasUsed, 0xffffn, 'should exhaust gas limit')

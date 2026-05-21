@@ -1,5 +1,5 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { type EVM, createEVM } from '@tvmjs/tvm'
+import { type EVM, createTVM } from '@tvmjs/tvm'
 import { type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 
 // CLZ (Count Leading Zeros) opcode (0x1e)
@@ -50,7 +50,7 @@ const runCase = async (evm: EVM, x: PrefixedHexString) => {
 }
 
 const main = async () => {
-  const evm = await createEVM({ common })
+  const evm = await createTVM({ common })
 
   // Case 1: x == 0x00..00 -> expect 256
   await runCase(evm, `0x${'00'.repeat(32)}` as PrefixedHexString)

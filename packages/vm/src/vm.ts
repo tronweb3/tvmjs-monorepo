@@ -1,4 +1,4 @@
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import { EventEmitter } from 'eventemitter3'
 
 import { createVM } from './constructors.ts'
@@ -120,7 +120,7 @@ export class VM {
       blockchain: this._opts.evmOpts?.blockchain?.shallowCopy() ?? blockchain,
       stateManager: this._opts.evmOpts?.stateManager?.shallowCopy(downlevelCaches) ?? stateManager,
     }
-    const evmCopy = await createEVM(evmOpts) // TODO fixme (should copy the EVMInterface, not default EVM)
+    const evmCopy = await createTVM(evmOpts) // TODO fixme (should copy the EVMInterface, not default EVM)
     return createVM({
       stateManager,
       blockchain: this.blockchain,

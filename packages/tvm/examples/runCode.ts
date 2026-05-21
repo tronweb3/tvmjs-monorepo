@@ -1,6 +1,6 @@
 import { createBlockchain } from '@tvmjs/blockchain'
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 import type { PrefixedHexString } from '@tvmjs/util'
@@ -9,7 +9,7 @@ const main = async () => {
   const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
   const blockchain = await createBlockchain()
 
-  const evm = await createEVM({
+  const evm = await createTVM({
     common,
     blockchain,
   })

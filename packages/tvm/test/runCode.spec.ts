@@ -2,7 +2,7 @@ import { Account, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { EVMErrorTypeString } from '../src/errors.ts'
-import { createEVM } from '../src/index.ts'
+import { createTVM } from '../src/index.ts'
 
 const PUSH1 = '60'
 const STOP = '00'
@@ -22,7 +22,7 @@ const testCases = [
 
 describe('VM.runCode: initial program counter', () => {
   it('should work', async () => {
-    const evm = await createEVM()
+    const evm = await createTVM()
 
     for (const [i, testData] of testCases.entries()) {
       const runCodeArgs = {
@@ -58,7 +58,7 @@ describe('VM.runCode: initial program counter', () => {
 
 describe('VM.runCode: interpreter', () => {
   it('should return a EVMError as an exceptionError on the result', async () => {
-    const evm = await createEVM()
+    const evm = await createTVM()
 
     const INVALID_opcode = 'fe'
     const runCodeArgs = {
@@ -77,7 +77,7 @@ describe('VM.runCode: interpreter', () => {
   })
 
   it('should throw on non-EVMError', async () => {
-    const evm = await createEVM()
+    const evm = await createTVM()
     // NOTE: due to now throwing on `getStorage` if account does not exist
     // this now means that if `runCode` is called and the address it runs on (default: zero address)
     // does not exist, then if SSTORE/SLOAD is used, the runCode will immediately fail because StateManager now throws
@@ -106,7 +106,7 @@ describe('VM.runCode: interpreter', () => {
 
 describe('VM.runCode: RunCodeOptions', () => {
   it('should throw on negative value args', async () => {
-    const evm = await createEVM()
+    const evm = await createTVM()
 
     const runCodeArgs = {
       value: BigInt(-10),

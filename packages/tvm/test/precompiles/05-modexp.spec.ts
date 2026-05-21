@@ -2,7 +2,7 @@ import { Common, Mainnet } from '@tvmjs/common'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, beforeAll, describe, it } from 'vitest'
 
-import { createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 import { testData } from './modexp-testdata.ts'
 
@@ -18,7 +18,7 @@ describe('Precompiles: MODEXP', () => {
   let MODEXP: PrecompileFunc
   beforeAll(async () => {
     common = new Common({ chain: Mainnet })
-    evm = await createEVM({
+    evm = await createTVM({
       common,
     })
     addressStr = '0000000000000000000000000000000000000005'

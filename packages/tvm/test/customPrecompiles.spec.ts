@@ -9,7 +9,7 @@ import {
 } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { type PrecompileInput, createEVM } from '../src/index.ts'
+import { type PrecompileInput, createTVM } from '../src/index.ts'
 
 import type { ExecResult } from '../src/types.ts'
 
@@ -35,7 +35,7 @@ function customPrecompileNoInput(): ExecResult {
 
 describe('EVM -> custom precompiles', () => {
   it('should work on precompiles without input arguments', async () => {
-    const EVMOverride = await createEVM({
+    const EVMOverride = await createTVM({
       customPrecompiles: [
         {
           address: createZeroAddress(),
@@ -54,7 +54,7 @@ describe('EVM -> custom precompiles', () => {
     assert.strictEqual(result.execResult.executionGasUsed, expectedGas, 'gas used is correct')
   })
   it('should override existing precompiles', async () => {
-    const EVMOverride = await createEVM({
+    const EVMOverride = await createTVM({
       customPrecompiles: [
         {
           address: shaAddress,
@@ -74,7 +74,7 @@ describe('EVM -> custom precompiles', () => {
   })
 
   it('should delete existing precompiles', async () => {
-    const EVMOverride = await createEVM({
+    const EVMOverride = await createTVM({
       customPrecompiles: [
         {
           address: shaAddress,
@@ -92,7 +92,7 @@ describe('EVM -> custom precompiles', () => {
   })
 
   it('should add precompiles', async () => {
-    const EVMOverride = await createEVM({
+    const EVMOverride = await createTVM({
       customPrecompiles: [
         {
           address: newPrecompile,
@@ -111,14 +111,14 @@ describe('EVM -> custom precompiles', () => {
   })
 
   it('should not persist changes to precompiles', async () => {
-    let EVMSha = await createEVM()
+    let EVMSha = await createTVM()
     const shaResult = await EVMSha.runCall({
       to: shaAddress,
       gasLimit: BigInt(30000),
       data: hexToBytes('0x'),
       caller: sender,
     })
-    const EVMOverride = await createEVM({
+    const EVMOverride = await createTVM({
       customPrecompiles: [
         {
           address: shaAddress,
@@ -135,7 +135,7 @@ describe('EVM -> custom precompiles', () => {
     // sanity: check we have overridden
     assert.deepEqual(result.execResult.returnValue, expectedReturn, 'return value is correct')
     assert.strictEqual(result.execResult.executionGasUsed, expectedGas, 'gas used is correct')
-    EVMSha = await createEVM()
+    EVMSha = await createTVM()
     const shaResult2 = await EVMSha.runCall({
       to: shaAddress,
       gasLimit: BigInt(30000),
@@ -154,7 +154,7 @@ describe('EVM -> custom precompiles', () => {
     )
   })
   it('should copy custom precompiles', async () => {
-    const evm = await createEVM({
+    const evm = await createTVM({
       customPrecompiles: [
         {
           address: shaAddress,
@@ -172,7 +172,7 @@ describe('EVM -> custom precompiles', () => {
 
   it('should accept PrefixedHexString addresses for custom precompiles', async () => {
     const addressHex = '0x000000000000000000000000000000000000ff01'
-    const evm = await createEVM({
+    const evm = await createTVM({
       customPrecompiles: [
         {
           address: addressHex,
@@ -191,7 +191,7 @@ describe('EVM -> custom precompiles', () => {
   })
 
   it('should delete precompiles using PrefixedHexString addresses', async () => {
-    const evm = await createEVM({
+    const evm = await createTVM({
       customPrecompiles: [
         {
           address: '0x0000000000000000000000000000000000000002',
@@ -209,7 +209,7 @@ describe('EVM -> custom precompiles', () => {
   })
 
   it('getPrecompile() should retrieve precompile by Address', async () => {
-    const evm = await createEVM()
+    const evm = await createTVM()
     const shaPrecompile = evm.getPrecompile(shaAddress)
     assert.notStrictEqual(shaPrecompile, undefined, 'SHA256 precompile found by Address')
 
@@ -218,7 +218,7 @@ describe('EVM -> custom precompiles', () => {
   })
 
   it('getPrecompile() should retrieve precompile by PrefixedHexString', async () => {
-    const evm = await createEVM()
+    const evm = await createTVM()
     const shaPrecompile = evm.getPrecompile('0x0000000000000000000000000000000000000002')
     assert.notStrictEqual(shaPrecompile, undefined, 'SHA256 precompile found by hex string')
 
@@ -228,7 +228,7 @@ describe('EVM -> custom precompiles', () => {
 
   it('getPrecompile() should retrieve custom precompiles', async () => {
     const addressHex = '0x000000000000000000000000000000000000ff01'
-    const evm = await createEVM({
+    const evm = await createTVM({
       customPrecompiles: [
         {
           address: addressHex,
@@ -254,7 +254,7 @@ describe('EVM -> custom precompiles', () => {
     }
 
     const address = '0x000000000000000000000000000000000000ff01'
-    const evm = await createEVM({
+    const evm = await createTVM({
       customPrecompiles: [{ address, function: additionPrecompile }],
     })
 

@@ -1,12 +1,12 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 describe('Precompiles: BN254MUL', () => {
   it('BN254MUL', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
     const BN254MUL = getActivePrecompiles(common).get('0000000000000000000000000000000000000007')!

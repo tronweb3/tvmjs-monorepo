@@ -3,7 +3,7 @@ import { Common, Mainnet } from '@tvmjs/common'
 import { Address, hexToBytes } from '@tvmjs/util'
 import { assert, beforeAll, describe, it } from 'vitest'
 
-import { createEVM } from '../../src/index.ts'
+import { createTVM } from '../../src/index.ts'
 import { precompile100 } from '../../src/precompiles/100-p256verify.ts'
 
 import type { PrecompileInput } from '../../src/precompiles/types.ts'
@@ -121,7 +121,7 @@ describe('P256VERIFY precompile', () => {
 
   beforeAll(async () => {
     common = new Common({ chain: Mainnet, eips: [7951] })
-    evm = await createEVM({ common })
+    evm = await createTVM({ common })
   })
 
   describe('precompile100', () => {

@@ -1,6 +1,6 @@
 import { Common, Mainnet } from '@tvmjs/common'
 import { MerkleStateManager } from '@tvmjs/statemanager'
-import { EVMMockBlockchain, createEVM, getActivePrecompiles } from '@tvmjs/tvm'
+import { EVMMockBlockchain, createTVM, getActivePrecompiles } from '@tvmjs/tvm'
 import {
   Account,
   Address,
@@ -56,7 +56,7 @@ export async function createVM(opts: VMOpts = {}): Promise<VM> {
       enableProfiler = true
     }
     const evmOpts = opts.evmOpts ?? {}
-    opts.evm = await createEVM({
+    opts.evm = await createTVM({
       common: opts.common,
       stateManager: opts.stateManager,
       blockchain: opts.blockchain,

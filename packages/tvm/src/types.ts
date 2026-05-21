@@ -326,7 +326,7 @@ export interface EVMOpts {
    * import * as mcl from 'mcl-wasm'
    *
    * await mcl.init(mcl.BLS12_381)
-   * const evm = await createEVM({ bls: new MCLBLS(mcl) })
+   * const evm = await createTVM({ bls: new MCLBLS(mcl) })
    * ```
    */
   bls?: EVMBLSInterface
@@ -349,7 +349,7 @@ export interface EVMOpts {
    * import { initRustBN } from 'rustbn-wasm'
    *
    * const bn254 = await initRustBN()
-   * const evm = await createEVM({ bn254: new RustBN254(bn254) })
+   * const evm = await createTVM({ bn254: new RustBN254(bn254) })
    * ```
    */
   bn254?: EVMBN254Interface

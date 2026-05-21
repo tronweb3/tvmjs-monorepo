@@ -10,7 +10,7 @@ import {
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 import type { PrefixedHexString } from '@tvmjs/util'
 import type { PrecompileInput } from '../../src/index.ts'
@@ -29,7 +29,7 @@ describe('Precompiles: point evaluation', () => {
       customCrypto: { kzg },
     })
 
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
     const addressStr = '000000000000000000000000000000000000000a'

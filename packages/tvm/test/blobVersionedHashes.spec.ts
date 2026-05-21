@@ -9,7 +9,7 @@ import {
 } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM } from '../src/index.ts'
+import { createTVM } from '../src/index.ts'
 
 import type { PrefixedHexString } from '@tvmjs/util'
 import type { EVMRunCallOpts } from '../src/types.ts'
@@ -22,7 +22,7 @@ describe('BLOBHASH / access blobVersionedHashes in calldata', () => {
       chain: 'custom',
       hardfork: Hardfork.Cancun,
     })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
 
@@ -52,7 +52,7 @@ describe(`BLOBHASH: access blobVersionedHashes within contract calls`, () => {
       chain: 'custom',
       hardfork: Hardfork.Cancun,
     })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
 
@@ -102,7 +102,7 @@ describe(`BLOBHASH: access blobVersionedHashes in a CREATE/CREATE2 frame`, () =>
       chain: 'custom',
       hardfork: Hardfork.Cancun,
     })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
 

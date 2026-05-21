@@ -2,7 +2,7 @@ import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { unprefixedHexToBytes } from '@tvmjs/util'
 import split from 'split'
 
-import { createEVM, validateEOF } from '../src/index.ts'
+import { createTVM, validateEOF } from '../src/index.ts'
 
 /**
  * This script reads hex strings (either prefixed or non-prefixed with 0x) from stdin
@@ -14,7 +14,7 @@ import { createEVM, validateEOF } from '../src/index.ts'
 const common = new Common({ chain: Mainnet })
 common.setHardfork(Hardfork.Prague)
 common.setEIPs([663, 3540, 3670, 4200, 4750, 5450, 6206, 7069, 7480, 7620, 7692, 7698])
-const evm = await createEVM({ common })
+const evm = await createTVM({ common })
 
 function processLine(line) {
   if (line.length === 0) {

@@ -1,7 +1,7 @@
 import { equalsBytes, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM } from '../src/index.ts'
+import { createTVM } from '../src/index.ts'
 
 import type { RunState } from '../src/interpreter.ts'
 import type { AddOpcode } from '../src/types.ts'
@@ -25,7 +25,7 @@ describe('VM: custom opcodes', () => {
   }
 
   it('should add custom opcodes to the EVM', async () => {
-    const evm = await createEVM({ customOpcodes: [testOpcode] })
+    const evm = await createTVM({ customOpcodes: [testOpcode] })
     const gas = 123456
     let correctOpcodeName: boolean = false
     evm.events.on('step', (e) => {
@@ -43,7 +43,7 @@ describe('VM: custom opcodes', () => {
   })
 
   it('should delete opcodes from the EVM', async () => {
-    const evm = await createEVM({
+    const evm = await createTVM({
       customOpcodes: [{ opcode: 0x20 }], // deletes KECCAK opcode
     })
     const gas = BigInt(123456)
@@ -57,7 +57,7 @@ describe('VM: custom opcodes', () => {
   it('should not override default opcodes', async () => {
     // This test ensures that always the original opcode map is used
     // Thus, each time you recreate a EVM, it is in a clean state
-    const evm = await createEVM({
+    const evm = await createTVM({
       customOpcodes: [{ opcode: 0x01 }], // deletes ADD opcode
     })
     const gas = BigInt(123456)
@@ -67,7 +67,7 @@ describe('VM: custom opcodes', () => {
     })
     assert.strictEqual(res.executionGasUsed, gas, 'successfully deleted opcode')
 
-    const evmDefault = await createEVM()
+    const evmDefault = await createTVM()
 
     // PUSH 04
     // PUSH 01
@@ -86,7 +86,7 @@ describe('VM: custom opcodes', () => {
 
   it('should override opcodes in the EVM', async () => {
     testOpcode.opcode = 0x20 // Overrides KECCAK
-    const evm = await createEVM({ customOpcodes: [testOpcode] })
+    const evm = await createTVM({ customOpcodes: [testOpcode] })
     const gas = 123456
     const res = await evm.runCode({
       code: hexToBytes('0x20'),
@@ -109,7 +109,7 @@ describe('VM: custom opcodes', () => {
       },
     }
 
-    const evm = await createEVM({ customOpcodes: [testOpcode] })
+    const evm = await createTVM({ customOpcodes: [testOpcode] })
     evm.events.on('beforeMessage', () => {})
     evm.events.on('beforeMessage', () => {})
     const evmCopy = evm.shallowCopy()

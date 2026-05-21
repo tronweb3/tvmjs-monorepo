@@ -1,5 +1,5 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEVM } from '@tvmjs/tvm'
+import { createTVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import type { PrefixedHexString } from '@tvmjs/util'
 
@@ -18,7 +18,7 @@ export async function runPrecompile(
   hardfork: Hardfork = Hardfork.Osaka,
 ) {
   const common = new Common({ chain: Mainnet, hardfork })
-  const evm = await createEVM({ common })
+  const evm = await createTVM({ common })
 
   const precompileFunction = evm.getPrecompile(precompile)
 

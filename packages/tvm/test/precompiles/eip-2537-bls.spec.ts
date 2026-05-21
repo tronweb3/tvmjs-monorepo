@@ -4,7 +4,7 @@ import { Address, bytesToHex, createZeroAddress, hexToBytes } from '@tvmjs/util'
 import * as mcl from 'mcl-wasm'
 import { assert, describe, it } from 'vitest'
 
-import { MCLBLS, createEVM, getActivePrecompiles } from '../../src/index.ts'
+import { MCLBLS, createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 import type { PrefixedHexString } from '@tvmjs/util'
 
@@ -53,7 +53,7 @@ for (const bls of [undefined, mclbls]) {
     describe(`Precompiles: ${fname} [${BLSType}]`, () => {
       for (const data of parsedJSON) {
         it(`${data.Name}`, async () => {
-          const evm = await createEVM({
+          const evm = await createTVM({
             common,
             bls,
           })
@@ -111,7 +111,7 @@ for (let address = precompileAddressStart; address <= precompileAddressEnd; addr
 describe('EIP-2537 BLS precompile availability tests', () => {
   it('BLS precompiles should not be available if EIP not activated', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const evm = await createEVM({
+    const evm = await createTVM({
       common,
     })
 

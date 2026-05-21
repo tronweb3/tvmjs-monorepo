@@ -1,7 +1,7 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
-import { createEVM } from '../src/index.ts'
+import { createTVM } from '../src/index.ts'
 
 describe('EVM -> getActiveOpcodes()', () => {
   const DIFFICULTY_PREVRANDAO = 0x44
@@ -9,7 +9,7 @@ describe('EVM -> getActiveOpcodes()', () => {
 
   it('should not expose opcodes from a follow-up HF (istanbul -> petersburg)', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })
-    const evm = await createEVM({ common })
+    const evm = await createTVM({ common })
     assert.strictEqual(
       evm.getActiveOpcodes().get(CHAINID),
       undefined,
@@ -19,7 +19,7 @@ describe('EVM -> getActiveOpcodes()', () => {
 
   it('should expose opcodes when HF is active (>= istanbul)', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const evm = await createEVM({ common })
+    const evm = await createTVM({ common })
     assert.strictEqual(
       evm.getActiveOpcodes().get(CHAINID)!.name,
       'CHAINID',
@@ -29,7 +29,7 @@ describe('EVM -> getActiveOpcodes()', () => {
 
   it('should switch DIFFICULTY opcode name to PREVRANDAO when >= Merge HF', async () => {
     let common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    let evm = await createEVM({ common })
+    let evm = await createTVM({ common })
     assert.strictEqual(
       evm.getActiveOpcodes().get(DIFFICULTY_PREVRANDAO)!.name,
       'DIFFICULTY',
@@ -37,7 +37,7 @@ describe('EVM -> getActiveOpcodes()', () => {
     )
 
     common = new Common({ chain: Mainnet, hardfork: Hardfork.Paris })
-    evm = await createEVM({ common })
+    evm = await createTVM({ common })
     assert.strictEqual(
       evm.getActiveOpcodes().get(DIFFICULTY_PREVRANDAO)!.name,
       'PREVRANDAO',
@@ -47,7 +47,7 @@ describe('EVM -> getActiveOpcodes()', () => {
 
   it('should update opcodes on a hardfork change', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const evm = await createEVM({ common })
+    const evm = await createTVM({ common })
 
     common.setHardfork(Hardfork.Byzantium)
     assert.strictEqual(
