@@ -13,12 +13,12 @@ import { getCommon } from './eof-utils.ts'
 // To test, use `npx vitest run ./scripts/eof-header-validation.spec.ts
 const testDir = path.resolve('../ethereum-tests/EOFTests')
 
-async function getEVM() {
+async function getTVM() {
   const common = getCommon()
-  const evm = createTVM({
+  const tvm = createTVM({
     common,
   })
-  return evm
+  return tvm
 }
 
 await new Promise<void>((resolve, reject) => {
@@ -42,7 +42,7 @@ await new Promise<void>((resolve, reject) => {
     const name = path.parse(fileName).name
     describe(`EOF Header validation tests - ${name}`, async () => {
       const testData = JSON.parse(content as string)
-      const evm = await getEVM()
+      const tvm = await getTVM()
       for (const key in testData) {
         it(`Test ${key}`, () => {
           const input = testData[key as keyof typeof testData]
@@ -67,11 +67,11 @@ await new Promise<void>((resolve, reject) => {
             }
 
             if (expected === true) {
-              validateEOF(code, evm, containerSectionType, eofContainerMode)
+              validateEOF(code, tvm, containerSectionType, eofContainerMode)
             } else {
               assert.throws(() => {
                 // TODO verify that the correct error is thrown
-                validateEOF(code, evm, containerSectionType, eofContainerMode)
+                validateEOF(code, tvm, containerSectionType, eofContainerMode)
               })
             }
           }

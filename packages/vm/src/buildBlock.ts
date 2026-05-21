@@ -189,7 +189,7 @@ export class BlockBuilder {
       this.headerData.coinbase !== undefined
         ? new Address(toBytes(this.headerData.coinbase))
         : createZeroAddress()
-    await rewardAccount(this.vm.evm, coinbase, reward, this.vm.common)
+    await rewardAccount(this.vm.tvm, coinbase, reward, this.vm.common)
   }
 
   /**
@@ -205,7 +205,7 @@ export class BlockBuilder {
       if (amount === BIGINT_0) continue
       // Withdrawal amount is represented in Gwei so needs to be
       // converted to wei
-      await rewardAccount(this.vm.evm, address, amount * GWEI_TO_WEI, this.vm.common)
+      await rewardAccount(this.vm.tvm, address, amount * GWEI_TO_WEI, this.vm.common)
     }
   }
 
@@ -225,7 +225,7 @@ export class BlockBuilder {
     this.checkStatus()
 
     if (!this.checkpointed) {
-      await this.vm.evm.journal.checkpoint()
+      await this.vm.tvm.journal.checkpoint()
       this.checkpointed = true
     }
 
@@ -309,7 +309,7 @@ export class BlockBuilder {
    */
   async revert() {
     if (this.checkpointed) {
-      await this.vm.evm.journal.revert()
+      await this.vm.tvm.journal.revert()
       this.checkpointed = false
     }
     this.blockStatus = { status: BuildStatus.Reverted }
@@ -406,7 +406,7 @@ export class BlockBuilder {
 
     this.blockStatus = { status: BuildStatus.Build, block }
     if (this.checkpointed) {
-      await this.vm.evm.journal.commit()
+      await this.vm.tvm.journal.commit()
       this.checkpointed = false
     }
 
@@ -416,7 +416,7 @@ export class BlockBuilder {
   async initState() {
     if (this.vm.common.isActivatedEIP(4788)) {
       if (!this.checkpointed) {
-        await this.vm.evm.journal.checkpoint()
+        await this.vm.tvm.journal.checkpoint()
         this.checkpointed = true
       }
 
@@ -430,7 +430,7 @@ export class BlockBuilder {
     }
     if (this.vm.common.isActivatedEIP(2935)) {
       if (!this.checkpointed) {
-        await this.vm.evm.journal.checkpoint()
+        await this.vm.tvm.journal.checkpoint()
         this.checkpointed = true
       }
 

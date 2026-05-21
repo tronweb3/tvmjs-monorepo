@@ -1,5 +1,5 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { EVMError } from '@tvmjs/tvm'
+import { TVMError } from '@tvmjs/tvm'
 import { Address, bytesToBigInt, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -8,7 +8,7 @@ import { createAccountWithDefaults } from '../utils.ts'
 
 const testCases = [
   { chain: Mainnet, hardfork: Hardfork.Istanbul, selfbalance: '0xf1' },
-  { chain: Mainnet, hardfork: Hardfork.Constantinople, err: EVMError.errorMessages.INVALID_OPCODE },
+  { chain: Mainnet, hardfork: Hardfork.Constantinople, err: TVMError.errorMessages.INVALID_OPCODE },
 ]
 
 // SELFBALANCE PUSH8 0x00 MSTORE8 PUSH8 0x01 PUSH8 0x00 RETURN
@@ -33,7 +33,7 @@ describe('Istanbul: EIP-1884', () => {
       await vm.stateManager.putAccount(addr, account)
 
       try {
-        const res = await vm.evm.runCode!(runCodeArgs)
+        const res = await vm.tvm.runCode!(runCodeArgs)
         if (testCase.err !== undefined) {
           assert.strictEqual(res.exceptionError?.error, testCase.err)
         } else {

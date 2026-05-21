@@ -9,16 +9,16 @@ import { createTVM } from '../../src/index.ts'
 
 import { getCommon } from './eof-utils.ts'
 
-async function getEVM() {
+async function getTVM() {
   const common = getCommon()
-  const evm = createTVM({
+  const tvm = createTVM({
     common,
   })
-  return evm
+  return tvm
 }
 
 describe('EIP 5450 tests', async () => {
-  const evm = await getEVM()
+  const tvm = await getTVM()
   for (const key in testData.validInvalid.vectors) {
     it(`Container validation tests ${key}`, () => {
       const input = testData.validInvalid.vectors[key as keyof typeof testData.validInvalid.vectors]
@@ -27,11 +27,11 @@ describe('EIP 5450 tests', async () => {
       const expected = input.results.Osaka.result
 
       if (expected === true) {
-        validateEOF(code, evm)
+        validateEOF(code, tvm)
       } else {
         assert.throws(() => {
           // TODO verify that the correct error is thrown
-          validateEOF(code, evm)
+          validateEOF(code, tvm)
         })
       }
     })

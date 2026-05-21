@@ -19,7 +19,7 @@ const ACTIVE_PACKAGES = [
   'block',
   'blockchain',
   'common',
-  'evm',
+  'tvm',
   'mpt',
   'rlp',
   'statemanager',

@@ -31,7 +31,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: await createTVM({ common }),
+      _TVM: await createTVM({ common }),
     })
     // console.log(result)
     assert.deepEqual(result.executionGasUsed, 4500n, 'should use petersburg gas costs')
@@ -50,7 +50,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: vm.evm,
+      _TVM: vm.tvm,
     })
 
     assert.deepEqual(result.executionGasUsed, 1500n, 'should use petersburg gas costs')
@@ -69,7 +69,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: vm.evm,
+      _TVM: vm.tvm,
     })
     // console.log(result)
 
@@ -91,7 +91,7 @@ describe('Precompiles: VALIDATE-MULTI_SIGN', () => {
       data,
       gasLimit: 0xffffn,
       common,
-      _EVM: vm.evm,
+      _TVM: vm.tvm,
     })
 
     assert.deepEqual(result.executionGasUsed, 4500n, 'should use petersburg gas costs')

@@ -186,16 +186,16 @@ describe('Transient Storage', () => {
   })
 
   it('should cleanup after a message create', async () => {
-    const evm = await createTVM()
+    const tvm = await createTVM()
     // PUSH 1 PUSH 1 TSTORE
     const code = hexToBytes('0x600160015D')
     const keyBuf = setLengthLeft(new Uint8Array([1]), 32)
-    const result = await evm.runCall({
+    const result = await tvm.runCall({
       data: code,
       gasLimit: BigInt(100_000),
     })
     const created = result.createdAddress!
-    const stored = evm.transientStorage.get(created, keyBuf)
+    const stored = tvm.transientStorage.get(created, keyBuf)
     assert.isTrue(
       equalsBytes(unpadBytes(stored), new Uint8Array()),
       'Transient storage has been cleared',
@@ -203,16 +203,16 @@ describe('Transient Storage', () => {
   })
 
   it('should cleanup after a message call', async () => {
-    const evm = await createTVM()
+    const tvm = await createTVM()
     const contractAddress = createZeroAddress()
     // PUSH 1 PUSH 1 TSTORE
     const code = hexToBytes('0x600160015D')
-    await evm.stateManager.putCode(contractAddress, code)
+    await tvm.stateManager.putCode(contractAddress, code)
     const keyBuf = setLengthLeft(new Uint8Array([1]), 32)
-    await evm.runCall({
+    await tvm.runCall({
       gasLimit: BigInt(100_000),
     })
-    const stored = evm.transientStorage.get(contractAddress, keyBuf)
+    const stored = tvm.transientStorage.get(contractAddress, keyBuf)
     assert.isTrue(
       equalsBytes(unpadBytes(stored), new Uint8Array()),
       'Transient storage has been cleared',

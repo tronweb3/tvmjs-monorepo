@@ -41,7 +41,7 @@ const args: T8NOptions = {
 }
 
 // This test is generated using `execution-spec-tests` commit 88cab2521322191b2ec7ef7d548740c0b0a264fc, running:
-// fill -k test_push0_contracts[fork_Shanghai-blockchain_test-key_sstore] --fork Shanghai tests/shanghai/eip3855_push0 --evm-bin=<ETHEREUMJS_T8NTOOL_LAUNCHER.sh>
+// fill -k test_push0_contracts[fork_Shanghai-blockchain_test-key_sstore] --fork Shanghai tests/shanghai/eip3855_push0 --tvm-bin=<ETHEREUMJS_T8NTOOL_LAUNCHER.sh>
 
 // The test will run the TransitionTool using the inputs, and then compare if the output matches
 // TRON changed account model, so root should change too.
@@ -72,7 +72,7 @@ describe('trace tests', async () => {
     const afterTxHandler = async (event: AfterTxEvent) => {
       trace.push(JSON.stringify(await summaryTraceJSON(event, vm)))
     }
-    vm.evm.events!.on('step', stepHandler)
+    vm.tvm.events!.on('step', stepHandler)
     vm.events!.on('afterTx', afterTxHandler)
     const tx = createTx({
       to: contractAddress,
@@ -83,7 +83,7 @@ describe('trace tests', async () => {
     await runTx(vm, { tx, skipBalance: true, skipBlockGasLimitValidation: true, skipNonce: true })
     assert.strictEqual(trace.length, 7, 'trace length is 7')
     assert.strictEqual(JSON.parse(trace[6]).gasUsed, 21154)
-    vm.evm.events!.removeListener('step', stepHandler)
+    vm.tvm.events!.removeListener('step', stepHandler)
     vm.events!.removeListener('afterTx', afterTxHandler)
   })
   // TRON does not support eip 7480
@@ -116,7 +116,7 @@ describe('trace tests', async () => {
     const afterTxHandler = async (event: AfterTxEvent) => {
       trace.push(JSON.stringify(await summaryTraceJSON(event, vm)))
     }
-    vm.evm.events!.on('step', stepHandler)
+    vm.tvm.events!.on('step', stepHandler)
     vm.events!.on('afterTx', afterTxHandler)
     const result = await runTx(vm, {
       tx,
@@ -126,7 +126,7 @@ describe('trace tests', async () => {
     })
     assert.strictEqual(result.execResult.executionGasUsed, BigInt(4))
     assert.strictEqual(trace.length, 4)
-    vm.evm.events!.removeListener('step', stepHandler)
+    vm.tvm.events!.removeListener('step', stepHandler)
     vm.events!.removeListener('afterTx', afterTxHandler)
   })
   // TRON does not support eip 7480
@@ -204,7 +204,7 @@ describe('trace tests', async () => {
     const afterTxHandler = async (event: AfterTxEvent) => {
       trace.push(JSON.stringify(await summaryTraceJSON(event, vm)))
     }
-    vm.evm.events!.on('step', stepHandler)
+    vm.tvm.events!.on('step', stepHandler)
     vm.events!.on('afterTx', afterTxHandler)
 
     const result = await runTx(vm, {
@@ -230,7 +230,7 @@ describe('trace tests', async () => {
     assert.strictEqual(result.execResult.executionGasUsed, BigInt(19))
     const immediate = JSON.parse(trace[2]).immediate
     assert.strictEqual(immediate, '0x0001') // Verifies that CALLF immediate matches
-    vm.evm.events!.removeListener('step', stepHandler)
+    vm.tvm.events!.removeListener('step', stepHandler)
     vm.events!.removeListener('afterTx', afterTxHandler)
   })
 })

@@ -37,7 +37,7 @@ const ACTIVE_PACKAGES = [
   'block',
   'blockchain',
   'common',
-  'evm',
+  'tvm',
   'genesis',
   'mpt',
   'rlp',

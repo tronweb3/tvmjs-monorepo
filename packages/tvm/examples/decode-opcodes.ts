@@ -1,12 +1,12 @@
 // Decode opcodes example
 //
-// 1. Takes binary EVM code and decodes it into opcodes
+// 1. Takes binary TVM code and decodes it into opcodes
 
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { getOpcodesForHF, paramsEVM } from '@tvmjs/tvm'
+import { getOpcodesForHF, paramsTVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul, params: paramsEVM })
+const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul, params: paramsTVM })
 const opcodes = getOpcodesForHF(common).opcodes
 
 const data = '0x6107608061000e6000396000f30060003560e060020a90048063141961bc1461006e57806319ac74bd'

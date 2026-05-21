@@ -32,7 +32,7 @@ import type { Address, BinaryTreeExecutionWitness, PrefixedHexString } from '@tv
 import { ChunkCache } from './chunkCache.ts'
 import { StemCache } from './stemCache.ts'
 
-const debug = debugDefault('evm:binaryTree:aw')
+const debug = debugDefault('tvm:binaryTree:aw')
 
 /**
  * Tree key constants.

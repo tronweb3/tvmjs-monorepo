@@ -1,7 +1,7 @@
 import { EOFErrorMessage, validationError } from './errors.ts'
 import { stackDelta } from './stackDelta.ts'
 
-import type { EVM } from '../evm.ts'
+import type { TVM } from '../tvm.ts'
 import type { EOFContainer } from './container.ts'
 
 /**
@@ -35,17 +35,17 @@ export const ContainerSectionType = {
  * This is a compilation of all the extra validation rules introduced by the various EIPs
  * In particular, the stack validation EIP https://eips.ethereum.org/EIPS/eip-5450 is a big part here
  * @param container EOFContainer to verify
- * @param evm The EVM to run in (pulls opcodes from here)
+ * @param tvm The TVM to run in (pulls opcodes from here)
  * @param mode The validation mode to run in
  * @returns Returns a Map which marks what ContainerSectionType each container is
  * NOTE: this should likely not be a map, since a container section can only be of a single type, not multiple
  */
 export function verifyCode(
   container: EOFContainer,
-  evm: EVM,
+  tvm: TVM,
   mode: ContainerSectionType = ContainerSectionType.RuntimeCode,
 ) {
-  return validateOpcodes(container, evm, mode)
+  return validateOpcodes(container, tvm, mode)
 }
 
 // Helper methods to read Int16s / Uint16s
@@ -59,7 +59,7 @@ function readUint16(code: Uint8Array, start: number) {
 
 function validateOpcodes(
   container: EOFContainer,
-  evm: EVM,
+  tvm: TVM,
   mode: ContainerSectionType = ContainerSectionType.RuntimeCode,
 ) {
   // Track the type of the container targets
@@ -69,7 +69,7 @@ function validateOpcodes(
   // (so no need to generate the valid opcodeNumbers)
 
   // Validate each code section
-  const opcodes = evm.getActiveOpcodes()
+  const opcodes = tvm.getActiveOpcodes()
 
   const opcodeNumbers = new Set<number>()
 
@@ -161,7 +161,7 @@ function validateOpcodes(
     reachableSections[codeSection] = new Set()
 
     // Section is marked as "non-returning": it does never "return" to another code section
-    // it rather exits the current EVM call frame
+    // it rather exits the current TVM call frame
     const nonReturningFunction = container.body.typeSections[codeSection].outputs === 0x80
 
     // Boolean flag to mark if this section has a returning opcode:

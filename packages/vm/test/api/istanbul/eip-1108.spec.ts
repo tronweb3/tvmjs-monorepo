@@ -21,7 +21,7 @@ describe('Istanbul: EIP-1108 tests', () => {
       data: new Uint8Array(0),
       gasLimit: BigInt(0xffff),
       common,
-      _EVM: vm.evm,
+      _TVM: vm.tvm,
     })
 
     assert.deepEqual(result.executionGasUsed, BigInt(150), 'should use istanbul gas costs')
@@ -35,7 +35,7 @@ describe('Istanbul: EIP-1108 tests', () => {
       data: new Uint8Array(0),
       gasLimit: BigInt(0xffff),
       common,
-      _EVM: vm.evm,
+      _TVM: vm.tvm,
     })
 
     assert.deepEqual(result.executionGasUsed, BigInt(6000), 'should use istanbul gas costs')
@@ -51,7 +51,7 @@ describe('Istanbul: EIP-1108 tests', () => {
       ),
       gasLimit: BigInt(0xffffff),
       common,
-      _EVM: vm.evm,
+      _TVM: vm.tvm,
     })
 
     assert.deepEqual(

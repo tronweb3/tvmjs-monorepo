@@ -1,7 +1,7 @@
-import { EVMError } from './errors.ts'
+import { TVMError } from './errors.ts'
 
 /**
- * Implementation of the stack used in evm.
+ * Implementation of the stack used in tvm.
  */
 export class Stack {
   // This array is initialized as an empty array. Once values are pushed, the array size will never decrease.
@@ -27,7 +27,7 @@ export class Stack {
    */
   push(value: bigint) {
     if (this._len >= this._maxHeight) {
-      throw new EVMError(EVMError.errorMessages.STACK_OVERFLOW)
+      throw new TVMError(TVMError.errorMessages.STACK_OVERFLOW)
     }
 
     // Read current length, set `_store` to value, and then increase the length
@@ -40,7 +40,7 @@ export class Stack {
    */
   pop(): bigint {
     if (this._len < 1) {
-      throw new EVMError(EVMError.errorMessages.STACK_UNDERFLOW)
+      throw new TVMError(TVMError.errorMessages.STACK_UNDERFLOW)
     }
 
     // Length is checked above, so pop shouldn't return undefined
@@ -57,7 +57,7 @@ export class Stack {
    */
   popN(num: number = 1): bigint[] {
     if (this._len < num) {
-      throw new EVMError(EVMError.errorMessages.STACK_UNDERFLOW)
+      throw new TVMError(TVMError.errorMessages.STACK_UNDERFLOW)
     }
 
     if (num === 0) {
@@ -79,7 +79,7 @@ export class Stack {
    * Returns items from the stack without removing them.
    * @param num - Number of items to return (defaults to 1)
    * @returns Array of items, with index 0 representing the top of the stack
-   * @throws {@link EVMError} with code STACK_UNDERFLOW if there are not enough items on the stack
+   * @throws {@link TVMError} with code STACK_UNDERFLOW if there are not enough items on the stack
    */
   peek(num: number = 1): bigint[] {
     const peekArray: bigint[] = Array(num)
@@ -88,7 +88,7 @@ export class Stack {
     for (let peek = 0; peek < num; peek++) {
       const index = --start
       if (index < 0) {
-        throw new EVMError(EVMError.errorMessages.STACK_UNDERFLOW)
+        throw new TVMError(TVMError.errorMessages.STACK_UNDERFLOW)
       }
       peekArray[peek] = this._store[index]
     }
@@ -101,7 +101,7 @@ export class Stack {
    */
   swap(position: number) {
     if (this._len <= position) {
-      throw new EVMError(EVMError.errorMessages.STACK_UNDERFLOW)
+      throw new TVMError(TVMError.errorMessages.STACK_UNDERFLOW)
     }
 
     const head = this._len - 1
@@ -124,12 +124,12 @@ export class Stack {
   dup(position: number) {
     const len = this._len
     if (len < position) {
-      throw new EVMError(EVMError.errorMessages.STACK_UNDERFLOW)
+      throw new TVMError(TVMError.errorMessages.STACK_UNDERFLOW)
     }
 
     // Note: this code is borrowed from `push()` (avoids a call)
     if (len >= this._maxHeight) {
-      throw new EVMError(EVMError.errorMessages.STACK_OVERFLOW)
+      throw new TVMError(TVMError.errorMessages.STACK_OVERFLOW)
     }
 
     const i = len - position
@@ -148,7 +148,7 @@ export class Stack {
 
     // Stack underflow is not possible in EOF
     if (exchangeIndex1 < 0 || exchangeIndex2 < 0) {
-      throw new EVMError(EVMError.errorMessages.STACK_UNDERFLOW)
+      throw new TVMError(TVMError.errorMessages.STACK_UNDERFLOW)
     }
 
     const cache = this._store[exchangeIndex2]

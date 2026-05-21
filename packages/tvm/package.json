@@ -2,7 +2,7 @@
   "name": "@tvmjs/tvm",
   "version": "1.0.0",
   "description": "JavaScript TRON Virtual Machine (TVM) implementation.",
-  "keywords": ["ethereum", "EVM", "JavaScript", "TypeScript", "tron", "tvm"],
+  "keywords": ["ethereum", "TVM", "JavaScript", "TypeScript", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm#readme",
   "bugs": {
     "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+tvm%22"

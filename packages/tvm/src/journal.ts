@@ -53,7 +53,7 @@ export class Journal {
     // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
     this.DEBUG = isDebugEnabled('ethjs')
 
-    this._debug = debugDefault('evm:journal')
+    this._debug = debugDefault('tvm:journal')
 
     // TODO maybe call into this.clearJournal
     this.cleanJournal()

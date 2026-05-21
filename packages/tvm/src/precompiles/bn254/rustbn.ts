@@ -1,15 +1,15 @@
 import { bytesToUnprefixedHex, hexToBytes } from '@tvmjs/util'
 
-import type { EVMBN254Interface } from '../../types.ts'
+import type { TVMBN254Interface } from '../../types.ts'
 
 /**
- * Implementation of the `EVMBN254Interface` using a WASM wrapper https://github.com/ethereumjs/rustbn.js
+ * Implementation of the `TVMBN254Interface` using a WASM wrapper https://github.com/ethereumjs/rustbn.js
  * around the Parity fork of the Zcash bn pairing cryptography library.
  *
  * This can be optionally used to replace the build-in Noble implementation (`NobleBN254`) with
- * a more performant WASM variant. See EVM `bls` constructor option on how to use.
+ * a more performant WASM variant. See TVM `bls` constructor option on how to use.
  */
-export class RustBN254 implements EVMBN254Interface {
+export class RustBN254 implements TVMBN254Interface {
   protected readonly _rustbn: any
 
   constructor(rustbn: any) {

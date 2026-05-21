@@ -7,18 +7,18 @@ import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 import { testData } from './modexp-testdata.ts'
 
 import type { PrefixedHexString } from '@tvmjs/util'
-import type { EVM } from '../../src/index.ts'
+import type { TVM } from '../../src/index.ts'
 import type { PrecompileFunc } from '../../src/precompiles/types.ts'
 
 const fuzzerTests = testData.data as PrefixedHexString[][]
 describe('Precompiles: MODEXP', () => {
   let common: Common
-  let evm: EVM
+  let tvm: TVM
   let addressStr: string
   let MODEXP: PrecompileFunc
   beforeAll(async () => {
     common = new Common({ chain: Mainnet })
-    evm = await createTVM({
+    tvm = await createTVM({
       common,
     })
     addressStr = '0000000000000000000000000000000000000005'
@@ -33,7 +33,7 @@ describe('Precompiles: MODEXP', () => {
         data: hexToBytes(input),
         gasLimit: BigInt(0xffff),
         common,
-        _EVM: evm,
+        _TVM: tvm,
       })
       const output = bytesToHex(result.returnValue)
       assert.strictEqual(output, expect)
@@ -46,7 +46,7 @@ describe('Precompiles: MODEXP', () => {
       data: hexToBytes('0x41'),
       gasLimit: gas,
       common,
-      _EVM: evm,
+      _TVM: tvm,
     })
     assert.strictEqual(result.executionGasUsed, gas)
   })

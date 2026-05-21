@@ -25,7 +25,7 @@ import {
 import { EOFErrorMessage, validationError } from './errors.ts'
 import { ContainerSectionType, verifyCode } from './verify.ts'
 
-import type { EVM } from '../evm.ts'
+import type { TVM } from '../tvm.ts'
 
 /*
   This file creates EOF Containers
@@ -244,7 +244,7 @@ class EOFHeader {
     this.buffer = input.slice(0, stream.getPtr())
     const relativeOffset = this.buffer.length + this.typeSize
     // Write the start of the first code section into `codeStartPos`
-    // Note: in EVM, if one would set the Program Counter to this byte, it would start executing the bytecode of the first code section
+    // Note: in TVM, if one would set the Program Counter to this byte, it would start executing the bytecode of the first code section
     this.codeStartPos = [relativeOffset]
   }
 
@@ -256,7 +256,7 @@ class EOFHeader {
   }
 
   // Returns the code position in the container for the requested section
-  // Setting the Program Counter in the EVM to a number of this array would start executing the bytecode of the indexed section
+  // Setting the Program Counter in the TVM to a number of this array would start executing the bytecode of the indexed section
   getCodePosition(section: number) {
     if (this.codeStartPos[section]) {
       return this.codeStartPos[section]
@@ -314,7 +314,7 @@ class EOFBody {
   buffer: Uint8Array // Raw bytes of the body
 
   txCallData?: Uint8Array // Only available in TxInitmode. The `txCallData` are the dangling bytes after parsing the container,
-  // and these are used for the CALLDATA in the EVM when trying to create a contract via a transaction, and the deployment code is an EOF container
+  // and these are used for the CALLDATA in the TVM when trying to create a contract via a transaction, and the deployment code is an EOF container
 
   constructor(
     buf: Uint8Array, // Buffer of the body. This should be the entire body. It is not valid to pass an entire EOF container in here
@@ -393,7 +393,7 @@ class EOFBody {
           validationError(EOFErrorMessage.DANGLING_BYTES)
         }
       } else {
-        // Tx init mode: the remaining bytes (if any) are used as CALLDATA in the EVM, in case of a Tx init
+        // Tx init mode: the remaining bytes (if any) are used as CALLDATA in the TVM, in case of a Tx init
         this.txCallData = stream.readRemainder()
       }
     } else {
@@ -468,14 +468,14 @@ export class EOFContainer {
  * This is ONLY necessary when trying to deploy contracts from a transaction: these can submit containers which are invalid
  * Since all deployed EOF containers are valid by definition, `validateEOF` does not need to be called each time an EOF contract is called
  * @param input Full container buffer
- * @param evm EVM, to read opcodes from
+ * @param tvm TVM, to read opcodes from
  * @param containerMode Container mode to validate on
  * @param eofMode EOF mode to run in
  * @returns The decoded EOF container
  */
 export function validateEOF(
   input: Uint8Array,
-  evm: EVM,
+  tvm: TVM,
   containerMode: ContainerSectionType = ContainerSectionType.RuntimeCode,
   eofMode: EOFContainerMode = EOFContainerMode.Default,
 ) {
@@ -484,12 +484,12 @@ export function validateEOF(
     eofMode,
     containerMode === ContainerSectionType.DeploymentCode,
   )
-  const containerMap = verifyCode(container, evm, containerMode)
+  const containerMap = verifyCode(container, tvm, containerMode)
   // Recursively validate the containerSections
   for (let i = 0; i < container.body.containerSections.length; i++) {
     const subContainer = container.body.containerSections[i]
     const mode = containerMap.get(i)!
-    validateEOF(subContainer, evm, mode)
+    validateEOF(subContainer, tvm, mode)
   }
   return container
 }

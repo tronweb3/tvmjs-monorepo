@@ -1,6 +1,5 @@
 import { EOFContainer, validateEOF } from './eof/container.ts'
-import { EVMError } from './errors.ts'
-import { EVM } from './evm.ts'
+import { TVMError } from './errors.ts'
 import { Message } from './message.ts'
 import { getOpcodesForHF } from './opcodes/index.ts'
 import {
@@ -15,21 +14,22 @@ import {
   RustBN254,
   getActivePrecompiles,
 } from './precompiles/index.ts'
-import { EVMMockBlockchain } from './types.ts'
+import { TVM } from './tvm.ts'
+import { TVMMockBlockchain } from './types.ts'
 
 import type { InterpreterStep } from './interpreter.ts'
 import type {
-  EVMBLSInterface,
-  EVMBN254Interface,
-  EVMInterface,
-  EVMMockBlockchainInterface,
-  EVMOpts,
-  EVMResult,
-  EVMRunCallOpts,
-  EVMRunCodeOpts,
   ExecResult,
   Log,
   SelfdestructMap,
+  TVMBLSInterface,
+  TVMBN254Interface,
+  TVMInterface,
+  TVMMockBlockchainInterface,
+  TVMOpts,
+  TVMResult,
+  TVMRunCallOpts,
+  TVMRunCodeOpts,
 } from './types.ts'
 export * from './logger.ts'
 
@@ -37,14 +37,14 @@ export type {
   AddPrecompile,
   CustomPrecompile,
   DeletePrecompile,
-  EVMBLSInterface,
-  EVMBN254Interface,
-  EVMInterface,
-  EVMMockBlockchainInterface,
-  EVMOpts,
-  EVMResult,
-  EVMRunCallOpts,
-  EVMRunCodeOpts,
+  TVMBLSInterface,
+  TVMBN254Interface,
+  TVMInterface,
+  TVMMockBlockchainInterface,
+  TVMOpts,
+  TVMResult,
+  TVMRunCallOpts,
+  TVMRunCodeOpts,
   ExecResult,
   InterpreterStep,
   Log,
@@ -55,9 +55,9 @@ export type {
 
 export {
   EOFContainer,
-  EVM,
-  EVMError,
-  EVMMockBlockchain,
+  TVM,
+  TVMError,
+  TVMMockBlockchain,
   getActivePrecompiles,
   getOpcodesForHF,
   MCLBLS,

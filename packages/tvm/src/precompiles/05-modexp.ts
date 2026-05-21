@@ -14,7 +14,7 @@ import {
   setLengthRight,
 } from '@tvmjs/util'
 
-import { OOGResult } from '../evm.ts'
+import { OOGResult } from '../tvm.ts'
 
 import { getPrecompileName } from './index.ts'
 import { gasLimitCheck } from './util.ts'

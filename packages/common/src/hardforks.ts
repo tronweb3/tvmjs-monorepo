@@ -144,7 +144,7 @@ export const hardforksDict: HardforksDict = {
   },
   /**
    * Description: Next feature hardfork after shanghai, includes proto-danksharding EIP 4844 blobs,
-   * transient storage opcodes, parent beacon block root availability in EVM, selfdestruct only in
+   * transient storage opcodes, parent beacon block root availability in TVM, selfdestruct only in
    * same transaction, and blob base fee opcode
    * URL        : https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/cancun.md
    * Status     : Final
@@ -311,7 +311,7 @@ export const tronHardforksDict: HardforksDict = {
   },
   /**
    * Description: Next feature hardfork after shanghai, includes proto-danksharding EIP 4844 blobs,
-   * transient storage opcodes, parent beacon block root availability in EVM, selfdestruct only in
+   * transient storage opcodes, parent beacon block root availability in TVM, selfdestruct only in
    * same transaction, and blob base fee opcode
    * URL        : https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/cancun.md
    * Status     : Final

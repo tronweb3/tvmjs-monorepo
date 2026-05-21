@@ -102,7 +102,7 @@ describe('VM initialized with custom state', () => {
       functionName: 'retrieve',
     })
 
-    const callResult = await vm.evm.runCall({
+    const callResult = await vm.tvm.runCall({
       to: createAddressFromString(contractAddress),
       data: hexToBytes(calldata as PrefixedHexString),
       caller: createAddressFromPrivateKey(SIGNER_A.privateKey),

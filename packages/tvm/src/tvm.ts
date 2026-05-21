@@ -25,30 +25,30 @@ import { EventEmitter } from 'eventemitter3'
 import { createEIP7708TransferLog } from './eip7708.ts'
 import { FORMAT } from './eof/constants.ts'
 import { isEOF } from './eof/util.ts'
-import { EVMError } from './errors.ts'
+import { TVMError } from './errors.ts'
 import { Interpreter } from './interpreter.ts'
 import { Journal } from './journal.ts'
-import { EVMPerformanceLogger } from './logger.ts'
+import { TVMPerformanceLogger } from './logger.ts'
 import { Message } from './message.ts'
 import { getOpcodesForHF } from './opcodes/index.ts'
-import { paramsEVM } from './params.ts'
+import { paramsTVM } from './params.ts'
 import { NobleBLS, getActivePrecompiles, getPrecompileName } from './precompiles/index.ts'
 import { TransientStorage } from './transientStorage.ts'
 import {
   type Block,
   type CustomOpcode,
   DELEGATION_7702_FLAG,
-  type EVMBLSInterface,
-  type EVMBN254Interface,
-  type EVMEvent,
-  type EVMInterface,
-  type EVMMockBlockchainInterface,
-  type EVMOpts,
-  type EVMResult,
-  type EVMRunCallOpts,
-  type EVMRunCodeOpts,
   type ExecResult,
   type Log,
+  type TVMBLSInterface,
+  type TVMBN254Interface,
+  type TVMEvent,
+  type TVMInterface,
+  type TVMMockBlockchainInterface,
+  type TVMOpts,
+  type TVMResult,
+  type TVMRunCallOpts,
+  type TVMRunCodeOpts,
 } from './types.ts'
 
 import type { Common, StateManagerInterface } from '@tvmjs/common'
@@ -60,9 +60,9 @@ import type { AsyncDynamicGasHandler, SyncDynamicGasHandler } from './opcodes/ga
 import type { OpHandler, OpcodeList, OpcodeMap } from './opcodes/index.ts'
 import type { CustomPrecompile, PrecompileFunc } from './precompiles/index.ts'
 
-const debug = debugDefault('evm:evm')
-const debugGas = debugDefault('evm:gas')
-const debugPrecompiles = debugDefault('evm:precompiles')
+const debug = debugDefault('tvm:tvm')
+const debugGas = debugDefault('tvm:gas')
+const debugPrecompiles = debugDefault('tvm:precompiles')
 
 /**
  * Creates a standardized ExecResult for out-of-gas errors.
@@ -73,7 +73,7 @@ export function OOGResult(gasLimit: bigint): ExecResult {
   return {
     returnValue: new Uint8Array(0),
     executionGasUsed: gasLimit,
-    exceptionError: new EVMError(EVMError.errorMessages.OUT_OF_GAS),
+    exceptionError: new TVMError(TVMError.errorMessages.OUT_OF_GAS),
   }
 }
 /**
@@ -84,7 +84,7 @@ export function COOGResult(gasUsedCreateCode: bigint): ExecResult {
   return {
     returnValue: new Uint8Array(0),
     executionGasUsed: gasUsedCreateCode,
-    exceptionError: new EVMError(EVMError.errorMessages.CODESTORE_OUT_OF_GAS),
+    exceptionError: new TVMError(TVMError.errorMessages.CODESTORE_OUT_OF_GAS),
   }
 }
 
@@ -96,7 +96,7 @@ export function INVALID_BYTECODE_RESULT(gasLimit: bigint): ExecResult {
   return {
     returnValue: new Uint8Array(0),
     executionGasUsed: gasLimit,
-    exceptionError: new EVMError(EVMError.errorMessages.INVALID_BYTECODE_RESULT),
+    exceptionError: new TVMError(TVMError.errorMessages.INVALID_BYTECODE_RESULT),
   }
 }
 
@@ -108,7 +108,7 @@ export function INVALID_EOF_RESULT(gasLimit: bigint): ExecResult {
   return {
     returnValue: new Uint8Array(0),
     executionGasUsed: gasLimit,
-    exceptionError: new EVMError(EVMError.errorMessages.INVALID_EOF_FORMAT),
+    exceptionError: new TVMError(TVMError.errorMessages.INVALID_EOF_FORMAT),
   }
 }
 
@@ -120,16 +120,16 @@ export function CodesizeExceedsMaximumError(gasUsed: bigint): ExecResult {
   return {
     returnValue: new Uint8Array(0),
     executionGasUsed: gasUsed,
-    exceptionError: new EVMError(EVMError.errorMessages.CODESIZE_EXCEEDS_MAXIMUM),
+    exceptionError: new TVMError(TVMError.errorMessages.CODESIZE_EXCEEDS_MAXIMUM),
   }
 }
 
 /**
- * Wraps an {@link EVMError} in an ExecResult.
+ * Wraps an {@link TVMError} in an ExecResult.
  * @param error - Error encountered during execution
  * @param gasUsed - Gas consumed up to the error
  */
-export function EVMErrorResult(error: EVMError, gasUsed: bigint): ExecResult {
+export function TVMErrorResult(error: TVMError, gasUsed: bigint): ExecResult {
   return {
     returnValue: new Uint8Array(0),
     executionGasUsed: gasUsed,
@@ -157,13 +157,13 @@ export function defaultBlock(): Block {
 }
 
 /**
- * The EVM (Ethereum Virtual Machine) is responsible for executing EVM bytecode, processing transactions, and managing state changes. It handles both contract calls and contract creation operations.
+ * The TVM (Ethereum Virtual Machine) is responsible for executing TVM bytecode, processing transactions, and managing state changes. It handles both contract calls and contract creation operations.
  *
- * An EVM instance can be created with the constructor method:
+ * An TVM instance can be created with the constructor method:
  *
  * - {@link createTVM}
  */
-export class EVM implements EVMInterface {
+export class TVM implements TVMInterface {
   protected static supportedHardforks = [
     Hardfork.Chainstart,
     Hardfork.Homestead,
@@ -200,10 +200,10 @@ export class EVM implements EVMInterface {
   protected _block?: Block
 
   public readonly common: Common
-  public readonly events: EventEmitter<EVMEvent>
+  public readonly events: EventEmitter<TVMEvent>
 
   public stateManager: StateManagerInterface
-  public blockchain: EVMMockBlockchainInterface
+  public blockchain: TVMMockBlockchainInterface
   public journal: Journal
   public binaryAccessWitness?: BinaryTreeAccessWitness
   public systemBinaryAccessWitness?: BinaryTreeAccessWitness
@@ -228,9 +228,9 @@ export class EVM implements EVMInterface {
 
   protected _precompiles!: Map<string, PrecompileFunc>
 
-  protected readonly _optsCached: EVMOpts
+  protected readonly _optsCached: TVMOpts
 
-  protected performanceLogger: EVMPerformanceLogger
+  protected performanceLogger: TVMPerformanceLogger
 
   public get precompiles() {
     return this._precompiles
@@ -240,10 +240,10 @@ export class EVM implements EVMInterface {
     return this._opcodes
   }
 
-  protected readonly _bls?: EVMBLSInterface
+  protected readonly _bls?: TVMBLSInterface
 
   /**
-   * EVM is run in DEBUG mode (default: false)
+   * TVM is run in DEBUG mode (default: false)
    * Taken from DEBUG environment variable
    *
    * Safeguards on debug() calls are added for
@@ -254,20 +254,20 @@ export class EVM implements EVMInterface {
 
   protected readonly _emit: (topic: string, data: any) => Promise<void>
 
-  private _bn254: EVMBN254Interface
+  private _bn254: TVMBN254Interface
 
   /**
    *
-   * Creates new EVM object
+   * Creates new TVM object
    *
    * @deprecated The direct usage of this constructor is replaced since
    * non-finalized async initialization lead to side effects. Please
    * use the async {@link createTVM} constructor instead (same API).
    *
-   * @param opts The EVM options
+   * @param opts The TVM options
    * @param bn128 Initialized bn128 WASM object for precompile usage (internal)
    */
-  constructor(opts: EVMOpts) {
+  constructor(opts: TVMOpts) {
     this.common = opts.common!
     this.blockchain = opts.blockchain!
     this.stateManager = opts.stateManager!
@@ -287,7 +287,7 @@ export class EVM implements EVMInterface {
       this.blockLevelAccessList = opts.blockLevelAccessList ?? createBlockLevelAccessList()
     }
 
-    this.events = new EventEmitter<EVMEvent>()
+    this.events = new EventEmitter<TVMEvent>()
     this._optsCached = opts
 
     // Supported EIPs
@@ -300,17 +300,17 @@ export class EVM implements EVMInterface {
 
     for (const eip of this.common.eips()) {
       if (!supportedEIPs.includes(eip)) {
-        throw EthereumJSErrorWithoutCode(`EIP-${eip} is not supported by the EVM`)
+        throw EthereumJSErrorWithoutCode(`EIP-${eip} is not supported by the TVM`)
       }
     }
 
-    if (!EVM.supportedHardforks.includes(this.common.hardfork() as Hardfork)) {
+    if (!TVM.supportedHardforks.includes(this.common.hardfork() as Hardfork)) {
       throw EthereumJSErrorWithoutCode(
         `Hardfork ${this.common.hardfork()} not set as supported in supportedHardforks`,
       )
     }
 
-    this.common.updateParams(opts.params ?? paramsEVM)
+    this.common.updateParams(opts.params ?? paramsTVM)
 
     this.allowUnlimitedContractSize = opts.allowUnlimitedContractSize ?? false
     this.allowUnlimitedInitCodeSize = opts.allowUnlimitedInitCodeSize ?? false
@@ -338,7 +338,7 @@ export class EVM implements EVMInterface {
     this._bn254 = opts.bn254!
 
     this._emit = async (topic: string, data: any): Promise<void> => {
-      const listeners = this.events.listeners(topic as keyof EVMEvent)
+      const listeners = this.events.listeners(topic as keyof TVMEvent)
       for (const listener of listeners) {
         if (listener.length === 2) {
           await new Promise<void>((resolve) => {
@@ -350,7 +350,7 @@ export class EVM implements EVMInterface {
       }
     }
 
-    this.performanceLogger = new EVMPerformanceLogger()
+    this.performanceLogger = new TVMPerformanceLogger()
 
     // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
     this.DEBUG = isDebugEnabled('ethjs')
@@ -358,7 +358,7 @@ export class EVM implements EVMInterface {
 
   /**
    * Returns a list with the currently activated opcodes
-   * available for EVM execution
+   * available for TVM execution
    */
   getActiveOpcodes(): OpcodeList {
     const data = getOpcodesForHF(this.common, this._customOpcodes)
@@ -369,7 +369,7 @@ export class EVM implements EVMInterface {
     return data.opcodes
   }
 
-  protected async _executeCall(message: MessageWithTo): Promise<EVMResult> {
+  protected async _executeCall(message: MessageWithTo): Promise<TVMResult> {
     let gasLimit = message.gasLimit
     const fromAddress = message.caller
 
@@ -572,7 +572,7 @@ export class EVM implements EVMInterface {
     }
   }
 
-  protected async _executeCreate(message: Message): Promise<EVMResult> {
+  protected async _executeCreate(message: Message): Promise<TVMResult> {
     let gasLimit = message.gasLimit
     const fromAddress = message.caller
 
@@ -600,7 +600,7 @@ export class EVM implements EVMInterface {
           createdAddress: message.to,
           execResult: {
             returnValue: new Uint8Array(0),
-            exceptionError: new EVMError(EVMError.errorMessages.INITCODE_SIZE_VIOLATION),
+            exceptionError: new TVMError(TVMError.errorMessages.INITCODE_SIZE_VIOLATION),
             executionGasUsed: message.gasLimit,
           },
         }
@@ -662,7 +662,7 @@ export class EVM implements EVMInterface {
         createdAddress: message.to,
         execResult: {
           returnValue: new Uint8Array(0),
-          exceptionError: new EVMError(EVMError.errorMessages.CREATE_COLLISION),
+          exceptionError: new TVMError(TVMError.errorMessages.CREATE_COLLISION),
           executionGasUsed: message.gasLimit,
         },
       }
@@ -1005,8 +1005,8 @@ export class EVM implements EVMInterface {
     let gasUsed = message.gasLimit - interpreterRes.runState!.gasLeft
     if (interpreterRes.exceptionError) {
       if (
-        interpreterRes.exceptionError.error !== EVMError.errorMessages.REVERT &&
-        interpreterRes.exceptionError.error !== EVMError.errorMessages.INVALID_EOF_FORMAT
+        interpreterRes.exceptionError.error !== TVMError.errorMessages.REVERT &&
+        interpreterRes.exceptionError.error !== TVMError.errorMessages.INVALID_EOF_FORMAT
       ) {
         gasUsed = message.gasLimit
       }
@@ -1037,11 +1037,11 @@ export class EVM implements EVMInterface {
   }
 
   /**
-   * Executes an EVM message, determining whether it's a call or create
+   * Executes an TVM message, determining whether it's a call or create
    * based on the `to` address. It checkpoints the state and reverts changes
    * if an exception happens during the message execution.
    */
-  async runCall(opts: EVMRunCallOpts): Promise<EVMResult> {
+  async runCall(opts: TVMRunCallOpts): Promise<TVMResult> {
     let timer: Timer | undefined
     if (
       (opts.depth === 0 || opts.message === undefined) &&
@@ -1173,7 +1173,7 @@ export class EVM implements EVMInterface {
     // There is one exception: if the CODESTORE_OUT_OF_GAS error is thrown
     // (this only happens the Frontier/Chainstart fork)
     // then the error is dismissed
-    if (err && err.error !== EVMError.errorMessages.CODESTORE_OUT_OF_GAS) {
+    if (err && err.error !== TVMError.errorMessages.CODESTORE_OUT_OF_GAS) {
       result.execResult.selfdestruct = new Map()
       result.execResult.createdAddresses = new Set()
       result.execResult.gasRefund = BIGINT_0
@@ -1182,7 +1182,7 @@ export class EVM implements EVMInterface {
       err &&
       !(
         this.common.hardfork() === Hardfork.Chainstart &&
-        err.error === EVMError.errorMessages.CODESTORE_OUT_OF_GAS
+        err.error === TVMError.errorMessages.CODESTORE_OUT_OF_GAS
       )
     ) {
       result.execResult.logs = []
@@ -1216,9 +1216,9 @@ export class EVM implements EVMInterface {
 
   /**
    * Bound to the global VM and therefore
-   * shouldn't be used directly from the evm class
+   * shouldn't be used directly from the tvm class
    */
-  async runCode(opts: EVMRunCodeOpts): Promise<ExecResult> {
+  async runCode(opts: TVMRunCodeOpts): Promise<ExecResult> {
     this._block = opts.block ?? defaultBlock()
 
     this._tx = {
@@ -1251,10 +1251,10 @@ export class EVM implements EVMInterface {
    * Accepts either an `Address` instance or a `0x`-prefixed hex string.
    *
    * ```ts
-   * const evm = await createTVM({
+   * const tvm = await createTVM({
    *   customPrecompiles: [{ address: '0x000000000000000000000000000000000000ff01', function: myFn }],
    * })
-   * const fn = evm.getPrecompile('0x000000000000000000000000000000000000ff01')
+   * const fn = tvm.getPrecompile('0x000000000000000000000000000000000000ff01')
    * ```
    */
   getPrecompile(address: Address | PrefixedHexString): PrecompileFunc | undefined {
@@ -1280,7 +1280,7 @@ export class EVM implements EVMInterface {
       data,
       gasLimit,
       common: this.common,
-      _EVM: this,
+      _TVM: this,
       _debug: this.DEBUG ? debugPrecompiles : undefined,
       stateManager: this.stateManager,
     }
@@ -1338,7 +1338,7 @@ export class EVM implements EVMInterface {
     const originalBalance = account.balance
     account.balance -= message.value
     if (account.balance < BIGINT_0) {
-      throw new EVMError(EVMError.errorMessages.INSUFFICIENT_BALANCE)
+      throw new TVMError(TVMError.errorMessages.INSUFFICIENT_BALANCE)
     }
     // EIP-7928: Record the sender's reduced balance in BAL
     // Per spec, CALL/CALLCODE senders must have their balance recorded
@@ -1368,7 +1368,7 @@ export class EVM implements EVMInterface {
   protected async _reduceSenderTokenBalance(account: Account, message: Message): Promise<void> {
     const newBalance = this._getTokenBalance(account, message.tokenId) - message.tokenValue
     if (newBalance < BIGINT_0) {
-      throw new EVMError(EVMError.errorMessages.INSUFFICIENT_TOKEN_BALANCE)
+      throw new TVMError(TVMError.errorMessages.INSUFFICIENT_TOKEN_BALANCE)
     }
     if (account.asset && message.tokenId !== BIGINT_0) {
       account.asset[Number(message.tokenId)] = newBalance
@@ -1384,7 +1384,7 @@ export class EVM implements EVMInterface {
     const originalBalance = toAccount.balance
     const newBalance = toAccount.balance + message.value
     if (newBalance > MAX_INTEGER) {
-      throw new EVMError(EVMError.errorMessages.VALUE_OVERFLOW)
+      throw new TVMError(TVMError.errorMessages.VALUE_OVERFLOW)
     }
     toAccount.balance = newBalance
     if (this.common.isActivatedEIP(7928)) {
@@ -1408,7 +1408,7 @@ export class EVM implements EVMInterface {
   protected async _addToTokenBalance(toAccount: Account, message: MessageWithTo): Promise<void> {
     const newBalance = this._getTokenBalance(toAccount, message.tokenId) + message.tokenValue
     if (newBalance > MAX_INTEGER) {
-      throw new EVMError(EVMError.errorMessages.VALUE_OVERFLOW)
+      throw new TVMError(TVMError.errorMessages.VALUE_OVERFLOW)
     }
     if (toAccount.asset && message.tokenId !== BIGINT_0) {
       toAccount.asset[Number(message.tokenId)] = newBalance
@@ -1428,15 +1428,15 @@ export class EVM implements EVMInterface {
   }
 
   /**
-   * This method copies the EVM, current HF and EIP settings
-   * and returns a new EVM instance.
+   * This method copies the TVM, current HF and EIP settings
+   * and returns a new TVM instance.
    *
-   * Note: this is only a shallow copy and both EVM instances
+   * Note: this is only a shallow copy and both TVM instances
    * will point to the same underlying state DB.
    *
-   * @returns EVM
+   * @returns TVM
    */
-  public shallowCopy(): EVM {
+  public shallowCopy(): TVM {
     const common = this.common.copy()
     common.setHardfork(this.common.hardfork())
 
@@ -1447,7 +1447,7 @@ export class EVM implements EVMInterface {
     }
     // @ts-expect-error -- Assigning a StateManager property that is absent from the interface
     opts.stateManager['common'] = common
-    return new EVM(opts)
+    return new TVM(opts)
   }
 
   public getPerformanceLogs() {

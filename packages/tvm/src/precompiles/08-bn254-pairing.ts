@@ -1,19 +1,19 @@
 import { bytesToHex } from '@tvmjs/util'
 
-import { EVMError } from '../errors.ts'
-import { EVMErrorResult, OOGResult } from '../evm.ts'
+import { TVMError } from '../errors.ts'
+import { OOGResult, TVMErrorResult } from '../tvm.ts'
 
 import { getPrecompileName } from './index.ts'
 import { gasLimitCheck, moduloLengthCheck } from './util.ts'
 
-import type { EVM } from '../evm.ts'
+import type { TVM } from '../tvm.ts'
 import type { ExecResult } from '../types.ts'
 import type { PrecompileInput } from './types.ts'
 
 export function precompile08(opts: PrecompileInput): ExecResult {
   const pName = getPrecompileName('08')
   if (!moduloLengthCheck(opts, 192, pName)) {
-    return EVMErrorResult(new EVMError(EVMError.errorMessages.INVALID_INPUT_LENGTH), opts.gasLimit)
+    return TVMErrorResult(new TVMError(TVMError.errorMessages.INVALID_INPUT_LENGTH), opts.gasLimit)
   }
 
   const inputDataSize = BigInt(Math.floor(opts.data.length / 192))
@@ -26,12 +26,12 @@ export function precompile08(opts: PrecompileInput): ExecResult {
 
   let returnData
   try {
-    returnData = (opts._EVM as EVM)['_bn254'].pairing(opts.data)
+    returnData = (opts._TVM as TVM)['_bn254'].pairing(opts.data)
   } catch (e: any) {
     if (opts._debug !== undefined) {
       opts._debug(`${pName} failed: ${e.message}`)
     }
-    return EVMErrorResult(e, opts.gasLimit)
+    return TVMErrorResult(e, opts.gasLimit)
   }
 
   // check ecpairing success or failure by comparing the output length

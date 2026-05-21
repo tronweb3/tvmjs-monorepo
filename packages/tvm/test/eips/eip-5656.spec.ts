@@ -85,20 +85,20 @@ describe('should test mcopy', () => {
         eips: [5656],
       })
 
-      const evm = await createTVM({
+      const tvm = await createTVM({
         common,
       })
 
       let currentMem = ''
 
-      evm.events.on('step', (e) => {
+      tvm.events.on('step', (e) => {
         if (e.opcode.name === 'STOP') {
           currentMem = bytesToHex(e.memory)
           assert.strictEqual(currentMem, '0x' + situation.post, 'post-memory correct')
         }
       })
 
-      await evm.runCall({
+      await tvm.runCall({
         data: hexToBytes(bytecode as PrefixedHexString),
         gasLimit: BigInt(0xffffff),
       })

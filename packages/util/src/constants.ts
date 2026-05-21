@@ -9,14 +9,14 @@ import { hexToBytes } from './bytes.ts'
 export const MAX_UINT64 = BigInt('0xffffffffffffffff')
 
 /**
- * The max integer that the evm can handle (2^256-1)
+ * The max integer that the tvm can handle (2^256-1)
  */
 export const MAX_INTEGER = BigInt(
   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
 )
 
 /**
- * The max integer that the evm can handle (2^256-1) as a bigint
+ * The max integer that the tvm can handle (2^256-1) as a bigint
  * 2^256-1 equals to 340282366920938463463374607431768211455
  * We use literal value instead of calculated value for compatibility issue.
  */

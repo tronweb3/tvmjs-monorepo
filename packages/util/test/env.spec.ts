@@ -34,7 +34,7 @@ describe('isDebugEnabled', () => {
   })
 
   it('handles partial namespace matches (namespace substring present)', () => {
-    ;(globalThis as any).process = { env: { DEBUG: 'ethjs:evm,other' } }
+    ;(globalThis as any).process = { env: { DEBUG: 'ethjs:tvm,other' } }
     assert.isTrue(isDebugEnabled('ethjs'))
   })
 })

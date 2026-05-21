@@ -53,7 +53,7 @@ describe('EIP 1153: transient storage', () => {
       }
       i++
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     for (const { code, address } of test.contracts) {
       await vm.stateManager.putCode(address, hexToBytes(code as PrefixedHexString))
@@ -67,7 +67,7 @@ describe('EIP 1153: transient storage', () => {
       results.push(result)
     }
 
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
     return results
   }
 

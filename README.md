@@ -43,8 +43,8 @@ TVMJS is a monorepo of modular packages that together implement the full TRON ex
 | 0x09 | BatchValidateSign | Batch signature validation |
 | 0x0a | ValidateMultiSign | Multi-signature permission validation |
 | 0x03 | RIPEMD-160 | TRON-specific RIPEMD-160 hash(Double hash) |
-| 0x20003 | RIPEMD-160 | EVM-specific RIPEMD-160 hash |
-| 0x20009 | BLAKE2F | EVM-specific BLAKE2F compression |
+| 0x20003 | RIPEMD-160 | TVM-specific RIPEMD-160 hash |
+| 0x20009 | BLAKE2F | TVM-specific BLAKE2F compression |
 
 ### Account Model Extensions
 

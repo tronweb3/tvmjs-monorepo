@@ -39,7 +39,7 @@ class OpcodeInfo {
   }
 }
 
-// This code is from Besu: https://github.com/hyperledger/besu/blob/ac5d03f91d4c9e938ff5b4ba90abae1bb4afa997/evm/src/main/java/org/hyperledger/besu/evm/code/OpcodeInfo.java#L79
+// This code is from Besu: https://github.com/hyperledger/besu/blob/ac5d03f91d4c9e938ff5b4ba90abae1bb4afa997/tvm/src/main/java/org/hyperledger/besu/tvm/code/OpcodeInfo.java#L79
 const tbl = [
   OpcodeInfo.terminalOpcode('STOP', 0x00, 0, 0, 1),
   OpcodeInfo.validOpcode('ADD', 0x01, 2, 1, 1),

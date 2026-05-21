@@ -1,5 +1,5 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { EVMError } from '@tvmjs/tvm'
+import { TVMError } from '@tvmjs/tvm'
 import { bytesToBigInt, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -7,7 +7,7 @@ import { createVM } from '../../../src/index.ts'
 
 const testCases = [
   { chain: Mainnet, hardfork: Hardfork.Istanbul, chainId: BigInt(1) },
-  { chain: Mainnet, hardfork: Hardfork.Constantinople, err: EVMError.errorMessages.INVALID_OPCODE },
+  { chain: Mainnet, hardfork: Hardfork.Constantinople, err: TVMError.errorMessages.INVALID_OPCODE },
 ]
 
 // CHAINID PUSH8 0x00 MSTORE8 PUSH8 0x01 PUSH8 0x00 RETURN
@@ -25,7 +25,7 @@ describe('Istanbul: EIP-1344', () => {
       const common = new Common({ chain, hardfork })
       const vm = await createVM({ common })
       try {
-        const res = await vm.evm.runCode!(runCodeArgs)
+        const res = await vm.tvm.runCode!(runCodeArgs)
         if (testCase.err !== undefined) {
           assert.strictEqual(res.exceptionError?.error, testCase.err)
         } else {

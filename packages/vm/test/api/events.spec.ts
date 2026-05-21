@@ -97,7 +97,7 @@ describe('VM events', () => {
       emitted = val
       resolve?.()
     }
-    vm.evm.events!.once('beforeMessage', handler)
+    vm.tvm.events!.once('beforeMessage', handler)
 
     const tx = createFeeMarket1559Tx({
       gasLimit: 90000,
@@ -112,7 +112,7 @@ describe('VM events', () => {
     assert.strictEqual(bytesToHex(emitted.code), '0x')
   })
 
-  it('should emit EVMResult after running a message', async () => {
+  it('should emit TVMResult after running a message', async () => {
     const vm = await createVM()
     await vm.stateManager.putAccount(SIGNER_A.address, new Account(BigInt(0), BigInt(0x11111111)))
     let emitted: any
@@ -120,7 +120,7 @@ describe('VM events', () => {
       emitted = val
       resolve?.()
     }
-    vm.evm.events!.once('afterMessage', handler)
+    vm.tvm.events!.once('afterMessage', handler)
 
     const tx = createFeeMarket1559Tx({
       gasLimit: 90000,
@@ -141,7 +141,7 @@ describe('VM events', () => {
     const handler = (val: unknown) => {
       lastEmitted = val
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     // This is a deployment transaction that pushes 0x41 (i.e. ascii A) followed by 31 0s to
     // the stack, stores that in memory, and then returns the first byte from memory.
@@ -155,7 +155,7 @@ describe('VM events', () => {
     await runTx(vm, { tx, skipBalance: true, skipHardForkValidation: true })
 
     assert.strictEqual((lastEmitted as any).opcode.name, 'RETURN')
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
   })
 
   it('should emit a NewContractEvent on new contracts', async () => {
@@ -166,7 +166,7 @@ describe('VM events', () => {
       emitted = val
       resolve?.()
     }
-    vm.evm.events!.once('newContract', handler)
+    vm.tvm.events!.once('newContract', handler)
 
     // This is a deployment transaction that pushes 0x41 (i.e. ascii A) followed by 31 0s to
     // the stack, stores that in memory, and then returns the first byte from memory.

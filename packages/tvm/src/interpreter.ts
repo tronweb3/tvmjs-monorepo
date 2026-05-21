@@ -25,8 +25,8 @@ import { FORMAT, MAGIC, VERSION } from './eof/constants.ts'
 import { EOFContainerMode, validateEOF } from './eof/container.ts'
 import { setupEOF } from './eof/setup.ts'
 import { ContainerSectionType } from './eof/verify.ts'
-import { EVMError, EVMErrorTypeString } from './errors.ts'
-import { type EVMPerformanceLogger, type Timer } from './logger.ts'
+import { TVMError, TVMErrorTypeString } from './errors.ts'
+import { type TVMPerformanceLogger, type Timer } from './logger.ts'
 import { Memory } from './memory.ts'
 import { Message } from './message.ts'
 import { trap } from './opcodes/index.ts'
@@ -36,19 +36,19 @@ import { Stack } from './stack.ts'
 import type { BinaryTreeAccessWitnessInterface, Common, StateManagerInterface } from '@tvmjs/common'
 import type { Address, PrefixedHexString } from '@tvmjs/util'
 import { stackDelta } from './eof/stackDelta.ts'
-import type { EVM } from './evm.ts'
 import type { Journal } from './journal.ts'
 import type { AsyncOpHandler, Opcode, OpcodeMapEntry } from './opcodes/index.ts'
+import type { TVM } from './tvm.ts'
 import type {
   Block,
   EOFEnv,
-  EVMMockBlockchainInterface,
-  EVMProfilerOpts,
-  EVMResult,
   Log,
+  TVMMockBlockchainInterface,
+  TVMProfilerOpts,
+  TVMResult,
 } from './types.ts'
 
-const debugGas = debugDefault('evm:gas')
+const debugGas = debugDefault('tvm:gas')
 
 export interface InterpreterOpts {
   pc?: number
@@ -57,7 +57,7 @@ export interface InterpreterOpts {
 }
 
 /**
- * Immediate (unprocessed) result of running an EVM bytecode.
+ * Immediate (unprocessed) result of running an TVM bytecode.
  */
 export interface RunResult {
   logs: Log[]
@@ -111,7 +111,7 @@ export interface RunState {
   validJumps: Uint8Array // array of values where validJumps[index] has value 0 (default), 1 (jumpdest), 2 (beginsub)
   cachedPushes: { [pc: number]: bigint }
   stateManager: StateManagerInterface
-  blockchain: EVMMockBlockchainInterface
+  blockchain: TVMMockBlockchainInterface
   env: Env
   messageGasLimit?: bigint // Cache value from `gas.ts` to save gas limit for a message call
   interpreter: Interpreter
@@ -122,7 +122,7 @@ export interface RunState {
 
 export interface InterpreterResult {
   runState: RunState
-  exceptionError?: EVMError
+  exceptionError?: TVMError
 }
 
 export interface InterpreterStep {
@@ -152,14 +152,14 @@ export interface InterpreterStep {
 }
 
 /**
- * Parses and executes EVM bytecode.
+ * Parses and executes TVM bytecode.
  */
 export class Interpreter {
   protected _vm: any
   protected _runState: RunState
   protected _stateManager: StateManagerInterface
   protected common: Common
-  public _evm: EVM
+  public _tvm: TVM
   public journal: Journal
   _env: Env
 
@@ -170,27 +170,27 @@ export class Interpreter {
   // Opcode debuggers (e.g. { 'push': [debug Object], 'sstore': [debug Object], ...})
   private opDebuggers: { [key: string]: (debug: string) => void } = {}
 
-  private profilerOpts?: EVMProfilerOpts
-  private performanceLogger: EVMPerformanceLogger
+  private profilerOpts?: TVMProfilerOpts
+  private performanceLogger: TVMPerformanceLogger
 
   // TODO remove gasLeft as constructor argument
   constructor(
-    evm: EVM,
+    tvm: TVM,
     stateManager: StateManagerInterface,
-    blockchain: EVMMockBlockchainInterface,
+    blockchain: TVMMockBlockchainInterface,
     env: Env,
     gasLeft: bigint,
     journal: Journal,
-    performanceLogs: EVMPerformanceLogger,
-    profilerOpts?: EVMProfilerOpts,
+    performanceLogs: TVMPerformanceLogger,
+    profilerOpts?: TVMProfilerOpts,
   ) {
-    this._evm = evm
+    this._tvm = tvm
     this._stateManager = stateManager
-    this.common = this._evm.common
+    this.common = this._tvm.common
 
     if (
       this.common.consensusType() === 'poa' &&
-      this._evm['_optsCached'].cliqueSigner === undefined
+      this._tvm['_optsCached'].cliqueSigner === undefined
     )
       throw EthereumJSErrorWithoutCode(
         'Must include cliqueSigner function if clique/poa is being used for consensus type',
@@ -235,14 +235,14 @@ export class Interpreter {
         // Bytecode contains invalid EOF magic byte
         return {
           runState: this._runState,
-          exceptionError: new EVMError(EVMError.errorMessages.INVALID_BYTECODE_RESULT),
+          exceptionError: new TVMError(TVMError.errorMessages.INVALID_BYTECODE_RESULT),
         }
       }
       if (code[2] !== VERSION) {
         // Bytecode contains invalid EOF version number
         return {
           runState: this._runState,
-          exceptionError: new EVMError(EVMError.errorMessages.INVALID_EOF_FORMAT),
+          exceptionError: new TVMError(TVMError.errorMessages.INVALID_EOF_FORMAT),
         }
       }
       this._runState.code = code
@@ -255,7 +255,7 @@ export class Interpreter {
       } catch {
         return {
           runState: this._runState,
-          exceptionError: new EVMError(EVMError.errorMessages.INVALID_EOF_FORMAT), // TODO: verify if all gas should be consumed
+          exceptionError: new TVMError(TVMError.errorMessages.INVALID_EOF_FORMAT), // TODO: verify if all gas should be consumed
         }
       }
 
@@ -264,7 +264,7 @@ export class Interpreter {
         try {
           validateEOF(
             this._runState.code,
-            this._evm,
+            this._tvm,
             ContainerSectionType.InitCode,
             EOFContainerMode.TxInitmode,
           )
@@ -272,7 +272,7 @@ export class Interpreter {
           // Trying to deploy an invalid EOF container
           return {
             runState: this._runState,
-            exceptionError: new EVMError(EVMError.errorMessages.INVALID_EOF_FORMAT), // TODO: verify if all gas should be consumed
+            exceptionError: new TVMError(TVMError.errorMessages.INVALID_EOF_FORMAT), // TODO: verify if all gas should be consumed
           }
         }
       }
@@ -352,11 +352,11 @@ export class Interpreter {
           this.performanceLogger.unpauseTimer(overheadTimer)
         }
         // re-throw on non-VM errors
-        if (!('errorType' in e && e.errorType === EVMErrorTypeString)) {
+        if (!('errorType' in e && e.errorType === TVMErrorTypeString)) {
           throw e
         }
         // STOP is not an exception
-        if (e.error !== EVMError.errorMessages.STOP) {
+        if (e.error !== TVMError.errorMessages.STOP) {
           err = e
         }
         break
@@ -400,7 +400,7 @@ export class Interpreter {
         gas = await opEntry.gasHandler(this._runState, gas, this.common)
       }
 
-      if (this._evm.events.listenerCount('step') > 0 || this._evm.DEBUG) {
+      if (this._tvm.events.listenerCount('step') > 0 || this._tvm.DEBUG) {
         // Only run this stepHook function if there is an event listener (e.g. test runner)
         // or if the vm is running in debug mode (to display opcode debug logs)
         await this._runStepHook(gas, this.getGasLeft(), memorySizeCache)
@@ -422,7 +422,7 @@ export class Interpreter {
 
       // Check for invalid opcode
       if (opInfo.isInvalid) {
-        throw new EVMError(EVMError.errorMessages.INVALID_OPCODE)
+        throw new TVMError(TVMError.errorMessages.INVALID_OPCODE)
       }
 
       // Reduce opcode's base fee
@@ -454,10 +454,10 @@ export class Interpreter {
   }
 
   /**
-   * Get info for an opcode from EVM's list of opcodes.
+   * Get info for an opcode from TVM's list of opcodes.
    */
   lookupOpInfo(op: number): OpcodeMapEntry {
-    return this._evm['_opcodeMap'][op]
+    return this._tvm['_opcodeMap'][op]
   }
 
   async _runStepHook(dynamicFee: bigint, gasLeft: bigint, memorySize: bigint): Promise<void> {
@@ -518,7 +518,7 @@ export class Interpreter {
         this._env.eof !== undefined ? this._env.eof?.eofRunState.returnStack.length + 1 : undefined,
     }
 
-    if (this._evm.DEBUG) {
+    if (this._tvm.DEBUG) {
       // Create opTrace for debug functionality
       let hexStack = []
       hexStack = eventObj.stack.map((item: any) => {
@@ -537,7 +537,7 @@ export class Interpreter {
       }
 
       if (!(name in this.opDebuggers)) {
-        this.opDebuggers[name] = debugDefault(`evm:ops:${name}`)
+        this.opDebuggers[name] = debugDefault(`tvm:ops:${name}`)
       }
       this.opDebuggers[name](JSON.stringify(opTrace))
     }
@@ -562,7 +562,7 @@ export class Interpreter {
      * @property {Account} account the Account which owns the code running
      * @property {Address} address the address of the `account`
      * @property {Number} depth the current number of calls deep the contract is
-     * @property {Uint8Array} memory the memory of the EVM as a `Uint8Array`
+     * @property {Uint8Array} memory the memory of the TVM as a `Uint8Array`
      * @property {BigInt} memoryWordCount current size of memory in words
      * @property {Address} codeAddress the address of the code which is currently being ran (this differs from `address` in a `DELEGATECALL` and `CALLCODE` call)
      * @property {number} eofSection the current EOF code section referenced by the PC
@@ -571,7 +571,7 @@ export class Interpreter {
      * @property {number} eofFunctionDepth the depth of the function call (only present for EOF)
      * @property {Array} storage an array of tuples, where each tuple contains a storage key and value
      */
-    await this._evm['_emit']('step', eventObj)
+    await this._tvm['_emit']('step', eventObj)
   }
 
   // Returns all valid jump and jumpsub destinations.
@@ -627,7 +627,7 @@ export class Interpreter {
    */
   useGas(amount: bigint, context?: string | Opcode): void {
     this._runState.gasLeft -= amount
-    if (this._evm.DEBUG) {
+    if (this._tvm.DEBUG) {
       let tempString = ''
       if (typeof context === 'string') {
         tempString = context + ': '
@@ -638,7 +638,7 @@ export class Interpreter {
     }
     if (this._runState.gasLeft < BIGINT_0) {
       this._runState.gasLeft = BIGINT_0
-      trap(EVMError.errorMessages.OUT_OF_GAS)
+      trap(TVMError.errorMessages.OUT_OF_GAS)
     }
   }
 
@@ -648,7 +648,7 @@ export class Interpreter {
    * @param context - Usage context for debugging
    */
   refundGas(amount: bigint, context?: string): void {
-    if (this._evm.DEBUG) {
+    if (this._tvm.DEBUG) {
       debugGas(
         `${typeof context === 'string' ? context + ': ' : ''}refund ${amount} gas (-> ${
           this._runState.gasRefund
@@ -664,7 +664,7 @@ export class Interpreter {
    * @param context - Usage context for debugging
    */
   subRefund(amount: bigint, context?: string): void {
-    if (this._evm.DEBUG) {
+    if (this._tvm.DEBUG) {
       debugGas(
         `${typeof context === 'string' ? context + ': ' : ''}sub gas refund ${amount} (-> ${
           this._runState.gasRefund
@@ -674,7 +674,7 @@ export class Interpreter {
     this._runState.gasRefund -= amount
     if (this._runState.gasRefund < BIGINT_0) {
       this._runState.gasRefund = BIGINT_0
-      trap(EVMError.errorMessages.REFUND_EXHAUSTED)
+      trap(TVMError.errorMessages.REFUND_EXHAUSTED)
     }
   }
 
@@ -683,7 +683,7 @@ export class Interpreter {
    * @param amount - Amount to add
    */
   addStipend(amount: bigint): void {
-    if (this._evm.DEBUG) {
+    if (this._tvm.DEBUG) {
       debugGas(`add stipend ${amount} (-> ${this._runState.gasLeft})`)
     }
     this._runState.gasLeft += amount
@@ -695,8 +695,8 @@ export class Interpreter {
    */
   async getExternalBalance(address: Address): Promise<bigint> {
     // Track address access for EIP-7928 BAL
-    if (this._evm.common.isActivatedEIP(7928)) {
-      this._evm.blockLevelAccessList?.addAddress(address.toString())
+    if (this._tvm.common.isActivatedEIP(7928)) {
+      this._tvm.blockLevelAccessList?.addAddress(address.toString())
     }
     // shortcut if current account
     if (address.equals(this._env.address)) {
@@ -730,18 +730,18 @@ export class Interpreter {
     // EIP-7928: Get the original (pre-transaction) value BEFORE storing
     // This is needed to detect no-op writes (where new value equals original value)
     let originalValue: Uint8Array | undefined
-    if (this._evm.common.isActivatedEIP(7928)) {
+    if (this._tvm.common.isActivatedEIP(7928)) {
       originalValue = await this._stateManager.originalStorageCache.get(this._env.address, key)
     }
 
     await this._stateManager.putStorage(this._env.address, key, value)
 
-    if (this._evm.common.isActivatedEIP(7928)) {
-      this._evm.blockLevelAccessList?.addStorageWrite(
+    if (this._tvm.common.isActivatedEIP(7928)) {
+      this._tvm.blockLevelAccessList?.addStorageWrite(
         this._env.address.toString(),
         key,
         value,
-        this._evm.blockLevelAccessList!.blockAccessIndex,
+        this._tvm.blockLevelAccessList!.blockAccessIndex,
         originalValue,
       )
     }
@@ -760,8 +760,8 @@ export class Interpreter {
    *                   implicit reads (e.g., SSTORE gas calculation) that should not appear in BAL.
    */
   async storageLoad(key: Uint8Array, original = false, trackBAL = true): Promise<Uint8Array> {
-    if (this._evm.common.isActivatedEIP(7928) && trackBAL) {
-      this._evm.blockLevelAccessList?.addStorageRead(this._env.address.toString(), key)
+    if (this._tvm.common.isActivatedEIP(7928) && trackBAL) {
+      this._tvm.blockLevelAccessList?.addStorageRead(this._env.address.toString(), key)
     }
     if (original) {
       return this._stateManager.originalStorageCache.get(this._env.address, key)
@@ -777,7 +777,7 @@ export class Interpreter {
    * @param value Storage value
    */
   transientStorageStore(key: Uint8Array, value: Uint8Array): void {
-    return this._evm.transientStorage.put(this._env.address, key, value)
+    return this._tvm.transientStorage.put(this._env.address, key, value)
   }
 
   /**
@@ -786,7 +786,7 @@ export class Interpreter {
    * @param key Storage key
    */
   transientStorageLoad(key: Uint8Array): Uint8Array {
-    return this._evm.transientStorage.get(this._env.address, key)
+    return this._tvm.transientStorage.get(this._env.address, key)
   }
 
   /**
@@ -795,7 +795,7 @@ export class Interpreter {
    */
   finish(returnData: Uint8Array): void {
     this._result.returnValue = returnData
-    trap(EVMError.errorMessages.STOP)
+    trap(TVMError.errorMessages.STOP)
   }
 
   /**
@@ -805,7 +805,7 @@ export class Interpreter {
    */
   revert(returnData: Uint8Array): void {
     this._result.returnValue = returnData
-    trap(EVMError.errorMessages.REVERT)
+    trap(TVMError.errorMessages.REVERT)
   }
 
   /**
@@ -941,7 +941,7 @@ export class Interpreter {
   getBlockCoinbase(): bigint {
     let coinbase: Address
     if (this.common.consensusAlgorithm() === ConsensusAlgorithm.Clique) {
-      coinbase = this._evm['_optsCached'].cliqueSigner!(this._env.block.header)
+      coinbase = this._tvm['_optsCached'].cliqueSigner!(this._env.block.header)
     } else {
       coinbase = this._env.block.header.coinbase
     }
@@ -1124,10 +1124,10 @@ export class Interpreter {
 
     if (this._env.address.equals(msg.codeAddress)) {
       if (msg.value > BIGINT_0) {
-        trap(EVMError.errorMessages.CAN_NOT_TRANSFER_TRX_YOURSELF)
+        trap(TVMError.errorMessages.CAN_NOT_TRANSFER_TRX_YOURSELF)
       }
       if (msg.tokenValue > BIGINT_0) {
-        trap(EVMError.errorMessages.CAN_NOT_TRANSFER_ASSET_YOURSELF)
+        trap(TVMError.errorMessages.CAN_NOT_TRANSFER_ASSET_YOURSELF)
       }
     }
 
@@ -1150,7 +1150,7 @@ export class Interpreter {
       return BIGINT_0
     }
 
-    const results = await this._evm.runCall({ message: msg })
+    const results = await this._tvm.runCall({ message: msg })
 
     if (results.execResult.logs) {
       this._result.logs = this._result.logs.concat(results.execResult.logs)
@@ -1166,7 +1166,7 @@ export class Interpreter {
     if (
       results.execResult.returnValue !== undefined &&
       (!results.execResult.exceptionError ||
-        results.execResult.exceptionError.error === EVMError.errorMessages.REVERT)
+        results.execResult.exceptionError.error === TVMError.errorMessages.REVERT)
     ) {
       this._runState.returnBytes = results.execResult.returnValue
     }
@@ -1226,17 +1226,17 @@ export class Interpreter {
     this._env.contract.nonce += BIGINT_1
     await this.journal.putAccount(this._env.address, this._env.contract)
     if (this.common.isActivatedEIP(7928)) {
-      this._evm.blockLevelAccessList!.addNonceChange(
+      this._tvm.blockLevelAccessList!.addNonceChange(
         this._env.address.toString(),
         this._env.contract.nonce,
-        this._evm.blockLevelAccessList!.blockAccessIndex,
+        this._tvm.blockLevelAccessList!.blockAccessIndex,
       )
     }
 
     if (this.common.isActivatedEIP(3860)) {
       if (
         codeToRun.length > Number(this.common.param('maxInitCodeSize')) &&
-        this._evm.allowUnlimitedInitCodeSize === false
+        this._tvm.allowUnlimitedInitCodeSize === false
       ) {
         return BIGINT_0
       }
@@ -1262,7 +1262,7 @@ export class Interpreter {
       message.createdAddresses = createdAddresses
     }
 
-    const results = await this._evm.runCall({ message })
+    const results = await this._tvm.runCall({ message })
 
     if (results.execResult.logs) {
       this._result.logs = this._result.logs.concat(results.execResult.logs)
@@ -1274,14 +1274,14 @@ export class Interpreter {
     // Set return buffer in case revert happened
     if (
       results.execResult.exceptionError &&
-      results.execResult.exceptionError.error === EVMError.errorMessages.REVERT
+      results.execResult.exceptionError.error === TVMError.errorMessages.REVERT
     ) {
       this._runState.returnBytes = results.execResult.returnValue
     }
 
     if (
       !results.execResult.exceptionError ||
-      results.execResult.exceptionError.error === EVMError.errorMessages.CODESTORE_OUT_OF_GAS
+      results.execResult.exceptionError.error === TVMError.errorMessages.CODESTORE_OUT_OF_GAS
     ) {
       for (const [addressToSelfdestructHex, beneficiaryHex] of selfdestruct) {
         this._result.selfdestruct.set(addressToSelfdestructHex, beneficiaryHex)
@@ -1381,10 +1381,10 @@ export class Interpreter {
       toAccount.balance += contractBalance
       await this.journal.putAccount(toAddress, toAccount)
       if (this.common.isActivatedEIP(7928)) {
-        this._evm.blockLevelAccessList!.addBalanceChange(
+        this._tvm.blockLevelAccessList!.addBalanceChange(
           toAddress.toString(),
           toAccount.balance,
-          this._evm.blockLevelAccessList!.blockAccessIndex,
+          this._tvm.blockLevelAccessList!.blockAccessIndex,
           originalBalance,
         )
       }
@@ -1426,16 +1426,16 @@ export class Interpreter {
         balance: BIGINT_0,
       })
       if (this.common.isActivatedEIP(7928)) {
-        this._evm.blockLevelAccessList!.addBalanceChange(
+        this._tvm.blockLevelAccessList!.addBalanceChange(
           this._env.address.toString(),
           BIGINT_0,
-          this._evm.blockLevelAccessList!.blockAccessIndex,
+          this._tvm.blockLevelAccessList!.blockAccessIndex,
           originalBalance,
         )
       }
     }
 
-    trap(EVMError.errorMessages.STOP)
+    trap(TVMError.errorMessages.STOP)
   }
 
   /**
@@ -1469,18 +1469,18 @@ export class Interpreter {
    */
   log(data: Uint8Array, numberOfTopics: number, topics: Uint8Array[]): void {
     if (numberOfTopics < 0 || numberOfTopics > 4) {
-      trap(EVMError.errorMessages.OUT_OF_RANGE)
+      trap(TVMError.errorMessages.OUT_OF_RANGE)
     }
 
     if (topics.length !== numberOfTopics) {
-      trap(EVMError.errorMessages.INTERNAL_ERROR)
+      trap(TVMError.errorMessages.INTERNAL_ERROR)
     }
 
     const log: Log = [this._env.address.bytes, topics, data]
     this._result.logs.push(log)
   }
 
-  private _getReturnCode(results: EVMResult, isEOFCreate = false) {
+  private _getReturnCode(results: TVMResult, isEOFCreate = false) {
     if (this._runState.env.eof === undefined || isEOFCreate) {
       if (results.execResult.exceptionError) {
         return BIGINT_0
@@ -1490,7 +1490,7 @@ export class Interpreter {
     } else {
       // EOF mode, call was either EXTCALL / EXTDELEGATECALL / EXTSTATICCALL
       if (results.execResult.exceptionError !== undefined) {
-        if (results.execResult.exceptionError.error === EVMError.errorMessages.REVERT) {
+        if (results.execResult.exceptionError.error === TVMError.errorMessages.REVERT) {
           // Revert
           return BIGINT_1
         } else {

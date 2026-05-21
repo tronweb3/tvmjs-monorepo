@@ -20,10 +20,10 @@ describe('Precompiles: hardfork availability', () => {
       assert.isTrue(true, 'BN254PAIRING available in petersburg')
     }
 
-    let evm = await createTVM({
+    let tvm = await createTVM({
       common: commonByzantium,
     })
-    let result = await evm.runCall({
+    let result = await tvm.runCall({
       caller: createZeroAddress(),
       gasLimit: BigInt(0xffffffffff),
       to: ECPAIR_Address,
@@ -41,10 +41,10 @@ describe('Precompiles: hardfork availability', () => {
       assert.isTrue(true, 'BN254PAIRING available in petersburg')
     }
 
-    evm = await createTVM({
+    tvm = await createTVM({
       common: commonPetersburg,
     })
-    result = await evm.runCall({
+    result = await tvm.runCall({
       caller: createZeroAddress(),
       gasLimit: BigInt(0xffffffffff),
       to: ECPAIR_Address,
@@ -63,11 +63,11 @@ describe('Precompiles: hardfork availability', () => {
       assert.isTrue(true, 'BN254PAIRING not available in homestead')
     }
 
-    evm = await createTVM({
+    tvm = await createTVM({
       common: commonHomestead,
     })
 
-    result = await evm.runCall({
+    result = await tvm.runCall({
       caller: createZeroAddress(),
       gasLimit: BigInt(0xffffffffff),
       to: ECPAIR_Address,

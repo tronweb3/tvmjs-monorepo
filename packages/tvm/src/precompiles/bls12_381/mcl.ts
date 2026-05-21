@@ -7,7 +7,7 @@ import {
   unprefixedHexToBytes,
 } from '@tvmjs/util'
 
-import { EVMError } from '../../errors.ts'
+import { TVMError } from '../../errors.ts'
 
 import {
   BLS_FIELD_MODULUS,
@@ -19,7 +19,7 @@ import {
   BLS_ZERO_BUFFER,
 } from './constants.ts'
 
-import type { EVMBLSInterface } from '../../types.ts'
+import type { TVMBLSInterface } from '../../types.ts'
 
 /**
  * Converts an Uint8Array to a MCL G1 point. Raises errors if the point is not on the curve
@@ -54,12 +54,12 @@ function BLS12_381_ToG1Point(input: Uint8Array, mcl: any, verifyOrder = true): a
 
   mcl.verifyOrderG1(verifyOrder)
   if (verifyOrder && G1.isValidOrder() === false) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
   }
 
   // Check if these coordinates are actually on the curve.
   if (G1.isValid() === false) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
   }
 
   return G1
@@ -88,10 +88,10 @@ function BLS12_381_FromG1Point(input: any): Uint8Array {
 function BLS12_381_ToFp2Point(fpXCoordinate: Uint8Array, fpYCoordinate: Uint8Array, mcl: any): any {
   // check if the coordinates are in the field
   if (bytesToBigInt(fpXCoordinate) >= BLS_FIELD_MODULUS) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
   }
   if (bytesToBigInt(fpYCoordinate) >= BLS_FIELD_MODULUS) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
   }
 
   const fp_x = new mcl.Fp()
@@ -148,11 +148,11 @@ function BLS12_381_ToG2Point(input: Uint8Array, mcl: any, verifyOrder = true): a
 
   mcl.verifyOrderG2(verifyOrder)
   if (verifyOrder && p.isValidOrder() === false) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
   }
 
   if (p.isValid() === false) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
   }
 
   return p
@@ -193,7 +193,7 @@ function BLS12_381_ToFrPoint(input: Uint8Array, mcl: any): any {
 function BLS12_381_ToFpPoint(fpCoordinate: Uint8Array, mcl: any): any {
   // check if point is in field
   if (bytesToBigInt(fpCoordinate) >= BLS_FIELD_MODULUS) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
   }
 
   const fp = new mcl.Fp()
@@ -205,13 +205,13 @@ function BLS12_381_ToFpPoint(fpCoordinate: Uint8Array, mcl: any): any {
 }
 
 /**
- * Implementation of the `EVMBLSInterface` using the `mcl-wasm` WASM `mcl` wrapper library,
+ * Implementation of the `TVMBLSInterface` using the `mcl-wasm` WASM `mcl` wrapper library,
  * see https://github.com/herumi/mcl-wasm.
  *
  * This can be optionally used to replace the build-in Noble implementation (`NobleBLS`) with
- * a more performant WASM variant. See EVM `bls` constructor option on how to use.
+ * a more performant WASM variant. See TVM `bls` constructor option on how to use.
  */
-export class MCLBLS implements EVMBLSInterface {
+export class MCLBLS implements TVMBLSInterface {
   protected readonly _mcl: any
 
   constructor(mcl: any) {
@@ -341,7 +341,7 @@ export class MCLBLS implements EVMBLSInterface {
     }
 
     // run the pairing check
-    // reference (Nethermind): https://github.com/NethermindEth/nethermind/blob/374b036414722b9c8ad27e93d64840b8f63931b9/src/Nethermind/Nethermind.Evm/Precompiles/Bls/Mcl/PairingPrecompile.cs#L93
+    // reference (Nethermind): https://github.com/NethermindEth/nethermind/blob/374b036414722b9c8ad27e93d64840b8f63931b9/src/Nethermind/Nethermind.Tvm/Precompiles/Bls/Mcl/PairingPrecompile.cs#L93
     let GT
     for (let index = 0; index < pairs.length; index++) {
       const pair = pairs[index]

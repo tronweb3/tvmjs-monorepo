@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
 ### Features
 
-- **TRON TVM test suite**: Add initial TVM integration tests including `AllowTvmCompatibleEvmTest` (RIPEMD160, Blake2f, gasPrice, chainId), `AllowTvmLondonTest` (baseFee), `BatchSendTest` (token transfer), `BatchValidateSignContractTest`, `ChargeTest` (energy overflow), `Create2Test`, `ExtCodeHashTest`, and `ValidateMultiSignContractTest`
+- **TRON TVM test suite**: Add initial TVM integration tests including `AllowTvmCompatibleTvmTest` (RIPEMD160, Blake2f, gasPrice, chainId), `AllowTvmLondonTest` (baseFee), `BatchSendTest` (token transfer), `BatchValidateSignContractTest`, `ChargeTest` (energy overflow), `Create2Test`, `ExtCodeHashTest`, and `ValidateMultiSignContractTest`
 - **TRC-10 token support in `runTx()`**: Add token balance validation via `state.tokenIdExists()` before executing token transfers; throw `No asset!` when token ID does not exist
 
 ### Bug Fixes

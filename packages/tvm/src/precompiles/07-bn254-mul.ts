@@ -1,11 +1,11 @@
 import { bytesToHex, setLengthRight } from '@tvmjs/util'
 
-import { EVMErrorResult, OOGResult } from '../evm.ts'
+import { OOGResult, TVMErrorResult } from '../tvm.ts'
 
 import { getPrecompileName } from './index.ts'
 import { gasLimitCheck } from './util.ts'
 
-import type { EVM } from '../evm.ts'
+import type { TVM } from '../tvm.ts'
 import type { ExecResult } from '../types.ts'
 import type { PrecompileInput } from './types.ts'
 
@@ -22,12 +22,12 @@ export function precompile07(opts: PrecompileInput): ExecResult {
 
   let returnData
   try {
-    returnData = (opts._EVM as EVM)['_bn254'].mul(input)
+    returnData = (opts._TVM as TVM)['_bn254'].mul(input)
   } catch (e: any) {
     if (opts._debug !== undefined) {
       opts._debug(`${pName} failed: ${e.message}`)
     }
-    return EVMErrorResult(e, opts.gasLimit)
+    return TVMErrorResult(e, opts.gasLimit)
   }
 
   // check ecmul success or failure by comparing the output length

@@ -2,8 +2,8 @@ import { cliqueSigner, createBlockHeader } from '@tvmjs/block'
 import { ConsensusType, Hardfork } from '@tvmjs/common'
 import {
   BinaryTreeAccessWitness,
-  type EVM,
   type Log,
+  type TVM,
   createEIP7708SelfdestructLog,
 } from '@tvmjs/tvm'
 import { Capability, isBlob4844Tx } from '@tvmjs/tx'
@@ -31,7 +31,7 @@ import {
 import debugDefault from 'debug'
 
 import { Bloom } from './bloom/index.ts'
-import { emitEVMProfile } from './emitEVMProfile.ts'
+import { emitTVMProfile } from './emitTVMProfile.ts'
 
 import type { Block } from '@tvmjs/block'
 import type { Common } from '@tvmjs/common'
@@ -62,7 +62,7 @@ const debugGas = debugDefault('vm:tx:gas')
 const DEFAULT_HEADER = createBlockHeader()
 
 let enableProfiler = false
-const initLabel = 'EVM journal init, address/slot warming, fee validation'
+const initLabel = 'TVM journal init, address/slot warming, fee validation'
 const balanceNonceLabel = 'Balance/Nonce checks and update'
 const executionLabel = 'Execution'
 const logsGasBalanceLabel = 'Logs, gas usage, account/miner balances'
@@ -139,12 +139,12 @@ async function processAuthorizationList(
     const account = accountMaybeUndefined ?? new Account()
 
     // Add authority address to warm addresses
-    vm.evm.journal.addAlwaysWarmAddress(authority.toString())
+    vm.tvm.journal.addAlwaysWarmAddress(authority.toString())
 
     // EIP-7928: Add authority address to BAL (even if authorization fails later,
     // the account was accessed to check nonce/code)
     if (vm.common.isActivatedEIP(7928)) {
-      vm.evm.blockLevelAccessList!.addAddress(authority.toString())
+      vm.tvm.blockLevelAccessList!.addAddress(authority.toString())
     }
 
     // Skip if account is a "normal" contract (not 7702-delegated)
@@ -174,12 +174,12 @@ async function processAuthorizationList(
 
     // Update account nonce and store
     account.nonce++
-    await vm.evm.journal.putAccount(authority, account)
+    await vm.tvm.journal.putAccount(authority, account)
     if (vm.common.isActivatedEIP(7928)) {
-      vm.evm.blockLevelAccessList!.addNonceChange(
+      vm.tvm.blockLevelAccessList!.addNonceChange(
         authority.toString(),
         account.nonce,
-        vm.evm.blockLevelAccessList!.blockAccessIndex,
+        vm.tvm.blockLevelAccessList!.blockAccessIndex,
       )
     }
 
@@ -194,10 +194,10 @@ async function processAuthorizationList(
       // See EIP PR: https://github.com/ethereum/EIPs/pull/8929
       await vm.stateManager.putCode(authority, new Uint8Array())
       if (vm.common.isActivatedEIP(7928)) {
-        vm.evm.blockLevelAccessList!.addCodeChange(
+        vm.tvm.blockLevelAccessList!.addCodeChange(
           authority.toString(),
           new Uint8Array(),
-          vm.evm.blockLevelAccessList!.blockAccessIndex,
+          vm.tvm.blockLevelAccessList!.blockAccessIndex,
           currentCode,
         )
       }
@@ -205,10 +205,10 @@ async function processAuthorizationList(
       const addressCode = concatBytes(DELEGATION_7702_FLAG, address)
       await vm.stateManager.putCode(authority, addressCode)
       if (vm.common.isActivatedEIP(7928)) {
-        vm.evm.blockLevelAccessList!.addCodeChange(
+        vm.tvm.blockLevelAccessList!.addCodeChange(
           authority.toString(),
           addressCode,
-          vm.evm.blockLevelAccessList!.blockAccessIndex,
+          vm.tvm.blockLevelAccessList!.blockAccessIndex,
           currentCode,
         )
       }
@@ -254,7 +254,7 @@ async function processSelfdestructs(vm: VM, results: RunTxResult): Promise<void>
       }
     }
 
-    await vm.evm.journal.deleteAccount(address)
+    await vm.tvm.journal.deleteAccount(address)
     destroyedForBAL.add(address.toString())
     if (vm.DEBUG) {
       debug(`tx selfdestruct on address=${address}`)
@@ -266,7 +266,7 @@ async function processSelfdestructs(vm: VM, results: RunTxResult): Promise<void>
   }
 
   if (destroyedForBAL.size > 0 && vm.common.isActivatedEIP(7928)) {
-    vm.evm.blockLevelAccessList!.cleanupSelfdestructed([...destroyedForBAL])
+    vm.tvm.blockLevelAccessList!.cleanupSelfdestructed([...destroyedForBAL])
   }
 }
 
@@ -280,7 +280,7 @@ async function processSelfdestructs(vm: VM, results: RunTxResult): Promise<void>
 function buildAccessListResult(vm: VM): AccessList {
   const accessList: AccessList = []
 
-  for (const [address, storageSet] of vm.evm.journal.accessList!) {
+  for (const [address, storageSet] of vm.tvm.journal.accessList!) {
     const item: AccessListItem = {
       address: `0x${address}`,
       storageKeys: [],
@@ -333,23 +333,23 @@ async function updateMinerBalance(
   minerAccount.balance += results.minerValue
   if (vm.common.isActivatedEIP(7928)) {
     if (results.minerValue !== BIGINT_0) {
-      vm.evm.blockLevelAccessList!.addBalanceChange(
+      vm.tvm.blockLevelAccessList!.addBalanceChange(
         miner.toString(),
         minerAccount.balance,
-        vm.evm.blockLevelAccessList!.blockAccessIndex,
+        vm.tvm.blockLevelAccessList!.blockAccessIndex,
         minerOriginalBalance,
       )
     } else {
       // EIP-7928: If the COINBASE reward is zero, the COINBASE address
       // MUST be included as a read (address only, no balance change)
-      vm.evm.blockLevelAccessList!.addAddress(miner.toString())
+      vm.tvm.blockLevelAccessList!.addAddress(miner.toString())
     }
   }
 
   // Store updated miner account
   // Note: If balance remains zero, account is marked as "touched" and may be
   // removed during cleanup for forks >= SpuriousDragon
-  await vm.evm.journal.putAccount(miner, minerAccount)
+  await vm.tvm.journal.putAccount(miner, minerAccount)
 
   if (vm.DEBUG) {
     debug(`tx update miner account (${miner}) balance (-> ${minerAccount.balance})`)
@@ -393,17 +393,17 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   }
 
   // Ensure we start with a clear warmed accounts Map
-  await vm.evm.journal.cleanup()
+  await vm.tvm.journal.cleanup()
 
   if (opts.reportAccessList === true) {
-    vm.evm.journal.startReportingAccessList()
+    vm.tvm.journal.startReportingAccessList()
   }
 
   if (opts.reportPreimages === true) {
-    vm.evm.journal.startReportingPreimages!()
+    vm.tvm.journal.startReportingPreimages!()
   }
 
-  await vm.evm.journal.checkpoint()
+  await vm.tvm.journal.checkpoint()
   if (vm.DEBUG) {
     debug('-'.repeat(100))
     debug(`tx checkpoint`)
@@ -413,7 +413,7 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   if (opts.tx.supports(Capability.EIP2718TypedTransaction) && vm.common.isActivatedEIP(2718)) {
     // Is it an Access List transaction?
     if (!vm.common.isActivatedEIP(2930)) {
-      await vm.evm.journal.revert()
+      await vm.tvm.journal.revert()
       const msg = _errorMsg(
         'Cannot run transaction: EIP 2930 is not activated.',
         vm,
@@ -423,7 +423,7 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
       throw EthereumJSErrorWithoutCode(msg)
     }
     if (opts.tx.supports(Capability.EIP1559FeeMarket) && !vm.common.isActivatedEIP(1559)) {
-      await vm.evm.journal.revert()
+      await vm.tvm.journal.revert()
       const msg = _errorMsg(
         'Cannot run transaction: EIP 1559 is not activated.',
         vm,
@@ -439,42 +439,42 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
       const [addressBytes, slotBytesList] = accessListItem
       // Using deprecated bytesToUnprefixedHex for performance: journal methods expect unprefixed hex strings for Map/Set lookups.
       const address = bytesToUnprefixedHex(addressBytes)
-      vm.evm.journal.addAlwaysWarmAddress(address, true)
+      vm.tvm.journal.addAlwaysWarmAddress(address, true)
       for (const storageKey of slotBytesList) {
-        vm.evm.journal.addAlwaysWarmSlot(address, bytesToUnprefixedHex(storageKey), true)
+        vm.tvm.journal.addAlwaysWarmSlot(address, bytesToUnprefixedHex(storageKey), true)
       }
     }
   }
 
   try {
     const result = await _runTx(vm, opts)
-    await vm.evm.journal.commit()
+    await vm.tvm.journal.commit()
     if (vm.DEBUG) {
       debug(`tx checkpoint committed`)
     }
     return result
   } catch (e: any) {
-    await vm.evm.journal.revert()
+    await vm.tvm.journal.revert()
     if (vm.DEBUG) {
       debug(`tx checkpoint reverted`)
     }
     throw e
   } finally {
     if (vm.common.isActivatedEIP(2929)) {
-      vm.evm.journal.cleanJournal()
+      vm.tvm.journal.cleanJournal()
     }
-    vm.evm.stateManager.originalStorageCache.clear()
+    vm.tvm.stateManager.originalStorageCache.clear()
     if (enableProfiler) {
       // eslint-disable-next-line no-console
       console.timeEnd(entireTxLabel)
-      const logs = (vm.evm as EVM).getPerformanceLogs()
+      const logs = (vm.tvm as TVM).getPerformanceLogs()
       if (logs.precompiles.length === 0 && logs.opcodes.length === 0) {
         // eslint-disable-next-line no-console
         console.log('No precompile or opcode execution.')
       }
-      emitEVMProfile(logs.precompiles, 'Precompile performance')
-      emitEVMProfile(logs.opcodes, 'Opcodes performance')
-      ;(vm.evm as EVM).clearPerformanceLogs()
+      emitTVMProfile(logs.precompiles, 'Precompile performance')
+      emitTVMProfile(logs.opcodes, 'Opcodes performance')
+      ;(vm.tvm as TVM).clearPerformanceLogs()
     }
   }
 }
@@ -489,7 +489,7 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   let txAccesses: BinaryTreeAccessWitness | undefined
 
   if (vm.common.isActivatedEIP(7864)) {
-    if (vm.evm.binaryTreeAccessWitness === undefined) {
+    if (vm.tvm.binaryTreeAccessWitness === undefined) {
       throw Error(`Binary tree access witness needed for execution of binary tree blocks`)
     }
 
@@ -499,9 +499,9 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
         `Binary tree State Manager needed for execution of binary tree blocks`,
       )
     }
-    stateAccesses = vm.evm.binaryTreeAccessWitness
+    stateAccesses = vm.tvm.binaryTreeAccessWitness
     txAccesses = new BinaryTreeAccessWitness({
-      hashFunction: vm.evm.binaryTreeAccessWitness.hashFunction,
+      hashFunction: vm.tvm.binaryTreeAccessWitness.hashFunction,
     })
   }
 
@@ -527,20 +527,20 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   // ===========================
   if (vm.common.isActivatedEIP(2929)) {
     // Add origin, precompiles, and relevant addresses to warm set
-    const activePrecompiles = vm.evm.precompiles
+    const activePrecompiles = vm.tvm.precompiles
     for (const [addressStr] of activePrecompiles.entries()) {
-      vm.evm.journal.addAlwaysWarmAddress(addressStr)
+      vm.tvm.journal.addAlwaysWarmAddress(addressStr)
     }
-    vm.evm.journal.addAlwaysWarmAddress(caller.toString())
+    vm.tvm.journal.addAlwaysWarmAddress(caller.toString())
     if (tx.to !== undefined) {
-      // Note: in case we create a contract, we do vm in EVMs `_executeCreate` (vm is also correct in inner calls, per the EIP)
+      // Note: in case we create a contract, we do vm in TVMs `_executeCreate` (vm is also correct in inner calls, per the EIP)
       // Using deprecated bytesToUnprefixedHex for performance: journal methods expect unprefixed hex strings.
-      vm.evm.journal.addAlwaysWarmAddress(bytesToUnprefixedHex(tx.to.bytes))
+      vm.tvm.journal.addAlwaysWarmAddress(bytesToUnprefixedHex(tx.to.bytes))
     }
     if (vm.common.isActivatedEIP(3651)) {
       const coinbase = block?.header.coinbase.bytes ?? DEFAULT_HEADER.coinbase.bytes
       // Using deprecated bytesToUnprefixedHex for performance: journal methods expect unprefixed hex strings.
-      vm.evm.journal.addAlwaysWarmAddress(bytesToUnprefixedHex(coinbase))
+      vm.tvm.journal.addAlwaysWarmAddress(bytesToUnprefixedHex(coinbase))
     }
   }
 
@@ -648,12 +648,12 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
         // if skipBalance and not EIP1559 transaction, ensure caller balance is enough to run transaction
         const originalBalance = fromAccount.balance
         fromAccount.balance = upFrontCost
-        await vm.evm.journal.putAccount(caller, fromAccount)
+        await vm.tvm.journal.putAccount(caller, fromAccount)
         if (vm.common.isActivatedEIP(7928)) {
-          vm.evm.blockLevelAccessList!.addBalanceChange(
+          vm.tvm.blockLevelAccessList!.addBalanceChange(
             caller.toString(),
             fromAccount.balance,
-            vm.evm.blockLevelAccessList!.blockAccessIndex,
+            vm.tvm.blockLevelAccessList!.blockAccessIndex,
             originalBalance,
           )
         }
@@ -709,12 +709,12 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
       // if skipBalance, ensure caller balance is enough to run transaction
       const originalBalance = fromAccount.balance
       fromAccount.balance = maxCost
-      await vm.evm.journal.putAccount(caller, fromAccount)
+      await vm.tvm.journal.putAccount(caller, fromAccount)
       if (vm.common.isActivatedEIP(7928)) {
-        vm.evm.blockLevelAccessList!.addBalanceChange(
+        vm.tvm.blockLevelAccessList!.addBalanceChange(
           caller.toString(),
           fromAccount.balance,
-          vm.evm.blockLevelAccessList!.blockAccessIndex,
+          vm.tvm.blockLevelAccessList!.blockAccessIndex,
           originalBalance,
         )
       }
@@ -824,13 +824,13 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   if (opts.skipBalance === true && fromAccount.balance < BIGINT_0) {
     fromAccount.balance = BIGINT_0
   }
-  await vm.evm.journal.putAccount(caller, fromAccount)
+  await vm.tvm.journal.putAccount(caller, fromAccount)
 
   if (vm.common.isActivatedEIP(7928)) {
-    vm.evm.blockLevelAccessList!.addBalanceChange(
+    vm.tvm.blockLevelAccessList!.addBalanceChange(
       caller.toString(),
       fromAccount.balance,
-      vm.evm.blockLevelAccessList!.blockAccessIndex,
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
       senderOriginalBalance,
     )
   }
@@ -852,7 +852,7 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   }
 
   // ===========================
-  // EXECUTION: Run EVM Call
+  // EXECUTION: Run TVM Call
   // ===========================
   const { value, tokenId, tokenValue, data, to } = tx
 
@@ -866,7 +866,7 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     )
   }
 
-  const results = (await vm.evm.runCall({
+  const results = (await vm.tvm.runCall({
     block,
     gasPrice,
     caller,
@@ -970,26 +970,26 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   fromAccount.balance += txCostDiff
 
   if (vm.common.isActivatedEIP(7928)) {
-    vm.evm.blockLevelAccessList!.addBalanceChange(
+    vm.tvm.blockLevelAccessList!.addBalanceChange(
       caller.toString(),
       fromAccount.balance,
-      vm.evm.blockLevelAccessList!.blockAccessIndex,
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
       originalBalance,
     )
-    vm.evm.blockLevelAccessList!.addNonceChange(
+    vm.tvm.blockLevelAccessList!.addNonceChange(
       caller.toString(),
       fromAccount.nonce,
-      vm.evm.blockLevelAccessList!.blockAccessIndex,
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
     )
   }
 
-  await vm.evm.journal.putAccount(caller, fromAccount)
+  await vm.tvm.journal.putAccount(caller, fromAccount)
   // EIP-7928: Track sender balance change for gas refund in Block Access List
   if (vm.common.isActivatedEIP(7928) && txCostDiff > BIGINT_0) {
-    vm.evm.blockLevelAccessList!.addBalanceChange(
+    vm.tvm.blockLevelAccessList!.addBalanceChange(
       caller.toString(),
       fromAccount.balance,
-      vm.evm.blockLevelAccessList!.blockAccessIndex,
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
     )
   }
   if (vm.DEBUG) {
@@ -1039,12 +1039,12 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   }
 
   // Collect preimages if requested
-  if (opts.reportPreimages === true && vm.evm.journal.preimages !== undefined) {
-    results.preimages = vm.evm.journal.preimages
+  if (opts.reportPreimages === true && vm.tvm.journal.preimages !== undefined) {
+    results.preimages = vm.tvm.journal.preimages
   }
 
   // Clear journal and caches
-  await vm.evm.journal.cleanup()
+  await vm.tvm.journal.cleanup()
   state.originalStorageCache.clear()
 
   if (enableProfiler) {
@@ -1076,7 +1076,7 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   // EIP-7928: Clean up net-zero balance changes
   // Per spec, if an account's balance changed during tx but final == pre-tx, don't record
   if (vm.common.isActivatedEIP(7928)) {
-    vm.evm.blockLevelAccessList!.cleanupNetZeroBalanceChanges()
+    vm.tvm.blockLevelAccessList!.cleanupNetZeroBalanceChanges()
   }
 
   /** The `afterTx` event - emits transaction results */

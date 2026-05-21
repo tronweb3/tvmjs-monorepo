@@ -24,16 +24,16 @@ describe('VM: custom opcodes', () => {
     },
   }
 
-  it('should add custom opcodes to the EVM', async () => {
-    const evm = await createTVM({ customOpcodes: [testOpcode] })
+  it('should add custom opcodes to the TVM', async () => {
+    const tvm = await createTVM({ customOpcodes: [testOpcode] })
     const gas = 123456
     let correctOpcodeName: boolean = false
-    evm.events.on('step', (e) => {
+    tvm.events.on('step', (e) => {
       if (e.pc === 0) {
         correctOpcodeName = e.opcode.name === testOpcode.opcodeName
       }
     })
-    const res = await evm.runCode({
+    const res = await tvm.runCode({
       code: hexToBytes('0x21'),
       gasLimit: BigInt(gas),
     })
@@ -42,12 +42,12 @@ describe('VM: custom opcodes', () => {
     assert.isTrue(correctOpcodeName, 'successfully set opcode name')
   })
 
-  it('should delete opcodes from the EVM', async () => {
-    const evm = await createTVM({
+  it('should delete opcodes from the TVM', async () => {
+    const tvm = await createTVM({
       customOpcodes: [{ opcode: 0x20 }], // deletes KECCAK opcode
     })
     const gas = BigInt(123456)
-    const res = await evm.runCode({
+    const res = await tvm.runCode({
       code: hexToBytes('0x20'),
       gasLimit: BigInt(gas),
     })
@@ -56,18 +56,18 @@ describe('VM: custom opcodes', () => {
 
   it('should not override default opcodes', async () => {
     // This test ensures that always the original opcode map is used
-    // Thus, each time you recreate a EVM, it is in a clean state
-    const evm = await createTVM({
+    // Thus, each time you recreate a TVM, it is in a clean state
+    const tvm = await createTVM({
       customOpcodes: [{ opcode: 0x01 }], // deletes ADD opcode
     })
     const gas = BigInt(123456)
-    const res = await evm.runCode({
+    const res = await tvm.runCode({
       code: hexToBytes('0x01'),
       gasLimit: BigInt(gas),
     })
     assert.strictEqual(res.executionGasUsed, gas, 'successfully deleted opcode')
 
-    const evmDefault = await createTVM()
+    const tvmDefault = await createTVM()
 
     // PUSH 04
     // PUSH 01
@@ -77,18 +77,18 @@ describe('VM: custom opcodes', () => {
     // PUSH 01 // RETURNDATA length
     // PUSH 1F // RETURNDATA offset
     // RETURN  // Returns 0x05
-    const result = await evmDefault.runCode!({
+    const result = await tvmDefault.runCode!({
       code: hexToBytes('0x60046001016000526001601FF3'),
       gasLimit: BigInt(gas),
     })
     assert.isTrue(equalsBytes(result.returnValue, hexToBytes('0x05')))
   })
 
-  it('should override opcodes in the EVM', async () => {
+  it('should override opcodes in the TVM', async () => {
     testOpcode.opcode = 0x20 // Overrides KECCAK
-    const evm = await createTVM({ customOpcodes: [testOpcode] })
+    const tvm = await createTVM({ customOpcodes: [testOpcode] })
     const gas = 123456
-    const res = await evm.runCode({
+    const res = await tvm.runCode({
       code: hexToBytes('0x20'),
       gasLimit: BigInt(gas),
     })
@@ -96,7 +96,7 @@ describe('VM: custom opcodes', () => {
     assert.strictEqual(res.runState!.stack.peek()[0], stackPush, 'successfully ran opcode logic')
   })
 
-  it('should pass the correct EVM options when copying the EVM', async () => {
+  it('should pass the correct TVM options when copying the TVM', async () => {
     const fee = 333
     const stackPush = BigInt(1)
 
@@ -109,26 +109,26 @@ describe('VM: custom opcodes', () => {
       },
     }
 
-    const evm = await createTVM({ customOpcodes: [testOpcode] })
-    evm.events.on('beforeMessage', () => {})
-    evm.events.on('beforeMessage', () => {})
-    const evmCopy = evm.shallowCopy()
+    const tvm = await createTVM({ customOpcodes: [testOpcode] })
+    tvm.events.on('beforeMessage', () => {})
+    tvm.events.on('beforeMessage', () => {})
+    const tvmCopy = tvm.shallowCopy()
 
     assert.deepEqual(
-      evmCopy['_customOpcodes'],
-      evm['_customOpcodes'],
-      'evm.shallowCopy() successfully copied customOpcodes option',
+      tvmCopy['_customOpcodes'],
+      tvm['_customOpcodes'],
+      'tvm.shallowCopy() successfully copied customOpcodes option',
     )
 
     assert.strictEqual(
-      evm.events.listenerCount('beforeMessage'),
+      tvm.events.listenerCount('beforeMessage'),
       2,
-      'original EVM instance should have two listeners',
+      'original TVM instance should have two listeners',
     )
     assert.strictEqual(
-      evmCopy!.events!.listenerCount('beforeMessage'),
+      tvmCopy!.events!.listenerCount('beforeMessage'),
       0,
-      'copied EVM instance should have zero listeners',
+      'copied TVM instance should have zero listeners',
     )
   })
 })

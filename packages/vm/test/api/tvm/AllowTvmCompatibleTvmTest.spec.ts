@@ -8,7 +8,7 @@ import { PK, deployContract, triggerConstant } from './utils.ts'
 
 const OWNER_ADDRESS = createAddressFromPrivateKey(hexToBytes(PK))
 
-describe('AllowTvmCompatibleEvmTest', () => {
+describe('AllowTvmCompatibleTvmTest', () => {
   /*contract c {
     function getRipemd160() public view returns(bytes32 output) {
       string memory input = "11";

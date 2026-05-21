@@ -1,4 +1,4 @@
-// Generated using a script, which can be found in ./evm/scripts/stackDeltaGenerator.ts
+// Generated using a script, which can be found in ./tvm/scripts/stackDeltaGenerator.ts
 
 export const stackDelta: {
   [key: number]: {
@@ -150,7 +150,7 @@ export const stackDelta: {
   // This has to do with the dynamic intermediate size of RJUMPV, which depends upon the table size byte right after RJUMPV
   0xe2: { inputs: 1, outputs: 0, name: 'RJUMPV', intermediates: 0 },
   // CALLF special case for stack validation algorithm: the inputs and outputs MUST stay 0
-  // (this is currently the case also in EVM)
+  // (this is currently the case also in TVM)
   0xe3: { inputs: 0, outputs: 0, name: 'CALLF', intermediates: 2 },
   0xe4: { inputs: 0, outputs: 0, name: 'RETF', intermediates: 0, terminating: true },
   0xe5: { inputs: 0, outputs: 0, name: 'JUMPF', intermediates: 2, terminating: true },

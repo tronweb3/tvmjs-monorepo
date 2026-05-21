@@ -9,10 +9,10 @@ import {
   setLengthLeft,
 } from '@tvmjs/util'
 
-import { EVMError } from '../../errors.ts'
+import { TVMError } from '../../errors.ts'
 
 import type { AffinePoint } from '@noble/curves/abstract/weierstrass.js'
-import type { EVMBN254Interface } from '../../types.ts'
+import type { TVMBN254Interface } from '../../types.ts'
 
 const G1_INFINITY_POINT_BYTES = new Uint8Array(64)
 const G2_INFINITY_POINT_BYTES = new Uint8Array(128)
@@ -53,10 +53,10 @@ function fromG1Point(input: AffinePoint<bigint>): Uint8Array {
 
 function toFp2Point(fpXCoordinate: Uint8Array, fpYCoordinate: Uint8Array) {
   if (bytesToBigInt(fpXCoordinate) >= bn254.fields.Fp2.ORDER) {
-    throw new EVMError(EVMError.errorMessages.BN254_FP_NOT_IN_FIELD)
+    throw new TVMError(TVMError.errorMessages.BN254_FP_NOT_IN_FIELD)
   }
   if (bytesToBigInt(fpYCoordinate) >= bn254.fields.Fp2.ORDER) {
-    throw new EVMError(EVMError.errorMessages.BN254_FP_NOT_IN_FIELD)
+    throw new TVMError(TVMError.errorMessages.BN254_FP_NOT_IN_FIELD)
   }
 
   const fpBytes = concatBytes(fpXCoordinate, fpYCoordinate)
@@ -85,7 +85,7 @@ function toG2Point(input: Uint8Array) {
   for (const p of [p_x_1, p_x_2, p_y_1, p_y_2]) {
     const pB = bytesToBigInt(p)
     if (bn254.fields.Fp.create(pB) !== pB) {
-      throw new EVMError(EVMError.errorMessages.BN254_FP_NOT_IN_FIELD)
+      throw new TVMError(TVMError.errorMessages.BN254_FP_NOT_IN_FIELD)
     }
   }
 
@@ -103,12 +103,12 @@ function toG2Point(input: Uint8Array) {
 }
 
 /**
- * Implementation of the `EVMBN254Interface` using the `ethereum-cryptography (`@noble/curves`)
+ * Implementation of the `TVMBN254Interface` using the `ethereum-cryptography (`@noble/curves`)
  * JS library, see https://github.com/ethereum/js-ethereum-cryptography.
  *
- * This is the EVM default implementation.
+ * This is the TVM default implementation.
  */
-export class NobleBN254 implements EVMBN254Interface {
+export class NobleBN254 implements TVMBN254Interface {
   add(input: Uint8Array): Uint8Array {
     const p1 = toG1Point(input.slice(0, G1_POINT_BYTE_LENGTH))
     const p2 = toG1Point(input.slice(G1_POINT_BYTE_LENGTH, G1_POINT_BYTE_LENGTH * 2))

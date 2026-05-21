@@ -1,6 +1,6 @@
 import type { Block, BlockOptions, HeaderData } from '@tvmjs/block'
 import type { Common, ParamsDict, StateManagerInterface } from '@tvmjs/common'
-import type { EVMInterface, EVMMockBlockchainInterface, EVMOpts, EVMResult, Log } from '@tvmjs/tvm'
+import type { Log, TVMInterface, TVMMockBlockchainInterface, TVMOpts, TVMResult } from '@tvmjs/tvm'
 import type { AccessList, TypedTransaction } from '@tvmjs/tx'
 import type {
   BigIntLike,
@@ -70,7 +70,7 @@ export interface EIP4844BlobTxReceipt extends PostByzantiumTxReceipt {
   blobGasPrice: bigint
 }
 
-export type EVMProfilerOpts = {
+export type TVMProfilerOpts = {
   enabled: boolean
   // extra options here (such as use X hardfork for gas)
 }
@@ -83,7 +83,7 @@ export type VMEvent = {
 }
 
 export type VMProfilerOpts = {
-  //evmProfilerOpts: EVMProfilerOpts
+  //tvmProfilerOpts: TVMProfilerOpts
   reportAfterTx?: boolean
   reportAfterBlock?: boolean
 }
@@ -121,7 +121,7 @@ export interface VMOpts {
   /**
    * A {@link Blockchain} object for storing/retrieving blocks
    */
-  blockchain?: EVMMockBlockchainInterface
+  blockchain?: TVMMockBlockchainInterface
   /**
    * If true, create entries in the state tree for the precompiled contracts, saving some gas the
    * first time each of them is called.
@@ -166,17 +166,17 @@ export interface VMOpts {
   params?: ParamsDict
 
   /**
-   * Use a custom EVM to run Messages on. If this is not present, use the default EVM.
+   * Use a custom TVM to run Messages on. If this is not present, use the default TVM.
    */
-  evm?: EVMInterface
+  tvm?: TVMInterface
 
   /**
-   * Often there is no need to provide a full custom EVM but only a few options need to be
-   * adopted. This option allows to provide a custom set of EVM options to be passed.
+   * Often there is no need to provide a full custom TVM but only a few options need to be
+   * adopted. This option allows to provide a custom set of TVM options to be passed.
    *
-   * Note: This option will throw if used in conjunction with a full custom EVM passed.
+   * Note: This option will throw if used in conjunction with a full custom TVM passed.
    */
-  evmOpts?: EVMOpts
+  tvmOpts?: TVMOpts
 
   profilerOpts?: VMProfilerOpts
 }
@@ -442,7 +442,7 @@ export interface RunTxOpts {
 /**
  * Execution result of a transaction
  */
-export interface RunTxResult extends EVMResult {
+export interface RunTxResult extends TVMResult {
   /**
    * Bloom filter resulted from transaction
    */

@@ -1,7 +1,7 @@
 import { p256 } from '@noble/curves/nist.js'
 import { bytesToBigInt, bytesToHex, setLengthLeft } from '@tvmjs/util'
 
-import { OOGResult } from '../evm.ts'
+import { OOGResult } from '../tvm.ts'
 
 import { getPrecompileName } from './index.ts'
 import type { PrecompileInput } from './types.ts'

@@ -47,7 +47,7 @@ describe('EIP 2929: gas cost tests', () => {
       }
       i++
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     await vm.stateManager.putCode(address, hexToBytes(test.code))
 
@@ -63,7 +63,7 @@ describe('EIP 2929: gas cost tests', () => {
 
     const totalGasUsed = initialGas - currentGas
     assert.strictEqual(true, totalGasUsed === BigInt(test.totalGasUsed) + BigInt(21000)) // Add tx upfront cost.
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
     return result
   }
 

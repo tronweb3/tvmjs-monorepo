@@ -65,7 +65,7 @@ export const paramsVM: ParamsDict = {
     minBlobGas: 1, // The minimum fee per blob gas
   },
   /**
-.  * Beacon block root in the EVM
+.  * Beacon block root in the TVM
 .  */
   4788: {
     // config

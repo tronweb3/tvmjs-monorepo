@@ -29,7 +29,7 @@ describe('Precompiles: point evaluation', () => {
       customCrypto: { kzg },
     })
 
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common,
     })
     const addressStr = '000000000000000000000000000000000000000a'
@@ -54,7 +54,7 @@ describe('Precompiles: point evaluation', () => {
         hexToBytes(testCase.proof),
       ),
       gasLimit: 0xfffffffffn,
-      _EVM: evm,
+      _TVM: tvm,
       common,
     }
 
@@ -74,7 +74,7 @@ describe('Precompiles: point evaluation', () => {
         hexToBytes(testCase.proof),
       ),
       gasLimit: 0xfffffffffn,
-      _EVM: evm,
+      _TVM: tvm,
       common,
     }
     res = await pointEvaluation(optsWithInvalidCommitment)

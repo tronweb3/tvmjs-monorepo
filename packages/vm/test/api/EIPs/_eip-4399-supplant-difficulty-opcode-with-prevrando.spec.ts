@@ -30,13 +30,13 @@ describe('EIP-4399 -> 0x44 (DIFFICULTY) should return PREVRANDAO', () => {
         stack = iStep.stack
       }
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     const runCodeArgs = {
       code: hexToBytes('0x4400'),
       gasLimit: BigInt(0xffff),
     }
-    await vm.evm.runCode!({ ...runCodeArgs, block })
+    await vm.tvm.runCode!({ ...runCodeArgs, block })
     assert.strictEqual(stack[0], block.header.difficulty, '0x44 returns DIFFICULTY (London)')
 
     common.setHardfork(Hardfork.Paris)
@@ -50,8 +50,8 @@ describe('EIP-4399 -> 0x44 (DIFFICULTY) should return PREVRANDAO', () => {
       },
       { common },
     )
-    await vm.evm.runCode!({ ...runCodeArgs, block })
+    await vm.tvm.runCode!({ ...runCodeArgs, block })
     assert.strictEqual(stack[0], prevRandao, '0x44 returns PREVRANDAO (Merge)')
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
   })
 })

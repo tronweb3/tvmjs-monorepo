@@ -21,7 +21,7 @@ describe('EIP 3860 tests', () => {
       hardfork: Hardfork.London,
       eips: [3860],
     })
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common,
     })
 
@@ -41,7 +41,7 @@ describe('EIP 3860 tests', () => {
         buffer,
       ),
     }
-    const result = await evm.runCall(runCallArgs)
+    const result = await tvm.runCall(runCallArgs)
     assert.isTrue(
       (result.execResult.exceptionError?.error as string) === 'initcode exceeds max initcode size',
       'initcode exceeds max size',
@@ -61,22 +61,22 @@ describe('EIP 3860 tests', () => {
       eips: [],
     })
     const caller = createAddressFromString('0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b')
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common: commonWith3860,
     })
-    const evmWithout3860 = await createTVM({
+    const tvmWithout3860 = await createTVM({
       common: commonWithout3860,
     })
     const contractFactory = createAddressFromString('0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b')
-    const contractAccount = await evm.stateManager.getAccount(contractFactory)
-    await evm.stateManager.putAccount(contractFactory, contractAccount!)
-    await evmWithout3860.stateManager.putAccount(contractFactory, contractAccount!)
+    const contractAccount = await tvm.stateManager.getAccount(contractFactory)
+    await tvm.stateManager.putAccount(contractFactory, contractAccount!)
+    await tvmWithout3860.stateManager.putAccount(contractFactory, contractAccount!)
     const factoryCode = hexToBytes(
       '0x7f600a80600080396000f3000000000000000000000000000000000000000000006000526000355a8160006000f05a8203600a55806000556001600155505050',
     )
 
-    await evm.stateManager.putCode(contractFactory, factoryCode)
-    await evmWithout3860.stateManager.putCode(contractFactory, factoryCode)
+    await tvm.stateManager.putCode(contractFactory, factoryCode)
+    await tvmWithout3860.stateManager.putCode(contractFactory, factoryCode)
     const data = hexToBytes('0x000000000000000000000000000000000000000000000000000000000000c000')
     const runCallArgs = {
       from: caller,
@@ -84,8 +84,8 @@ describe('EIP 3860 tests', () => {
       data,
       gasLimit: BigInt(0xfffffffff),
     }
-    const res = await evm.runCall(runCallArgs)
-    const res2 = await evmWithout3860.runCall(runCallArgs)
+    const res = await tvm.runCall(runCallArgs)
+    const res2 = await tvmWithout3860.runCall(runCallArgs)
     assert.isTrue(
       res.execResult.executionGasUsed > res2.execResult.executionGasUsed,
       'execution gas used is higher with EIP 3860 active',
@@ -105,22 +105,22 @@ describe('EIP 3860 tests', () => {
       eips: [],
     })
     const caller = createAddressFromString('0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b')
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common: commonWith3860,
     })
-    const evmWithout3860 = await createTVM({
+    const tvmWithout3860 = await createTVM({
       common: commonWithout3860,
     })
     const contractFactory = createAddressFromString('0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b')
-    const contractAccount = await evm.stateManager.getAccount(contractFactory)
-    await evm.stateManager.putAccount(contractFactory, contractAccount!)
-    await evmWithout3860.stateManager.putAccount(contractFactory, contractAccount!)
+    const contractAccount = await tvm.stateManager.getAccount(contractFactory)
+    await tvm.stateManager.putAccount(contractFactory, contractAccount!)
+    await tvmWithout3860.stateManager.putAccount(contractFactory, contractAccount!)
     const factoryCode = hexToBytes(
       '0x7f600a80600080396000f3000000000000000000000000000000000000000000006000526000355a60008260006000f55a8203600a55806000556001600155505050',
     )
 
-    await evm.stateManager.putCode(contractFactory, factoryCode)
-    await evmWithout3860.stateManager.putCode(contractFactory, factoryCode)
+    await tvm.stateManager.putCode(contractFactory, factoryCode)
+    await tvmWithout3860.stateManager.putCode(contractFactory, factoryCode)
     const data = hexToBytes('0x000000000000000000000000000000000000000000000000000000000000c000')
     const runCallArgs = {
       from: caller,
@@ -128,8 +128,8 @@ describe('EIP 3860 tests', () => {
       data,
       gasLimit: BigInt(0xfffffffff),
     }
-    const res = await evm.runCall(runCallArgs)
-    const res2 = await evmWithout3860.runCall(runCallArgs)
+    const res = await tvm.runCall(runCallArgs)
+    const res2 = await tvmWithout3860.runCall(runCallArgs)
     assert.isTrue(
       res.execResult.executionGasUsed > res2.execResult.executionGasUsed,
       'execution gas used is higher with EIP 3860 active',
@@ -142,7 +142,7 @@ describe('EIP 3860 tests', () => {
       hardfork: Hardfork.London,
       eips: [3860],
     })
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common,
       allowUnlimitedInitCodeSize: true,
     })
@@ -161,7 +161,7 @@ describe('EIP 3860 tests', () => {
         bytes,
       ),
     }
-    const result = await evm.runCall(runCallArgs)
+    const result = await tvm.runCall(runCallArgs)
     assert.isTrue(
       result.execResult.exceptionError === undefined,
       'successfully created a contract with data size > MAX_INITCODE_SIZE and allowUnlimitedInitCodeSize active',
@@ -176,19 +176,19 @@ describe('EIP 3860 tests', () => {
     })
     const caller = createAddressFromString('0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b')
     for (const code of ['F0', 'F5']) {
-      const evm = await createTVM({
+      const tvm = await createTVM({
         common: commonWith3860,
 
         allowUnlimitedInitCodeSize: true,
       })
-      const evmDisabled = await createTVM({
+      const tvmDisabled = await createTVM({
         common: commonWith3860,
         allowUnlimitedInitCodeSize: false,
       })
       const contractFactory = createAddressFromString('0xb94f5374fce5edbc8e2a8697c15331677e6ebf0b')
-      const contractAccount = await evm.stateManager.getAccount(contractFactory)
-      await evm.stateManager.putAccount(contractFactory, contractAccount!)
-      await evmDisabled.stateManager.putAccount(contractFactory, contractAccount!)
+      const contractAccount = await tvm.stateManager.getAccount(contractFactory)
+      await tvm.stateManager.putAccount(contractFactory, contractAccount!)
+      await tvmDisabled.stateManager.putAccount(contractFactory, contractAccount!)
       // This factory code:
       // -> reads 32 bytes from the calldata (X)
       // Attempts to create a contract of X size
@@ -197,8 +197,8 @@ describe('EIP 3860 tests', () => {
       // This is either the contract address if it was successful, or 0 in case of error
       const factoryCode = hexToBytes(`0x600060003560006000${code}600055`)
 
-      await evm.stateManager.putCode(contractFactory, factoryCode)
-      await evmDisabled.stateManager.putCode(contractFactory, factoryCode)
+      await tvm.stateManager.putCode(contractFactory, factoryCode)
+      await tvmDisabled.stateManager.putCode(contractFactory, factoryCode)
 
       const runCallArgs = {
         from: caller,
@@ -207,12 +207,12 @@ describe('EIP 3860 tests', () => {
         data: hexToBytes(`0x${'00'.repeat(30)}C001`),
       }
 
-      const res = await evm.runCall(runCallArgs)
-      await evmDisabled.runCall(runCallArgs)
+      const res = await tvm.runCall(runCallArgs)
+      await tvmDisabled.runCall(runCallArgs)
 
       const key0 = hexToBytes(`0x${'00'.repeat(32)}`)
-      const storageActive = await evm.stateManager.getStorage(contractFactory, key0)
-      const storageInactive = await evmDisabled.stateManager.getStorage(contractFactory, key0)
+      const storageActive = await tvm.stateManager.getStorage(contractFactory, key0)
+      const storageInactive = await tvmDisabled.stateManager.getStorage(contractFactory, key0)
 
       assert.isTrue(
         !equalsBytes(storageActive, new Uint8Array()),
@@ -236,7 +236,7 @@ describe('EIP 3860 tests', () => {
       // On the `allowUnlimitedInitCodeSize = true`, create contract with MAX_INITCODE_SIZE + 1
       // On `allowUnlimitedInitCodeSize = false`, create contract with MAX_INITCODE_SIZE
       // Verify that the gas cost on the prior one is higher than the first one
-      const res2 = await evmDisabled.runCall(runCallArgs2)
+      const res2 = await tvmDisabled.runCall(runCallArgs2)
 
       assert.isTrue(
         res.execResult.executionGasUsed > res2.execResult.executionGasUsed,

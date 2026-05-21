@@ -54,7 +54,7 @@ describe('Constantinople: EIP-1283', () => {
       }
 
       try {
-        const res = await vm.evm.runCall(runCallArgs)
+        const res = await vm.tvm.runCall(runCallArgs)
         assert.strictEqual(res.execResult.exceptionError, undefined)
         assert.strictEqual(res.execResult.executionGasUsed, BigInt(testCase.used))
         assert.strictEqual(res.execResult.gasRefund, BigInt(testCase.refund))

@@ -113,7 +113,7 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
     ;(blockchain.consensus as EthashConsensus)._ethash!.cacheDB = cacheDB
   }
 
-  const evmOpts = {
+  const tvmOpts = {
     bls: options.bls,
     bn254: options.bn254,
   }
@@ -122,7 +122,7 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
     blockchain,
     common,
     setHardfork: true,
-    evmOpts,
+    tvmOpts,
     profilerOpts: {
       reportAfterBlock: options.profile,
     },

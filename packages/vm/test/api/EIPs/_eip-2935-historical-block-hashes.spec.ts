@@ -26,7 +26,7 @@ import { buildBlock, createVM, paramsVM, runBlock, runTx } from '../../../src/in
 
 import type { Block } from '@tvmjs/block'
 import type { ChainConfig } from '@tvmjs/common'
-import type { EVM } from '@tvmjs/tvm'
+import type { TVM } from '@tvmjs/tvm'
 import type { LegacyTxData } from '@tvmjs/tx'
 import type { PrefixedHexString } from '@tvmjs/util'
 import type { VM } from '../../../src/index.ts'
@@ -269,7 +269,7 @@ describe('EIP 2935: historical block hashes', () => {
       })
       // @ts-expect-error -- Assign to read-only property
       vm.blockchain = blockchainEmpty
-      ;(vm.evm as EVM).blockchain = blockchainEmpty
+      ;(vm.tvm as TVM).blockchain = blockchainEmpty
 
       for (let i = 1; i <= blocksToBuild; i++) {
         const block = await blockchain.getBlock(i)
@@ -280,7 +280,7 @@ describe('EIP 2935: historical block hashes', () => {
 
         // we will evaluate on lastBlock where 7709 is active and BLOCKHASH
         // will look from the state if within 256 window
-        const ret = await vm.evm.runCall({
+        const ret = await vm.tvm.runCall({
           // Code: RETURN the BLOCKHASH of block i
           // PUSH(i) BLOCKHASH PUSH(32) MSTORE PUSH(64) PUSH(0) RETURN
           // Note: need to return a contract with starting zero bytes to avoid non-deployable contracts by EIP 3540

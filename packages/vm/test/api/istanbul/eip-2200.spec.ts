@@ -70,7 +70,7 @@ describe('Istanbul: EIP-2200', () => {
       }
 
       try {
-        const res = await vm.evm.runCall(runCallArgs)
+        const res = await vm.tvm.runCall(runCallArgs)
         if (typeof testCase.err !== 'undefined') {
           assert.strictEqual(res.execResult.exceptionError?.error, testCase.err)
         } else {

@@ -1,6 +1,6 @@
 import { equalsBytes } from '@tvmjs/util'
 
-import { EVMError } from '../errors.ts'
+import { TVMError } from '../errors.ts'
 
 import { adjustSstoreGasEIP2929 } from './EIP2929.ts'
 import { trap } from './util.ts'
@@ -27,7 +27,7 @@ export function updateSstoreGasEIP2200(
 ) {
   // Fail if not enough gas is left
   if (runState.interpreter.getGasLeft() <= common.param('sstoreSentryEIP2200Gas')) {
-    trap(EVMError.errorMessages.OUT_OF_GAS)
+    trap(TVMError.errorMessages.OUT_OF_GAS)
   }
 
   // Noop

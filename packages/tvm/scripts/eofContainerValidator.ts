@@ -14,7 +14,7 @@ import { createTVM, validateEOF } from '../src/index.ts'
 const common = new Common({ chain: Mainnet })
 common.setHardfork(Hardfork.Prague)
 common.setEIPs([663, 3540, 3670, 4200, 4750, 5450, 6206, 7069, 7480, 7620, 7692, 7698])
-const evm = await createTVM({ common })
+const tvm = await createTVM({ common })
 
 function processLine(line) {
   if (line.length === 0) {
@@ -26,7 +26,7 @@ function processLine(line) {
   }
   const bytes = unprefixedHexToBytes(trimmed)
   try {
-    validateEOF(bytes, evm)
+    validateEOF(bytes, tvm)
     console.log('OK')
   } catch (e: any) {
     console.log('err: ' + e.message)

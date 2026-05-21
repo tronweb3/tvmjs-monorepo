@@ -282,7 +282,7 @@ const precompiles: Precompiles = {
 }
 
 /**
- * Specifies a precompile to remove from the EVM.
+ * Specifies a precompile to remove from the TVM.
  * The address can be an `Address` instance or a `0x`-prefixed hex string.
  */
 type DeletePrecompile = {
@@ -290,7 +290,7 @@ type DeletePrecompile = {
 }
 
 /**
- * Specifies a precompile to add to (or override in) the EVM.
+ * Specifies a precompile to add to (or override in) the TVM.
  * The address can be an `Address` instance or a `0x`-prefixed hex string.
  */
 type AddPrecompile = {

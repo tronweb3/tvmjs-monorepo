@@ -1,7 +1,7 @@
 import { Account, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { EVMErrorTypeString } from '../src/errors.ts'
+import { TVMErrorTypeString } from '../src/errors.ts'
 import { createTVM } from '../src/index.ts'
 
 const PUSH1 = '60'
@@ -22,7 +22,7 @@ const testCases = [
 
 describe('VM.runCode: initial program counter', () => {
   it('should work', async () => {
-    const evm = await createTVM()
+    const tvm = await createTVM()
 
     for (const [i, testData] of testCases.entries()) {
       const runCodeArgs = {
@@ -33,7 +33,7 @@ describe('VM.runCode: initial program counter', () => {
 
       let err
       try {
-        const result = await evm.runCode!(runCodeArgs)
+        const result = await tvm.runCode!(runCodeArgs)
         if (testData.resultPC !== undefined) {
           assert.strictEqual(
             result.runState?.programCounter,
@@ -57,8 +57,8 @@ describe('VM.runCode: initial program counter', () => {
 })
 
 describe('VM.runCode: interpreter', () => {
-  it('should return a EVMError as an exceptionError on the result', async () => {
-    const evm = await createTVM()
+  it('should return a TVMError as an exceptionError on the result', async () => {
+    const tvm = await createTVM()
 
     const INVALID_opcode = 'fe'
     const runCodeArgs = {
@@ -68,24 +68,24 @@ describe('VM.runCode: interpreter', () => {
 
     let result: any
     try {
-      result = await evm.runCode!(runCodeArgs)
+      result = await tvm.runCode!(runCodeArgs)
     } catch {
       assert.fail('should not throw error')
     }
-    assert.strictEqual(result?.exceptionError?.errorType, EVMErrorTypeString)
+    assert.strictEqual(result?.exceptionError?.errorType, TVMErrorTypeString)
     assert.isTrue(result?.exceptionError?.error.includes('invalid opcode'))
   })
 
-  it('should throw on non-EVMError', async () => {
-    const evm = await createTVM()
+  it('should throw on non-TVMError', async () => {
+    const tvm = await createTVM()
     // NOTE: due to now throwing on `getStorage` if account does not exist
     // this now means that if `runCode` is called and the address it runs on (default: zero address)
     // does not exist, then if SSTORE/SLOAD is used, the runCode will immediately fail because StateManager now throws
     // TODO: is this behavior which we should fix? (Either in StateManager OR in runCode where we load the account first,
     // then re-put the account after (if account === undefined put empty account, such that the account exists))
     const address = createAddressFromString(`0x${'00'.repeat(20)}`)
-    await evm.stateManager.putAccount(address, new Account())
-    evm.stateManager.putStorage = (..._args) => {
+    await tvm.stateManager.putAccount(address, new Account())
+    tvm.stateManager.putStorage = (..._args) => {
       throw new Error('Test')
     }
 
@@ -96,7 +96,7 @@ describe('VM.runCode: interpreter', () => {
     }
 
     try {
-      await evm.runCode!(runCodeArgs)
+      await tvm.runCode!(runCodeArgs)
       assert.fail('should throw error')
     } catch (e: any) {
       assert.isTrue(e.toString().includes('Test'), 'error thrown')
@@ -106,7 +106,7 @@ describe('VM.runCode: interpreter', () => {
 
 describe('VM.runCode: RunCodeOptions', () => {
   it('should throw on negative value args', async () => {
-    const evm = await createTVM()
+    const tvm = await createTVM()
 
     const runCodeArgs = {
       value: BigInt(-10),
@@ -114,7 +114,7 @@ describe('VM.runCode: RunCodeOptions', () => {
     }
 
     try {
-      await evm.runCode!(runCodeArgs)
+      await tvm.runCode!(runCodeArgs)
       assert.fail('should not accept a negative call value')
     } catch (err: any) {
       assert.isTrue(

@@ -1,7 +1,7 @@
 import { bytesToHex } from '@tvmjs/util'
 
-import { EVMError } from '../errors.ts'
-import { OOGResult } from '../evm.ts'
+import { TVMError } from '../errors.ts'
+import { OOGResult } from '../tvm.ts'
 
 import { getPrecompileName } from './index.ts'
 import { gasLimitCheck } from './util.ts'
@@ -181,7 +181,7 @@ export function precompile20009(opts: PrecompileInput): ExecResult {
     return {
       returnValue: new Uint8Array(0),
       executionGasUsed: opts.gasLimit,
-      exceptionError: new EVMError(EVMError.errorMessages.OUT_OF_RANGE),
+      exceptionError: new TVMError(TVMError.errorMessages.OUT_OF_RANGE),
     }
   }
   const lastByte = data.subarray(212, 213)[0]
@@ -192,7 +192,7 @@ export function precompile20009(opts: PrecompileInput): ExecResult {
     return {
       returnValue: new Uint8Array(0),
       executionGasUsed: opts.gasLimit,
-      exceptionError: new EVMError(EVMError.errorMessages.OUT_OF_RANGE),
+      exceptionError: new TVMError(TVMError.errorMessages.OUT_OF_RANGE),
     }
   }
 

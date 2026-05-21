@@ -31,7 +31,7 @@ const LOG_SIZE = 576
 const LOG_LAYOUT_MISMATCH = 'invalid deposit log: unsupported data layout'
 
 function cloneSystemAccessEntry(vm: VM, systemAddressHex: PrefixedHexString) {
-  const access = vm.evm.blockLevelAccessList?.accesses[systemAddressHex]
+  const access = vm.tvm.blockLevelAccessList?.accesses[systemAddressHex]
   if (access === undefined) {
     return undefined
   }
@@ -57,7 +57,7 @@ function restoreSystemAccessEntry(
   systemAddressHex: PrefixedHexString,
   snapshot: ReturnType<typeof cloneSystemAccessEntry>,
 ) {
-  const bal = vm.evm.blockLevelAccessList
+  const bal = vm.tvm.blockLevelAccessList
   if (bal === undefined) {
     return
   }
@@ -128,7 +128,7 @@ const accumulateWithdrawalsRequest = async (
 
   const systemAddressHex = systemAddress.toString()
   const balSnapshot = cloneSystemAccessEntry(vm, systemAddressHex)
-  const results = await vm.evm.runCall({
+  const results = await vm.tvm.runCall({
     caller: systemAddress,
     gasLimit: vm.common.param('systemCallGasLimit'),
     to: withdrawalsAddress,
@@ -167,7 +167,7 @@ const accumulateConsolidationsRequest = async (
 
   const systemAddressHex = systemAddress.toString()
   const balSnapshot = cloneSystemAccessEntry(vm, systemAddressHex)
-  const results = await vm.evm.runCall({
+  const results = await vm.tvm.runCall({
     caller: systemAddress,
     gasLimit: vm.common.param('systemCallGasLimit'),
     to: consolidationsAddress,

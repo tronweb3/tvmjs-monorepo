@@ -22,14 +22,14 @@ describe('custom crypto', () => {
     }
     const msg = Uint8Array.from([0, 1, 2, 3])
     const common = new Common({ chain: Mainnet, customCrypto })
-    const evm = await createTVM({ common })
+    const tvm = await createTVM({ common })
     const addressStr = '0000000000000000000000000000000000000002'
     const SHA256 = getActivePrecompiles(common).get(addressStr)!
     const result = await SHA256({
       data: msg,
       gasLimit: 0xfffffn,
       common,
-      _EVM: evm,
+      _TVM: tvm,
     })
     assert.strictEqual(result.returnValue[0], 0xff, 'used custom sha256 hashing function')
   })
@@ -45,14 +45,14 @@ describe('custom crypto', () => {
     }
     const msg = concatBytes(randomBytes(32), setLengthLeft(intToBytes(27), 32), randomBytes(32))
     const common = new Common({ chain: Mainnet, customCrypto })
-    const evm = await createTVM({ common })
+    const tvm = await createTVM({ common })
     const addressStr = '0000000000000000000000000000000000000001'
     const ECRECOVER = getActivePrecompiles(common).get(addressStr)!
     const result = await ECRECOVER({
       data: msg,
       gasLimit: 0xfffffn,
       common,
-      _EVM: evm,
+      _TVM: tvm,
     })
     assert.strictEqual(
       bytesToHex(result.returnValue),

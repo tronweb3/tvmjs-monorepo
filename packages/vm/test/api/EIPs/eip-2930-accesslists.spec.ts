@@ -72,7 +72,7 @@ describe('EIP-2930 Optional Access Lists tests', () => {
     const handler = (o: InterpreterStep) => {
       trace.push([o.opcode.name, o.gasLeft])
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     await runTx(vm, { tx: txnWithAccessList })
     assert.strictEqual(trace[1][0], 'SLOAD')
@@ -84,6 +84,6 @@ describe('EIP-2930 Optional Access Lists tests', () => {
     assert.strictEqual(trace[1][0], 'SLOAD')
     gasUsed = trace[1][1] - trace[2][1]
     assert.strictEqual(Number(gasUsed), 2100, 'charge cold sload gas')
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
   })
 })

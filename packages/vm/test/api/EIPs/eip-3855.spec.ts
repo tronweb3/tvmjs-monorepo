@@ -2,7 +2,7 @@ import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { EVMError, type InterpreterStep } from '@tvmjs/tvm'
+import { type InterpreterStep, TVMError } from '@tvmjs/tvm'
 import { createVM } from '../../../src/index.ts'
 
 describe('EIP 3855 tests', () => {
@@ -19,9 +19,9 @@ describe('EIP 3855 tests', () => {
     const handler = (e: InterpreterStep) => {
       stack = e.stack
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
-    const result = await vm.evm.runCode!({
+    const result = await vm.tvm.runCode!({
       code: hexToBytes('0x5F00'),
       gasLimit: BigInt(10),
     })
@@ -29,7 +29,7 @@ describe('EIP 3855 tests', () => {
     assert.strictEqual(stack!.length, 1)
     assert.strictEqual(stack![0], BigInt(0))
     assert.strictEqual(result.executionGasUsed, common.param('push0Gas'))
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
   })
 
   it('should correctly use push0 to create a stack with stack limit length', async () => {
@@ -38,11 +38,11 @@ describe('EIP 3855 tests', () => {
     const handler = (e: InterpreterStep) => {
       stack = e.stack
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     const depth = 1024 // TRON: code stack max length is 1024
 
-    const result = await vm.evm.runCode!({
+    const result = await vm.tvm.runCode!({
       code: hexToBytes(`0x${'5F'.repeat(depth)}00`),
       gasLimit: BigInt(10000),
     })
@@ -54,7 +54,7 @@ describe('EIP 3855 tests', () => {
       }
     }
     assert.strictEqual(result.executionGasUsed, common.param('push0Gas')! * BigInt(depth))
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
   })
 
   it('should correctly use push0 to create a stack with stack limit + 1 length', async () => {
@@ -62,22 +62,22 @@ describe('EIP 3855 tests', () => {
 
     const depth = 1025 // TRON: opcode stack max length is 1024
 
-    const result = await vm.evm.runCode!({
+    const result = await vm.tvm.runCode!({
       code: hexToBytes(`0x${'5F'.repeat(depth)}`),
       gasLimit: BigInt(10000),
     })
 
-    assert.strictEqual(result.exceptionError?.error, EVMError.errorMessages.STACK_OVERFLOW)
+    assert.strictEqual(result.exceptionError?.error, TVMError.errorMessages.STACK_OVERFLOW)
   })
 
   it('push0 is not available if EIP3855 is not activated', async () => {
     const vm = await createVM({ common: commonNoEIP3855 })
 
-    const result = await vm.evm.runCode!({
+    const result = await vm.tvm.runCode!({
       code: hexToBytes('0x5F'),
       gasLimit: BigInt(10000),
     })
 
-    assert.strictEqual(result.exceptionError!.error, EVMError.errorMessages.INVALID_OPCODE)
+    assert.strictEqual(result.exceptionError!.error, TVMError.errorMessages.INVALID_OPCODE)
   })
 })

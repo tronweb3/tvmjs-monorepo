@@ -28,13 +28,13 @@ const main = async () => {
   const ADDRESS = '0x000000000000000000000000000000000000ff01'
 
   // Register the custom precompile with a hex string address
-  const evm = await createTVM({
+  const tvm = await createTVM({
     common,
     customPrecompiles: [{ address: ADDRESS, function: additionPrecompile }],
   })
 
   // Verify it is registered
-  const fn = evm.getPrecompile(ADDRESS)
+  const fn = tvm.getPrecompile(ADDRESS)
   console.log(`Precompile registered at ${ADDRESS}: ${fn !== undefined}`)
 
   // Build call data: two 32-byte values (7 + 35)
@@ -45,7 +45,7 @@ const main = async () => {
   callData.set(b, 32)
 
   // Execute via runCall
-  const result = await evm.runCall({
+  const result = await tvm.runCall({
     to: createAddressFromString(ADDRESS),
     gasLimit: BigInt(30000),
     data: callData,

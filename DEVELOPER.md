@@ -321,7 +321,7 @@ TVM-JS adds the following TRON-specific opcodes in `packages/tvm/src/opcodes/cod
 | `CALLTOKENID` | `0xd3` | Get the token ID of the current call |
 | `ISCONTRACT` | `0xd4` | Check whether an address is a contract |
 
-These opcodes are defined alongside the standard EVM opcode set and dispatched through the same interpreter loop.
+These opcodes are defined alongside the standard TVM opcode set and dispatched through the same interpreter loop.
 
 ### TRC-10 Token Support
 

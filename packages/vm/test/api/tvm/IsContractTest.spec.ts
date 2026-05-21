@@ -257,7 +257,7 @@ contract isTestCtr {
     // TVM will set toAddress(contractAddress) to zero address if it is not set
     // In this case, ISCONTRACT on zero address will return true because it is the same as toAddress
     // This has been fixed
-    const res = await vm.evm.runCode({
+    const res = await vm.tvm.runCode({
       code: hexToBytes(`0x6000d460005260206000f3`),
     })
     assert.equal(

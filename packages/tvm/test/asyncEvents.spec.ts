@@ -8,19 +8,19 @@ describe('async events', () => {
   it('should work', async () => {
     const caller = new Address(hexToBytes('0x00000000000000000000000000000000000000ee'))
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Constantinople })
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common,
     })
     const to = createAddressFromBigInt(BigInt(123456))
-    await evm.stateManager.putCode(to, hexToBytes('0x6001'))
+    await tvm.stateManager.putCode(to, hexToBytes('0x6001'))
     let didTimeOut = false
     let stepHandlerError: Error | undefined
-    evm.events.on('step', async (event, next) => {
+    tvm.events.on('step', async (event, next) => {
       assert.isTrue(event.codeAddress !== undefined)
       const startTime = Date.now()
       setTimeout(() => {
         try {
-          assert.isTrue(Date.now() > startTime + 999, 'evm paused on step function for one second')
+          assert.isTrue(Date.now() > startTime + 999, 'tvm paused on step function for one second')
           didTimeOut = true
         } catch (error) {
           stepHandlerError = error as Error
@@ -34,7 +34,7 @@ describe('async events', () => {
       data: hexToBytes('0x600000'),
       to,
     }
-    await evm.runCall(runCallArgs)
+    await tvm.runCall(runCallArgs)
     // Wait a bit more to ensure the setTimeout callback has executed
     await new Promise((resolve) => setTimeout(resolve, 100))
     if (stepHandlerError) {

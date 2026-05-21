@@ -8,7 +8,7 @@ import type { Account, Address, BlockLevelAccessList, PrefixedHexString } from '
 import type { EventEmitter } from 'eventemitter3'
 import type { BinaryTreeAccessWitness } from './binaryTreeAccessWitness.ts'
 import type { EOFContainer } from './eof/container.ts'
-import type { EVMError } from './errors.ts'
+import type { TVMError } from './errors.ts'
 import type { InterpreterStep, RunState } from './interpreter.ts'
 import type { Message } from './message.ts'
 import type { AsyncDynamicGasHandler, SyncDynamicGasHandler } from './opcodes/gas.ts'
@@ -43,9 +43,9 @@ export function isAddOpcode(customOpcode: CustomOpcode): customOpcode is AddOpco
 }
 
 /**
- * Base options for the `EVM.runCode()` / `EVM.runCall()` method.
+ * Base options for the `TVM.runCode()` / `TVM.runCall()` method.
  */
-interface EVMRunOpts {
+interface TVMRunOpts {
   /**
    * The `block` the `tx` belongs to. If omitted a default blank block will be used.
    */
@@ -63,7 +63,7 @@ interface EVMRunOpts {
    */
   caller?: Address
   /**
-   * The EVM code to run.
+   * The TVM code to run.
    */
   code?: Uint8Array
   /**
@@ -104,7 +104,7 @@ interface EVMRunOpts {
   blobVersionedHashes?: PrefixedHexString[]
 }
 
-export interface EVMRunCodeOpts extends EVMRunOpts {
+export interface TVMRunCodeOpts extends TVMRunOpts {
   /*
    * The initial program counter. Defaults to `0`
    */
@@ -112,9 +112,9 @@ export interface EVMRunCodeOpts extends EVMRunOpts {
 }
 
 /**
- * Options for running a call (or create) operation with `EVM.runCall()`
+ * Options for running a call (or create) operation with `TVM.runCall()`
  */
-export interface EVMRunCallOpts extends EVMRunOpts {
+export interface TVMRunCallOpts extends TVMRunOpts {
   /**
    * If the code location is a precompile.
    */
@@ -154,14 +154,14 @@ interface NewContractEvent {
   code: Uint8Array
 }
 
-export type EVMEvent = {
+export type TVMEvent = {
   newContract: (data: NewContractEvent, resolve?: (result?: any) => void) => void
   beforeMessage: (data: Message, resolve?: (result?: any) => void) => void
-  afterMessage: (data: EVMResult, resolve?: (result?: any) => void) => void
+  afterMessage: (data: TVMResult, resolve?: (result?: any) => void) => void
   step: (data: InterpreterStep, resolve?: (result?: any) => void) => void
 }
 
-export interface EVMInterface {
+export interface TVMInterface {
   common: Common
   journal: {
     commit(): Promise<void>
@@ -181,25 +181,25 @@ export interface EVMInterface {
   stateManager: StateManagerInterface
   precompiles: Map<string, PrecompileFunc>
   getPrecompile?(address: Address | PrefixedHexString): PrecompileFunc | undefined
-  runCall(opts: EVMRunCallOpts): Promise<EVMResult>
-  runCode(opts: EVMRunCodeOpts): Promise<ExecResult>
-  events?: EventEmitter<EVMEvent>
+  runCall(opts: TVMRunCallOpts): Promise<TVMResult>
+  runCode(opts: TVMRunCodeOpts): Promise<ExecResult>
+  events?: EventEmitter<TVMEvent>
   binaryTreeAccessWitness?: BinaryTreeAccessWitness
   systemBinaryTreeAccessWitness?: BinaryTreeAccessWitness
   blockLevelAccessList?: BlockLevelAccessList
 }
 
-export type EVMProfilerOpts = {
+export type TVMProfilerOpts = {
   enabled: boolean
   // extra options here (such as use X hardfork for gas)
 }
 
 /**
- * Options for instantiating a {@link EVM}.
+ * Options for instantiating a {@link TVM}.
  */
-export interface EVMOpts {
+export interface TVMOpts {
   /**
-   * Use a {@link Common} instance for EVM instantiation.
+   * Use a {@link Common} instance for TVM instantiation.
    *
    * ### Supported EIPs
    *
@@ -223,7 +223,7 @@ export interface EVMOpts {
    * - [EIP-3860](https://eips.ethereum.org/EIPS/eip-3860) - Limit and meter initcode (Shanghai)
    * - [EIP-4345](https://eips.ethereum.org/EIPS/eip-4345) - Difficulty Bomb Delay to June 2022
    * - [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) - Supplant DIFFICULTY opcode with PREVRANDAO (Merge)
-   * - [EIP-4788](https://eips.ethereum.org/EIPS/eip-4788) - Beacon block root in the EVM (Cancun)
+   * - [EIP-4788](https://eips.ethereum.org/EIPS/eip-4788) - Beacon block root in the TVM (Cancun)
    * - [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) - Shard Blob Transactions (Cancun)
    * - [EIP-4895](https://eips.ethereum.org/EIPS/eip-4895) - Beacon chain push withdrawals as operations (Shanghai)
    * - [EIP-5133](https://eips.ethereum.org/EIPS/eip-5133) - Delaying Difficulty Bomb to mid-September 2022 (Gray Glacier)
@@ -236,7 +236,7 @@ export interface EVMOpts {
    * - [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623) - Increase calldata cost (Prague)
    * - [EIP-7685](https://eips.ethereum.org/EIPS/eip-7685) - General purpose execution layer requests (Prague)
    * - [EIP-7691](https://eips.ethereum.org/EIPS/eip-7691) - Blob throughput increase (Prague)
-   * - [EIP-7692](https://eips.ethereum.org/EIPS/eip-7692) - EVM Object Format (EOF) v1 (`experimental`)
+   * - [EIP-7692](https://eips.ethereum.org/EIPS/eip-7692) - TVM Object Format (EOF) v1 (`experimental`)
    * - [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) - Set EOA account code (Prague)
    * - [EIP-7709](https://eips.ethereum.org/EIPS/eip-7709) - Read BLOCKHASH from storage and update cost (Verkle)
    * - [EIP-7934](https://eips.ethereum.org/EIPS/eip-7934) - RLP Execution Block Size Limit
@@ -262,7 +262,7 @@ export interface EVMOpts {
   allowUnlimitedInitCodeSize?: boolean
 
   /**
-   * EVM parameters sorted by EIP can be found in the exported `paramsEVM` dictionary,
+   * TVM parameters sorted by EIP can be found in the exported `paramsTVM` dictionary,
    * which is internally passed to the associated `@tvmjs/common` instance which
    * manages parameter selection based on the hardfork and EIP settings.
    *
@@ -273,17 +273,17 @@ export interface EVMOpts {
    * It is recommended to deep-clone the params object for this to avoid side effects:
    *
    * ```ts
-   * const params = JSON.parse(JSON.stringify(paramsEVM))
+   * const params = JSON.parse(JSON.stringify(paramsTVM))
    * params['1679']['bn254AddGas'] = 100 // 150
    * ```
    */
   params?: ParamsDict
 
   /**
-   * Override or add custom opcodes to the EVM instruction set
+   * Override or add custom opcodes to the TVM instruction set
    * These custom opcodes are EIP-agnostic and are always statically added
-   * To delete an opcode, add an entry of format `{opcode: number}`. This will delete that opcode from the EVM.
-   * If this opcode is then used in the EVM, the `INVALID` opcode would instead be used.
+   * To delete an opcode, add an entry of format `{opcode: number}`. This will delete that opcode from the TVM.
+   * If this opcode is then used in the TVM, the `INVALID` opcode would instead be used.
    * To add an opcode, add an entry of the following format:
    * {
    *    // The opcode number which will invoke the custom opcode logic
@@ -316,7 +316,7 @@ export interface EVMOpts {
    *
    * To use an alternative implementation this option can be used by passing
    * in a wrapper implementation integrating the desired library and adhering
-   * to the `EVMBLSInterface` specification.
+   * to the `TVMBLSInterface` specification.
    *
    * An interface for the MCL WASM implementation https://github.com/herumi/mcl-wasm
    * is shipped with this library which can be used as follows (with `mcl-wasm` being
@@ -326,10 +326,10 @@ export interface EVMOpts {
    * import * as mcl from 'mcl-wasm'
    *
    * await mcl.init(mcl.BLS12_381)
-   * const evm = await createTVM({ bls: new MCLBLS(mcl) })
+   * const tvm = await createTVM({ bls: new MCLBLS(mcl) })
    * ```
    */
-  bls?: EVMBLSInterface
+  bls?: TVMBLSInterface
 
   /**
    * For the EIP-196/EIP-197 BN254 (alt_BN128) EC precompiles, the native JS `ethereum-cryptography`
@@ -338,7 +338,7 @@ export interface EVMOpts {
    *
    * To use an alternative implementation this option can be used by passing
    * in a wrapper implementation integrating the desired library and adhering
-   * to the `EVMBN254Interface` specification.
+   * to the `TVMBN254Interface` specification.
    *
    * An interface for a WASM wrapper https://github.com/ethereumjs/rustbn.js around the
    * Parity fork of the Zcash bn pairing cryptography library is shipped with this library
@@ -349,13 +349,13 @@ export interface EVMOpts {
    * import { initRustBN } from 'rustbn-wasm'
    *
    * const bn254 = await initRustBN()
-   * const evm = await createTVM({ bn254: new RustBN254(bn254) })
+   * const tvm = await createTVM({ bn254: new RustBN254(bn254) })
    * ```
    */
-  bn254?: EVMBN254Interface
+  bn254?: TVMBN254Interface
 
   /*
-   * The EVM comes with a basic dependency-minimized `SimpleStateManager` implementation
+   * The TVM comes with a basic dependency-minimized `SimpleStateManager` implementation
    * which serves most code execution use cases and which is included in the
    * `@tvmjs/statemanager` package.
    *
@@ -366,18 +366,18 @@ export interface EVMOpts {
   stateManager?: StateManagerInterface
 
   /**
-   * The EVM comes with a basic mock blockchain interface and implementation for
+   * The TVM comes with a basic mock blockchain interface and implementation for
    * non-block containing use cases.
    *
    * For block-containing setups use the full blockchain implementation from the
    * `@tvmjs/blockchain package.
    */
-  blockchain?: EVMMockBlockchainInterface
+  blockchain?: TVMMockBlockchainInterface
 
   /**
    *
    */
-  profiler?: EVMProfilerOpts
+  profiler?: TVMProfilerOpts
 
   /**
    * If EIP-7928 is activated, a block-level access list can be provided here.
@@ -386,7 +386,7 @@ export interface EVMOpts {
   blockLevelAccessList?: BlockLevelAccessList
 
   /**
-   * When running the EVM with PoA consensus, the `cliqueSigner` function from the `@tvmjs/block` class
+   * When running the TVM with PoA consensus, the `cliqueSigner` function from the `@tvmjs/block` class
    * must be provided along with a `BlockHeader` so that the coinbase can be correctly retrieved when the
    * `Interpreter.getBlockCoinbase` method is called.
    */
@@ -394,9 +394,9 @@ export interface EVMOpts {
 }
 
 /**
- * Result of executing a message via the {@link EVM}.
+ * Result of executing a message via the {@link TVM}.
  */
-export interface EVMResult {
+export interface TVMResult {
   /**
    * Address of created account during transaction, if any
    */
@@ -408,14 +408,14 @@ export interface EVMResult {
 }
 
 /**
- * Result of executing a call via the {@link EVM}.
+ * Result of executing a call via the {@link TVM}.
  */
 export interface ExecResult {
   runState?: RunState
   /**
    * Description of the exception, if any occurred
    */
-  exceptionError?: EVMError
+  exceptionError?: TVMError
   /**
    * Amount of gas left
    */
@@ -454,7 +454,7 @@ export interface ExecResult {
  * High level wrapper for BLS libraries used
  * for the BLS precompiles
  */
-export type EVMBLSInterface = {
+export type TVMBLSInterface = {
   init?(): void
   addG1(input: Uint8Array): Uint8Array
   addG2(input: Uint8Array): Uint8Array
@@ -469,7 +469,7 @@ export type EVMBLSInterface = {
  * High level wrapper for BN254 (alt_BN128) libraries
  * used for the BN254 (alt_BN128) EC precompiles
  */
-export type EVMBN254Interface = {
+export type TVMBN254Interface = {
   add: (input: Uint8Array) => Uint8Array
   mul: (input: Uint8Array) => Uint8Array
   pairing: (input: Uint8Array) => Uint8Array
@@ -504,17 +504,17 @@ export interface TransientStorageInterface {
   clear(): void
 }
 
-export type EVMMockBlock = {
+export type TVMMockBlock = {
   hash(): Uint8Array
 }
 
-export interface EVMMockBlockchainInterface {
-  getBlock(blockId: number): Promise<EVMMockBlock>
-  putBlock(block: EVMMockBlock): Promise<void>
-  shallowCopy(): EVMMockBlockchainInterface
+export interface TVMMockBlockchainInterface {
+  getBlock(blockId: number): Promise<TVMMockBlock>
+  putBlock(block: TVMMockBlock): Promise<void>
+  shallowCopy(): TVMMockBlockchainInterface
 }
 
-export class EVMMockBlockchain implements EVMMockBlockchainInterface {
+export class TVMMockBlockchain implements TVMMockBlockchainInterface {
   async getBlock() {
     return {
       hash() {

@@ -4,7 +4,7 @@ import { assert, beforeAll, describe, it } from 'vitest'
 
 import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 
-import type { EVM } from '../../src/index.ts'
+import type { TVM } from '../../src/index.ts'
 import type { PrecompileFunc } from '../../src/precompiles/types.ts'
 
 const validCases = [
@@ -77,7 +77,7 @@ const malformedCases = [
 ]
 
 describe('Precompiles: BLAKE2F', () => {
-  let evm: EVM
+  let tvm: TVM
   let common: Common
   let addressStr: string
   let BLAKE2F: PrecompileFunc
@@ -86,7 +86,7 @@ describe('Precompiles: BLAKE2F', () => {
     // Test references: https://github.com/ethereum/go-ethereum/blob/e206d3f8975bd98cc86d14055dca40f996bacc60/core/vm/testdata/precompiles/blake2F.json
     //                  https://github.com/ethereum/go-ethereum/blob/e206d3f8975bd98cc86d14055dca40f996bacc60/core/vm/contracts_test.go#L73
 
-    evm = await createTVM({
+    tvm = await createTVM({
       common,
     })
     addressStr = '0000000000000000000000000000000000020009'
@@ -100,7 +100,7 @@ describe('Precompiles: BLAKE2F', () => {
         data,
         gasLimit: BigInt(0xffffff),
         common,
-        _EVM: evm,
+        _TVM: tvm,
       })
       assert.strictEqual(
         bytesToHex(result.returnValue),
@@ -118,7 +118,7 @@ describe('Precompiles: BLAKE2F', () => {
         data,
         gasLimit: BigInt(0xffff),
         common,
-        _EVM: evm,
+        _TVM: tvm,
       })
       assert.strictEqual(
         result.exceptionError!.error,
@@ -140,9 +140,9 @@ describe('Precompiles: BLAKE2F', () => {
     // -> Calls Blake2F with this data (so, with the calldata)
     // -> Returns the data from Blake2F
     const code = `0x366000602037600080366020600060095AF1593D6000593E3D90F3`
-    await evm.stateManager.putCode(addr, hexToBytes(code))
+    await tvm.stateManager.putCode(addr, hexToBytes(code))
 
-    const res = await evm.runCall({
+    const res = await tvm.runCall({
       data: hexToBytes(calldata),
       to: addr,
     })

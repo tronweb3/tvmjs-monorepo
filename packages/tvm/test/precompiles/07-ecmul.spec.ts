@@ -6,7 +6,7 @@ import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 describe('Precompiles: BN254MUL', () => {
   it('BN254MUL', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common,
     })
     const BN254MUL = getActivePrecompiles(common).get('0000000000000000000000000000000000000007')!
@@ -15,7 +15,7 @@ describe('Precompiles: BN254MUL', () => {
       data: new Uint8Array(0),
       gasLimit: BigInt(0xffff),
       common,
-      _EVM: evm,
+      _TVM: tvm,
     })
 
     assert.deepEqual(result.executionGasUsed, BigInt(40000), 'should use petersburg gas costs')

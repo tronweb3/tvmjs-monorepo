@@ -8,7 +8,7 @@ import {
   setLengthLeft,
 } from '@tvmjs/util'
 
-import { EVMError } from '../../errors.ts'
+import { TVMError } from '../../errors.ts'
 
 import {
   BLS_FIELD_MODULUS,
@@ -22,7 +22,7 @@ import {
 
 import type { Fp2 } from '@noble/curves/abstract/tower.js'
 import type { AffinePoint } from '@noble/curves/abstract/weierstrass.js'
-import type { EVMBLSInterface } from '../../types.ts'
+import type { TVMBLSInterface } from '../../types.ts'
 
 const G1_ZERO = bls12_381.G1.Point.ZERO
 
@@ -31,10 +31,10 @@ const G2_ZERO = bls12_381.G2.Point.ZERO
 function BLS12_381_ToFp2Point(fpXCoordinate: Uint8Array, fpYCoordinate: Uint8Array) {
   // check if the coordinates are in the field
   if (bytesToBigInt(fpXCoordinate) >= BLS_FIELD_MODULUS) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
   }
   if (bytesToBigInt(fpYCoordinate) >= BLS_FIELD_MODULUS) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
   }
 
   const fpBytes = concatBytes(fpXCoordinate.subarray(16), fpYCoordinate.subarray(16))
@@ -66,7 +66,7 @@ function BLS12_381_ToG1Point(input: Uint8Array, verifyOrder = true) {
     G1.assertValidity()
   } catch (e) {
     if (verifyOrder || (e as Error).message !== 'bad point: not in prime-order subgroup')
-      throw new EVMError(EVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
+      throw new TVMError(TVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
   }
 
   return G1
@@ -109,7 +109,7 @@ function BLS12_381_ToG2Point(input: Uint8Array, verifyOrder = true) {
     pG2.assertValidity()
   } catch (e) {
     if (verifyOrder || (e as Error).message !== 'bad point: not in prime-order subgroup')
-      throw new EVMError(EVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
+      throw new TVMError(TVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE)
   }
 
   return pG2
@@ -143,19 +143,19 @@ function BLS12_381_ToFrPoint(input: Uint8Array): bigint {
 function BLS12_381_ToFpPoint(fpCoordinate: Uint8Array) {
   // check if point is in field
   if (bytesToBigInt(fpCoordinate) >= BLS_FIELD_MODULUS) {
-    throw new EVMError(EVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
+    throw new TVMError(TVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD)
   }
   const FP = bls12_381.fields.Fp.fromBytes(fpCoordinate.slice(16))
   return FP
 }
 
 /**
- * Implementation of the `EVMBLSInterface` using the `ethereum-cryptography (`@noble/curves`)
+ * Implementation of the `TVMBLSInterface` using the `ethereum-cryptography (`@noble/curves`)
  * JS library, see https://github.com/ethereum/js-ethereum-cryptography.
  *
- * This is the EVM default implementation.
+ * This is the TVM default implementation.
  */
-export class NobleBLS implements EVMBLSInterface {
+export class NobleBLS implements TVMBLSInterface {
   addG1(input: Uint8Array): Uint8Array {
     const p1 = BLS12_381_ToG1Point(input.subarray(0, BLS_G1_POINT_BYTE_LENGTH), false)
     const p2 = BLS12_381_ToG1Point(

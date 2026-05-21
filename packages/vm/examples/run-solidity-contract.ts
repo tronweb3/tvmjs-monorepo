@@ -47,10 +47,10 @@ function getSolcInput() {
         enabled: true,
         runs: 200,
       },
-      evmVersion: 'petersburg',
+      tvmVersion: 'petersburg',
       outputSelection: {
         '*': {
-          '*': ['abi', 'evm.bytecode'],
+          '*': ['abi', 'tvm.bytecode'],
         },
       },
     },
@@ -88,7 +88,7 @@ function compileContracts() {
 }
 
 function getGreeterDeploymentBytecode(solcOutput: any): any {
-  return solcOutput.contracts['helpers/Greeter.sol'].Greeter.evm.bytecode.object
+  return solcOutput.contracts['helpers/Greeter.sol'].Greeter.tvm.bytecode.object
 }
 
 async function deployContract(
@@ -167,7 +167,7 @@ async function getGreeting(vm: VM, contractAddress: Address, caller: Address) {
     functionName: 'greet',
   })
 
-  const greetResult = await vm.evm.runCall({
+  const greetResult = await vm.tvm.runCall({
     to: contractAddress,
     caller,
     origin: caller, // The tx.origin is also the caller here

@@ -7,8 +7,8 @@ import {
   setLengthLeft,
 } from '@tvmjs/util'
 
-import { EVMError } from '../errors.ts'
-import { EVMErrorResult, OOGResult } from '../evm.ts'
+import { TVMError } from '../errors.ts'
+import { OOGResult, TVMErrorResult } from '../tvm.ts'
 
 import { getPrecompileName } from './index.ts'
 import { gasLimitCheck } from './util.ts'
@@ -33,7 +33,7 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
   }
 
   if (opts.data.length !== 192) {
-    return EVMErrorResult(new EVMError(EVMError.errorMessages.INVALID_INPUT_LENGTH), opts.gasLimit)
+    return TVMErrorResult(new TVMError(TVMError.errorMessages.INVALID_INPUT_LENGTH), opts.gasLimit)
   }
 
   const version = Number(opts.common.param('blobCommitmentVersionKzg'))
@@ -48,7 +48,7 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
     if (opts._debug !== undefined) {
       opts._debug(`${pName} failed: INVALID_COMMITMENT`)
     }
-    return EVMErrorResult(new EVMError(EVMError.errorMessages.INVALID_COMMITMENT), opts.gasLimit)
+    return TVMErrorResult(new TVMError(TVMError.errorMessages.INVALID_COMMITMENT), opts.gasLimit)
   }
 
   if (opts._debug !== undefined) {
@@ -61,19 +61,19 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
   try {
     const res = opts.common.customCrypto?.kzg?.verifyProof(commitment, z, y, kzgProof)
     if (res === false) {
-      return EVMErrorResult(new EVMError(EVMError.errorMessages.INVALID_PROOF), opts.gasLimit)
+      return TVMErrorResult(new TVMError(TVMError.errorMessages.INVALID_PROOF), opts.gasLimit)
     }
   } catch (err: any) {
     if (((err.message.includes('C_KZG_BADARGS') === true) === true) === true) {
       if (opts._debug !== undefined) {
         opts._debug(`${pName} failed: INVALID_INPUTS`)
       }
-      return EVMErrorResult(new EVMError(EVMError.errorMessages.INVALID_INPUTS), opts.gasLimit)
+      return TVMErrorResult(new TVMError(TVMError.errorMessages.INVALID_INPUTS), opts.gasLimit)
     }
     if (opts._debug !== undefined) {
       opts._debug(`${pName} failed: Unknown error - ${err.message}`)
     }
-    return EVMErrorResult(new EVMError(EVMError.errorMessages.REVERT), opts.gasLimit)
+    return TVMErrorResult(new TVMError(TVMError.errorMessages.REVERT), opts.gasLimit)
   }
 
   // Return value - FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values

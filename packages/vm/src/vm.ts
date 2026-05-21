@@ -5,14 +5,14 @@ import { createVM } from './constructors.ts'
 import { paramsVM } from './params.ts'
 
 import type { Common, StateManagerInterface } from '@tvmjs/common'
-import type { EVMInterface, EVMMockBlockchainInterface } from '@tvmjs/tvm'
+import type { TVMInterface, TVMMockBlockchainInterface } from '@tvmjs/tvm'
 import { isDebugEnabled } from '@tvmjs/util'
 import type { BigIntLike } from '@tvmjs/util'
 import type { VMEvent, VMOpts } from './types.ts'
 
 /**
- * The VM is a state transition machine that executes EVM bytecode and updates the state.
- * It can be used to execute transactions, blocks, individual transactions, or snippets of EVM bytecode.
+ * The VM is a state transition machine that executes TVM bytecode and updates the state.
+ * It can be used to execute transactions, blocks, individual transactions, or snippets of TVM bytecode.
  *
  * A VM can be created with the constructor method:
  *
@@ -27,15 +27,15 @@ export class VM {
   /**
    * The blockchain the VM operates on
    */
-  readonly blockchain: EVMMockBlockchainInterface
+  readonly blockchain: TVMMockBlockchainInterface
 
   readonly common: Common
 
   readonly events: EventEmitter<VMEvent>
   /**
-   * The EVM used for bytecode execution
+   * The TVM used for bytecode execution
    */
-  readonly evm: EVMInterface
+  readonly tvm: TVMInterface
 
   protected readonly _opts: VMOpts
   protected _isInitialized: boolean = false
@@ -72,7 +72,7 @@ export class VM {
     this.common.updateParams(opts.params ?? paramsVM)
     this.stateManager = opts.stateManager!
     this.blockchain = opts.blockchain!
-    this.evm = opts.evm!
+    this.tvm = opts.tvm!
 
     this.events = new EventEmitter<VMEvent>()
 
@@ -114,18 +114,18 @@ export class VM {
     common.setHardfork(this.common.hardfork())
     const blockchain = this.blockchain.shallowCopy()
     const stateManager = this.stateManager.shallowCopy(downlevelCaches)
-    const evmOpts = {
-      ...(this.evm as any)._optsCached,
-      common: this._opts.evmOpts?.common?.copy() ?? common,
-      blockchain: this._opts.evmOpts?.blockchain?.shallowCopy() ?? blockchain,
-      stateManager: this._opts.evmOpts?.stateManager?.shallowCopy(downlevelCaches) ?? stateManager,
+    const tvmOpts = {
+      ...(this.tvm as any)._optsCached,
+      common: this._opts.tvmOpts?.common?.copy() ?? common,
+      blockchain: this._opts.tvmOpts?.blockchain?.shallowCopy() ?? blockchain,
+      stateManager: this._opts.tvmOpts?.stateManager?.shallowCopy(downlevelCaches) ?? stateManager,
     }
-    const evmCopy = await createTVM(evmOpts) // TODO fixme (should copy the EVMInterface, not default EVM)
+    const tvmCopy = await createTVM(tvmOpts) // TODO fixme (should copy the TVMInterface, not default TVM)
     return createVM({
       stateManager,
       blockchain: this.blockchain,
       common,
-      evm: evmCopy,
+      tvm: tvmCopy,
       setHardfork: this._setHardfork,
       profilerOpts: this._opts.profilerOpts,
     })

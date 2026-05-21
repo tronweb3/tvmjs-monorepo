@@ -76,7 +76,7 @@ describe('EIP 3541 tests', () => {
         address = step.address
       }
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     await runTx(vm, { tx, skipHardForkValidation: true })
 
@@ -96,7 +96,7 @@ describe('EIP 3541 tests', () => {
     code = await vm.stateManager.getCode(address!)
 
     assert.isNotEmpty(code, 'did deposit code')
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
   })
 
   it('deploy contracts starting with 0xEF using CREATE2', async () => {
@@ -113,7 +113,7 @@ describe('EIP 3541 tests', () => {
         address = step.address
       }
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     await runTx(vm, { tx, skipHardForkValidation: true })
 
@@ -133,6 +133,6 @@ describe('EIP 3541 tests', () => {
     code = await vm.stateManager.getCode(address!)
 
     assert.isNotEmpty(code, 'did deposit code')
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
   })
 })

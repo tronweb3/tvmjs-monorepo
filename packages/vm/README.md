@@ -31,7 +31,7 @@ to build and run blocks and txs and update state.
   - [Docs](#docs)
   - [Hybrid CJS/ESM Builds](#hybrid-cjsesm-builds)
 - [Architecture](#architecture)
-  - [VM/EVM Relation](#vmevm-relation)
+  - [VM/TVM Relation](#vmtvm-relation)
   - [State and Blockchain Information](#state-and-blockchain-information)
 - [Setup](#setup)
   - [Chains](#chains)
@@ -60,7 +60,7 @@ To obtain the latest version, simply require the project using `npm`:
 npm install @tvmjs/vm
 ```
 
-**Note:** Starting with the Dencun hardfork `EIP-4844` related functionality has become an integrated part of the EVM functionality with the activation of the point evaluation precompile. For this precompile to work a separate installation of the KGZ library is necessary (we decided not to bundle due to large bundle sizes), see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
+**Note:** Starting with the Dencun hardfork `EIP-4844` related functionality has become an integrated part of the TVM functionality with the activation of the point evaluation precompile. For this precompile to work a separate installation of the KGZ library is necessary (we decided not to bundle due to large bundle sizes), see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
 
 ## Usage
 
@@ -100,7 +100,7 @@ Additionally to the `VM.runTx()` method there is an API method `VM.runBlock()` w
 
 It is possible to fetch a real mainnet block via JSON-RPC and execute it locally using the VM together with the `RPCStateManager` from the `@tvmjs/statemanager` package, which fetches account and storage data on demand from a remote provider.
 
-> **Note:** Running recent mainnet blocks will generate **thousands of RPC requests** (one for each account/storage access during EVM execution). Make sure your RPC provider can handle the load and be mindful of rate limits and quotas.
+> **Note:** Running recent mainnet blocks will generate **thousands of RPC requests** (one for each account/storage access during TVM execution). Make sure your RPC provider can handle the load and be mindful of rate limits and quotas.
 
 ```ts
 // ./examples/runBlockWithRPC.ts
@@ -291,24 +291,24 @@ Using ESM will give you additional advantages over CJS beyond browser usage like
 
 ## Architecture
 
-### VM/EVM Relation
+### VM/TVM Relation
 
 Starting with the `VM` v6 version the inner TVM core previously included in this library has been extracted to an own package [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm).
 
-It is still possible to access all `EVM` functionality through the `evm` property of the initialized `vm` object, e.g.:
+It is still possible to access all `TVM` functionality through the `tvm` property of the initialized `vm` object, e.g.:
 
 ```ts
-vm.evm.runCode()
-vm.evm.events.on('step', function (data) {
+vm.tvm.runCode()
+vm.tvm.events.on('step', function (data) {
   console.log(`Opcode: ${data.opcode.name}\tStack: ${data.stack}`)
 })
 ```
 
-Note that it's now also possible to pass in an own or customized `EVM` instance by using the optional `evm` constructor option.
+Note that it's now also possible to pass in an own or customized `TVM` instance by using the optional `tvm` constructor option.
 
 ### State and Blockchain Information
 
-A previously needed EEI interface for EVM/VM communication is not needed any more and the API has been simplified, also see the respective EVM README section. Most of the EEI related logic is now either handled internally or more generic functionality being taken over by the `@tvmjs/statemanager` package, with the `EVM` now taking in both an (optional) `stateManager` and `blockchain` argument for the constructor (which the `VM` passes over by default).
+A previously needed EEI interface for TVM/VM communication is not needed any more and the API has been simplified, also see the respective TVM README section. Most of the EEI related logic is now either handled internally or more generic functionality being taken over by the `@tvmjs/statemanager` package, with the `TVM` now taking in both an (optional) `stateManager` and `blockchain` argument for the constructor (which the `VM` passes over by default).
 
 The previously included `StateManager` has been extracted to its own package [@tvmjs/statemanager](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/statemanager). The `StateManager` package provides a unified state interface and it is now also possible to provide a modified or custom `StateManager` to the VM via the optional `stateManager` constructor option.
 
@@ -319,9 +319,9 @@ Beside the default Proof-of-Stake setup coming with the `Common` library default
 
 ### Hardforks
 
-For hardfork support see the [Hardfork Support](../evm#hardfork-support) section from the underlying `@tvmjs/tvm` instance.
+For hardfork support see the [Hardfork Support](../tvm#hardfork-support) section from the underlying `@tvmjs/tvm` instance.
 
-An explicit HF in the `VM` - which is then passed on to the inner `EVM` - can be set with:
+An explicit HF in the `VM` - which is then passed on to the inner `TVM` - can be set with:
 
 ```ts
 // ./examples/runTx.ts#L1-L8
@@ -446,7 +446,7 @@ vm.events.on('afterTx', (event) => {
 })
 ```
 
-Please note that there are additional EVM-specific events in the [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm) package.
+Please note that there are additional TVM-specific events in the [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm) package.
 
 ### Asynchronous event handlers
 
@@ -490,7 +490,7 @@ The following loggers are currently available:
 | `vm:tx:gas` |  Transaction gas logger                                            |
 | `vm:state`  | StateManager logger                                                |
 
-Note that there are additional EVM-specific loggers in the [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm) package.
+Note that there are additional TVM-specific loggers in the [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm) package.
 
 Here are some examples for useful logger combinations.
 
@@ -521,7 +521,7 @@ DEBUG=ethjs,vm:*,vm:*:*,-vm:state tsx test.ts
 Run some specific loggers including a logger specifically logging the `SSTORE` executions from the VM (this is from the screenshot above):
 
 ```shell
-DEBUG=ethjs,vm:tx,vm:evm,vm:ops:sstore,vm:*:gas tsx test.ts
+DEBUG=ethjs,vm:tx,vm:tvm,vm:ops:sstore,vm:*:gas tsx test.ts
 ```
 
 ## Internal Structure
@@ -541,13 +541,13 @@ The VM processes state changes at several levels:
   - Performs pre-execution checks: Sender balance sufficient for gas+value, sender nonce validity, transaction gas limit against block gas limit, EIP activations (e.g., 2930 Access Lists, 1559 Fee Market, 4844 Blobs).
   - Warms up state access based on Access Lists (EIP-2929/2930).
   - Pays intrinsic gas cost.
-  - Executes the transaction code using `vm.evm.runCall` (or specific logic for contract creation).
+  - Executes the transaction code using `vm.tvm.runCall` (or specific logic for contract creation).
   - Calculates gas used and refunds remaining gas.
   - Transfers gas fees to the fee recipient (recipient receives all pre EIP-1559, base fee is burned post EIP-1559).
   - Generates a transaction receipt.
   - Manages state checkpoints and commits/reverts changes for the transaction.
-- **[`vm.evm.runCall`](../evm/src/evm.ts)** (within `@tvmjs/tvm`): Executes the EVM code for a transaction (message call or contract creation).
-  - Steps through EVM opcodes.
+- **[`vm.tvm.runCall`](../tvm/src/tvm.ts)** (within `@tvmjs/tvm`): Executes the TVM code for a transaction (message call or contract creation).
+  - Steps through TVM opcodes.
   - Manages memory, stack, and storage changes.
   - Handles exceptions and gas consumption during execution.
 

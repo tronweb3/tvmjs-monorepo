@@ -1,6 +1,6 @@
 import { EthereumJSErrorWithoutCode } from '@tvmjs/util'
 
-type EVMPerformanceLogEntry = {
+type TVMPerformanceLogEntry = {
   calls: number
   time: number
   gasUsed: number
@@ -8,7 +8,7 @@ type EVMPerformanceLogEntry = {
   dynamicGasUsed?: number
 }
 
-export type EVMPerformanceLogOutput = {
+export type TVMPerformanceLogOutput = {
   calls: number // Amount this opcode/precompile was called
   totalTime: number // Amount of seconds taken for this opcode/precompile (rounded to 3 digits)
   avgTimePerCall: number // Avg time per call of this opcode/precompile (rounded to 3 digits)
@@ -21,8 +21,8 @@ export type EVMPerformanceLogOutput = {
   staticGas?: number // static gas of the opcode
 }
 
-type EVMPerformanceLogs = {
-  [tag: string]: EVMPerformanceLogEntry
+type TVMPerformanceLogs = {
+  [tag: string]: TVMPerformanceLogEntry
 }
 
 const blockGasLimit = 30_000_000 // Block gas limit
@@ -54,9 +54,9 @@ export class Timer {
   }
 }
 
-export class EVMPerformanceLogger {
-  private opcodes!: EVMPerformanceLogs
-  private precompiles!: EVMPerformanceLogs
+export class TVMPerformanceLogger {
+  private opcodes!: TVMPerformanceLogs
+  private precompiles!: TVMPerformanceLogs
 
   private currentTimer?: Timer
 
@@ -71,12 +71,12 @@ export class EVMPerformanceLogger {
 
   getLogs() {
     // Return nicely formatted logs
-    function getLogsFor(obj: EVMPerformanceLogs) {
-      const output: EVMPerformanceLogOutput[] = []
+    function getLogsFor(obj: TVMPerformanceLogs) {
+      const output: TVMPerformanceLogOutput[] = []
       for (const key in obj) {
         const field = obj[key]
         const gasPerSecond = field.gasUsed / field.time
-        const entry: EVMPerformanceLogOutput = {
+        const entry: TVMPerformanceLogOutput = {
           calls: field.calls,
           totalTime: Math.round(field.time * 1e6) / 1e3,
           avgTimePerCall: Math.round((field.time / field.calls) * 1e6) / 1e3,

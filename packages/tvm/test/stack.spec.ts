@@ -107,7 +107,7 @@ describe('Stack', () => {
   it('stack items should not change if they are DUPed', async () => {
     const caller = new Address(hexToBytes('0x00000000000000000000000000000000000000ee'))
     const addr = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
-    const evm = await createTVM()
+    const tvm = await createTVM()
     const account = createAccount(BigInt(0), BigInt(0))
     const code = '0x60008080808060013382F15060005260206000F3'
     const expectedReturnValue = setLengthLeft(bigIntToBytes(BigInt(0)), 32)
@@ -129,9 +129,9 @@ describe('Stack', () => {
           PUSH1 0x00
           RETURN        stack: [0, 0x20] (we thus return the stack item which was originally pushed as 0, and then DUPed)
     */
-    await evm.stateManager.putAccount(addr, account)
-    await evm.stateManager.putCode(addr, hexToBytes(code))
-    await evm.stateManager.putAccount(caller, new Account(BigInt(0), BigInt(0x11)))
+    await tvm.stateManager.putAccount(addr, account)
+    await tvm.stateManager.putCode(addr, hexToBytes(code))
+    await tvm.stateManager.putAccount(caller, new Account(BigInt(0), BigInt(0x11)))
     const runCallArgs = {
       caller,
       gasLimit: BigInt(0xffffffffff),
@@ -139,7 +139,7 @@ describe('Stack', () => {
       value: BigInt(1),
     }
     try {
-      const res = await evm.runCall(runCallArgs)
+      const res = await tvm.runCall(runCallArgs)
       const executionReturnValue = res.execResult.returnValue
       assert.deepEqual(executionReturnValue, expectedReturnValue)
     } catch (e: any) {
@@ -158,20 +158,20 @@ describe('Stack', () => {
   })
 
   it('stack should return the padded value', async () => {
-    const evm = await createTVM()
+    const tvm = await createTVM()
 
     for (let pushN = 0x60; pushN <= 0x7f; pushN++) {
       const expectedStack = new Stack(1024)
       expectedStack.push(bytesToBigInt(setLengthRight(new Uint8Array([0x01]), pushN - 0x5f)))
 
-      const resWithoutJumps = await evm.runCall({
+      const resWithoutJumps = await tvm.runCall({
         // PUSHx 01
         data: hexToBytes(`0x${pushN.toString(16)}01`),
       })
       const executionStack = resWithoutJumps.execResult.runState?.stack
       assert.deepEqual(executionStack, expectedStack, 'code without jumps ok')
 
-      const resWithJumps = await evm.runCall({
+      const resWithJumps = await tvm.runCall({
         // PUSH 0x03 JUMP JUMPDEST < PUSHx 01 >
         data: hexToBytes(`0x6003565B${pushN.toString(16)}01`),
       })

@@ -280,7 +280,7 @@ export class MerkleStateManager implements StateManagerInterface {
   }
 
   /**
-   * Gets the storage trie for the EVM-internal account identified by the provided address/hash.
+   * Gets the storage trie for the TVM-internal account identified by the provided address/hash.
    * If the storage trie is not in the local cache ('this._storageTries'),
    *   generates a new storage trie object based on a lookup (shallow copy from 'this._trie'),
    *   applies the storage root of the provided rootAccount (or an

@@ -166,7 +166,7 @@ export interface StateManagerInterface {
   dumpStorageRange?(address: Address, startKey: bigint, limit: number): Promise<StorageRange>
 
   /*
-   * EVM/VM Specific Functionality
+   * TVM/VM Specific Functionality
    */
   originalStorageCache: {
     get(address: Address, key: Uint8Array): Promise<Uint8Array>

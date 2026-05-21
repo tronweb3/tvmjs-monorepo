@@ -2,8 +2,8 @@ import { sha256 } from '@noble/hashes/sha2.js'
 import type { Permission } from '@tvmjs/util'
 import { Address, bigIntToBytes, bytesToHex, concatBytes, setLengthLeft } from '@tvmjs/util'
 
-import { EVMError } from '../errors.ts'
-import { OOGResult } from '../evm.ts'
+import { TVMError } from '../errors.ts'
+import { OOGResult } from '../tvm.ts'
 import type { ExecResult } from '../types.ts'
 import { DataWord } from './dataWord.ts'
 import type { PrecompileInput } from './types.ts'
@@ -11,7 +11,7 @@ import { convertToTronAddress, extractBytesArray, recoverAddrBySign } from './ut
 
 export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
   const rawData = opts.data
-  const vm = opts._EVM
+  const vm = opts._TVM
 
   const ENGERYPERSIGN = opts.common.param('validatemultisignGas')
   const MAX_SIZE = 5
@@ -105,7 +105,7 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
     return {
       executionGasUsed: opts.gasLimit,
       returnValue: new Uint8Array(),
-      exceptionError: new EVMError(EVMError.errorMessages.UNKNOWN),
+      exceptionError: new TVMError(TVMError.errorMessages.UNKNOWN),
     }
   }
 }

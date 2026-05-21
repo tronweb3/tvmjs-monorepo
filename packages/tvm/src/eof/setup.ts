@@ -3,7 +3,7 @@ import { EOFContainer, EOFContainerMode } from './container.ts'
 import type { RunState } from '../interpreter.ts'
 
 /**
- * Setup EOF by preparing the `RunState` to run EVM in EOF mode
+ * Setup EOF by preparing the `RunState` to run TVM in EOF mode
  * @param runState Current run state
  * @param eofMode EOF mode to run in (only changes in case of EOFCREATE)
  */

@@ -1,5 +1,5 @@
-import { EVMError } from '../errors.ts'
-import { OOGResult } from '../evm.ts'
+import { TVMError } from '../errors.ts'
+import { OOGResult } from '../tvm.ts'
 import type { ExecResult } from '../types.ts'
 import { DataWord } from './dataWord.ts'
 import type { PrecompileInput } from './types.ts'
@@ -50,7 +50,7 @@ export function precompile09(opts: PrecompileInput): ExecResult {
     return {
       executionGasUsed: opts.gasLimit,
       returnValue: new Uint8Array(),
-      exceptionError: new EVMError(EVMError.errorMessages.UNKNOWN),
+      exceptionError: new TVMError(TVMError.errorMessages.UNKNOWN),
     }
   }
 }

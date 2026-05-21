@@ -1,8 +1,8 @@
-export type EVMErrorType = (typeof EVMErrorMessage)[keyof typeof EVMErrorMessage]
+export type TVMErrorType = (typeof TVMErrorMessage)[keyof typeof TVMErrorMessage]
 
-export const EVMErrorTypeString = 'EVMError'
+export const TVMErrorTypeString = 'TVMError'
 
-const EVMErrorMessage = {
+const TVMErrorMessage = {
   OUT_OF_GAS: 'out of gas',
   CODESTORE_OUT_OF_GAS: 'code store out of gas',
   CODESIZE_EXCEEDS_MAXIMUM: 'code size to deposit exceeds maximum code size',
@@ -37,13 +37,13 @@ const EVMErrorMessage = {
   UNKNOWN: 'unknown',
 } as const
 
-export class EVMError {
-  error: EVMErrorType
+export class TVMError {
+  error: TVMErrorType
   errorType: string
-  static errorMessages: Record<keyof typeof EVMErrorMessage, EVMErrorType> = EVMErrorMessage
+  static errorMessages: Record<keyof typeof TVMErrorMessage, TVMErrorType> = TVMErrorMessage
 
-  constructor(error: EVMErrorType) {
+  constructor(error: TVMErrorType) {
     this.error = error
-    this.errorType = EVMErrorTypeString
+    this.errorType = TVMErrorTypeString
   }
 }

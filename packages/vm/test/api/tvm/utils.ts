@@ -168,7 +168,7 @@ export async function triggerConstant(vm: VM, triggerOption: TriggerConstantOpti
     return iface.encodeFunctionData(abi!.name, params || [])
   })()
 
-  const result = await vm.evm.runCall({
+  const result = await vm.tvm.runCall({
     block,
     to: contractAddress,
     caller,
@@ -209,7 +209,7 @@ export async function compileSol(fileName: string, contractName: string) {
       },
       outputSelection: {
         '*': {
-          '*': ['abi', 'evm.bytecode'],
+          '*': ['abi', 'tvm.bytecode'],
         },
       },
     },
@@ -244,7 +244,7 @@ export async function compileSol(fileName: string, contractName: string) {
     throw new Error(compileError)
   }
 
-  const bytecodeInst = output.contracts[fileName][contractName].evm.bytecode
+  const bytecodeInst = output.contracts[fileName][contractName].tvm.bytecode
   const bytecode: string = bytecodeInst.object
 
   return { bytecode, abi: output.contracts[fileName][contractName].abi }

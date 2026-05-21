@@ -17,7 +17,7 @@ import type { SimpleStateManagerOpts } from './index.ts'
  * implementation of checkpointing but lacks methods implementations of
  * state root related logic as well as some other non-core functions.
  *
- * Functionality provided is sufficient to be used for simple EVM use
+ * Functionality provided is sufficient to be used for simple TVM use
  * cases and the state manager is used as default there.
  *
  * For a more full fledged and MPT-backed state manager implementation

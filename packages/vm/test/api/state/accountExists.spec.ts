@@ -43,7 +43,7 @@ describe('correctly apply new account gas fee on pre-Spurious Dragon hardforks',
       value: BigInt(0),
     }
 
-    const result = await vm.evm.runCall(runCallArgs)
+    const result = await vm.tvm.runCall(runCallArgs)
     assert.strictEqual(
       result.execResult.executionGasUsed,
       BigInt(53552),
@@ -92,7 +92,7 @@ describe('do not apply new account gas fee for empty account in DB on pre-Spurio
       value: BigInt(0),
     }
 
-    const result = await vm.evm.runCall(runCallArgs)
+    const result = await vm.tvm.runCall(runCallArgs)
     assert.strictEqual(
       result.execResult.executionGasUsed,
       BigInt(28552),

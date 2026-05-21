@@ -12,29 +12,29 @@ import { assert, describe, it } from 'vitest'
 import { createTVM } from '../src/index.ts'
 
 import type { PrefixedHexString } from '@tvmjs/util'
-import type { EVMRunCallOpts } from '../src/types.ts'
+import type { TVMRunCallOpts } from '../src/types.ts'
 
 describe('BLOBHASH / access blobVersionedHashes in calldata', () => {
   it('should work', async () => {
-    // setup the evm
+    // setup the tvm
     const { eip4844GethGenesis } = await import('@tvmjs/testdata')
     const common = createCommonFromGethGenesis(eip4844GethGenesis, {
       chain: 'custom',
       hardfork: Hardfork.Cancun,
     })
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common,
     })
 
     const getBlobHashIndex0Code = '0x60004960005260206000F3'
     // setup the call arguments
-    const runCallArgs: EVMRunCallOpts = {
+    const runCallArgs: TVMRunCallOpts = {
       gasLimit: BigInt(0xffffffffff),
       // calldata -- retrieves the versioned hash at index 0 and returns it from memory
       data: hexToBytes(getBlobHashIndex0Code),
       blobVersionedHashes: ['0xab'],
     }
-    const res = await evm.runCall(runCallArgs)
+    const res = await tvm.runCall(runCallArgs)
 
     assert.strictEqual(
       bytesToHex(unpadBytes(res.execResult.returnValue)),
@@ -46,22 +46,22 @@ describe('BLOBHASH / access blobVersionedHashes in calldata', () => {
 
 describe(`BLOBHASH: access blobVersionedHashes within contract calls`, () => {
   it('should work', async () => {
-    // setup the evm
+    // setup the tvm
     const { eip4844GethGenesis } = await import('@tvmjs/testdata')
     const common = createCommonFromGethGenesis(eip4844GethGenesis, {
       chain: 'custom',
       hardfork: Hardfork.Cancun,
     })
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common,
     })
 
     const getBlobHasIndexCode = '0x60004960005260206000F3'
     const contractAddress = new Address(hexToBytes('0x00000000000000000000000000000000000000ff')) // contract address
-    await evm.stateManager.putCode(contractAddress, hexToBytes(getBlobHasIndexCode)) // setup the contract code
+    await tvm.stateManager.putCode(contractAddress, hexToBytes(getBlobHasIndexCode)) // setup the contract code
 
     const caller = new Address(hexToBytes('0x00000000000000000000000000000000000000ee')) // caller address
-    await evm.stateManager.putAccount(caller, new Account(BigInt(0), BigInt(0x11111111))) // give the calling account a big balance so we don't run out of funds
+    await tvm.stateManager.putAccount(caller, new Account(BigInt(0), BigInt(0x11111111))) // give the calling account a big balance so we don't run out of funds
 
     for (const callCode of ['F1', 'F4', 'F2', 'FA']) {
       // Call the contract via static call and return the returned BLOBHASH
@@ -77,13 +77,13 @@ describe(`BLOBHASH: access blobVersionedHashes within contract calls`, () => {
         '60205F5F3E60206000F3') as PrefixedHexString
 
       // setup the call arguments
-      const runCallArgs: EVMRunCallOpts = {
+      const runCallArgs: TVMRunCallOpts = {
         gasLimit: BigInt(0xffffffffff),
         // calldata -- retrieves the versioned hash at index 0 and returns it from memory
         data: hexToBytes(staticCallCode),
         blobVersionedHashes: ['0xab'],
       }
-      const res = await evm.runCall(runCallArgs)
+      const res = await tvm.runCall(runCallArgs)
 
       assert.strictEqual(
         bytesToHex(unpadBytes(res.execResult.returnValue)),
@@ -96,13 +96,13 @@ describe(`BLOBHASH: access blobVersionedHashes within contract calls`, () => {
 
 describe(`BLOBHASH: access blobVersionedHashes in a CREATE/CREATE2 frame`, () => {
   it('should work', async () => {
-    // setup the evm
+    // setup the tvm
     const { eip4844GethGenesis } = await import('@tvmjs/testdata')
     const common = createCommonFromGethGenesis(eip4844GethGenesis, {
       chain: 'custom',
       hardfork: Hardfork.Cancun,
     })
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common,
     })
 
@@ -110,7 +110,7 @@ describe(`BLOBHASH: access blobVersionedHashes in a CREATE/CREATE2 frame`, () =>
     getBlobHashIndex0Code = getBlobHashIndex0Code.padEnd(64, '0')
 
     const caller = new Address(hexToBytes('0x00000000000000000000000000000000000000ee')) // caller address
-    await evm.stateManager.putAccount(caller, new Account(BigInt(0), BigInt(0x11111111))) // give the calling account a big balance so we don't run out of funds
+    await tvm.stateManager.putAccount(caller, new Account(BigInt(0), BigInt(0x11111111))) // give the calling account a big balance so we don't run out of funds
 
     for (const createOP of ['F0', 'F5']) {
       // Call the contract via static call and return the returned BLOBHASH
@@ -130,16 +130,16 @@ describe(`BLOBHASH: access blobVersionedHashes in a CREATE/CREATE2 frame`, () =>
         '5F5260206000F3') as PrefixedHexString
 
       // setup the call arguments
-      const runCallArgs: EVMRunCallOpts = {
+      const runCallArgs: TVMRunCallOpts = {
         gasLimit: BigInt(0xffffffffff),
         // calldata -- retrieves the versioned hash at index 0 and returns it from memory
         data: hexToBytes(staticCallCode),
         blobVersionedHashes: ['0xab'],
       }
-      const res = await evm.runCall(runCallArgs)
+      const res = await tvm.runCall(runCallArgs)
 
       const address = createAddressFromString(bytesToHex(res.execResult.returnValue.slice(12)))
-      const code = await evm.stateManager.getCode(address)
+      const code = await tvm.stateManager.getCode(address)
 
       assert.strictEqual(
         bytesToHex(code),

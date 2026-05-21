@@ -1,12 +1,12 @@
 import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { type EVM, createTVM } from '@tvmjs/tvm'
+import { type TVM, createTVM } from '@tvmjs/tvm'
 import { type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 
 // CLZ (Count Leading Zeros) opcode (0x1e)
 // Demonstrates the CLZ opcode introduced in https://eips.ethereum.org/EIPS/eip-7939
 //
 // The CLZ opcode returns the number of zero bits before the most significant 1-bit in a 256-bit value.
-// It enables efficient computation of bit length, log₂, and prefix comparisons directly in the EVM.
+// It enables efficient computation of bit length, log₂, and prefix comparisons directly in the TVM.
 //
 // Doing this in Solidity/Yul requires a loop or binary search using shifts and comparisons,
 // which costs hundreds of gas and bloats bytecode. By replacing multi-step shift and branch logic
@@ -30,10 +30,10 @@ const assembleCode = (x: Uint8Array) => {
   return code
 }
 
-const runCase = async (evm: EVM, x: PrefixedHexString) => {
+const runCase = async (tvm: TVM, x: PrefixedHexString) => {
   const code = assembleCode(hexToBytes(x))
 
-  const res = await evm.runCode({ code })
+  const res = await tvm.runCode({ code })
 
   const stack = res.runState?.stack
   if (!stack) {
@@ -50,19 +50,19 @@ const runCase = async (evm: EVM, x: PrefixedHexString) => {
 }
 
 const main = async () => {
-  const evm = await createTVM({ common })
+  const tvm = await createTVM({ common })
 
   // Case 1: x == 0x00..00 -> expect 256
-  await runCase(evm, `0x${'00'.repeat(32)}` as PrefixedHexString)
+  await runCase(tvm, `0x${'00'.repeat(32)}` as PrefixedHexString)
 
   // Case 2: x == 0x0..01 -> MSB at bit 0 -> expect 255
-  await runCase(evm, `0x${'00'.repeat(31)}01` as PrefixedHexString)
+  await runCase(tvm, `0x${'00'.repeat(31)}01` as PrefixedHexString)
 
   // Case 3: x == 0x40..00 -> MSB at bit 254 -> expect 1
-  await runCase(evm, `0x40${'00'.repeat(31)}` as PrefixedHexString)
+  await runCase(tvm, `0x40${'00'.repeat(31)}` as PrefixedHexString)
 
   // Case 4: x == 0x80..00 -> MSB at bit 255 -> expect 0
-  await runCase(evm, `0x80${'00'.repeat(31)}` as PrefixedHexString)
+  await runCase(tvm, `0x80${'00'.repeat(31)}` as PrefixedHexString)
   console.log('--------------------------------')
 }
 

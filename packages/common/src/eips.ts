@@ -151,7 +151,7 @@ export const eipsDict: EIPsDict = {
     requiredEIPs: [2929],
   },
   /**
-   * Description : EVM Object Format (EOF) v1
+   * Description : TVM Object Format (EOF) v1
    * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-3540.md
    * Status      : Review
    */
@@ -260,7 +260,7 @@ export const eipsDict: EIPsDict = {
     requiredEIPs: [3540, 3670, 5450],
   },
   /**
-   * Description : Beacon block root in the EVM
+   * Description : Beacon block root in the TVM
    * URL         : https://eips.ethereum.org/EIPS/eip-4788
    * Status      : Final
    */
@@ -444,7 +444,7 @@ export const eipsDict: EIPsDict = {
     requiredEIPs: [4844],
   },
   /**
-   * Description : EVM Object Format (EOFv1) Meta
+   * Description : TVM Object Format (EOFv1) Meta
    * URL         : https://github.com/ethereum/EIPs/blob/4153e95befd0264082de3c4c2fe3a85cc74d3152/EIPS/eip-7692.md
    * Status      : Draft
    */
@@ -719,7 +719,7 @@ export const tipsDict: EIPsDict = {
     requiredEIPs: [2929],
   },
   /**
-   * Description : EVM Object Format (EOF) v1
+   * Description : TVM Object Format (EOF) v1
    * URL         : https://github.com/ethereum/EIPs/blob/bd421962b4e241aa2b00a85d9cf4e57770bdb954/EIPS/eip-3540.md
    * Status      : Review
    */
@@ -804,7 +804,7 @@ export const tipsDict: EIPsDict = {
     requiredEIPs: [3540, 3670, 5450],
   },
   /**
-   * Description : Beacon block root in the EVM
+   * Description : Beacon block root in the TVM
    * URL         : https://eips.ethereum.org/EIPS/eip-4788
    * Status      : Final
    */
@@ -926,7 +926,7 @@ export const tipsDict: EIPsDict = {
     requiredEIPs: [3675],
   },
   /**
-   * Description : EVM Object Format (EOFv1) Meta
+   * Description : TVM Object Format (EOFv1) Meta
    * URL         : https://github.com/ethereum/EIPs/blob/4153e95befd0264082de3c4c2fe3a85cc74d3152/EIPS/eip-7692.md
    * Status      : Draft
    */

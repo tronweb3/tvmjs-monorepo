@@ -10,7 +10,7 @@
  *
  * Examples:
  *   tsx scripts/release-github.ts --version=10.1.1
- *   tsx scripts/release-github.ts --version=10.1.1 --start-with=evm
+ *   tsx scripts/release-github.ts --version=10.1.1 --start-with=tvm
  *
  * Options:
  *   --version=<version>    Version to release (required)
@@ -31,7 +31,7 @@ const ACTIVE_PACKAGES = [
   'block',
   'blockchain',
   'common',
-  'evm',
+  'tvm',
   'genesis',
   'mpt',
   'rlp',
@@ -64,7 +64,7 @@ function parseArgs(): ParsedArgs {
     console.error('')
     console.error('Examples:')
     console.error('  tsx scripts/release-github.ts --version=10.1.1')
-    console.error('  tsx scripts/release-github.ts --version=10.1.1 --start-with=evm')
+    console.error('  tsx scripts/release-github.ts --version=10.1.1 --start-with=tvm')
     console.error('')
     console.error('Options:')
     console.error('  --version=<version>    Version to release (required)')

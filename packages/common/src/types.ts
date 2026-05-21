@@ -109,7 +109,7 @@ export interface BaseOpts {
   eips?: number[]
   /**
    * Optionally pass in an EIP params dictionary, see one of the
-   * EthereumJS library `params.ts` files for an example (e.g. tx, evm).
+   * EthereumJS library `params.ts` files for an example (e.g. tx, tvm).
    * By default parameters are set by the respective library, so this
    * is only relevant if you want to use EthereumJS libraries with a
    * custom parameter set.

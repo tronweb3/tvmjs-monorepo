@@ -83,7 +83,7 @@ describe('EIP3198 tests', () => {
         stack = iStep.stack
       }
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     const results = await runTx(vm, {
       tx: block.transactions[0],
@@ -93,6 +93,6 @@ describe('EIP3198 tests', () => {
     const gasUsed = results.totalGasSpent - txBaseFee
     assert.strictEqual(gasUsed, BigInt(2), 'gas used correct')
     assert.strictEqual(stack[0], fee, 'right item pushed on stack')
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
   })
 })

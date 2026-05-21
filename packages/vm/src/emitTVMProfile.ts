@@ -1,12 +1,12 @@
-import type { EVMPerformanceLogOutput } from '@tvmjs/tvm'
+import type { TVMPerformanceLogOutput } from '@tvmjs/tvm'
 
 /**
- * Emit EVM profile logs
+ * Emit TVM profile logs
  * @param logs
  * @param profileTitle
  * @hidden
  */
-export function emitEVMProfile(logs: EVMPerformanceLogOutput[], profileTitle: string) {
+export function emitTVMProfile(logs: TVMPerformanceLogOutput[], profileTitle: string) {
   if (logs.length === 0) {
     return
   }
@@ -17,9 +17,9 @@ export function emitEVMProfile(logs: EVMPerformanceLogOutput[], profileTitle: st
   let totalMs = 0
   let totalGas = 0
 
-  // Order of columns to report (see `EVMPerformanceLogOutput` type)
+  // Order of columns to report (see `TVMPerformanceLogOutput` type)
 
-  const colOrder: (keyof EVMPerformanceLogOutput)[] = [
+  const colOrder: (keyof TVMPerformanceLogOutput)[] = [
     'tag',
     'calls',
     'avgTimePerCall',

@@ -117,11 +117,11 @@ const testCases = [
 
 describe('P256VERIFY precompile', () => {
   let common: Common
-  let evm: any
+  let tvm: any
 
   beforeAll(async () => {
     common = new Common({ chain: Mainnet, eips: [7951] })
-    evm = await createTVM({ common })
+    tvm = await createTVM({ common })
   })
 
   describe('precompile100', () => {
@@ -131,7 +131,7 @@ describe('P256VERIFY precompile', () => {
           data: testCase.input,
           gasLimit: BigInt(10000),
           common,
-          _EVM: evm,
+          _TVM: tvm,
         }
 
         const result = precompile100(opts)
@@ -142,14 +142,14 @@ describe('P256VERIFY precompile', () => {
     }
   })
 
-  describe('integration with EVM', () => {
-    it('should be callable from EVM', async () => {
+  describe('integration with TVM', () => {
+    it('should be callable from TVM', async () => {
       // Create a simple contract that calls the P256VERIFY precompile
       const code = hexToBytes(
         '0x6101006000526001601f600060003660006000610100611af4f13d6001556000553d600060003e3d600020600255',
       )
 
-      const result = await evm.runCall({
+      const result = await tvm.runCall({
         to: undefined, // Contract creation
         caller: new Address(hexToBytes('0x0000000000000000000000000000000000000000')),
         data: code,

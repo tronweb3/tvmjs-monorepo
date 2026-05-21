@@ -3,7 +3,7 @@
 | Library to provide high level access to TRON-compatible state. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
 
-- 🫧 Transparent state access from EVM/VM
+- 🫧 Transparent state access from TVM/VM
 - 🌴 Tree-shakeable API
 - 👷🏼 Controlled dependency set (5 external + `@Noble` crypto)
 - ⏳ Checkpoints + Diff-based Caches
@@ -43,7 +43,7 @@ The `StateManager` provides high-level access and manipulation methods to and fo
 
 This library includes several different implementations that all implement the `StateManager` interface which is accepted by the `vm` library. These include:
 
-- [`SimpleStateManager`](./src/simpleStateManager.ts) -a minimally functional (and dependency minimized) version of the state manager suitable for most basic EVM bytecode operations
+- [`SimpleStateManager`](./src/simpleStateManager.ts) -a minimally functional (and dependency minimized) version of the state manager suitable for most basic TVM bytecode operations
 - [`MerkleStateManager`](./src/stateManager.ts) - a Merkle-Patricia Trie-based `MerkleStateManager` implementation that is used by the `@tvmjs/client` and `@tvmjs/vm`
 - [`RPCStateManager`](./src/rpcStateManager.ts) - a light-weight implementation that sources state and history data from an external JSON-RPC provider
 - [`StatefulVerkleStateManager`](./src/statefulVerkleStateManager.ts) - an experimental implementation of a stateful verkle state manager
@@ -218,12 +218,12 @@ void main()
 
 ### Points on `RPCStateManager` usage
 
-#### Instantiating the EVM
+#### Instantiating the TVM
 
-In order to have an EVM instance that supports the BLOCKHASH opcode (which requires access to block history), you must instantiate both the `RPCStateManager` and the `RpcBlockChain` and use that when initializing your EVM instance as below:
+In order to have an TVM instance that supports the BLOCKHASH opcode (which requires access to block history), you must instantiate both the `RPCStateManager` and the `RpcBlockChain` and use that when initializing your TVM instance as below:
 
 ```ts
-// ./examples/evm.ts
+// ./examples/tvm.ts
 
 import { createTVM } from '@tvmjs/tvm'
 import { RPCBlockChain, RPCStateManager } from '@tvmjs/statemanager'
@@ -234,7 +234,7 @@ const main = async () => {
     const blockchain = new RPCBlockChain(provider)
     const blockTag = 1n
     const state = new RPCStateManager({ provider, blockTag })
-    const evm = await createTVM({ blockchain, stateManager: state }) // note that evm is ready to run BLOCKHASH opcodes (over RPC)
+    const tvm = await createTVM({ blockchain, stateManager: state }) // note that tvm is ready to run BLOCKHASH opcodes (over RPC)
   } catch (e) {
     console.log(e.message) // fetch would fail because provider url is not real. please replace provider with a valid RPC url string.
   }
@@ -242,7 +242,7 @@ const main = async () => {
 void main()
 ```
 
-Note: Failing to provide the `RPCBlockChain` instance when instantiating the EVM means that the `BLOCKHASH` opcode will fail to work correctly during EVM execution.
+Note: Failing to provide the `RPCBlockChain` instance when instantiating the TVM means that the `BLOCKHASH` opcode will fail to work correctly during TVM execution.
 
 #### Provider selection
 

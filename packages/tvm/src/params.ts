@@ -1,7 +1,7 @@
 import type { ParamsDict } from '@tvmjs/common'
 import { SYSTEM_ADDRESS } from '@tvmjs/util'
 
-export const paramsEVM: ParamsDict = {
+export const paramsTVM: ParamsDict = {
   /**
    * Frontier/Chainstart
    */
@@ -142,7 +142,7 @@ export const paramsEVM: ParamsDict = {
   607: {
     // gasPrices
     expByteGas: 50, // Times ceil(log256(exponent)) for the EXP instruction
-    // evm
+    // tvm
     maxCodeSize: 24576, // Maximum length of contract code
   },
   /**
@@ -285,7 +285,7 @@ export const paramsEVM: ParamsDict = {
    * Save historical block hashes in state (Verkle related usage, UNSTABLE)
    */
   2935: {
-    // evm
+    // tvm
     historyStorageAddress: '0x0000F90827F1C53A10CB7A02335B175320002935', // The address where the historical blockhashes are stored
     historyServeWindow: 8192, // The amount of blocks to be served by the historical blockhash contract
     systemAddress: SYSTEM_ADDRESS, // The system address

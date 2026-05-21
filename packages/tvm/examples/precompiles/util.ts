@@ -18,9 +18,9 @@ export async function runPrecompile(
   hardfork: Hardfork = Hardfork.Osaka,
 ) {
   const common = new Common({ chain: Mainnet, hardfork })
-  const evm = await createTVM({ common })
+  const tvm = await createTVM({ common })
 
-  const precompileFunction = evm.getPrecompile(precompile)
+  const precompileFunction = tvm.getPrecompile(precompile)
 
   if (!precompileFunction) {
     throw new Error(`Precompile ${precompile} not found for hardfork ${hardfork}`)
@@ -30,7 +30,7 @@ export async function runPrecompile(
     data: hexToBytes(data),
     gasLimit: BigInt(5000000),
     common,
-    _EVM: evm,
+    _TVM: tvm,
   }
 
   const res = await precompileFunction(callData)

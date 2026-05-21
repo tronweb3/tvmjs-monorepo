@@ -53,7 +53,7 @@ for (const bls of [undefined, mclbls]) {
     describe(`Precompiles: ${fname} [${BLSType}]`, () => {
       for (const data of parsedJSON) {
         it(`${data.Name}`, async () => {
-          const evm = await createTVM({
+          const tvm = await createTVM({
             common,
             bls,
           })
@@ -64,7 +64,7 @@ for (const bls of [undefined, mclbls]) {
             data: hexToBytes(`0x${data.Input}`),
             gasLimit: BigInt(5000000),
             common,
-            _EVM: evm,
+            _TVM: tvm,
           }
 
           if (data.ExpectedError !== undefined) {
@@ -111,13 +111,13 @@ for (let address = precompileAddressStart; address <= precompileAddressEnd; addr
 describe('EIP-2537 BLS precompile availability tests', () => {
   it('BLS precompiles should not be available if EIP not activated', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const evm = await createTVM({
+    const tvm = await createTVM({
       common,
     })
 
     for (const address of precompiles) {
       const to = new Address(hexToBytes(address))
-      const result = await evm.runCall({
+      const result = await tvm.runCall({
         caller: createZeroAddress(),
         gasLimit: BigInt(0xffffffffff),
         to,

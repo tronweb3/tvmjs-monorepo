@@ -1,9 +1,9 @@
 // Deactivated due to direct dist/precompiles/09-blake2f import
 // during ESM/CJS build integration (Mai 2023)
-// TODO: reactivate by moving to EVM
+// TODO: reactivate by moving to TVM
 
 /**import { Chain, Common, Hardfork } from '@tvmjs/common'
-import { EVMErrorMessage } from '@tvmjs/tvm'
+import { TVMErrorMessage } from '@tvmjs/tvm'
 import { F, precompile09 } from '@tvmjs/tvm/dist/precompiles/09-blake2f'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
@@ -15,25 +15,25 @@ import { VM, createVM } from '../../../src/index.ts'
 const failingTestCases = [
   {
     input: '',
-    err: EVMErrorMessage.OUT_OF_RANGE,
+    err: TVMErrorMessage.OUT_OF_RANGE,
     name: 'vector 0: empty input',
   },
   {
     input:
       '00000c48c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001',
-    err: EVMErrorMessage.OUT_OF_RANGE,
+    err: TVMErrorMessage.OUT_OF_RANGE,
     name: 'vector 1: less than 213 bytes input',
   },
   {
     input:
       '000000000c48c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000001',
-    err: EVMErrorMessage.OUT_OF_RANGE,
+    err: TVMErrorMessage.OUT_OF_RANGE,
     name: 'vector 2: more than 213 bytes input',
   },
   {
     input:
       '0000000c48c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b61626300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000002',
-    err: EVMErrorMessage.OUT_OF_RANGE,
+    err: TVMErrorMessage.OUT_OF_RANGE,
     name: 'vector 3: malformed final block indicator flag',
   },
 ]
@@ -98,7 +98,7 @@ describe('Istanbul: EIP-152', () => {
         data: hexToBytes('0x' + testCase.input),
         gasLimit: BigInt(20),
         common: common,
-        _EVM: vm.evm,
+        _TVM: vm.tvm,
       })
       assert.strictEqual(res.exceptionError?.error, testCase.err)
     }
@@ -109,7 +109,7 @@ describe('Istanbul: EIP-152', () => {
         data: hexToBytes('0x' + testCase.input),
         gasLimit: BigInt(10000000),
         common: common,
-        _EVM: vm.evm,
+        _TVM: vm.tvm,
       })
       assert.strictEqual(bytesToHex(res.returnValue), '0x' + testCase.expected)
     }

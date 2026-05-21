@@ -15,11 +15,11 @@ import {
   setLengthRight,
 } from '@tvmjs/util'
 
-import { EVMError } from '../errors.ts'
+import { TVMError } from '../errors.ts'
 
 import type { Common } from '@tvmjs/common'
 import type { Address } from '@tvmjs/util'
-import type { EVMErrorType } from '../errors.ts'
+import type { TVMErrorType } from '../errors.ts'
 import type { RunState } from '../interpreter.ts'
 
 const MASK_160 = (BIGINT_1 << BIGINT_160) - BIGINT_1
@@ -85,11 +85,11 @@ export function setLengthLeftStorage(value: Uint8Array) {
 }
 
 /**
- * Wraps error message as EVMError
+ * Wraps error message as TVMError
  */
 export function trap(err: string) {
   // TODO: facilitate extra data along with errors
-  throw new EVMError(err as EVMErrorType)
+  throw new TVMError(err as TVMErrorType)
 }
 
 export function readImmediateByteOrZero(runState: RunState): number {
@@ -104,7 +104,7 @@ export function isEIP8024SingleImmediateValid(immediate: number): boolean {
 
 export function decodeEIP8024SingleImmediate(immediate: number): number {
   if (!isEIP8024SingleImmediateValid(immediate)) {
-    trap(EVMError.errorMessages.INVALID_OPCODE)
+    trap(TVMError.errorMessages.INVALID_OPCODE)
   }
   return immediate <= 0x5a ? immediate + 17 : immediate - 20
 }
@@ -121,7 +121,7 @@ export function isEIP8024PairImmediateValid(immediate: number): boolean {
  */
 export function decodeEIP8024PairImmediate(immediate: number): [number, number] {
   if (!isEIP8024PairImmediateValid(immediate)) {
-    trap(EVMError.errorMessages.INVALID_OPCODE)
+    trap(TVMError.errorMessages.INVALID_OPCODE)
   }
   const k = immediate <= 0x4f ? immediate : immediate - 48
   const q = Math.floor(k / 16)
@@ -136,7 +136,7 @@ export function decodeEIP8024PairImmediate(immediate: number): [number, number] 
  * Error message helper - generates location string
  */
 export function describeLocation(runState: RunState): string {
-  const keccakFunction = runState.interpreter._evm.common.customCrypto.keccak256 ?? keccak_256
+  const keccakFunction = runState.interpreter._tvm.common.customCrypto.keccak256 ?? keccak_256
   const hash = bytesToHex(keccakFunction(runState.interpreter.getCode()))
   const address = runState.interpreter.getAddress().toString()
   const pc = runState.programCounter - 1
@@ -265,7 +265,7 @@ export function subMemUsage(runState: RunState, offset: bigint, length: bigint, 
 }
 
 /**
- * Writes data returned by evm.call* methods to memory
+ * Writes data returned by tvm.call* methods to memory
  */
 export function writeCallOutput(runState: RunState, outOffset: bigint, outLength: bigint) {
   const returnData = runState.interpreter.getReturnData()

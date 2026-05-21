@@ -63,7 +63,7 @@ describe('EIP 6780 tests', () => {
 
     // Account does not exist...
     assert.isUndefined(
-      await vm.evm.stateManager.getAccount(createdAddress),
+      await vm.tvm.stateManager.getAccount(createdAddress),
       'account does not exist, so storage is cleared',
     )
     assert.strictEqual(
