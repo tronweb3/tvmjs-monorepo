@@ -209,7 +209,7 @@ export async function compileSol(fileName: string, contractName: string) {
       },
       outputSelection: {
         '*': {
-          '*': ['abi', 'tvm.bytecode'],
+          '*': ['abi', 'evm.bytecode'],
         },
       },
     },
@@ -244,7 +244,7 @@ export async function compileSol(fileName: string, contractName: string) {
     throw new Error(compileError)
   }
 
-  const bytecodeInst = output.contracts[fileName][contractName].tvm.bytecode
+  const bytecodeInst = output.contracts[fileName][contractName].evm.bytecode
   const bytecode: string = bytecodeInst.object
 
   return { bytecode, abi: output.contracts[fileName][contractName].abi }
