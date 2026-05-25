@@ -17,6 +17,7 @@ import {
   BIGINT_255,
   BIGINT_256,
   MAX_INTEGER_BIGINT,
+  MIN_TOKEN_ID,
   TWO_POW256,
   bigIntToAddressBytes,
   bigIntToBytes,
@@ -1711,6 +1712,18 @@ export const handlers: Map<number, OpHandler> = new Map([
 
       if (runState.interpreter.isStatic() && value !== BIGINT_0) {
         trap(TVMError.errorMessages.STATIC_STATE_CHANGE)
+      }
+
+      if (tokenId !== BIGINT_0 && tokenId <= MIN_TOKEN_ID) {
+        trap(TVMError.errorMessages.INVALID_TOKENID)
+      }
+
+      if (tokenId === BIGINT_0 && value > BIGINT_0) {
+        trap(TVMError.errorMessages.INVALID_TOKENID)
+      }
+
+      if (tokenId !== BIGINT_0 && !(await runState.stateManager.tokenIdExists(Number(tokenId)))) {
+        trap(TVMError.errorMessages.INVALID_TOKENID)
       }
 
       let data = new Uint8Array(0)
