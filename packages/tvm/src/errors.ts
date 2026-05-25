@@ -34,6 +34,7 @@ const TVMErrorMessage = {
   INVALID_PROOF: 'kzg proof invalid',
   CAN_NOT_TRANSFER_TRX_YOURSELF: 'transfer trx failed: Cannot transfer TRX to yourself.',
   CAN_NOT_TRANSFER_ASSET_YOURSELF: 'transfer trc10 failed: Cannot transfer asset to yourself.',
+  INVALID_TOKENID: 'invalid token id',
   UNKNOWN: 'unknown',
 } as const
 

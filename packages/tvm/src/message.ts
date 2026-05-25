@@ -1,4 +1,4 @@
-import { BIGINT_0, EthereumJSErrorWithoutCode, createZeroAddress } from '@tvmjs/util'
+import { BIGINT_0, EthereumJSErrorWithoutCode, MIN_TOKEN_ID, createZeroAddress } from '@tvmjs/util'
 
 import type { BinaryTreeAccessWitnessInterface } from '@tvmjs/common'
 import type { Address, PrefixedHexString } from '@tvmjs/util'
@@ -102,7 +102,22 @@ export class Message {
     this.gasRefund = opts.gasRefund ?? defaults.gasRefund
     this.blobVersionedHashes = opts.blobVersionedHashes
     this.accessWitness = opts.accessWitness
-    if (this.value < 0) {
+    if (this.tokenId !== BIGINT_0 && this.tokenId <= MIN_TOKEN_ID) {
+      throw EthereumJSErrorWithoutCode(
+        `tokenId field cannot be less than ${MIN_TOKEN_ID}, received ${this.tokenId}`,
+      )
+    }
+    if (this.tokenId === BIGINT_0 && this.tokenValue > BIGINT_0) {
+      throw EthereumJSErrorWithoutCode(
+        `tokenValue field must be zero when tokenId is zero, received ${this.tokenValue}`,
+      )
+    }
+    if (this.tokenValue < BIGINT_0) {
+      throw EthereumJSErrorWithoutCode(
+        `tokenValue field cannot be negative, received ${this.tokenValue}`,
+      )
+    }
+    if (this.value < BIGINT_0) {
       throw EthereumJSErrorWithoutCode(`value field cannot be negative, received ${this.value}`)
     }
   }
