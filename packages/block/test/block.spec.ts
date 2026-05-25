@@ -242,6 +242,11 @@ describe('[Block]: block functions', () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
     const blockRlp = hexToBytes(preLondonTestDataBlocks2RLP.block2RLP)
     const block = createBlockFromRLP(blockRlp, { common, freeze: false })
+    // Sync transactionsTrie: Tron tx format adds tokenId/tokenValue, so the
+    // trie root computed from the re-serialized txs differs from the embedded
+    // (Ethereum-format) trie in the legacy block RLP.
+    // @ts-expect-error -- Assigning to read-only property
+    block.header.transactionsTrie = await genTransactionsTrieRoot(block.transactions)
     assert.strictEqual(block.uncleHashIsValid(), true)
     // @ts-expect-error -- Assigning to read-only property
     block.header.uncleHash = new Uint8Array(32)

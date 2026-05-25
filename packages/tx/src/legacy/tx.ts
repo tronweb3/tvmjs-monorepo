@@ -223,6 +223,8 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
       bigIntToUnpaddedBytes(this.gasLimit),
       this.to !== undefined ? this.to.bytes : new Uint8Array(0),
       bigIntToUnpaddedBytes(this.value),
+      bigIntToUnpaddedBytes(this.tokenId),
+      bigIntToUnpaddedBytes(this.tokenValue),
       this.data,
       this.v !== undefined ? bigIntToUnpaddedBytes(this.v) : new Uint8Array(0),
       this.r !== undefined ? bigIntToUnpaddedBytes(this.r) : new Uint8Array(0),
@@ -264,6 +266,8 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
       bigIntToUnpaddedBytes(this.gasLimit),
       this.to !== undefined ? this.to.bytes : new Uint8Array(0),
       bigIntToUnpaddedBytes(this.value),
+      bigIntToUnpaddedBytes(this.tokenId),
+      bigIntToUnpaddedBytes(this.tokenValue),
       this.data,
     ]
 

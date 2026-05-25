@@ -257,7 +257,9 @@ describe('[Transaction]', () => {
   it('serialize()', () => {
     for (const [i, tx] of transactions.entries()) {
       const s1 = tx.serialize()
-      const s2 = RLP.encode(txsData[i].raw)
+      // Tron format inserts empty tokenId/tokenValue between value and data
+      const tronRaw = [...txsData[i].raw.slice(0, 5), '0x', '0x', ...txsData[i].raw.slice(5)]
+      const s2 = RLP.encode(tronRaw)
       assert.isTrue(equalsBytes(s1, s2))
     }
   })
@@ -300,16 +302,16 @@ describe('[Transaction]', () => {
     )
     assert.deepEqual(
       tx.hash(),
-      hexToBytes('0x375a8983c9fc56d7cfd118254a80a8d7403d590a6c9e105532b67aca1efb97aa'),
+      hexToBytes('0xd0d7f34b9076ac01ee262649b580f2299fd4353f11fd313185d8a0a8a79b8d00'),
     )
     assert.deepEqual(
       tx.getHashedMessageToSign(),
-      hexToBytes('0x61e1ec33764304dddb55348e7883d4437426f44ab3ef65e6da1e025734c03ff0'),
+      hexToBytes('0x9610731b614a8c8380ef10d30e5ad53dc0a111bfc3754410b9e9fb0cf5889eb3'),
     )
-    assert.strictEqual(tx.getMessageToSign().length, 6)
+    assert.strictEqual(tx.getMessageToSign().length, 8)
     assert.deepEqual(
       tx.hash(),
-      hexToBytes('0x375a8983c9fc56d7cfd118254a80a8d7403d590a6c9e105532b67aca1efb97aa'),
+      hexToBytes('0xd0d7f34b9076ac01ee262649b580f2299fd4353f11fd313185d8a0a8a79b8d00'),
     )
   })
 
@@ -319,15 +321,15 @@ describe('[Transaction]', () => {
     )
     assert.strictEqual(
       bytesToHex(tx.hash()),
-      '0x0f09dc98ea85b7872f4409131a790b91e7540953992886fc268b7ba5c96820e4',
+      '0x44587c0e7d0b6275fc1db63d69ee3f8f41ae538a7b485a607c60b14186dc69b0',
     )
     assert.strictEqual(
       bytesToHex(tx.hash()),
-      '0x0f09dc98ea85b7872f4409131a790b91e7540953992886fc268b7ba5c96820e4',
+      '0x44587c0e7d0b6275fc1db63d69ee3f8f41ae538a7b485a607c60b14186dc69b0',
     )
     assert.strictEqual(
       bytesToHex(tx.getHashedMessageToSign()),
-      '0xf97c73fdca079da7652dbc61a46cd5aeef804008e057be3e712c43eac389aaf0',
+      '0x292bf3de19388e507919a45c33198573c62ce9e0fbcf7e8d26175818cc38237d',
     )
   })
 
@@ -378,16 +380,16 @@ describe('[Transaction]', () => {
     // We don't have a getter for such a value in LegacyTx.
     assert.strictEqual(
       bytesToHex(pt.serialize()),
-      '0xec098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a764000080808080',
+      '0xee098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a7640000808080808080',
     )
     const signedTx = pt.sign(privateKey)
     assert.strictEqual(
       bytesToHex(signedTx.getHashedMessageToSign()),
-      '0xdaf5a779ae972f972197303d7b574746c7ef83eadac0f2791ad23db92e4c8e53',
+      '0x5703945c76baf5811a7fb65a70a7c5043896bfcf05ed449371df4b8b2e8e42de',
     )
     assert.strictEqual(
       bytesToHex(signedTx.serialize()),
-      '0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83',
+      '0xf86e098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a764000080808026a0c71345e2e234a8356b4947ea8977d1037a40f560559c4b687f7ff445687e51a0a03c82ff47683b95051b2a871674373990d7f0a83b339389129262d31fb0dff302',
     )
   })
 
@@ -432,7 +434,7 @@ describe('[Transaction]', () => {
     const signedTx = tx.sign(privateKey)
     assert.strictEqual(
       bytesToHex(signedTx.serialize()),
-      '0xf86c018502540be40082520894d7250824390ec5c8b71d856b5de895e271170d9d880de0b6b3a76400008029a0d3512c68099d184ccf54f44d9d6905bff303128574b663dcf10b4c726ddd8133a0628acc8f481dea593f13309dfc5f0340f83fdd40cf9fbe47f782668f6f3aec74',
+      '0xf86e018502540be40082520894d7250824390ec5c8b71d856b5de895e271170d9d880de0b6b3a764000080808029a06c79d86b9367c7736131a43162499df6532bafbb931eac36ed90e4ba1cb45ea0a02d99a0e68b96e7b2d37187bfddd829f7c8da87aad3d79caf25ce27e6bb9bfd31',
     )
   })
 

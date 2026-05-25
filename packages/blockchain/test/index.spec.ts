@@ -3,6 +3,7 @@ import {
   createBlockFromRLP,
   createBlockHeader,
   createBlockHeaderFromBytesArray,
+  genTransactionsTrieRoot,
 } from '@tvmjs/block'
 import { Common, Hardfork, Holesky, Mainnet, Sepolia } from '@tvmjs/common'
 import { goerliChainConfig, mainnetBlocks, preLondonTestDataBlocks1RLP } from '@tvmjs/testdata'
@@ -621,7 +622,12 @@ describe('blockchain test', () => {
     })
 
     const blockRlp = hexToBytes(preLondonTestDataBlocks1RLP.blockRLP)
-    const block = createBlockFromRLP(blockRlp, { common })
+    const block = createBlockFromRLP(blockRlp, { common, freeze: false })
+    // Sync transactionsTrie: Tron tx format adds tokenId/tokenValue, so the
+    // trie root computed from re-serialized txs differs from the embedded
+    // (Ethereum-format) trie in the legacy block RLP.
+    // @ts-expect-error -- Assigning to read-only property
+    block.header.transactionsTrie = await genTransactionsTrieRoot(block.transactions)
     await blockchain.putBlock(block)
   })
 

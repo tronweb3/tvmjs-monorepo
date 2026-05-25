@@ -197,7 +197,7 @@ describe('[BaseTransaction]', () => {
       )
     }
     rlpData[0] = hexToBytes('0x')
-    rlpData[6] = hexToBytes('0x0')
+    rlpData[8] = hexToBytes('0x0')
     try {
       createLegacyTxFromBytesArray(rlpData)
       assert.fail('should have thrown when v has leading zeroes')
