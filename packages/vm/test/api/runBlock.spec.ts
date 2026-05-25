@@ -325,6 +325,14 @@ describe('runBlock() -> runtime behavior', async () => {
     const block = createBlockFromBytesArray(block1 as BlockBytes, { common })
     await setupPreConditions(vm.stateManager, blockchainData)
 
+    // The legacy tx embedded in the test block was signed for the Ethereum
+    // format; under the Tron tx format (which adds tokenId/tokenValue to the
+    // signing preimage) the signature recovers to a different sender. Fund
+    // the new recovered sender so the tx can be processed.
+    const txSender = block.transactions[0].getSenderAddress()
+    const txSenderAcc = createAccountWithDefaults(BigInt(0), BigInt('0x02540be400'))
+    await vm.stateManager.putAccount(txSender, txSenderAcc)
+
     // fill two original DAO child-contracts with funds and the recovery account with funds in order to verify that the balance gets summed correctly
     const fundBalance1 = BigInt('0x1111')
     const accountFunded1 = createAccountWithDefaults(BigInt(0), fundBalance1)
@@ -455,6 +463,13 @@ async function runWithHf(hardfork: string) {
 
   await setupPreConditions(vm.stateManager, blockchainData)
 
+  // Tron tx format changes the signing preimage, so the legacy tx in the
+  // test block recovers to a different sender than under Ethereum. Fund
+  // the new recovered sender so the block can be processed.
+  const txSender = block.transactions[0].getSenderAddress()
+  const txSenderAcc = createAccountWithDefaults(BigInt(0), BigInt('0x02540be400'))
+  await vm.stateManager.putAccount(txSender, txSenderAcc)
+
   const res = await runBlock(vm, {
     block,
     generate: true,
@@ -476,7 +491,7 @@ describe('runBlock() -> API return values', () => {
     res = await runWithHf('spuriousDragon')
     assert.deepEqual(
       (res.receipts[0] as PreByzantiumTxReceipt).stateRoot,
-      hexToBytes('0xaa2d30a28312ae9754cd740d833044a67d1f9e609b9039c88b3b7891889bb673'),
+      hexToBytes('0x6aa7b1e43d61941bba9ebf272e5edea21639bcc3af651ac6fe66dcdf8d787a95'),
       'should return correct pre-Byzantium receipt format',
     )
   })

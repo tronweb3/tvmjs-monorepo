@@ -647,14 +647,18 @@ describe('runTx() -> consensus bugs', () => {
     common.setHardforkBy({ blockNumber: 2772981 })
     const vm = await createVM({ common })
 
-    const addr = createAddressFromString('0xd3563d8f19a85c95beab50901fd59ca4de69174c')
+    const tx = createLegacyTx(txData, { common })
+    // Tron tx format changes the signing preimage, so the hardcoded r/s/v
+    // recover to a different sender than under Ethereum. Use the recovered
+    // sender at runtime (the consensus bug being exercised is in EVM gas
+    // accounting and is independent of which address signs the tx).
+    const addr = tx.getSenderAddress()
     await vm.stateManager.putAccount(addr, new Account())
     const acc = await vm.stateManager.getAccount(addr)
     acc!.balance = beforeBalance
     acc!.nonce = BigInt(2)
     await vm.stateManager.putAccount(addr, acc!)
 
-    const tx = createLegacyTx(txData, { common })
     await runTx(vm, { tx })
 
     const newBalance = (await vm.stateManager.getAccount(addr))!.balance
