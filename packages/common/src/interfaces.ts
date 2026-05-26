@@ -32,7 +32,10 @@ export interface StorageRange {
 }
 
 export type AccountFields = Partial<
-  Pick<Account, 'nonce' | 'balance' | 'storageRoot' | 'codeHash' | 'codeSize'>
+  Pick<
+    Account,
+    'nonce' | 'balance' | 'storageRoot' | 'codeHash' | 'codeSize' | 'asset' | 'activePermissions'
+  >
 >
 
 export type StorageProof = {
