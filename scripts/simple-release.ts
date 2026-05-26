@@ -129,7 +129,7 @@ function publishPackages(packages: PackageInfo[], tag: string): void {
     console.log(`  Publishing ${pkg.name}...`)
     
     try {    
-      execSync(`npm publish --tag=${tag}`, {
+      execSync(`npm publish --access public --tag=${tag}`, {
         cwd: pkg.path,
         stdio: 'inherit',
         env: {
