@@ -78,7 +78,6 @@
     "node-dir": "0.1.17",
     "rollup-plugin-visualizer": "5.14.0",
     "rustbn-wasm": "0.4.0",
-    "solc": "0.8.28",
     "split": "1.0.1"
   },
   "engines": {
