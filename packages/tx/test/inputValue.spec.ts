@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { Address, hexToBytes, toBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Address, hexToBytes, toBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {
@@ -11,7 +11,7 @@ import {
   createTx,
 } from '../src/index.ts'
 
-import type { AddressLike, BigIntLike, BytesLike, PrefixedHexString } from '@ethereumjs/util'
+import type { AddressLike, BigIntLike, BytesLike, PrefixedHexString } from '@tvmjs/util'
 import type { TxValuesArray } from '../src/index.ts'
 
 // @returns: Array with subtypes of the AddressLike type for a given address

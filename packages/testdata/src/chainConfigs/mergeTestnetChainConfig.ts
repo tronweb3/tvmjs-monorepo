@@ -1,4 +1,4 @@
-import type { ChainConfig } from '@ethereumjs/common'
+import type { ChainConfig } from '@tvmjs/common'
 
 /**
  * Chain config for testing merge scenarios with most hardforks at block 0 and Paris at block 3.

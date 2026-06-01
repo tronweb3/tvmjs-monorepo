@@ -1,5 +1,5 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
+import { createBlock } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
 
 const common = new Common({ chain: Mainnet })
 

@@ -1,9 +1,11 @@
-import { Address, hexToBytes } from '@ethereumjs/util'
+import { Address, hexToBytes } from '@tvmjs/util'
 
 /**
  * Common set of Signers for internal test construction.
  * Sets of privateKeys, publicKeys, and addresses
  * Use these signers in test construction instead of hardcoding or constructing new signers.
+ *
+ * WARNING: These keys are for testing only. Never use in production.
  */
 
 export type Signer = {

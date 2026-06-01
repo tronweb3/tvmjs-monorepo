@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs'
-import { Block, createBlockFromRPC } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { VM, createVM, runBlock as runBlockVM } from '@ethereumjs/vm'
+import { Block, createBlockFromRPC } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { VM, createVM, runBlock as runBlockVM } from '@tvmjs/vm'
 import Benchmark from 'benchmark'
 import { getBlockchain, getPreState, verifyResult } from './util.ts'
 

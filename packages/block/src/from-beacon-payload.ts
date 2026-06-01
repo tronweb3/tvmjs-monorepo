@@ -1,6 +1,6 @@
-import { bigIntToHex } from '@ethereumjs/util'
+import { bigIntToHex } from '@tvmjs/util'
 
-import type { NumericString, PrefixedHexString } from '@ethereumjs/util'
+import type { NumericString, PrefixedHexString } from '@tvmjs/util'
 import type { ExecutionPayload } from './types.ts'
 
 type BeaconWithdrawal = {

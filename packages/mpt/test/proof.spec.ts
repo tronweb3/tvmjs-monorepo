@@ -1,5 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
-import { bytesToUtf8, equalsBytes, setLengthLeft, utf8ToBytes } from '@ethereumjs/util'
+import { RLP } from '@tvmjs/rlp'
+import { bytesToUtf8, equalsBytes, setLengthLeft, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {

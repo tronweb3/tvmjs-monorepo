@@ -1,4 +1,4 @@
-import { utf8ToBytes } from '@ethereumjs/util'
+import { utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createMPTFromProof, createMerkleProof, verifyMPTWithMerkleProof } from '../../src/index.ts'
@@ -12,7 +12,7 @@ describe('Run MerklePatriciaTrie script with DEBUG enabled', async () => {
     ['ether', null],
     ['dog', 'puppy'],
   ]
-  process.env.DEBUG = 'ethjs'
+  process.env.DEBUG = 'tvmjs'
   const trie = new MerklePatriciaTrie({
     useRootPersistence: true,
   })

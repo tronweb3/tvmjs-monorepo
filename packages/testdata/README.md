@@ -1,6 +1,6 @@
-# @ethereumjs/testdata
+# @tvmjs/testdata
 
-This package contains common test data used across EthereumJS packages. It is intended to be used as a devDependency in other packages within the monorepo.
+This package contains common test data used across TVMJS packages. It is intended to be used as a devDependency in other packages within the monorepo.
 
 ## Usage
 
@@ -10,20 +10,20 @@ To use this package in another package within the monorepo:
 ```json
 {
   "devDependencies": {
-    "@ethereumjs/testdata": "workspace:*"
+    "@tvmjs/testdata": "workspace:*"
   }
 }
 ```
 
 2. Import test data in your test files:
 ```typescript
-import { testData } from '@ethereumjs/testdata'
+import { testData } from '@tvmjs/testdata'
 ```
 
 ## Development
 
-This package is not published to npm and is meant to be used only within the EthereumJS monorepo.
+This package is not published to npm and is meant to be used only within the TVMJS monorepo.
 
-## EthereumJS
+## TVMJS
 
-The `EthereumJS` GitHub organization and its repositories are managed by members of the former Ethereum Foundation JavaScript team and the broader Ethereum community. If you want to join for work or carry out improvements on the libraries see the [developer docs](../../DEVELOPER.md) for an overview of current standards and tools and review our [code of conduct](../../CODE_OF_CONDUCT.md).
+This project is part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) monorepo — a TypeScript implementation of the TRON Virtual Machine. See the [developer docs](../../DEVELOPER.md) for an overview of current standards and tools.

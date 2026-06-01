@@ -1,4 +1,4 @@
-import { type PrefixedHexString, addHexPrefix, bigIntToHex, isHexString } from '@ethereumjs/util'
+import { type PrefixedHexString, addHexPrefix, bigIntToHex, isHexString } from '@tvmjs/util'
 
 /**
  * Interface for Geth Genesis Config

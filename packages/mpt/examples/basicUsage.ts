@@ -1,5 +1,5 @@
-import { createMPT } from '@ethereumjs/mpt'
-import { MapDB, bytesToUtf8, utf8ToBytes } from '@ethereumjs/util'
+import { createMPT } from '@tvmjs/mpt'
+import { MapDB, bytesToUtf8, utf8ToBytes } from '@tvmjs/util'
 
 async function test() {
   const trie = await createMPT({ db: new MapDB() })

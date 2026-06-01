@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { bytesToHex } from '@ethereumjs/util'
+import { bytesToHex } from '@tvmjs/util'
 import * as dir from 'node-dir'
 
 const falsePredicate = () => false

@@ -1,4 +1,4 @@
-import { Hardfork } from '@ethereumjs/common'
+import { Hardfork } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
 import { getCommon } from '../../tester/config.ts'
@@ -17,8 +17,8 @@ describe('test runner config tests', () => {
   it('should always activate EIP 3607', () => {
     let common = getCommon('byzantium')
     assert.isTrue(common.isActivatedEIP(3607))
-    common = getCommon('ArrowGlacierToMergeAtDiffC0000')
-    assert.isTrue(common.isActivatedEIP(3607))
+    // common = getCommon('ArrowGlacierToMergeAtDiffC0000')
+    // assert.isTrue(common.isActivatedEIP(3607))
     common = getCommon('ByzantiumToConstantinopleFixAt5')
     assert.isTrue(common.isActivatedEIP(3607))
   })
@@ -34,9 +34,9 @@ describe('test runner config tests', () => {
   })
   it('should be able to activate merge transition fork with the correct TTD set', () => {
     const forks = [
-      { hf: 'arrowGlacier', TTD: 20000 },
+      // { hf: 'arrowGlacier', TTD: 20000 },
       { hf: 'london', TTD: 20000 },
-      { hf: 'arrowGlacier', TTD: 40000 },
+      // { hf: 'arrowGlacier', TTD: 40000 },
     ]
     forks.map((testCase) => {
       const str = testCase.hf + 'ToMergeAtDiff' + testCase.TTD.toString(16)

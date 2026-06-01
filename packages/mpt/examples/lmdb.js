@@ -8,7 +8,7 @@ class LMDB {
     this.path = path
     this.database = open({
       compression: true,
-      name: '@ethereumjs/mpt',
+      name: '@tvmjs/mpt',
       path,
     })
   }

@@ -9,9 +9,9 @@
  *      - Input length < 32 bytes (reverts)
  */
 
-import { createBlock, createBlockHeader } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { type TransactionType, type TxData, createTx } from '@ethereumjs/tx'
+import { createBlock, createBlockHeader } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { type TransactionType, type TxData, createTx } from '@tvmjs/tx'
 import {
   bigIntToBytes,
   bytesToBigInt,
@@ -19,13 +19,13 @@ import {
   hexToBytes,
   setLengthLeft,
   setLengthRight,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runBlock as runBlockVM } from '../../../src/index.ts'
 
-import type { Block } from '@ethereumjs/block'
-import type { BigIntLike, PrefixedHexString } from '@ethereumjs/util'
+import type { Block } from '@tvmjs/block'
+import type { BigIntLike, PrefixedHexString } from '@tvmjs/util'
 import type { VM } from '../../../src/index.ts'
 
 const common = new Common({

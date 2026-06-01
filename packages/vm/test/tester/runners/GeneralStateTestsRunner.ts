@@ -10,15 +10,15 @@
  * PLEASE DO NOT COPY LARGER PARTS OF THE CODE TO THE NEW RUNNER BUT RE-IMPLEMENT
  * (USE COMMON SENSE).
  */
-import { Block } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { type InterpreterStep } from '@ethereumjs/evm'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { Caches, MerkleStateManager } from '@ethereumjs/statemanager'
-import { Account, bytesToHex, createAddressFromString, toBytes } from '@ethereumjs/util'
+import { Block } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { Caches, MerkleStateManager } from '@tvmjs/statemanager'
+import { type InterpreterStep } from '@tvmjs/tvm'
+import { Account, bytesToHex, createAddressFromString, toBytes } from '@tvmjs/util'
 import type { assert } from 'vitest'
 
-import type { StateManagerInterface } from '@ethereumjs/common'
+import type { StateManagerInterface } from '@tvmjs/common'
 import { createVM, runTx } from '../../../src/index.ts'
 import { makeBlockFromEnv, makeTx, setupPreConditions } from '../../util.ts'
 
@@ -99,7 +99,7 @@ async function runTestCase(options: any, testData: any, t: typeof assert) {
     common,
   })
 
-  const evmOpts = {
+  const tvmOpts = {
     bls: options.bls,
     bn254: options.bn254,
   }
@@ -107,7 +107,7 @@ async function runTestCase(options: any, testData: any, t: typeof assert) {
     stateManager,
     common,
     blockchain,
-    evmOpts,
+    tvmOpts,
     profilerOpts: { reportAfterTx: options.profile },
   })
 
@@ -125,7 +125,7 @@ async function runTestCase(options: any, testData: any, t: typeof assert) {
   // Even if no txs are ran, coinbase should always be created
   const coinbaseAddress = createAddressFromString(testData.env.currentCoinbase)
   const account = await vm.stateManager.getAccount(coinbaseAddress)
-  await vm.evm.journal.putAccount(coinbaseAddress, account ?? new Account())
+  await vm.tvm.journal.putAccount(coinbaseAddress, account ?? new Account())
 
   const stepHandler = (e: InterpreterStep, resolve: any) => {
     let hexStack = []
@@ -160,7 +160,7 @@ async function runTestCase(options: any, testData: any, t: typeof assert) {
       const block = makeBlockFromEnv(testData.env, { common })
 
       if (options.jsontrace === true) {
-        vm.evm.events!.on('step', stepHandler)
+        vm.tvm.events!.on('step', stepHandler)
         vm.events.on('afterTx', afterTxHandler)
       }
       try {
@@ -175,7 +175,7 @@ async function runTestCase(options: any, testData: any, t: typeof assert) {
   }
 
   // Cleanup touched accounts (this wipes coinbase if it is empty on HFs >= TangerineWhistle)
-  await vm.evm.journal.cleanup()
+  await vm.tvm.journal.cleanup()
 
   const stateManagerStateRoot = await vm.stateManager.getStateRoot() // Ensure state root is updated (flush all changes to trie)
   const testDataPostStateRoot = toBytes(testData.postStateRoot)
@@ -186,7 +186,7 @@ async function runTestCase(options: any, testData: any, t: typeof assert) {
   const msg = `error running test case for fork: ${options.forkConfigTestSuite} (${execInfo})`
   t.deepEqual(stateManagerStateRoot, testDataPostStateRoot, msg)
 
-  vm.evm.events!.removeListener('step', stepHandler)
+  vm.tvm.events!.removeListener('step', stepHandler)
   vm.events.removeListener('afterTx', afterTxHandler)
 
   common = blockchain = stateTree = stateManager = vm = null as any

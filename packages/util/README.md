@@ -1,13 +1,7 @@
-# @ethereumjs/util `v10`
+# @tvmjs/util `1.0.0`
 
-[![NPM Package][util-npm-badge]][util-npm-link]
-[![GitHub Issues][util-issues-badge]][util-issues-link]
-[![Actions Status][util-actions-badge]][util-actions-link]
-[![Code Coverage][util-coverage-badge]][util-coverage-link]
-[![Discord][discord-badge]][discord-link]
-
-| A collection of utility functions for Ethereum. |
-| ----------------------------------------------- |
+| A collection of utility functions for TRON/TVM. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
+| --- |
 
 ## Table of Contents
 
@@ -31,7 +25,7 @@
 - [Module: [withdrawal]](#module-withdrawal)
 - [Browser](#browser)
 - [API](#api)
-- [EthereumJS](#ethereumjs)
+- [Upstream](#upstream)
 - [License](#license)
 
 ## Installation
@@ -39,7 +33,7 @@
 To obtain the latest version, simply require the project using `npm`:
 
 ```shell
-npm install @ethereumjs/util
+npm install @tvmjs/util
 ```
 
 ## Getting Started
@@ -49,7 +43,7 @@ This package contains the following modules providing respective helper methods,
 All helpers are re-exported from the root level and deep imports are not necessary. So an import can be done like this:
 
 ```ts
-import { hexToBytes, isValidChecksumAddress } from '@ethereumjs/util'
+import { hexToBytes, isValidChecksumAddress } from '@tvmjs/util'
 ```
 
 ## Module: [account](src/account.ts)
@@ -59,7 +53,7 @@ Class representing an `Account` and providing private/public key and address-rel
 ```ts
 // ./examples/account.ts
 
-import { createAccount } from '@ethereumjs/util'
+import { createAccount } from '@tvmjs/util'
 
 const account = createAccount({
   nonce: '0x02',
@@ -75,7 +69,7 @@ For Verkle or other contexts it can be useful to create partial accounts not con
 ```ts
 // ./examples/accountPartial.ts
 
-import { createPartialAccount } from '@ethereumjs/util'
+import { createPartialAccount } from '@tvmjs/util'
 
 const account = createPartialAccount({
   nonce: '0x02',
@@ -86,15 +80,15 @@ console.log(`Partial account with nonce=${account.nonce} and balance=${account.b
 
 ## Module: [address](src/address.ts)
 
-Class representing an Ethereum `Address` with instantiation helpers and validation methods.
+Class representing a TRON-compatible `Address` with instantiation helpers and validation methods.
 
 ```ts
 // ./examples/address.ts
 
-import { createAddressFromString } from '@ethereumjs/util'
+import { createAddressFromString } from '@tvmjs/util'
 
 const address = createAddressFromString('0x2f015c60e0be116b1f0cd534704db9c92118fb6a')
-console.log(`Ethereum address ${address.toString()} created`)
+console.log(`Address ${address.toString()} created`)
 ```
 
 ## Module: [authorization](src/authorization.ts)
@@ -108,7 +102,7 @@ Module providing helpers around EIP-4844 blobs for creating blobs, associated KZ
 ```ts
 // ./examples/blobs.ts
 
-import { bytesToHex, computeVersionedHash, getBlobs } from '@ethereumjs/util'
+import { bytesToHex, computeVersionedHash, getBlobs } from '@tvmjs/util'
 
 const blobs = getBlobs('test input')
 
@@ -129,7 +123,7 @@ Byte-related helper and conversion functions.
 ```ts
 // ./examples/bytes.ts
 
-import { bytesToBigInt } from '@ethereumjs/util'
+import { bytesToBigInt } from '@tvmjs/util'
 
 const bytesValue = new Uint8Array([97])
 const bigIntValue = bytesToBigInt(bytesValue)
@@ -144,7 +138,7 @@ Exposed constants (e.g. `KECCAK256_NULL_S` for string representation of Keccak-2
 ```ts
 // ./examples/constants.ts
 
-import { BIGINT_2EXP96, KECCAK256_NULL_S } from '@ethereumjs/util'
+import { BIGINT_2EXP96, KECCAK256_NULL_S } from '@tvmjs/util'
 
 console.log(`The keccak-256 hash of null: ${KECCAK256_NULL_S}`)
 console.log(`BigInt constants (performance), e.g. BIGINT_2EXP96: ${BIGINT_2EXP96}`)
@@ -152,7 +146,7 @@ console.log(`BigInt constants (performance), e.g. BIGINT_2EXP96: ${BIGINT_2EXP96
 
 ## Module: [db](src/db.ts)
 
-DB interface for database abstraction (Blockchain, Trie), see e.g. [@ethereumjs/trie recipes](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/trie/recipes/level.ts)) for usage.
+DB interface for database abstraction (Blockchain, Trie), see e.g. [@tvmjs/trie recipes](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/trie/recipes/level.ts)) for usage.
 
 ## Module: [genesis](src/genesis.ts)
 
@@ -164,7 +158,7 @@ Internalized simple helper methods like `isHexString`. Note that methods from th
 
 ## Module: [kzg](src/kzg.ts)
 
-KZG interface (used for 4844 blob txs), see [@ethereumjs/tx](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) README for main usage instructions.
+KZG interface (used for 4844 blob txs), see [@tvmjs/tx](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) README for main usage instructions.
 
 ## Module: [mapDB](src/mapDB.ts)
 
@@ -178,7 +172,7 @@ Module with a compact generic request class for [EIP-7685](https://eips.ethereum
 - [EIP-7002](https://eips.ethereum.org/EIPS/eip-7002): `WithdrawalRequest` (Prague Hardfork)
 - [EIP-7251](https://eips.ethereum.org/EIPS/eip-7251): `ConsolidationRequest` (Prague Hardfork)
 
-These request types are mainly used within the [@ethereumjs/block](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/block) library where applied usage instructions are provided in the README.
+These request types are mainly used within the [@tvmjs/block](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/block) library where applied usage instructions are provided in the README.
 
 ## Module: [signature](src/signature.ts)
 
@@ -187,7 +181,7 @@ Small helpers around signature validation, conversion, recovery as well as selec
 ```ts
 // ./examples/signature.ts
 
-import { bytesToHex, ecrecover, hexToBytes } from '@ethereumjs/util'
+import { bytesToHex, ecrecover, hexToBytes } from '@tvmjs/util'
 
 const chainId = BigInt(3) // Ropsten
 
@@ -212,7 +206,7 @@ Class representing an `EIP-4895` `Withdrawal` with different constructors as wel
 ```ts
 // ./examples/withdrawal.ts
 
-import { createWithdrawal } from '@ethereumjs/util'
+import { createWithdrawal } from '@tvmjs/util'
 
 const withdrawal = createWithdrawal({
   index: 0n,
@@ -229,7 +223,7 @@ console.log(withdrawal.toJSON())
 
 We provide hybrid ESM/CJS builds for all our libraries. With the v10 breaking release round from Spring 2025, all libraries are "pure-JS" by default and we have eliminated all hard-wired WASM code. Additionally we have substantially lowered the bundle sizes, reduced the number of dependencies, and cut out all usages of Node.js-specific primitives (like the Node.js event emitter).
 
-It is easily possible to run a browser build of one of the EthereumJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
+It is easily possible to run a browser build of one of the TVMJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
 
 ## API
 
@@ -244,20 +238,20 @@ With the breaking releases from Summer 2023 we have started to ship our librarie
 If you use an ES6-style `import` in your code files from the ESM build will be used:
 
 ```ts
-import { EthereumJSClass } from '@ethereumjs/[PACKAGE_NAME]'
+import { TVMJSClass } from '@tvmjs/[PACKAGE_NAME]'
 ```
 
 If you use Node.js specific `require`, the CJS build will be used:
 
 ```ts
-const { EthereumJSClass } = require('@ethereumjs/[PACKAGE_NAME]')
+const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
 ```
 
 Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS can not provide.
 
-### ethjs-util methods
+### tvmjs-util methods
 
-The following methods are available by an internalized version of the [ethjs-util](https://github.com/ethjs/ethjs-util) package (`MIT` license), see [internal.ts](src/internal.ts). The original package is not maintained any more and the original functionality will be replaced by own implementations over time (starting with the `v7.1.3` release, October 2021).
+The following methods are available by an internalized version of the [tvmjs-util](https://github.com/tvmjs/tvmjs-util) package (`MIT` license), see [internal.ts](src/internal.ts). The original package is not maintained any more and the original functionality will be replaced by own implementations over time (starting with the `v7.1.3` release, October 2021).
 
 - arrayContainsArray
 - getBinarySize
@@ -274,24 +268,16 @@ The following methods are available by an internalized version of the [ethjs-uti
 They can be imported by name:
 
 ```ts
-import { stripHexPrefix } from '@ethereumjs/util'
+import { stripHexPrefix } from '@tvmjs/util'
 ```
 
-## EthereumJS
+## Upstream
 
-The `EthereumJS` GitHub organization and its repositories are managed by members of the former Ethereum Foundation JavaScript team and the broader Ethereum community. If you want to join for work or carry out improvements on the libraries see the [developer docs](../../DEVELOPER.md) for an overview of current standards and tools and review our [code of conduct](../../CODE_OF_CONDUCT.md).
+This package is part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, a TypeScript implementation of the TRON Virtual Machine (TVM) forked from the [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo) monorepo. We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
 
+For development information, see the [developer docs](../../DEVELOPER.md) and our [code of conduct](../../CODE_OF_CONDUCT.md).
 ## License
 
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
-[util-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/util.svg
-[util-npm-link]: https://www.npmjs.org/package/@ethereumjs/util
-[util-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20util?label=issues
-[util-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+util"
-[util-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/Util/badge.svg
-[util-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22Util%22
-[util-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=util
-[util-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/util
-[discord-badge]: https://img.shields.io/static/v1?logo=discord&label=discord&message=Join&color=blue
-[discord-link]: https://discord.gg/TNwARpR
+This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.

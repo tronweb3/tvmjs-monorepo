@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { bytesToHex, equalsBytes, hexToBytes, randomBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { bytesToHex, equalsBytes, hexToBytes, randomBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {
@@ -8,7 +8,7 @@ import {
   createBlockHeaderFromRPC,
 } from '../src/index.ts'
 
-import { goerliChainConfig } from '@ethereumjs/testdata'
+import { goerliChainConfig } from '@tvmjs/testdata'
 import { alchemy14151203Data } from './testdata/alchemy14151203.ts'
 import { infuraGoerliBlock10536893Data } from './testdata/infura-goerli-block-10536893.ts'
 import { infura2000004withTransactionsData } from './testdata/infura2000004withTransactions.ts'
@@ -22,7 +22,7 @@ import { testdataFromRPCWithUnclesUncleBlockData } from './testdata/testdata-fro
 import { testdataFromRPCWithWithdrawalsData } from './testdata/testdata-from-rpc-with-withdrawals.ts'
 import { testdataFromRPCData } from './testdata/testdata-from-rpc.ts'
 
-import type { JSONRPCTx, LegacyTx } from '@ethereumjs/tx'
+import type { JSONRPCTx, LegacyTx } from '@tvmjs/tx'
 import type { JSONRPCBlock } from '../src/index.ts'
 
 describe('[fromRPC]: block #2924874', () => {

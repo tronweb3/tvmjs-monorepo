@@ -10,7 +10,7 @@
  * PLEASE DO NOT COPY LARGER PARTS OF THE CODE TO THE NEW RUNNER BUT RE-IMPLEMENT
  * (USE COMMON SENSE).
  */
-import { type Common, ConsensusAlgorithm } from '@ethereumjs/common'
+import { type Common, ConsensusAlgorithm } from '@tvmjs/common'
 
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import * as mcl from 'mcl-wasm'
@@ -20,13 +20,13 @@ import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
 import path from 'path'
 import {
-  type EVMBLSInterface,
-  type EVMBN254Interface,
   MCLBLS,
   NobleBLS,
   NobleBN254,
   RustBN254,
-} from '@ethereumjs/evm'
+  type TVMBLSInterface,
+  type TVMBN254Interface,
+} from '@tvmjs/tvm'
 import { initRustBN } from 'rustbn-wasm'
 import {
   DEFAULT_FORK_CONFIG,
@@ -105,7 +105,7 @@ console.log(`Running tests for fork: ${FORK_CONFIG}`)
 // Examples: Istanbul -> istanbul, MuirGlacier -> muirGlacier
 const FORK_CONFIG_VM = FORK_CONFIG.charAt(0).toLowerCase() + FORK_CONFIG.substring(1)
 
-let bls: EVMBLSInterface
+let bls: TVMBLSInterface
 if (argv.bls !== undefined && argv.bls.toLowerCase() === 'mcl') {
   await mcl.init(mcl.BLS12_381)
   bls = new MCLBLS(mcl)
@@ -115,7 +115,7 @@ if (argv.bls !== undefined && argv.bls.toLowerCase() === 'mcl') {
   bls = new NobleBLS()
 }
 
-let bn254: EVMBN254Interface
+let bn254: TVMBN254Interface
 if (argv.bn254 !== undefined && argv.bn254.toLowerCase() === 'mcl') {
   const rustBN = await initRustBN()
   bn254 = new RustBN254(rustBN)
@@ -133,8 +133,8 @@ const runnerArgs: {
   dist?: boolean
   debug?: boolean
   profile: boolean
-  bls: EVMBLSInterface
-  bn254: EVMBN254Interface
+  bls: TVMBLSInterface
+  bn254: TVMBN254Interface
   stateManager?: string
   testCount: number
 } = {

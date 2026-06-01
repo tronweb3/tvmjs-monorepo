@@ -1,7 +1,7 @@
-import { ConsensusAlgorithm } from '@ethereumjs/common'
-import { BIGINT_0, EthereumJSErrorWithoutCode } from '@ethereumjs/util'
+import { ConsensusAlgorithm } from '@tvmjs/common'
+import { BIGINT_0, EthereumJSErrorWithoutCode } from '@tvmjs/util'
 
-import type { BlockHeader } from '@ethereumjs/block'
+import type { BlockHeader } from '@tvmjs/block'
 import type { Consensus } from '../types.ts'
 
 /**

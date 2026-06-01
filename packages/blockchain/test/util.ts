@@ -1,6 +1,7 @@
-import { Block, createBlock, createBlockHeader } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Block, createBlock, createBlockHeader } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
 import {
   MapDB,
   bytesToUnprefixedHex,
@@ -8,13 +9,12 @@ import {
   hexToBytes,
   toBytes,
   utf8ToBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 
 import { createBlockchain } from '../src/index.ts'
 
-import type { BlockHeader } from '@ethereumjs/block'
-import type { DB } from '@ethereumjs/util'
+import type { BlockHeader } from '@tvmjs/block'
+import type { DB } from '@tvmjs/util'
 
 export const generateBlocks = (numberOfBlocks: number, existingBlocks?: Block[]): Block[] => {
   const blocks = existingBlocks ?? []

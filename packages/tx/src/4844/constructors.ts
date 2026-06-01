@@ -1,4 +1,4 @@
-import { RLP } from '@ethereumjs/rlp'
+import { RLP } from '@tvmjs/rlp'
 import {
   CELLS_PER_EXT_BLOB,
   EthereumJSErrorWithoutCode,
@@ -16,7 +16,7 @@ import {
   getBlobs,
   intToHex,
   validateNoLeadingZeroes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import { paramsTx } from '../params.ts'
 import { TransactionType } from '../types.ts'
@@ -24,7 +24,7 @@ import { accessListBytesToJSON } from '../util/access.ts'
 
 import { Blob4844Tx, NetworkWrapperType } from './tx.ts'
 
-import type { KZG, PrefixedHexString } from '@ethereumjs/util'
+import type { KZG, PrefixedHexString } from '@tvmjs/util'
 import type {
   BlobEIP4844NetworkValuesArray,
   BlobEIP7594NetworkValuesArray,

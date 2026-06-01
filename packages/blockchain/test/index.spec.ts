@@ -3,17 +3,18 @@ import {
   createBlockFromRLP,
   createBlockHeader,
   createBlockHeaderFromBytesArray,
-} from '@ethereumjs/block'
-import { Common, Hardfork, Holesky, Mainnet, Sepolia } from '@ethereumjs/common'
-import { goerliChainConfig, mainnetBlocks, preLondonTestDataBlocks1RLP } from '@ethereumjs/testdata'
-import { MapDB, bytesToHex, equalsBytes, hexToBytes, utf8ToBytes } from '@ethereumjs/util'
+  genTransactionsTrieRoot,
+} from '@tvmjs/block'
+import { Common, Hardfork, Holesky, Mainnet, Sepolia } from '@tvmjs/common'
+import { goerliChainConfig, mainnetBlocks, preLondonTestDataBlocks1RLP } from '@tvmjs/testdata'
+import { MapDB, bytesToHex, equalsBytes, hexToBytes, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Blockchain, createBlockchain, createBlockchainFromBlocksData } from '../src/index.ts'
 
 import { createTestDB, generateBlockchain, generateBlocks, isConsecutive } from './util.ts'
 
-import type { Block, BlockOptions } from '@ethereumjs/block'
+import type { Block, BlockOptions } from '@tvmjs/block'
 
 describe('blockchain test', () => {
   it('should not crash on getting head of a blockchain without a genesis', async () => {
@@ -621,7 +622,12 @@ describe('blockchain test', () => {
     })
 
     const blockRlp = hexToBytes(preLondonTestDataBlocks1RLP.blockRLP)
-    const block = createBlockFromRLP(blockRlp, { common })
+    const block = createBlockFromRLP(blockRlp, { common, freeze: false })
+    // Sync transactionsTrie: Tron tx format adds tokenId/tokenValue, so the
+    // trie root computed from re-serialized txs differs from the embedded
+    // (Ethereum-format) trie in the legacy block RLP.
+    // @ts-expect-error -- Assigning to read-only property
+    block.header.transactionsTrie = await genTransactionsTrieRoot(block.transactions)
     await blockchain.putBlock(block)
   })
 

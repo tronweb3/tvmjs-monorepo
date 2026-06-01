@@ -1,13 +1,7 @@
-# @ethereumjs/mpt `v10`
+# @tvmjs/mpt `1.0.0`
 
-[![NPM Package][mpt-npm-badge]][mpt-npm-link]
-[![GitHub Issues][mpt-issues-badge]][mpt-issues-link]
-[![Actions Status][mpt-actions-badge]][mpt-actions-link]
-[![Code Coverage][mpt-coverage-badge]][mpt-coverage-link]
-[![Discord][discord-badge]][discord-link]
-
-| Implementation of the [Modified Merkle Patricia Trie](https://ethereum.org/en/developers/docs/data-structures-and-encoding/patricia-merkle-trie/) as specified in the [Ethereum Yellow Paper](http://gavwood.com/Paper.pdf) |
-| ---------------------------------------------------------------------------- |
+| Implementation of the [Modified Merkle Patricia Trie](https://ethereum.org/en/developers/docs/data-structures-and-encoding/patricia-merkle-trie/) as specified in the [Ethereum Yellow Paper](http://gavwood.com/Paper.pdf). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
+| --- |
 
 - 🔭 Highly scalable
 - 🌴 Tree-shakeable API
@@ -30,7 +24,7 @@
 - [Benchmarking](#benchmarking)
 - [Debugging](#debugging)
 - [References](#references)
-- [EthereumJS](#ethereumjs)
+- [Upstream](#upstream)
 - [License](#license)
 
 
@@ -39,7 +33,7 @@
 To obtain the latest version, simply require the project using `npm`:
 
 ```shell
-npm install @ethereumjs/mpt
+npm install @tvmjs/mpt
 ```
 
 ## Getting Started
@@ -55,8 +49,8 @@ It is best to select the variant that is most appropriate for your unique use ca
 ```ts
 // ./examples/basicUsage.ts
 
-import { createMPT } from '@ethereumjs/mpt'
-import { MapDB, bytesToUtf8, utf8ToBytes } from '@ethereumjs/util'
+import { createMPT } from '@tvmjs/mpt'
+import { MapDB, bytesToUtf8, utf8ToBytes } from '@tvmjs/util'
 
 async function test() {
   const trie = await createMPT({ db: new MapDB() })
@@ -70,7 +64,7 @@ void test()
 
 ### WASM Crypto Support
 
-This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing for keys. See `@ethereumjs/common` [README](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
+This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing for keys. See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
 
 ### Use with Standalone Constructors
 
@@ -98,8 +92,8 @@ const otherProof = await createMerkleProof(someOtherTrie, k2)
 ```ts
 // ./examples/basicUsage.ts
 
-import { createMPT } from '@ethereumjs/mpt'
-import { MapDB, bytesToUtf8, utf8ToBytes } from '@ethereumjs/util'
+import { createMPT } from '@tvmjs/mpt'
+import { MapDB, bytesToUtf8, utf8ToBytes } from '@tvmjs/util'
 
 async function test() {
   const trie = await createMPT({ db: new MapDB() })
@@ -127,8 +121,8 @@ import {
   createMPTFromProof,
   createMerkleProof,
   updateMPTFromMerkleProof,
-} from '@ethereumjs/mpt'
-import { bytesToUtf8, utf8ToBytes } from '@ethereumjs/util'
+} from '@tvmjs/mpt'
+import { bytesToUtf8, utf8ToBytes } from '@tvmjs/util'
 
 async function main() {
   const k1 = utf8ToBytes('keyOne')
@@ -158,15 +152,15 @@ For further proof usage documentation see additional documentation section below
 
 ### Walking a Trie
 
-Starting with the v6 release there is a new API for walking and iterating a trie by using an async walk generator, which now enables to walk tries without altering the walk controller and also now enables to walk a sparse (not completely filled) trie.
+There is a new API for walking and iterating a trie by using an async walk generator, which now enables to walk tries without altering the walk controller and also now enables to walk a sparse (not completely filled) trie.
 
 The new walk functionality can be used like the following:
 
 ```ts
 // ./examples/trieWalking.ts
 
-import { createMPT } from '@ethereumjs/mpt'
-import { utf8ToBytes } from '@ethereumjs/util'
+import { createMPT } from '@tvmjs/mpt'
+import { utf8ToBytes } from '@tvmjs/util'
 
 async function main() {
   const trie = await createMPT()
@@ -185,11 +179,11 @@ void main()
 
 ### Database Options
 
-The `DB` opt in the `MPTOpts` allows you to use any database that conforms to the `DB` interface to store the trie data in. We provide several [examples](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/mpt/examples) for database implementations. The [level.js](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/mpt/examples/level.js) example is used in the `ethereumjs client` while [lmdb.js](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/mpt/examples/lmdb.js) is an alternative implementation that uses the popular [LMDB](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) as its underlying database.
+The `DB` opt in the `MPTOpts` allows you to use any database that conforms to the `DB` interface to store the trie data in. We provide several [examples](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/mpt/examples) for database implementations. The [level.js](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/mpt/examples/level.js) example is used in the `tvmjs client` while [lmdb.js](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/mpt/examples/lmdb.js) is an alternative implementation that uses the popular [LMDB](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) as its underlying database.
 
-If no `db` option is provided, an in-memory database powered by [a Javascript Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) will fulfill this role (imported from `@ethereumjs/util`, see [mapDB](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/mapDB.ts) module).
+If no `db` option is provided, an in-memory database powered by [a Javascript Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) will fulfill this role (imported from `@tvmjs/util`, see [mapDB](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/util/src/mapDB.ts) module).
 
-If you want to use an alternative database, you can integrate your own by writing a DB wrapper that conforms to the [`DB` interface](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/util/src/db.ts) (in `@ethereumjs/util`). The `DB` interface defines the methods `get`, `put`, `del`, `batch` and `copy` that a concrete implementation of the `DB` interface will need to implement.
+If you want to use an alternative database, you can integrate your own by writing a DB wrapper that conforms to the [`DB` interface](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/util/src/db.ts) (in `@tvmjs/util`). The `DB` interface defines the methods `get`, `put`, `del`, `batch` and `copy` that a concrete implementation of the `DB` interface will need to implement.
 
 #### LevelDB
 
@@ -216,8 +210,8 @@ You can enable persistence by setting the `useRootPersistence` option to `true` 
 ```ts
 // ./examples/rootPersistence.ts
 
-import { createMPT } from '@ethereumjs/mpt'
-import { bytesToHex } from '@ethereumjs/util'
+import { createMPT } from '@tvmjs/mpt'
+import { bytesToHex } from '@tvmjs/util'
 
 async function main() {
   const trie = await createMPT({
@@ -296,7 +290,7 @@ You can find additional examples complete with detailed explanations [here](./ex
 
 We provide hybrid ESM/CJS builds for all our libraries. With the v10 breaking release round from Spring 2025, all libraries are "pure-JS" by default and we have eliminated all hard-wired WASM code. Additionally we have substantially lowered the bundle sizes, reduced the number of dependencies, and cut out all usages of Node.js-specific primitives (like the Node.js event emitter).
 
-It is easily possible to run a browser build of one of the EthereumJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
+It is easily possible to run a browser build of one of the TVMJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
 
 ## API
 
@@ -311,13 +305,13 @@ With the breaking releases from Summer 2023 we have started to ship our librarie
 If you use an ES6-style `import` in your code files from the ESM build will be used:
 
 ```ts
-import { EthereumJSClass } from '@ethereumjs/[PACKAGE_NAME]'
+import { TVMJSClass } from '@tvmjs/[PACKAGE_NAME]'
 ```
 
 If you use Node.js specific `require`, the CJS build will be used:
 
 ```ts
-const { EthereumJSClass } = require('@ethereumjs/[PACKAGE_NAME]')
+const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
 ```
 
 Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS can not provide.
@@ -349,7 +343,7 @@ npm run profiling
 
 This library uses the [debug](https://github.com/visionmedia/debug) debugging utility package.
 
-The `Trie` class features optional debug logging. Individual debug selections can be activated on the CL with `DEBUG=ethjs,[Logger Selection]`.
+The `Trie` class features optional debug logging. Individual debug selections can be activated on the CL with `DEBUG=tvmjs,[Logger Selection]`.
 
 The following options are available:
 
@@ -379,43 +373,43 @@ To observe the logging in action at different levels:
 Run with minimal logging:
 
 ```shell
-DEBUG=ethjs,mpt npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt npx vitest test/util/log.spec.ts
 ```
 
 Run with **put** method logging:
 
 ```shell
-DEBUG=ethjs,mpt:put npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt:put npx vitest test/util/log.spec.ts
 ```
 
 Run with **mpt** + **put**/**get**/**del** logging:
 
 ```shell
-DEBUG=ethjs,mpt,mpt:put,mpt:get,mpt:del npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt,mpt:put,mpt:get,mpt:del npx vitest test/util/log.spec.ts
 ```
 
 Run with **findPath** debug logging:
 
 ```shell
-DEBUG=ethjs,mpt:find_path npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt:find_path npx vitest test/util/log.spec.ts
 ```
 
 Run with **findPath** verbose logging:
 
 ```shell
-DEBUG=ethjs,mpt:find_path:* npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt:find_path:* npx vitest test/util/log.spec.ts
 ```
 
 Run with max logging:
 
 ```shell
-DEBUG=ethjs,mpt:* npx vitest test/util/log.spec.ts
+DEBUG=tvmjs,mpt:* npx vitest test/util/log.spec.ts
 ```
 
-`ethjs` **must** be included in the `DEBUG` environment variables to enable **any** logs.
+`tvmjs` **must** be included in the `DEBUG` environment variables to enable **any** logs.
 Additional log selections can be added with a comma separated list (no spaces). Logs with extensions can be enabled with a colon `:`, and `*` can be used to include all extensions.
 
-`DEBUG=ethjs,mpt:put,mpt:find_path:* npx vitest test/proof.spec.ts`
+`DEBUG=tvmjs,mpt:put,mpt:find_path:* npx vitest test/proof.spec.ts`
 
 ## References
 
@@ -428,21 +422,13 @@ Additional log selections can be added with a comma separated list (no spaces). 
 - Videos
   - [Trie and Patricia Trie Overview](https://www.youtube.com/watch?v=jXAHLqQthKw&t=26s)
 
-## EthereumJS
+## Upstream
 
-The `EthereumJS` GitHub organization and its repositories are managed by members of the former Ethereum Foundation JavaScript team and the broader Ethereum community. If you want to join for work or carry out improvements on the libraries see the [developer docs](../../DEVELOPER.md) for an overview of current standards and tools and review our [code of conduct](../../CODE_OF_CONDUCT.md).
+This package is part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, a TypeScript implementation of the TRON Virtual Machine (TVM) forked from the [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo) monorepo. We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
 
+For development information, see the [developer docs](../../DEVELOPER.md) and our [code of conduct](../../CODE_OF_CONDUCT.md).
 ## License
 
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
-[discord-badge]: https://img.shields.io/static/v1?logo=discord&label=discord&message=Join&color=blue
-[discord-link]: https://discord.gg/TNwARpR
-[mpt-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/mpt.svg
-[mpt-npm-link]: https://www.npmjs.com/package/@ethereumjs/mpt
-[mpt-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20mpt?label=issues
-[mpt-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+mpt"
-[mpt-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/Trie/badge.svg
-[mpt-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22Trie%22
-[mpt-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=mpt
-[mpt-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/mpt
+This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.

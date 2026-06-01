@@ -1,7 +1,7 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { bytesToHex, createZeroAddress } from '@ethereumjs/util'
-import { createVM, runTx } from '@ethereumjs/vm'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import { bytesToHex, createZeroAddress } from '@tvmjs/util'
+import { createVM, runTx } from '@tvmjs/vm'
 
 const main = async () => {
   const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })

@@ -6,7 +6,7 @@ import {
   MAX_UINT64,
   bytesToBigInt,
   validateNoLeadingZeroes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import type { EIP7702CompatibleTx } from '../types.ts'
 
 /**

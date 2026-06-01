@@ -1,8 +1,10 @@
-import { Common, Mainnet } from '@ethereumjs/common'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Common, Mainnet } from '@tvmjs/common'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
 import {
   Account,
+  BIGINT_0,
   EthereumJSErrorWithoutCode,
   bytesToUnprefixedHex,
   concatBytes,
@@ -11,26 +13,21 @@ import {
   createAddressFromString,
   equalsBytes,
   hexToBytes,
+  isDebugEnabled,
   short,
   toBytes,
   unpadBytes,
   unprefixedHexToBytes,
   utf8ToBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import { OriginalStorageCache } from './cache/index.ts'
 import type { Caches, MerkleStateManagerOpts } from './index.ts'
 import { modifyAccountFields } from './util.ts'
 
-import type {
-  AccountFields,
-  StateManagerInterface,
-  StorageDump,
-  StorageRange,
-} from '@ethereumjs/common'
-import type { Address, DB } from '@ethereumjs/util'
+import type { AccountFields, StateManagerInterface, StorageDump, StorageRange } from '@tvmjs/common'
+import type { Address, DB } from '@tvmjs/util'
 import type { Debugger } from 'debug'
 
 /**
@@ -51,10 +48,10 @@ export const CODEHASH_PREFIX = utf8ToBytes('c')
  * and storage slots.
  *
  * The default state manager implementation uses a
- * `@ethereumjs/mpt` trie as a data backend.
+ * `@tvmjs/mpt` trie as a data backend.
  *
  * Note that there is a `SimpleStateManager` dependency-free state
- * manager implementation available shipped with the `@ethereumjs/statemanager`
+ * manager implementation available shipped with the `@tvmjs/statemanager`
  * package which might be an alternative to this implementation
  * for many basic use cases.
  */
@@ -69,6 +66,11 @@ export class MerkleStateManager implements StateManagerInterface {
 
   protected readonly _prefixCodeHashes: boolean
   protected readonly _prefixStorageTrieKeys: boolean
+
+  // _tokenIds only update once
+  protected _tokenIds: Map<number, bigint>
+  protected _tokenIdsCache: Map<number, bigint>
+  protected _tokenIdsCacheStack: Map<number, bigint>[]
 
   public readonly common: Common
 
@@ -90,10 +92,8 @@ export class MerkleStateManager implements StateManagerInterface {
    * Instantiate the StateManager interface.
    */
   constructor(opts: MerkleStateManagerOpts = {}) {
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    // Additional window check is to prevent vite browser bundling (and potentially other) to break
-    this.DEBUG =
-      typeof window === 'undefined' ? (process?.env?.DEBUG?.includes('ethjs') ?? false) : false
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
 
     this._debug = debugDefault('statemanager:merkle')
 
@@ -112,6 +112,10 @@ export class MerkleStateManager implements StateManagerInterface {
     this._prefixStorageTrieKeys = opts.prefixStorageTrieKeys ?? false
 
     this._caches = opts.caches
+
+    this._tokenIds = new Map()
+    this._tokenIdsCache = new Map()
+    this._tokenIdsCacheStack = []
   }
 
   /**
@@ -148,6 +152,16 @@ export class MerkleStateManager implements StateManagerInterface {
         }`,
       )
     }
+    if (account !== undefined) {
+      for (const _ in account.asset) {
+        const tokenId = Number(_)
+        const value = account.asset[tokenId]
+        if (!this._tokenIds.has(tokenId)) {
+          const total = this._tokenIdsCache.get(tokenId) ?? BIGINT_0
+          this._tokenIdsCache.set(tokenId, value + total)
+        }
+      }
+    }
     if (this._caches?.account === undefined) {
       const trie = this._trie
       if (account !== undefined) {
@@ -182,6 +196,22 @@ export class MerkleStateManager implements StateManagerInterface {
   async deleteAccount(address: Address) {
     if (this.DEBUG) {
       this._debug(`Delete account ${address}`)
+    }
+    const account = await this.getAccount(address)
+    if (account) {
+      for (const _ in account.asset) {
+        const tokenId = Number(_)
+        const value = account.asset[tokenId]
+        if (this._tokenIdsCache.has(tokenId)) {
+          const total = this._tokenIdsCache.get(tokenId) ?? BIGINT_0
+          const cur = total - value
+          if (cur > 0) {
+            this._tokenIdsCache.set(tokenId, cur)
+          } else {
+            this._tokenIdsCache.delete(tokenId)
+          }
+        }
+      }
     }
 
     this._caches?.deleteAccount(address)
@@ -250,7 +280,7 @@ export class MerkleStateManager implements StateManagerInterface {
   }
 
   /**
-   * Gets the storage trie for the EVM-internal account identified by the provided address/hash.
+   * Gets the storage trie for the TVM-internal account identified by the provided address/hash.
    * If the storage trie is not in the local cache ('this._storageTries'),
    *   generates a new storage trie object based on a lookup (shallow copy from 'this._trie'),
    *   applies the storage root of the provided rootAccount (or an
@@ -444,6 +474,7 @@ export class MerkleStateManager implements StateManagerInterface {
   async checkpoint(): Promise<void> {
     this._trie.checkpoint()
     this._caches?.checkpoint()
+    this._tokenIdsCacheStack.push(new Map(this._tokenIdsCache))
     this._checkpointCount++
   }
 
@@ -461,6 +492,10 @@ export class MerkleStateManager implements StateManagerInterface {
       await this.flush()
       this.originalStorageCache.clear()
     }
+
+    this._tokenIdsCacheStack.pop()
+    this._tokenIdsCache.forEach((v, k) => this._tokenIds.set(k, v))
+    this._tokenIdsCache = new Map()
 
     if (this.DEBUG) {
       this._debug(`state checkpoint committed`)
@@ -484,6 +519,8 @@ export class MerkleStateManager implements StateManagerInterface {
       await this.flush()
       this.originalStorageCache.clear()
     }
+
+    this._tokenIdsCache = this._tokenIdsCacheStack.pop() ?? new Map()
   }
 
   /**
@@ -734,5 +771,17 @@ export class MerkleStateManager implements StateManagerInterface {
    */
   getAppliedKey(address: Uint8Array): Uint8Array {
     return this._trie['appliedKey'](address)
+  }
+
+  /**
+   * Checks if tokenid is exists
+   * @param tokenId - tokenId to check
+   */
+  async tokenIdExists(tokenId: number): Promise<boolean> {
+    if (this._tokenIds.has(tokenId)) return true
+
+    if (this._tokenIdsCache.has(tokenId)) return true
+
+    return false
   }
 }

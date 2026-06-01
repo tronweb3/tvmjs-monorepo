@@ -1,7 +1,7 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { Account, Address, hexToBytes, privateToAddress } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import { Account, Address, hexToBytes, privateToAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'

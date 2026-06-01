@@ -1,4 +1,4 @@
-import { RLP } from '@ethereumjs/rlp'
+import { RLP } from '@tvmjs/rlp'
 
 import { addHexPrefix, removeHexPrefix } from '../util/hex.ts'
 import { nibblesTypeToPackedBytes } from '../util/nibbles.ts'

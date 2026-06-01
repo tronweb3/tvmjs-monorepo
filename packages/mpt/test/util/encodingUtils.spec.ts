@@ -1,4 +1,4 @@
-import { hexToBytes } from '@ethereumjs/util'
+import { hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {

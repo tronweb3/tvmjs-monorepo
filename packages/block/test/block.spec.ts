@@ -1,19 +1,19 @@
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
 import {
   goerliChainConfig,
   preLondonTestDataBlocks1RLP,
   preLondonTestDataBlocks2RLP,
   testnetMergeChainConfig,
-} from '@ethereumjs/testdata'
-import { createLegacyTx, paramsTx } from '@ethereumjs/tx'
+} from '@tvmjs/testdata'
+import { createLegacyTx, paramsTx } from '@tvmjs/tx'
 import {
   KECCAK256_RLP_ARRAY,
   MAX_RLP_BLOCK_SIZE,
   bytesToHex,
   equalsBytes,
   hexToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, expect, it } from 'vitest'
 
 import { genTransactionsTrieRoot } from '../src/helpers.ts'
@@ -31,7 +31,7 @@ import {
 import { genesisHashesTestData } from './testdata/genesisHashesTest.ts'
 import { testdataFromRPCGoerliData } from './testdata/testdata-from-rpc-goerli.ts'
 
-import type { NestedUint8Array } from '@ethereumjs/util'
+import type { NestedUint8Array } from '@tvmjs/util'
 
 describe('[Block]: block functions', () => {
   it('should test block initialization', () => {
@@ -168,7 +168,8 @@ describe('[Block]: block functions', () => {
     assert.isEmpty(block.getTransactionsValidationErrors())
   }
 
-  it('should test transaction validation - transaction not signed', async () => {
+  // Osaka not supported
+  it.skip('should test transaction validation - transaction not signed', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Osaka })
     const maxTransactionGasLimit = paramsTx['7825'].maxTransactionGasLimit as number
     // Create tx with gas limit over max (but not yet on Osaka)
@@ -241,6 +242,11 @@ describe('[Block]: block functions', () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
     const blockRlp = hexToBytes(preLondonTestDataBlocks2RLP.block2RLP)
     const block = createBlockFromRLP(blockRlp, { common, freeze: false })
+    // Sync transactionsTrie: Tron tx format adds tokenId/tokenValue, so the
+    // trie root computed from the re-serialized txs differs from the embedded
+    // (Ethereum-format) trie in the legacy block RLP.
+    // @ts-expect-error -- Assigning to read-only property
+    block.header.transactionsTrie = await genTransactionsTrieRoot(block.transactions)
     assert.strictEqual(block.uncleHashIsValid(), true)
     // @ts-expect-error -- Assigning to read-only property
     block.header.uncleHash = new Uint8Array(32)

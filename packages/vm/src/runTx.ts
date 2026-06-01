@@ -1,7 +1,12 @@
-import { cliqueSigner, createBlockHeader } from '@ethereumjs/block'
-import { ConsensusType, Hardfork } from '@ethereumjs/common'
-import { BinaryTreeAccessWitness, type EVM } from '@ethereumjs/evm'
-import { Capability, isBlob4844Tx } from '@ethereumjs/tx'
+import { cliqueSigner, createBlockHeader } from '@tvmjs/block'
+import { ConsensusType, Hardfork } from '@tvmjs/common'
+import {
+  BinaryTreeAccessWitness,
+  type Log,
+  type TVM,
+  createEIP7708SelfdestructLog,
+} from '@tvmjs/tvm'
+import { Capability, isBlob4844Tx } from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -10,6 +15,8 @@ import {
   EthereumJSErrorWithoutCode,
   KECCAK256_NULL,
   MAX_UINT64,
+  MIN_TOKEN_ID,
+  type PrefixedHexString,
   SECP256K1_ORDER_DIV_2,
   bigIntMax,
   bytesToBigInt,
@@ -20,14 +27,14 @@ import {
   equalsBytes,
   hexToBytes,
   short,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import { Bloom } from './bloom/index.ts'
-import { emitEVMProfile } from './emitEVMProfile.ts'
+import { emitTVMProfile } from './emitTVMProfile.ts'
 
-import type { Block } from '@ethereumjs/block'
-import type { Common } from '@ethereumjs/common'
+import type { Block } from '@tvmjs/block'
+import type { Common } from '@tvmjs/common'
 import type {
   AccessList,
   AccessList2930Tx,
@@ -36,7 +43,7 @@ import type {
   FeeMarket1559Tx,
   LegacyTx,
   TypedTransaction,
-} from '@ethereumjs/tx'
+} from '@tvmjs/tx'
 import type {
   AfterTxEvent,
   BaseTxReceipt,
@@ -55,7 +62,7 @@ const debugGas = debugDefault('vm:tx:gas')
 const DEFAULT_HEADER = createBlockHeader()
 
 let enableProfiler = false
-const initLabel = 'EVM journal init, address/slot warming, fee validation'
+const initLabel = 'TVM journal init, address/slot warming, fee validation'
 const balanceNonceLabel = 'Balance/Nonce checks and update'
 const executionLabel = 'Execution'
 const logsGasBalanceLabel = 'Logs, gas usage, account/miner balances'
@@ -67,6 +74,287 @@ const entireTxLabel = 'Entire tx'
 
 // EIP-7702 flag: if contract code starts with these 3 bytes, it is a 7702-delegated EOA
 const DELEGATION_7702_FLAG = new Uint8Array([0xef, 0x01, 0x00])
+
+/**
+ * Process EIP-7702 authorization list tuples.
+ * Sets delegation code for authorized accounts and calculates gas refunds.
+ *
+ * @param vm - The VM instance
+ * @param tx - The transaction (must support EIP7702EOACode capability)
+ * @param caller - The transaction sender address
+ * @param initialGasRefund - The current gas refund amount
+ * @returns The updated gas refund amount
+ */
+async function processAuthorizationList(
+  vm: VM,
+  tx: EIP7702CompatibleTx,
+  caller: Address,
+  initialGasRefund: bigint,
+): Promise<bigint> {
+  let gasRefund = initialGasRefund
+  const authorizationList = tx.authorizationList
+
+  for (let i = 0; i < authorizationList.length; i++) {
+    const data = authorizationList[i]
+
+    // Validate chain ID
+    const chainId = data[0]
+    const chainIdBN = bytesToBigInt(chainId)
+    if (chainIdBN !== BIGINT_0 && chainIdBN !== vm.common.chainId()) {
+      continue
+    }
+
+    // Validate nonce bounds
+    const authorityNonce = data[2]
+    if (bytesToBigInt(authorityNonce) >= MAX_UINT64) {
+      // Authority nonce >= 2^64 - 1. Bumping this nonce by one will not make this fit in an uint64.
+      // EIPs PR: https://github.com/ethereum/EIPs/pull/8938
+      continue
+    }
+
+    // Validate signature malleability (s value)
+    const s = data[5]
+    if (bytesToBigInt(s) > SECP256K1_ORDER_DIV_2) {
+      // Malleability protection to avoid "flipping" a valid signature
+      continue
+    }
+
+    // Validate yParity
+    const yParity = bytesToBigInt(data[3])
+    if (yParity > BIGINT_1) {
+      continue
+    }
+
+    // Recover authority address from signature
+    let authority: Address
+    try {
+      authority = eoaCode7702RecoverAuthority(data)
+    } catch {
+      // Invalid signature
+      continue
+    }
+
+    const accountMaybeUndefined = await vm.stateManager.getAccount(authority)
+    const accountExists = accountMaybeUndefined !== undefined
+    const account = accountMaybeUndefined ?? new Account()
+
+    // Add authority address to warm addresses
+    vm.tvm.journal.addAlwaysWarmAddress(authority.toString())
+
+    // EIP-7928: Add authority address to BAL (even if authorization fails later,
+    // the account was accessed to check nonce/code)
+    if (vm.common.isActivatedEIP(7928)) {
+      vm.tvm.blockLevelAccessList!.addAddress(authority.toString())
+    }
+
+    // Skip if account is a "normal" contract (not 7702-delegated)
+    if (account.isContract()) {
+      const code = await vm.stateManager.getCode(authority)
+      if (!equalsBytes(code.slice(0, 3), DELEGATION_7702_FLAG)) {
+        continue
+      }
+    }
+
+    // Nonce validation
+    if (caller.toString() === authority.toString()) {
+      // Edge case: caller is the authority (self-signing delegation)
+      // Virtually bump the account nonce by one for comparison
+      if (account.nonce + BIGINT_1 !== bytesToBigInt(authorityNonce)) {
+        continue
+      }
+    } else if (account.nonce !== bytesToBigInt(authorityNonce)) {
+      continue
+    }
+
+    // Calculate gas refund for existing accounts
+    if (accountExists) {
+      const refund = tx.common.param('perEmptyAccountCost') - tx.common.param('perAuthBaseGas')
+      gasRefund += refund
+    }
+
+    // Update account nonce and store
+    account.nonce++
+    await vm.tvm.journal.putAccount(authority, account)
+    if (vm.common.isActivatedEIP(7928)) {
+      vm.tvm.blockLevelAccessList!.addNonceChange(
+        authority.toString(),
+        account.nonce,
+        vm.tvm.blockLevelAccessList!.blockAccessIndex,
+      )
+    }
+
+    // Set delegation code
+    const address = data[1]
+    // Get current code before modifying (needed for BAL tracking)
+    const currentCode = vm.common.isActivatedEIP(7928)
+      ? await vm.stateManager.getCode(authority)
+      : undefined
+    if (equalsBytes(address, new Uint8Array(20))) {
+      // Special case: clear delegation when delegating to zero address
+      // See EIP PR: https://github.com/ethereum/EIPs/pull/8929
+      await vm.stateManager.putCode(authority, new Uint8Array())
+      if (vm.common.isActivatedEIP(7928)) {
+        vm.tvm.blockLevelAccessList!.addCodeChange(
+          authority.toString(),
+          new Uint8Array(),
+          vm.tvm.blockLevelAccessList!.blockAccessIndex,
+          currentCode,
+        )
+      }
+    } else {
+      const addressCode = concatBytes(DELEGATION_7702_FLAG, address)
+      await vm.stateManager.putCode(authority, addressCode)
+      if (vm.common.isActivatedEIP(7928)) {
+        vm.tvm.blockLevelAccessList!.addCodeChange(
+          authority.toString(),
+          addressCode,
+          vm.tvm.blockLevelAccessList!.blockAccessIndex,
+          currentCode,
+        )
+      }
+    }
+  }
+
+  return gasRefund
+}
+
+/**
+ * Process selfdestruct cleanup for accounts marked for destruction.
+ * Handles EIP-6780 restrictions (only delete contracts created in same tx).
+ *
+ * @param vm - The VM instance
+ * @param results - The execution results containing selfdestruct list
+ */
+async function processSelfdestructs(vm: VM, results: RunTxResult): Promise<void> {
+  if (results.execResult.selfdestruct === undefined) {
+    return
+  }
+
+  const destroyedForBAL: Set<PrefixedHexString> = new Set()
+  const finalizationLogs: Log[] = []
+  const sortedSelfdestructs = [...results.execResult.selfdestruct.entries()].sort(([a], [b]) =>
+    a.localeCompare(b),
+  )
+
+  for (const [addressToSelfdestructHex] of sortedSelfdestructs) {
+    const address = new Address(hexToBytes(addressToSelfdestructHex))
+
+    // EIP-6780: Only delete contracts created in the same transaction
+    if (vm.common.isActivatedEIP(6780)) {
+      if (!results.execResult.createdAddresses!.has(address.toString())) {
+        continue
+      }
+    }
+
+    if (vm.common.isActivatedEIP(7708)) {
+      const account = await vm.stateManager.getAccount(address)
+      const finalizationBalance = account?.balance ?? BIGINT_0
+      if (finalizationBalance > BIGINT_0) {
+        finalizationLogs.push(createEIP7708SelfdestructLog(address, finalizationBalance))
+      }
+    }
+
+    await vm.tvm.journal.deleteAccount(address)
+    destroyedForBAL.add(address.toString())
+    if (vm.DEBUG) {
+      debug(`tx selfdestruct on address=${address}`)
+    }
+  }
+
+  if (finalizationLogs.length > 0) {
+    results.execResult.logs = [...(results.execResult.logs ?? []), ...finalizationLogs]
+  }
+
+  if (destroyedForBAL.size > 0 && vm.common.isActivatedEIP(7928)) {
+    vm.tvm.blockLevelAccessList!.cleanupSelfdestructed([...destroyedForBAL])
+  }
+}
+
+/**
+ * Build the access list result from the journal's tracked accesses.
+ * Converts the internal Map format to the standard AccessList format.
+ *
+ * @param vm - The VM instance
+ * @returns The formatted access list
+ */
+function buildAccessListResult(vm: VM): AccessList {
+  const accessList: AccessList = []
+
+  for (const [address, storageSet] of vm.tvm.journal.accessList!) {
+    const item: AccessListItem = {
+      address: `0x${address}`,
+      storageKeys: [],
+    }
+    for (const slot of storageSet) {
+      item.storageKeys.push(`0x${slot}`)
+    }
+    accessList.push(item)
+  }
+
+  return accessList
+}
+
+/**
+ * Update the miner's account balance with the transaction fee.
+ * Handles both EIP-1559 (priority fee only) and legacy (full gas price) fee models.
+ *
+ * @param vm - The VM instance
+ * @param state - The state manager
+ * @param block - The block (optional)
+ * @param results - The transaction results to update with minerValue
+ * @param inclusionFeePerGas - The priority fee per gas (for EIP-1559)
+ */
+async function updateMinerBalance(
+  vm: VM,
+  state: VM['stateManager'],
+  block: Block | undefined,
+  results: RunTxResult,
+  inclusionFeePerGas: bigint,
+): Promise<void> {
+  // Determine miner address based on consensus type
+  let miner: Address
+  if (vm.common.consensusType() === ConsensusType.ProofOfAuthority) {
+    miner = cliqueSigner(block?.header ?? DEFAULT_HEADER)
+  } else {
+    miner = block?.header.coinbase ?? DEFAULT_HEADER.coinbase
+  }
+
+  // Get or create miner account
+  let minerAccount = await state.getAccount(miner)
+  if (minerAccount === undefined) {
+    minerAccount = new Account()
+  }
+
+  // Calculate miner value: priority fee for EIP-1559, full amount for legacy
+  results.minerValue = vm.common.isActivatedEIP(1559)
+    ? results.totalGasSpent * inclusionFeePerGas
+    : results.amountSpent
+  const minerOriginalBalance = minerAccount.balance
+  minerAccount.balance += results.minerValue
+  if (vm.common.isActivatedEIP(7928)) {
+    if (results.minerValue !== BIGINT_0) {
+      vm.tvm.blockLevelAccessList!.addBalanceChange(
+        miner.toString(),
+        minerAccount.balance,
+        vm.tvm.blockLevelAccessList!.blockAccessIndex,
+        minerOriginalBalance,
+      )
+    } else {
+      // EIP-7928: If the COINBASE reward is zero, the COINBASE address
+      // MUST be included as a read (address only, no balance change)
+      vm.tvm.blockLevelAccessList!.addAddress(miner.toString())
+    }
+  }
+
+  // Store updated miner account
+  // Note: If balance remains zero, account is marked as "touched" and may be
+  // removed during cleanup for forks >= SpuriousDragon
+  await vm.tvm.journal.putAccount(miner, minerAccount)
+
+  if (vm.DEBUG) {
+    debug(`tx update miner account (${miner}) balance (-> ${minerAccount.balance})`)
+  }
+}
 
 /**
  * @ignore
@@ -105,17 +393,17 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   }
 
   // Ensure we start with a clear warmed accounts Map
-  await vm.evm.journal.cleanup()
+  await vm.tvm.journal.cleanup()
 
   if (opts.reportAccessList === true) {
-    vm.evm.journal.startReportingAccessList()
+    vm.tvm.journal.startReportingAccessList()
   }
 
   if (opts.reportPreimages === true) {
-    vm.evm.journal.startReportingPreimages!()
+    vm.tvm.journal.startReportingPreimages!()
   }
 
-  await vm.evm.journal.checkpoint()
+  await vm.tvm.journal.checkpoint()
   if (vm.DEBUG) {
     debug('-'.repeat(100))
     debug(`tx checkpoint`)
@@ -125,7 +413,7 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   if (opts.tx.supports(Capability.EIP2718TypedTransaction) && vm.common.isActivatedEIP(2718)) {
     // Is it an Access List transaction?
     if (!vm.common.isActivatedEIP(2930)) {
-      await vm.evm.journal.revert()
+      await vm.tvm.journal.revert()
       const msg = _errorMsg(
         'Cannot run transaction: EIP 2930 is not activated.',
         vm,
@@ -135,7 +423,7 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
       throw EthereumJSErrorWithoutCode(msg)
     }
     if (opts.tx.supports(Capability.EIP1559FeeMarket) && !vm.common.isActivatedEIP(1559)) {
-      await vm.evm.journal.revert()
+      await vm.tvm.journal.revert()
       const msg = _errorMsg(
         'Cannot run transaction: EIP 1559 is not activated.',
         vm,
@@ -151,42 +439,42 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
       const [addressBytes, slotBytesList] = accessListItem
       // Using deprecated bytesToUnprefixedHex for performance: journal methods expect unprefixed hex strings for Map/Set lookups.
       const address = bytesToUnprefixedHex(addressBytes)
-      vm.evm.journal.addAlwaysWarmAddress(address, true)
+      vm.tvm.journal.addAlwaysWarmAddress(address, true)
       for (const storageKey of slotBytesList) {
-        vm.evm.journal.addAlwaysWarmSlot(address, bytesToUnprefixedHex(storageKey), true)
+        vm.tvm.journal.addAlwaysWarmSlot(address, bytesToUnprefixedHex(storageKey), true)
       }
     }
   }
 
   try {
     const result = await _runTx(vm, opts)
-    await vm.evm.journal.commit()
+    await vm.tvm.journal.commit()
     if (vm.DEBUG) {
       debug(`tx checkpoint committed`)
     }
     return result
   } catch (e: any) {
-    await vm.evm.journal.revert()
+    await vm.tvm.journal.revert()
     if (vm.DEBUG) {
       debug(`tx checkpoint reverted`)
     }
     throw e
   } finally {
     if (vm.common.isActivatedEIP(2929)) {
-      vm.evm.journal.cleanJournal()
+      vm.tvm.journal.cleanJournal()
     }
-    vm.evm.stateManager.originalStorageCache.clear()
+    vm.tvm.stateManager.originalStorageCache.clear()
     if (enableProfiler) {
       // eslint-disable-next-line no-console
       console.timeEnd(entireTxLabel)
-      const logs = (vm.evm as EVM).getPerformanceLogs()
+      const logs = (vm.tvm as TVM).getPerformanceLogs()
       if (logs.precompiles.length === 0 && logs.opcodes.length === 0) {
         // eslint-disable-next-line no-console
         console.log('No precompile or opcode execution.')
       }
-      emitEVMProfile(logs.precompiles, 'Precompile performance')
-      emitEVMProfile(logs.opcodes, 'Opcodes performance')
-      ;(vm.evm as EVM).clearPerformanceLogs()
+      emitTVMProfile(logs.precompiles, 'Precompile performance')
+      emitTVMProfile(logs.opcodes, 'Opcodes performance')
+      ;(vm.tvm as TVM).clearPerformanceLogs()
     }
   }
 }
@@ -194,11 +482,14 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
 async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   const state = vm.stateManager
 
+  // ===========================
+  // SETUP: Binary Tree Witness
+  // ===========================
   let stateAccesses: BinaryTreeAccessWitness | undefined
   let txAccesses: BinaryTreeAccessWitness | undefined
 
   if (vm.common.isActivatedEIP(7864)) {
-    if (vm.evm.binaryTreeAccessWitness === undefined) {
+    if (vm.tvm.binaryTreeAccessWitness === undefined) {
       throw Error(`Binary tree access witness needed for execution of binary tree blocks`)
     }
 
@@ -208,21 +499,18 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
         `Binary tree State Manager needed for execution of binary tree blocks`,
       )
     }
-    stateAccesses = vm.evm.binaryTreeAccessWitness
+    stateAccesses = vm.tvm.binaryTreeAccessWitness
     txAccesses = new BinaryTreeAccessWitness({
-      hashFunction: vm.evm.binaryTreeAccessWitness.hashFunction,
+      hashFunction: vm.tvm.binaryTreeAccessWitness.hashFunction,
     })
   }
 
+  // ===========================
+  // SETUP: Transaction and Events
+  // ===========================
   const { tx, block } = opts
 
-  /**
-   * The `beforeTx` event
-   *
-   * @event Event: beforeTx
-   * @type {Object}
-   * @property {Transaction} tx emits the Transaction that is about to be processed
-   */
+  /** The `beforeTx` event - emits the Transaction that is about to be processed */
   await vm._emit('beforeTx', tx)
 
   const caller = tx.getSenderAddress()
@@ -234,29 +522,36 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     )
   }
 
+  // ===========================
+  // SETUP: Address Warming (EIP-2929)
+  // ===========================
   if (vm.common.isActivatedEIP(2929)) {
-    // Add origin and precompiles to warm addresses
-    const activePrecompiles = vm.evm.precompiles
+    // Add origin, precompiles, and relevant addresses to warm set
+    const activePrecompiles = vm.tvm.precompiles
     for (const [addressStr] of activePrecompiles.entries()) {
-      vm.evm.journal.addAlwaysWarmAddress(addressStr)
+      vm.tvm.journal.addAlwaysWarmAddress(addressStr)
     }
-    vm.evm.journal.addAlwaysWarmAddress(caller.toString())
+    vm.tvm.journal.addAlwaysWarmAddress(caller.toString())
     if (tx.to !== undefined) {
-      // Note: in case we create a contract, we do vm in EVMs `_executeCreate` (vm is also correct in inner calls, per the EIP)
+      // Note: in case we create a contract, we do vm in TVMs `_executeCreate` (vm is also correct in inner calls, per the EIP)
       // Using deprecated bytesToUnprefixedHex for performance: journal methods expect unprefixed hex strings.
-      vm.evm.journal.addAlwaysWarmAddress(bytesToUnprefixedHex(tx.to.bytes))
+      vm.tvm.journal.addAlwaysWarmAddress(bytesToUnprefixedHex(tx.to.bytes))
     }
     if (vm.common.isActivatedEIP(3651)) {
       const coinbase = block?.header.coinbase.bytes ?? DEFAULT_HEADER.coinbase.bytes
       // Using deprecated bytesToUnprefixedHex for performance: journal methods expect unprefixed hex strings.
-      vm.evm.journal.addAlwaysWarmAddress(bytesToUnprefixedHex(coinbase))
+      vm.tvm.journal.addAlwaysWarmAddress(bytesToUnprefixedHex(coinbase))
     }
   }
 
+  // ===========================
+  // VALIDATION: Gas Limit and Fees
+  // ===========================
   // Validate gas limit against tx base fee (DataFee + TxFee + Creation Fee)
   const intrinsicGas = tx.getIntrinsicGas()
   let floorCost = BIGINT_0
 
+  // EIP-7623: Calculate floor cost for calldata
   if (vm.common.isActivatedEIP(7623)) {
     // Tx should at least cover the floor price for tx data
     let tokens = 0
@@ -310,7 +605,9 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     console.time(balanceNonceLabel)
   }
 
-  // Check from account's balance and nonce
+  // ===========================
+  // VALIDATION: Sender Account
+  // ===========================
   let fromAccount = await state.getAccount(caller)
   if (fromAccount === undefined) {
     fromAccount = new Account()
@@ -319,6 +616,7 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   if (vm.DEBUG) {
     debug(`Sender's pre-tx balance is ${balance}`)
   }
+
   // EIP-3607: Reject transactions from senders with deployed code
   if (!equalsBytes(fromAccount.codeHash, KECCAK256_NULL)) {
     const isActive7702 = vm.common.isActivatedEIP(7702)
@@ -348,8 +646,17 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     if (opts.skipBalance === true && fromAccount.balance < upFrontCost) {
       if (tx.supports(Capability.EIP1559FeeMarket) === false) {
         // if skipBalance and not EIP1559 transaction, ensure caller balance is enough to run transaction
+        const originalBalance = fromAccount.balance
         fromAccount.balance = upFrontCost
-        await vm.evm.journal.putAccount(caller, fromAccount)
+        await vm.tvm.journal.putAccount(caller, fromAccount)
+        if (vm.common.isActivatedEIP(7928)) {
+          vm.tvm.blockLevelAccessList!.addBalanceChange(
+            caller.toString(),
+            fromAccount.balance,
+            vm.tvm.blockLevelAccessList!.blockAccessIndex,
+            originalBalance,
+          )
+        }
       }
     } else {
       const msg = _errorMsg(
@@ -400,8 +707,17 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   if (fromAccount.balance < maxCost) {
     if (opts.skipBalance === true && fromAccount.balance < maxCost) {
       // if skipBalance, ensure caller balance is enough to run transaction
+      const originalBalance = fromAccount.balance
       fromAccount.balance = maxCost
-      await vm.evm.journal.putAccount(caller, fromAccount)
+      await vm.tvm.journal.putAccount(caller, fromAccount)
+      if (vm.common.isActivatedEIP(7928)) {
+        vm.tvm.blockLevelAccessList!.addBalanceChange(
+          caller.toString(),
+          fromAccount.balance,
+          vm.tvm.blockLevelAccessList!.blockAccessIndex,
+          originalBalance,
+        )
+      }
     } else {
       const msg = _errorMsg(
         `sender doesn't have enough funds to send tx. The max cost is: ${maxCost} and the sender's account (${caller}) only has: ${balance}`,
@@ -410,6 +726,52 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
         tx,
       )
       throw EthereumJSErrorWithoutCode(msg)
+    }
+  }
+
+  if (!opts.skipBalance) {
+    const { to, value, tokenId, tokenValue } = tx
+    if (value > BIGINT_0) {
+      if (to?.equals(caller)) {
+        throw EthereumJSErrorWithoutCode('Cannot transfer TRX to yourself.')
+      }
+    }
+
+    if (tokenValue > BIGINT_0) {
+      if (to?.equals(caller)) {
+        throw EthereumJSErrorWithoutCode('Cannot transfer asset to yourself.')
+      }
+    }
+
+    if (tokenId !== BIGINT_0 && tokenId <= MIN_TOKEN_ID) {
+      throw EthereumJSErrorWithoutCode(`tokenId must be > ${MIN_TOKEN_ID}`)
+    }
+
+    if (tokenId === BIGINT_0 && tokenValue > BIGINT_0) {
+      throw EthereumJSErrorWithoutCode(
+        `invalid arguments with tokenValue = ${tokenValue.toString()}, tokenId = ${tokenId.toString()}`,
+      )
+    }
+
+    if (tokenId !== BIGINT_0 && tokenValue > BIGINT_0) {
+      const tokenExists = await state.tokenIdExists(Number(tokenId))
+      if (!tokenExists) {
+        throw EthereumJSErrorWithoutCode('No asset !')
+      }
+
+      if (fromAccount.asset && Object.keys(fromAccount.asset).length !== 0) {
+        if (fromAccount.asset[Number(tokenId)] === undefined) {
+          throw EthereumJSErrorWithoutCode('assetBalance must greater than 0.')
+        }
+        if (fromAccount.asset[Number(tokenId)] === BIGINT_0) {
+          throw EthereumJSErrorWithoutCode('assetBalance must greater than 0.')
+        }
+        if (fromAccount.asset[Number(tokenId)] < tokenValue) {
+          throw EthereumJSErrorWithoutCode('assetBalance is not sufficient.')
+        }
+      } else {
+        throw EthereumJSErrorWithoutCode('Owner no asset!')
+      }
     }
   }
 
@@ -425,9 +787,11 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     }
   }
 
+  // ===========================
+  // CALCULATION: Gas Price
+  // ===========================
   let gasPrice: bigint
   let inclusionFeePerGas: bigint
-  // EIP-1559 tx
   if (tx.supports(Capability.EIP1559FeeMarket)) {
     // TODO make txs use the new getEffectivePriorityFee
     const baseFee = block?.header.baseFeePerGas ?? DEFAULT_HEADER.baseFeePerGas!
@@ -449,103 +813,32 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     blobVersionedHashes = tx.blobVersionedHashes
   }
 
-  // Update from account's balance
+  // ===========================
+  // STATE UPDATE: Deduct Costs
+  // ===========================
   const txCost = tx.gasLimit * gasPrice
   const blobGasCost = totalblobGas * blobGasPrice
+  const senderOriginalBalance = fromAccount.balance
   fromAccount.balance -= txCost
   fromAccount.balance -= blobGasCost
   if (opts.skipBalance === true && fromAccount.balance < BIGINT_0) {
     fromAccount.balance = BIGINT_0
   }
-  await vm.evm.journal.putAccount(caller, fromAccount)
+  await vm.tvm.journal.putAccount(caller, fromAccount)
 
+  if (vm.common.isActivatedEIP(7928)) {
+    vm.tvm.blockLevelAccessList!.addBalanceChange(
+      caller.toString(),
+      fromAccount.balance,
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
+      senderOriginalBalance,
+    )
+  }
+
+  // Process EIP-7702 authorization list (if applicable)
   let gasRefund = BIGINT_0
-
   if (tx.supports(Capability.EIP7702EOACode)) {
-    // Add contract code for authority tuples provided by EIP 7702 tx
-    const authorizationList = (tx as EIP7702CompatibleTx).authorizationList
-    for (let i = 0; i < authorizationList.length; i++) {
-      // Authority tuple validation
-      const data = authorizationList[i]
-      const chainId = data[0]
-      const chainIdBN = bytesToBigInt(chainId)
-      if (chainIdBN !== BIGINT_0 && chainIdBN !== vm.common.chainId()) {
-        // Chain id does not match, continue
-        continue
-      }
-      // Address to take code from
-      const address = data[1]
-      const nonce = data[2]
-      if (bytesToBigInt(nonce) >= MAX_UINT64) {
-        // authority nonce >= 2^64 - 1. Bumping this nonce by one will not make this fit in an uint64.
-        // EIPs PR: https://github.com/ethereum/EIPs/pull/8938
-        continue
-      }
-      const s = data[5]
-      if (bytesToBigInt(s) > SECP256K1_ORDER_DIV_2) {
-        // Malleability protection to avoid "flipping" a valid signature to get
-        // another valid signature (which yields the same account on `ecrecover`)
-        // This is invalid, so skip this auth tuple
-        continue
-      }
-      const yParity = bytesToBigInt(data[3])
-
-      if (yParity > BIGINT_1) {
-        continue
-      }
-
-      // Address to set code to
-      let authority
-      try {
-        authority = eoaCode7702RecoverAuthority(data)
-      } catch {
-        // Invalid signature, continue
-        continue
-      }
-      const accountMaybeUndefined = await vm.stateManager.getAccount(authority)
-      const accountExists = accountMaybeUndefined !== undefined
-      const account = accountMaybeUndefined ?? new Account()
-
-      // Add authority address to warm addresses
-      vm.evm.journal.addAlwaysWarmAddress(authority.toString())
-      if (account.isContract()) {
-        const code = await vm.stateManager.getCode(authority)
-        if (!equalsBytes(code.slice(0, 3), DELEGATION_7702_FLAG)) {
-          // Account is a "normal" contract
-          continue
-        }
-      }
-
-      // Nonce check
-      if (caller.toString() === authority.toString()) {
-        if (account.nonce + BIGINT_1 !== bytesToBigInt(nonce)) {
-          // Edge case: caller is the authority, so is self-signing the delegation
-          // In this case, we "virtually" bump the account nonce by one
-          // We CANNOT put this updated nonce into the account trie, because then
-          // the EVM will bump the nonce once again, thus resulting in a wrong nonce
-          continue
-        }
-      } else if (account.nonce !== bytesToBigInt(nonce)) {
-        continue
-      }
-
-      if (accountExists) {
-        const refund = tx.common.param('perEmptyAccountCost') - tx.common.param('perAuthBaseGas')
-        gasRefund += refund
-      }
-
-      account.nonce++
-      await vm.evm.journal.putAccount(authority, account)
-
-      if (equalsBytes(address, new Uint8Array(20))) {
-        // Special case (see EIP PR: https://github.com/ethereum/EIPs/pull/8929)
-        // If delegated to the zero address, clear the delegation of authority
-        await vm.stateManager.putCode(authority, new Uint8Array())
-      } else {
-        const addressCode = concatBytes(DELEGATION_7702_FLAG, address)
-        await vm.stateManager.putCode(authority, addressCode)
-      }
-    }
+    gasRefund = await processAuthorizationList(vm, tx as EIP7702CompatibleTx, caller, gasRefund)
   }
 
   if (vm.DEBUG) {
@@ -558,10 +851,10 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     executionTimerPrecise = performance.now()
   }
 
-  /*
-   * Execute message
-   */
-  const { value, data, to } = tx
+  // ===========================
+  // EXECUTION: Run TVM Call
+  // ===========================
+  const { value, tokenId, tokenValue, data, to } = tx
 
   if (vm.DEBUG) {
     debug(
@@ -573,13 +866,15 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     )
   }
 
-  const results = (await vm.evm.runCall({
+  const results = (await vm.tvm.runCall({
     block,
     gasPrice,
     caller,
     gasLimit,
     to,
     value,
+    tokenId,
+    tokenValue,
     data,
     blobVersionedHashes,
     accessWitness: txAccesses,
@@ -612,17 +907,12 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     )
   }
 
-  /*
-   * Parse results
-   */
-  // Generate the bloom for the tx
-  results.bloom = txLogsBloom(results.execResult.logs, vm.common)
-  if (vm.DEBUG) {
-    debug(`Generated tx bloom with logs=${results.execResult.logs?.length}`)
-  }
-
-  // Calculate the total gas used
-  results.totalGasSpent = results.execResult.executionGasUsed + intrinsicGas
+  // ===========================
+  // RESULTS: Gas and Balances
+  // ===========================
+  // Calculate tx gas used before refund processing
+  const totalGasSpentBeforeRefund = results.execResult.executionGasUsed + intrinsicGas
+  results.totalGasSpent = totalGasSpentBeforeRefund
   if (vm.DEBUG) {
     debugGas(`tx add baseFee ${intrinsicGas} to totalGasSpent (-> ${results.totalGasSpent})`)
   }
@@ -661,6 +951,12 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     }
   }
 
+  // EIP-7778: block-level gas accounting does not subtract tx refunds.
+  // For pre-7778 forks this equals the amount paid by the sender.
+  results.blockGasSpent = vm.common.isActivatedEIP(7778)
+    ? bigIntMax(totalGasSpentBeforeRefund, floorCost)
+    : results.totalGasSpent
+
   results.amountSpent = results.totalGasSpent * gasPrice
 
   // Update sender's balance
@@ -670,8 +966,32 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   }
   const actualTxCost = results.totalGasSpent * gasPrice
   const txCostDiff = txCost - actualTxCost
+  const originalBalance = fromAccount.balance
   fromAccount.balance += txCostDiff
-  await vm.evm.journal.putAccount(caller, fromAccount)
+
+  if (vm.common.isActivatedEIP(7928)) {
+    vm.tvm.blockLevelAccessList!.addBalanceChange(
+      caller.toString(),
+      fromAccount.balance,
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
+      originalBalance,
+    )
+    vm.tvm.blockLevelAccessList!.addNonceChange(
+      caller.toString(),
+      fromAccount.nonce,
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
+    )
+  }
+
+  await vm.tvm.journal.putAccount(caller, fromAccount)
+  // EIP-7928: Track sender balance change for gas refund in Block Access List
+  if (vm.common.isActivatedEIP(7928) && txCostDiff > BIGINT_0) {
+    vm.tvm.blockLevelAccessList!.addBalanceChange(
+      caller.toString(),
+      fromAccount.balance,
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
+    )
+  }
   if (vm.DEBUG) {
     debug(
       `Refunded txCostDiff (${txCostDiff}) to fromAccount (caller) balance (-> ${fromAccount.balance})`,
@@ -679,30 +999,7 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   }
 
   // Update miner's balance
-  let miner
-  if (vm.common.consensusType() === ConsensusType.ProofOfAuthority) {
-    miner = cliqueSigner(block?.header ?? DEFAULT_HEADER)
-  } else {
-    miner = block?.header.coinbase ?? DEFAULT_HEADER.coinbase
-  }
-
-  let minerAccount = await state.getAccount(miner)
-  if (minerAccount === undefined) {
-    minerAccount = new Account()
-  }
-  // add the amount spent on gas to the miner's account
-  results.minerValue = vm.common.isActivatedEIP(1559)
-    ? results.totalGasSpent * inclusionFeePerGas!
-    : results.amountSpent
-  minerAccount.balance += results.minerValue
-
-  // Put the miner account into the state. If the balance of the miner account remains zero, note that
-  // the state.putAccount function puts vm into the "touched" accounts. This will thus be removed when
-  // we clean the touched accounts below in case we are in a fork >= SpuriousDragon
-  await vm.evm.journal.putAccount(miner, minerAccount)
-  if (vm.DEBUG) {
-    debug(`tx update miner account (${miner}) balance (-> ${minerAccount.balance})`)
-  }
+  await updateMinerBalance(vm, state, block, results, inclusionFeePerGas!)
 
   if (enableProfiler) {
     // eslint-disable-next-line no-console
@@ -711,23 +1008,15 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     console.time(accountsCleanUpLabel)
   }
 
-  /*
-   * Cleanup accounts
-   */
-  if (results.execResult.selfdestruct !== undefined) {
-    for (const addressToSelfdestructHex of results.execResult.selfdestruct) {
-      const address = new Address(hexToBytes(addressToSelfdestructHex))
-      if (vm.common.isActivatedEIP(6780)) {
-        // skip cleanup of addresses not in createdAddresses
-        if (!results.execResult.createdAddresses!.has(address.toString())) {
-          continue
-        }
-      }
-      await vm.evm.journal.deleteAccount(address)
-      if (vm.DEBUG) {
-        debug(`tx selfdestruct on address=${address}`)
-      }
-    }
+  // ===========================
+  // CLEANUP: Accounts and State
+  // ===========================
+  await processSelfdestructs(vm, results)
+
+  // Generate the bloom after selfdestruct finalization logs have been appended.
+  results.bloom = txLogsBloom(results.execResult.logs, vm.common)
+  if (vm.DEBUG) {
+    debug(`Generated tx bloom with logs=${results.execResult.logs?.length}`)
   }
 
   if (enableProfiler) {
@@ -737,21 +1026,9 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     console.time(accessListLabel)
   }
 
+  // Build access list result if requested
   if (opts.reportAccessList === true && vm.common.isActivatedEIP(2930)) {
-    // Convert the Map to the desired type
-    const accessList: AccessList = []
-    for (const [address, set] of vm.evm.journal.accessList!) {
-      const item: AccessListItem = {
-        address: `0x${address}`,
-        storageKeys: [],
-      }
-      for (const slot of set) {
-        item.storageKeys.push(`0x${slot}`)
-      }
-      accessList.push(item)
-    }
-
-    results.accessList = accessList
+    results.accessList = buildAccessListResult(vm)
   }
 
   if (enableProfiler) {
@@ -761,11 +1038,13 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     console.time(journalCacheCleanUpLabel)
   }
 
-  if (opts.reportPreimages === true && vm.evm.journal.preimages !== undefined) {
-    results.preimages = vm.evm.journal.preimages
+  // Collect preimages if requested
+  if (opts.reportPreimages === true && vm.tvm.journal.preimages !== undefined) {
+    results.preimages = vm.tvm.journal.preimages
   }
 
-  await vm.evm.journal.cleanup()
+  // Clear journal and caches
+  await vm.tvm.journal.cleanup()
   state.originalStorageCache.clear()
 
   if (enableProfiler) {
@@ -775,7 +1054,9 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     console.time(receiptsLabel)
   }
 
-  // Generate the tx receipt
+  // ===========================
+  // FINALIZE: Receipt and Events
+  // ===========================
   const gasUsed = opts.blockGasUsed ?? block?.header.gasUsed ?? DEFAULT_HEADER.gasUsed
   const cumulativeGasUsed = gasUsed + results.totalGasSpent
   results.receipt = await generateTxReceipt(
@@ -792,13 +1073,13 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     console.timeEnd(receiptsLabel)
   }
 
-  /**
-   * The `afterTx` event
-   *
-   * @event Event: afterTx
-   * @type {Object}
-   * @property {Object} result result of the transaction
-   */
+  // EIP-7928: Clean up net-zero balance changes
+  // Per spec, if an account's balance changed during tx but final == pre-tx, don't record
+  if (vm.common.isActivatedEIP(7928)) {
+    vm.tvm.blockLevelAccessList!.cleanupNetZeroBalanceChanges()
+  }
+
+  /** The `afterTx` event - emits transaction results */
   const event: AfterTxEvent = { transaction: tx, ...results }
   await vm._emit('afterTx', event)
   if (vm.DEBUG) {

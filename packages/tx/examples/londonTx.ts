@@ -1,7 +1,7 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import type { FeeMarketEIP1559TxData } from '@ethereumjs/tx'
-import { createFeeMarket1559Tx } from '@ethereumjs/tx'
-import { bytesToHex } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import type { FeeMarketEIP1559TxData } from '@tvmjs/tx'
+import { createFeeMarket1559Tx } from '@tvmjs/tx'
+import { bytesToHex } from '@tvmjs/util'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
 

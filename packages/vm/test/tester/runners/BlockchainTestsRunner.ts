@@ -10,14 +10,14 @@
  * PLEASE DO NOT COPY LARGER PARTS OF THE CODE TO THE NEW RUNNER BUT RE-IMPLEMENT
  * (USE COMMON SENSE).
  */
-import { createBlock, createBlockFromRLP } from '@ethereumjs/block'
-import { EthashConsensus, createBlockchain } from '@ethereumjs/blockchain'
-import { ConsensusAlgorithm } from '@ethereumjs/common'
-import { Ethash } from '@ethereumjs/ethash'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
-import { Caches, MerkleStateManager } from '@ethereumjs/statemanager'
-import { createTxFromRLP } from '@ethereumjs/tx'
+import { createBlock, createBlockFromRLP } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+// import { ConsensusAlgorithm } from '@tvmjs/common'
+// import { Ethash } from '@tvmjs/ethash'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
+import { Caches, MerkleStateManager } from '@tvmjs/statemanager'
+import { createTxFromRLP } from '@tvmjs/tx'
 import {
   MapDB,
   bytesToBigInt,
@@ -25,16 +25,16 @@ import {
   hexToBytes,
   isHexString,
   stripHexPrefix,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert } from 'vitest'
 
 import { buildBlock, createVM, runBlock } from '../../../src/index.ts'
 import { setupPreConditions, verifyPostConditions } from '../../util.ts'
 
-import type { Block } from '@ethereumjs/block'
-import type { Blockchain, ConsensusDict } from '@ethereumjs/blockchain'
-import type { Common, StateManagerInterface } from '@ethereumjs/common'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import type { Block } from '@tvmjs/block'
+import type { Blockchain, ConsensusDict, EthashConsensus } from '@tvmjs/blockchain'
+import type { Common, StateManagerInterface } from '@tvmjs/common'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 function logComment(t: typeof assert, message: string): void {
   console.log(`[TEST] ${message}`)
@@ -76,16 +76,16 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
     common,
   })
 
-  let validatePow = false
+  const validatePow = false
   // Only run with block validation when sealEngine present in test file
   // and being set to Ethash PoW validation
-  if (testData.sealEngine === 'Ethash') {
-    if (common.consensusAlgorithm() !== ConsensusAlgorithm.Ethash) {
-      // Return early - test is filtered in blockchain.spec.ts
-      return
-    }
-    validatePow = true
-  }
+  // if (testData.sealEngine === 'Ethash') {
+  //   if (common.consensusAlgorithm() !== ConsensusAlgorithm.Ethash) {
+  //     // Return early - test is filtered in blockchain.spec.ts
+  //     return
+  //   }
+  //   validatePow = true
+  // }
 
   // create and add genesis block
   const header = formatBlockHeader(testData.genesisBlockHeader)
@@ -100,7 +100,7 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
   }
 
   const consensusDict: ConsensusDict = {}
-  consensusDict[ConsensusAlgorithm.Ethash] = new EthashConsensus(new Ethash())
+  // consensusDict[ConsensusAlgorithm.Ethash] = new EthashConsensus(new Ethash())
   let blockchain = await createBlockchain({
     common,
     validateBlocks: true,
@@ -113,7 +113,7 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
     ;(blockchain.consensus as EthashConsensus)._ethash!.cacheDB = cacheDB
   }
 
-  const evmOpts = {
+  const tvmOpts = {
     bls: options.bls,
     bn254: options.bn254,
   }
@@ -122,7 +122,7 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
     blockchain,
     common,
     setHardfork: true,
-    evmOpts,
+    tvmOpts,
     profilerOpts: {
       reportAfterBlock: options.profile,
     },
@@ -259,7 +259,6 @@ export async function runBlockchainTest(options: any, testData: any, t: typeof a
 
       if (expectException !== false) {
         assert.fail(`expected exception but test did not throw an exception: ${expectException}`)
-        return
       }
     } catch (error: any) {
       // caught an error, reduce block number

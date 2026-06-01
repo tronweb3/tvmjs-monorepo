@@ -1,4 +1,4 @@
-import { MapDB } from '@ethereumjs/util'
+import { MapDB } from '@tvmjs/util'
 import { LevelDB } from './engines/level'
 import { createSuite } from './suite'
 

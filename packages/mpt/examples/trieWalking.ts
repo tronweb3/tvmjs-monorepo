@@ -1,5 +1,5 @@
-import { createMPT } from '@ethereumjs/mpt'
-import { utf8ToBytes } from '@ethereumjs/util'
+import { createMPT } from '@tvmjs/mpt'
+import { utf8ToBytes } from '@tvmjs/util'
 
 async function main() {
   const trie = await createMPT()

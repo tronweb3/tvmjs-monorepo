@@ -1,12 +1,12 @@
 import { readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { createBlock } from '@ethereumjs/block'
-import { EVMMockBlockchain, NobleBLS } from '@ethereumjs/evm'
-import { RLP } from '@ethereumjs/rlp'
-import { createTx } from '@ethereumjs/tx'
-import { bigIntToHex, bytesToHex, hexToBytes, toBytes } from '@ethereumjs/util'
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { createBlock } from '@tvmjs/block'
+import { RLP } from '@tvmjs/rlp'
+import { NobleBLS, TVMMockBlockchain } from '@tvmjs/tvm'
+import { createTx } from '@tvmjs/tx'
+import { bigIntToHex, bytesToHex, hexToBytes, toBytes } from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
 import { buildBlock, createVM } from '../../src/index.ts'
@@ -17,11 +17,11 @@ import { makeBlockFromEnv, makeParentBlockHeader, setupPreConditions } from '../
 import { normalizeNumbers, stepTraceJSON, summaryTraceJSON } from './helpers.ts'
 import { StateTracker } from './stateTracker.ts'
 
-import type { Block } from '@ethereumjs/block'
-import type { Common } from '@ethereumjs/common'
-import type { Log } from '@ethereumjs/evm'
-import type { TypedTxData } from '@ethereumjs/tx'
-import type { CLRequest, CLRequestType, PrefixedHexString } from '@ethereumjs/util'
+import type { Block } from '@tvmjs/block'
+import type { Common } from '@tvmjs/common'
+import type { Log } from '@tvmjs/tvm'
+import type { TypedTxData } from '@tvmjs/tx'
+import type { CLRequest, CLRequestType, PrefixedHexString } from '@tvmjs/util'
 import type { PostByzantiumTxReceipt } from '../../dist/esm/types.ts'
 import type { BlockBuilder, VM } from '../../src/index.ts'
 import type { AfterTxEvent } from '../../src/types.ts'
@@ -36,7 +36,7 @@ const kzg = new microEthKZG(trustedSetup)
  * @returns
  */
 function getBlockchain(inputEnv: T8NEnv) {
-  const blockchain = new EVMMockBlockchain()
+  const blockchain = new TVMMockBlockchain()
 
   blockchain.getBlock = async function (number?: number) {
     for (const key in inputEnv.blockHashes) {
@@ -174,7 +174,7 @@ export class TransitionTool {
       this.vm.events.on('beforeTx', () => {
         trace = []
       })
-      this.vm.evm.events?.on('step', (e) => {
+      this.vm.tvm.events?.on('step', (e) => {
         const opTrace = stepTraceJSON(e)
         trace.push(JSON.stringify(opTrace))
       })
@@ -207,8 +207,8 @@ export class TransitionTool {
       // Reward miner
 
       if (args.state.reward !== BigInt(-1)) {
-        await rewardAccount(this.vm.evm, block.header.coinbase, args.state.reward, this.vm.common)
-        await this.vm.evm.journal.cleanup()
+        await rewardAccount(this.vm.tvm, block.header.coinbase, args.state.reward, this.vm.common)
+        await this.vm.tvm.journal.cleanup()
       }
 
       const result = await builder.build()
@@ -244,8 +244,8 @@ export class TransitionTool {
     // Reward miner
 
     if (args.state.reward !== BigInt(-1)) {
-      await rewardAccount(this.vm.evm, block.header.coinbase, args.state.reward, this.vm.common)
-      await this.vm.evm.journal.cleanup()
+      await rewardAccount(this.vm.tvm, block.header.coinbase, args.state.reward, this.vm.common)
+      await this.vm.tvm.journal.cleanup()
     }
 
     const result = await builder.build()
@@ -261,10 +261,10 @@ export class TransitionTool {
     const blockchain = getBlockchain(this.inputEnv)
 
     // Setup BLS
-    const evmOpts = {
+    const tvmOpts = {
       bls: new NobleBLS(),
     }
-    this.vm = await createVM({ common: this.common, blockchain, evmOpts })
+    this.vm = await createVM({ common: this.common, blockchain, tvmOpts })
     await setupPreConditions(this.vm.stateManager, { pre: this.alloc })
 
     this.stateTracker = new StateTracker(this.vm, this.alloc)
@@ -279,7 +279,7 @@ export class TransitionTool {
         // eslint-disable-next-line no-console
         console.log('Done processing transaction (system operations might follow next)')
       })
-      this.vm.evm.events?.on('step', (e) => {
+      this.vm.tvm.events?.on('step', (e) => {
         // eslint-disable-next-line no-console
         console.log({
           gasLeft: e.gasLeft.toString(),

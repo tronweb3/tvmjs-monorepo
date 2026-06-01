@@ -1,8 +1,8 @@
 // Utility helpers to convert authorization lists from the byte format and JSON format and vice versa
 
-import { EthereumJSErrorWithoutCode, RLP } from '@ethereumjs/rlp'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { EthereumJSErrorWithoutCode, RLP } from '@tvmjs/rlp'
 import { publicToAddress } from './account.ts'
 import { Address } from './address.ts'
 import {

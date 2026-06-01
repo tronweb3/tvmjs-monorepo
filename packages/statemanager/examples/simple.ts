@@ -1,4 +1,4 @@
-import { Account, createAddressFromPrivateKey, randomBytes } from '@ethereumjs/util'
+import { Account, createAddressFromPrivateKey, randomBytes } from '@tvmjs/util'
 
 import { SimpleStateManager } from '../src/index.ts'
 

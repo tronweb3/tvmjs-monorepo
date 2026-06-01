@@ -1,13 +1,13 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { FeeMarket1559Tx } from '@ethereumjs/tx'
-import { Address, Units, hexToBytes, privateToAddress } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { FeeMarket1559Tx } from '@tvmjs/tx'
+import { Address, Units, hexToBytes, privateToAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
-import type { TypedTransaction } from '@ethereumjs/tx'
+import type { InterpreterStep } from '@tvmjs/tvm'
+import type { TypedTransaction } from '@tvmjs/tx'
 
 const common = new Common({
   eips: [1559, 2718, 2930, 3198],
@@ -83,7 +83,7 @@ describe('EIP3198 tests', () => {
         stack = iStep.stack
       }
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     const results = await runTx(vm, {
       tx: block.transactions[0],
@@ -93,6 +93,6 @@ describe('EIP3198 tests', () => {
     const gasUsed = results.totalGasSpent - txBaseFee
     assert.strictEqual(gasUsed, BigInt(2), 'gas used correct')
     assert.strictEqual(stack[0], fee, 'right item pushed on stack')
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
   })
 })

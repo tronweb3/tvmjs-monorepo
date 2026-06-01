@@ -1,8 +1,8 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
-import { Address, hexToBytes } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
+import { Address, hexToBytes } from '@tvmjs/util'
 
-import type { WithdrawalData } from '@ethereumjs/util'
+import type { WithdrawalData } from '@tvmjs/util'
 
 const common = new Common({ chain: Mainnet })
 

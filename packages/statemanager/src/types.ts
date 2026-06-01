@@ -1,8 +1,8 @@
-import { type PrefixedHexString } from '@ethereumjs/util'
+import { type PrefixedHexString } from '@tvmjs/util'
 
-import type { BinaryTree } from '@ethereumjs/binarytree'
-import type { Common } from '@ethereumjs/common'
-import type { MerklePatriciaTrie } from '@ethereumjs/mpt'
+import type { BinaryTree } from '@tvmjs/binarytree'
+import type { Common } from '@tvmjs/common'
+import type { MerklePatriciaTrie } from '@tvmjs/mpt'
 import type { Caches } from './index.ts'
 /**
  * Basic state manager options (not to be used directly)

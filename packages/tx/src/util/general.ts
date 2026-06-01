@@ -1,4 +1,4 @@
-import { TypeOutput, setLengthLeft, toBytes, toType } from '@ethereumjs/util'
+import { TypeOutput, setLengthLeft, toBytes, toType } from '@tvmjs/util'
 
 import type { TypedTxData } from '../types.ts'
 

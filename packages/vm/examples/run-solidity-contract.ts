@@ -1,19 +1,19 @@
 import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@ethereumjs/util'
-import { createVM, runTx } from '@ethereumjs/vm'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import { bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
+import { createVM, runTx } from '@tvmjs/vm'
 import solc from 'solc'
 import { decodeAbiParameters, encodeAbiParameters, encodeFunctionData } from 'viem'
 
 import { getAccountNonce, insertAccount } from './helpers/account-utils.ts'
 import { buildTransaction } from './helpers/tx-builder.ts'
 
-import type { Address, PrefixedHexString } from '@ethereumjs/util'
-import type { VM } from '@ethereumjs/vm'
+import type { Address, PrefixedHexString } from '@tvmjs/util'
+import type { VM } from '@tvmjs/vm'
 
 const INITIAL_GREETING = 'Hello, World!'
 const SECOND_GREETING = 'Hola, Mundo!' // cspell:disable-line
@@ -47,10 +47,10 @@ function getSolcInput() {
         enabled: true,
         runs: 200,
       },
-      evmVersion: 'petersburg',
+      tvmVersion: 'petersburg',
       outputSelection: {
         '*': {
-          '*': ['abi', 'evm.bytecode'],
+          '*': ['abi', 'tvm.bytecode'],
         },
       },
     },
@@ -88,7 +88,7 @@ function compileContracts() {
 }
 
 function getGreeterDeploymentBytecode(solcOutput: any): any {
-  return solcOutput.contracts['helpers/Greeter.sol'].Greeter.evm.bytecode.object
+  return solcOutput.contracts['helpers/Greeter.sol'].Greeter.tvm.bytecode.object
 }
 
 async function deployContract(
@@ -167,7 +167,7 @@ async function getGreeting(vm: VM, contractAddress: Address, caller: Address) {
     functionName: 'greet',
   })
 
-  const greetResult = await vm.evm.runCall({
+  const greetResult = await vm.tvm.runCall({
     to: contractAddress,
     caller,
     origin: caller, // The tx.origin is also the caller here

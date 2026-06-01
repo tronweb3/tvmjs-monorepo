@@ -1,10 +1,10 @@
 import { readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { Block, BlockHeader, createBlockFromBlockData } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { RLP } from '@ethereumjs/rlp'
-import { createLegacyTxFromBytesArray, createTxFromSerializedData } from '@ethereumjs/tx'
-import { Account, bytesToHex, unprefixedHexToBytes } from '@ethereumjs/util'
+import { Block, BlockHeader, createBlockFromBlockData } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { RLP } from '@tvmjs/rlp'
+import { createLegacyTxFromBytesArray, createTxFromSerializedData } from '@tvmjs/tx'
+import { Account, bytesToHex, unprefixedHexToBytes } from '@tvmjs/util'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 
 import { BlockBuilder } from '../../dist/cjs/buildBlock.js'
@@ -12,8 +12,8 @@ import { VM } from '../../dist/cjs/index.js'
 import { getCommon } from '../tester/config.ts'
 import { makeBlockFromEnv, setupPreConditions } from '../util.ts'
 
-import type { TypedTransaction } from '@ethereumjs/tx'
-import type { NestedUint8Array } from '@ethereumjs/util'
+import type { TypedTransaction } from '@tvmjs/tx'
+import type { NestedUint8Array } from '@tvmjs/util'
 import type { PostByzantiumTxReceipt } from '../../dist/cjs'
 
 const yargs = require('yargs/yargs')
@@ -126,7 +126,7 @@ async function runTransition(argsIn: any) {
   const logsBloom = builder.logsBloom()
   const logsHash = keccak256(logsBloom)
 
-  await vm.evm.journal.cleanup()
+  await vm.tvm.journal.cleanup()
 
   const output = {
     stateRoot: bytesToHex(await vm.stateManager.getStateRoot()),

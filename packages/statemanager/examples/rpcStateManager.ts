@@ -1,5 +1,5 @@
-import { RPCStateManager } from '@ethereumjs/statemanager'
-import { createAddressFromString } from '@ethereumjs/util'
+import { RPCStateManager } from '@tvmjs/statemanager'
+import { createAddressFromString } from '@tvmjs/util'
 
 const main = async () => {
   try {

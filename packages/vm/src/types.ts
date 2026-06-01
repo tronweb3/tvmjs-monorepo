@@ -1,20 +1,15 @@
-import type { Block, BlockOptions, HeaderData } from '@ethereumjs/block'
-import type { Common, ParamsDict, StateManagerInterface } from '@ethereumjs/common'
-import type {
-  EVMInterface,
-  EVMMockBlockchainInterface,
-  EVMOpts,
-  EVMResult,
-  Log,
-} from '@ethereumjs/evm'
-import type { AccessList, TypedTransaction } from '@ethereumjs/tx'
+import type { Block, BlockOptions, HeaderData } from '@tvmjs/block'
+import type { Common, ParamsDict, StateManagerInterface } from '@tvmjs/common'
+import type { Log, TVMInterface, TVMMockBlockchainInterface, TVMOpts, TVMResult } from '@tvmjs/tvm'
+import type { AccessList, TypedTransaction } from '@tvmjs/tx'
 import type {
   BigIntLike,
+  BlockLevelAccessList,
   CLRequest,
   CLRequestType,
   PrefixedHexString,
   WithdrawalData,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import type { Bloom } from './bloom/index.ts'
 export type TxReceipt = PreByzantiumTxReceipt | PostByzantiumTxReceipt | EIP4844BlobTxReceipt
 
@@ -75,7 +70,7 @@ export interface EIP4844BlobTxReceipt extends PostByzantiumTxReceipt {
   blobGasPrice: bigint
 }
 
-export type EVMProfilerOpts = {
+export type TVMProfilerOpts = {
   enabled: boolean
   // extra options here (such as use X hardfork for gas)
 }
@@ -88,7 +83,7 @@ export type VMEvent = {
 }
 
 export type VMProfilerOpts = {
-  //evmProfilerOpts: EVMProfilerOpts
+  //tvmProfilerOpts: TVMProfilerOpts
   reportAfterTx?: boolean
   reportAfterBlock?: boolean
 }
@@ -107,7 +102,7 @@ export interface VMOpts {
    * - `hardfork`: `mainnet` hardforks up to the `Paris` hardfork
    * - `eips`: `2537` (usage e.g. `eips: [ 2537, ]`)
    *
-   * Note: check the associated `@ethereumjs/evm` instance options
+   * Note: check the associated `@tvmjs/tvm` instance options
    * documentation for supported EIPs.
    *
    * ### Default Setup
@@ -126,7 +121,7 @@ export interface VMOpts {
   /**
    * A {@link Blockchain} object for storing/retrieving blocks
    */
-  blockchain?: EVMMockBlockchainInterface
+  blockchain?: TVMMockBlockchainInterface
   /**
    * If true, create entries in the state tree for the precompiled contracts, saving some gas the
    * first time each of them is called.
@@ -154,7 +149,7 @@ export interface VMOpts {
   setHardfork?: boolean | BigIntLike
   /**
    * VM parameters sorted by EIP can be found in the exported `paramsVM` dictionary,
-   * which is internally passed to the associated `@ethereumjs/common` instance which
+   * which is internally passed to the associated `@tvmjs/common` instance which
    * manages parameter selection based on the hardfork and EIP settings.
    *
    * This option allows providing a custom set of parameters. Note that parameters
@@ -171,17 +166,17 @@ export interface VMOpts {
   params?: ParamsDict
 
   /**
-   * Use a custom EVM to run Messages on. If this is not present, use the default EVM.
+   * Use a custom TVM to run Messages on. If this is not present, use the default TVM.
    */
-  evm?: EVMInterface
+  tvm?: TVMInterface
 
   /**
-   * Often there is no need to provide a full custom EVM but only a few options need to be
-   * adopted. This option allows to provide a custom set of EVM options to be passed.
+   * Often there is no need to provide a full custom TVM but only a few options need to be
+   * adopted. This option allows to provide a custom set of TVM options to be passed.
    *
-   * Note: This option will throw if used in conjunction with a full custom EVM passed.
+   * Note: This option will throw if used in conjunction with a full custom TVM passed.
    */
-  evmOpts?: EVMOpts
+  tvmOpts?: TVMOpts
 
   profilerOpts?: VMProfilerOpts
 }
@@ -251,7 +246,7 @@ export interface SealBlockOpts {
  */
 export interface RunBlockOpts {
   /**
-   * The @ethereumjs/block to process
+   * The @tvmjs/block to process
    */
   block: Block
   /**
@@ -373,6 +368,11 @@ export interface RunBlockResult extends Omit<ApplyBlockResult, 'bloom'> {
    * Any CL requests that were processed in the course of this block
    */
   requests?: CLRequest<CLRequestType>[]
+  /**
+   * The block level access list created during execution
+   * (if EIP-7928 is active)
+   */
+  blockLevelAccessList?: BlockLevelAccessList
 }
 
 export interface AfterBlockEvent extends RunBlockResult {
@@ -385,12 +385,12 @@ export interface AfterBlockEvent extends RunBlockResult {
  */
 export interface RunTxOpts {
   /**
-   * The `@ethereumjs/block` the `tx` belongs to.
+   * The `@tvmjs/block` the `tx` belongs to.
    * If omitted, a default blank block will be used.
    */
   block?: Block
   /**
-   * An `@ethereumjs/tx` to run
+   * An `@tvmjs/tx` to run
    */
   tx: TypedTransaction
   /**
@@ -442,7 +442,7 @@ export interface RunTxOpts {
 /**
  * Execution result of a transaction
  */
-export interface RunTxResult extends EVMResult {
+export interface RunTxResult extends TVMResult {
   /**
    * Bloom filter resulted from transaction
    */
@@ -464,6 +464,12 @@ export interface RunTxResult extends EVMResult {
    * which consists of calldata cost, intrinsic cost and optionally the access list costs
    */
   totalGasSpent: bigint
+
+  /**
+   * The amount of gas accounted for at block level.
+   * On EIP-7778 this excludes tx-level refund subtraction.
+   */
+  blockGasSpent: bigint
 
   /**
    * The amount of gas as that was refunded during the transaction (i.e. `gasUsed = totalGasConsumed - gasRefund`)

@@ -1,12 +1,12 @@
-import { Common, Sepolia } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
+import { Common, Sepolia } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
 import {
   type FeeMarketEIP1559TxData,
   type LegacyTxData,
   createFeeMarket1559Tx,
   createLegacyTx,
-} from '@ethereumjs/tx'
-import { bytesToHex } from '@ethereumjs/util'
+} from '@tvmjs/tx'
+import { bytesToHex } from '@tvmjs/util'
 import Eth from '@ledgerhq/hw-app-eth'
 import TransportNodeHid from '@ledgerhq/hw-transport-node-hid'
 

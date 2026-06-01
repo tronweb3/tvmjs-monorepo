@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { Address, hexToBytes, setLengthLeft } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Address, hexToBytes, setLengthLeft } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM } from '../../../src/index.ts'
@@ -70,7 +70,7 @@ describe('Istanbul: EIP-2200', () => {
       }
 
       try {
-        const res = await vm.evm.runCall(runCallArgs)
+        const res = await vm.tvm.runCall(runCallArgs)
         if (typeof testCase.err !== 'undefined') {
           assert.strictEqual(res.execResult.exceptionError?.error, testCase.err)
         } else {

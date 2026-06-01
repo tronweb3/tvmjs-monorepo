@@ -1,4 +1,4 @@
-import type { LegacyTxData } from '@ethereumjs/tx'
+import type { LegacyTxData } from '@tvmjs/tx'
 
 export const buildTransaction = (data: Partial<LegacyTxData>): LegacyTxData => {
   const defaultData: Partial<LegacyTxData> = {

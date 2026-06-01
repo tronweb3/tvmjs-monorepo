@@ -1,6 +1,6 @@
 import { MemoryLevel } from 'memory-level'
 
-import type { BatchDBOp, DB } from '@ethereumjs/util'
+import type { BatchDBOp, DB } from '@tvmjs/util'
 import type { AbstractLevel } from 'abstract-level'
 
 export const ENCODING_OPTS = { keyEncoding: 'view', valueEncoding: 'view' }

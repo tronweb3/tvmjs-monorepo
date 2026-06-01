@@ -1,13 +1,13 @@
-import { Common, Mainnet } from '@ethereumjs/common'
-import { EVMMockBlockchain, createEVM, getActivePrecompiles } from '@ethereumjs/evm'
-import { MerkleStateManager } from '@ethereumjs/statemanager'
+import { Common, Mainnet } from '@tvmjs/common'
+import { MerkleStateManager } from '@tvmjs/statemanager'
+import { TVMMockBlockchain, createTVM, getActivePrecompiles } from '@tvmjs/tvm'
 import {
   Account,
   Address,
   EthereumJSErrorWithoutCode,
   createAccount,
   unprefixedHexToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import { VM } from './vm.ts'
 
@@ -22,7 +22,7 @@ export async function createVM(opts: VMOpts = {}): Promise<VM> {
   // Save if a `StateManager` was passed (for activatePrecompiles)
   const didPassStateManager = opts.stateManager !== undefined
 
-  // Add common, SM, blockchain, EVM here
+  // Add common, SM, blockchain, TVM here
   if (opts.common === undefined) {
     opts.common = new Common({ chain: Mainnet })
   }
@@ -34,7 +34,7 @@ export async function createVM(opts: VMOpts = {}): Promise<VM> {
   }
 
   if (opts.blockchain === undefined) {
-    opts.blockchain = new EVMMockBlockchain()
+    opts.blockchain = new TVMMockBlockchain()
   }
 
   if (opts.profilerOpts !== undefined) {
@@ -46,33 +46,33 @@ export async function createVM(opts: VMOpts = {}): Promise<VM> {
     }
   }
 
-  if (opts.evm !== undefined && opts.evmOpts !== undefined) {
-    throw EthereumJSErrorWithoutCode('the evm and evmOpts options cannot be used in conjunction')
+  if (opts.tvm !== undefined && opts.tvmOpts !== undefined) {
+    throw EthereumJSErrorWithoutCode('the tvm and tvmOpts options cannot be used in conjunction')
   }
 
-  if (opts.evm === undefined) {
+  if (opts.tvm === undefined) {
     let enableProfiler = false
     if (opts.profilerOpts?.reportAfterBlock === true || opts.profilerOpts?.reportAfterTx === true) {
       enableProfiler = true
     }
-    const evmOpts = opts.evmOpts ?? {}
-    opts.evm = await createEVM({
+    const tvmOpts = opts.tvmOpts ?? {}
+    opts.tvm = await createTVM({
       common: opts.common,
       stateManager: opts.stateManager,
       blockchain: opts.blockchain,
       profiler: {
         enabled: enableProfiler,
       },
-      ...evmOpts,
+      ...tvmOpts,
     })
   }
 
   if (opts.activatePrecompiles === true && !didPassStateManager) {
-    await opts.evm.journal.checkpoint()
+    await opts.tvm.journal.checkpoint()
     // put 1 wei in each of the precompiles in order to make the accounts non-empty and thus not have them deduct `callNewAccount` gas.
     for (const [addressStr] of getActivePrecompiles(opts.common)) {
       const address = new Address(unprefixedHexToBytes(addressStr))
-      let account = await opts.evm.stateManager.getAccount(address)
+      let account = await opts.tvm.stateManager.getAccount(address)
       // Only do this if it is not overridden in genesis
       // Note: in the case that custom genesis has storage fields, this is preserved
       if (account === undefined) {
@@ -81,10 +81,10 @@ export async function createVM(opts: VMOpts = {}): Promise<VM> {
           balance: 1,
           storageRoot: account.storageRoot,
         })
-        await opts.evm.stateManager.putAccount(address, newAccount)
+        await opts.tvm.stateManager.putAccount(address, newAccount)
       }
     }
-    await opts.evm.journal.commit()
+    await opts.tvm.journal.commit()
   }
 
   return new VM(opts)

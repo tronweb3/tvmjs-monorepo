@@ -1,7 +1,7 @@
 {
-  "name": "@ethereumjs/common",
-  "version": "10.1.0",
-  "description": "Resources common to all Ethereum implementations",
+  "name": "@tvmjs/common",
+  "version": "1.0.0",
+  "description": "Common configuration and resources for the TRON Virtual Machine (TVM) implementation.",
   "keywords": [
     "ethereum",
     "ethereumjs",
@@ -9,15 +9,17 @@
     "parameters",
     "genesis",
     "networks",
-    "bootstrap"
+    "bootstrap",
+    "tron",
+    "tvm"
   ],
-  "homepage": "https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common#readme",
+  "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common#readme",
   "bugs": {
-    "url": "https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+common%22"
+    "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+common%22"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ethereumjs/ethereumjs-monorepo.git"
+    "url": "https://github.com/tronweb3/tvmjs-monorepo.git"
   },
   "license": "MIT",
   "maintainers": [
@@ -45,8 +47,8 @@
     "biome:fix": "npx @biomejs/biome check --write",
     "build": "../../config/cli/ts-build.sh",
     "clean": "../../config/cli/clean-package.sh",
-    "coverage": "DEBUG=ethjs npx vitest run -c ../../config/vitest.config.coverage.mts",
-    "coverage:istanbul": "DEBUG=ethjs npx vitest run -c ../../config/vitest.config.coverage.istanbul.mts",
+    "coverage": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.mts",
+    "coverage:istanbul": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.istanbul.mts",
     "docs:build": "typedoc --options typedoc.mjs",
     "examples": "tsx ../../scripts/examples-runner.ts -- common",
     "examples:build": "npx embedme README.md",
@@ -63,12 +65,13 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@ethereumjs/util": "^10.1.0",
-    "eventemitter3": "^5.0.1"
+    "@tvmjs/util": "1.0.0",
+    "eventemitter3": "5.0.1"
   },
   "devDependencies": {
-    "@noble/curves": "^2.0.1",
-    "@polkadot/util": "^13.4.3",
-    "@polkadot/wasm-crypto": "^7.4.1"
-  }
+    "@noble/curves": "2.0.1",
+    "@polkadot/util": "13.4.3",
+    "@polkadot/wasm-crypto": "7.5.1"
+  },
+  "contributors": ["TVMJS Team"]
 }

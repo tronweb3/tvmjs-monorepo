@@ -1,13 +1,14 @@
-import { Block, createBlockHeader } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Block, createBlockHeader } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
 import {
   createAccessList2930Tx,
   createBlob4844Tx,
   createEOACode7702Tx,
   createFeeMarket1559Tx,
   createLegacyTx,
-} from '@ethereumjs/tx'
+} from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -24,11 +25,10 @@ import {
   toBytes,
   toType,
   unpadBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 
-import type { BlockOptions } from '@ethereumjs/block'
-import type { StateManagerInterface } from '@ethereumjs/common'
+import type { BlockOptions } from '@tvmjs/block'
+import type { StateManagerInterface } from '@tvmjs/common'
 import type {
   AccessList2930Tx,
   Blob4844Tx,
@@ -36,7 +36,7 @@ import type {
   FeeMarket1559Tx,
   LegacyTx,
   TxOptions,
-} from '@ethereumjs/tx'
+} from '@tvmjs/tx'
 import type { assert } from 'vitest'
 
 // Use Vitest assert type directly
@@ -205,7 +205,7 @@ export function dumpState(state: any, cb: Function) {
 /**
  * Make a tx using JSON from tests repo
  * @param {Object} txData The tx object from tests repo
- * @param {TxOptions} opts Tx opts that can include an @ethereumjs/common object
+ * @param {TxOptions} opts Tx opts that can include an @tvmjs/common object
  * @returns {Blob4844Tx | FeeMarket1559Tx | AccessList2930Transaction | LegacyTx} Transaction to be passed to runTx() function
  */
 export function makeTx(

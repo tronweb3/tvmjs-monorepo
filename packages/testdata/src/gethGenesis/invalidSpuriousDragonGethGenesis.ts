@@ -1,4 +1,4 @@
-import type { GethGenesis } from '@ethereumjs/common'
+import type { GethGenesis } from '@tvmjs/common'
 
 export const invalidSpuriousDragonGethGenesis: GethGenesis = {
   config: {

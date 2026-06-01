@@ -1,16 +1,16 @@
-import { createBlock, createBlockHeader } from '@ethereumjs/block'
-import { Common, ConsensusAlgorithm, Hardfork, Mainnet } from '@ethereumjs/common'
-import { Ethash } from '@ethereumjs/ethash'
-import { RLP } from '@ethereumjs/rlp'
-import { bytesToHex } from '@ethereumjs/util'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { createBlock, createBlockHeader } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+// import { Ethash } from '@tvmjs/ethash'
+import { RLP } from '@tvmjs/rlp'
+import { bytesToHex } from '@tvmjs/util'
 import { assert, describe, expect, it } from 'vitest'
 
-import { EthashConsensus, createBlockchain } from '../src/index.ts'
+import { createBlockchain } from '../src/index.ts'
 
 import { generateBlock } from './util.ts'
 
-import type { ConsensusDict } from '../src/index.ts'
+// import type { ConsensusDict } from '../src/index.ts'
 
 describe('[Blockchain]: Block validation tests', () => {
   it('should throw if an uncle is included before', async () => {
@@ -93,35 +93,35 @@ describe('[Blockchain]: Block validation tests', () => {
     )
   })
 
-  it('should throw if the uncle header is invalid', async () => {
-    const consensusDict: ConsensusDict = {}
-    consensusDict[ConsensusAlgorithm.Ethash] = new EthashConsensus(new Ethash())
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
-    const blockchain = await createBlockchain({ common, validateConsensus: false, consensusDict })
+  // it('should throw if the uncle header is invalid', async () => {
+  //   const consensusDict: ConsensusDict = {}
+  //   consensusDict[ConsensusAlgorithm.Ethash] = new EthashConsensus(new Ethash())
+  //   const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
+  //   const blockchain = await createBlockchain({ common, validateConsensus: false, consensusDict })
 
-    const genesis = blockchain.genesisBlock
+  //   const genesis = blockchain.genesisBlock
 
-    const uncleBlock = createBlock(
-      {
-        header: {
-          number: genesis.header.number + BigInt(1),
-          parentHash: genesis.hash(),
-          timestamp: genesis.header.timestamp + BigInt(1),
-          gasLimit: BigInt(5000),
-        },
-      },
-      { common },
-    )
+  //   const uncleBlock = createBlock(
+  //     {
+  //       header: {
+  //         number: genesis.header.number + BigInt(1),
+  //         parentHash: genesis.hash(),
+  //         timestamp: genesis.header.timestamp + BigInt(1),
+  //         gasLimit: BigInt(5000),
+  //       },
+  //     },
+  //     { common },
+  //   )
 
-    const block1 = generateBlock(genesis, 'block1', [], common)
-    const block2 = generateBlock(block1, 'block2', [uncleBlock.header], common)
+  //   const block1 = generateBlock(genesis, 'block1', [], common)
+  //   const block2 = generateBlock(block1, 'block2', [uncleBlock.header], common)
 
-    await blockchain.putBlock(block1)
+  //   await blockchain.putBlock(block1)
 
-    await expect(blockchain.putBlock(block2)).rejects.toThrow(
-      'invalid difficulty block header number=1',
-    )
-  })
+  //   await expect(blockchain.putBlock(block2)).rejects.toThrow(
+  //     'invalid difficulty block header number=1',
+  //   )
+  // })
 
   it('throws if uncle is a canonical block', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })

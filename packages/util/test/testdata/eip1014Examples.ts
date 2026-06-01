@@ -5,7 +5,7 @@ export const eip1404ExamplesData = [
     salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
     initCode: '0x00',
     gas: '32006',
-    result: '0x4d1a2e2bb4f88f0250f26ffff098b0b30b26bf38',
+    result: '0x65a4f4773d93d98362d0dc131dd51ada88c34f7f',
   },
   {
     comment: 'Example 1',
@@ -13,7 +13,7 @@ export const eip1404ExamplesData = [
     salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
     initCode: '0x00',
     gas: '32006',
-    result: '0xb928f69bb1d91cd65274e3c79d8986362984fda3',
+    result: '0x29a2574c282a56ab6d8e12c922a0d63625a243ef',
   },
   {
     comment: 'Example 2',
@@ -21,7 +21,7 @@ export const eip1404ExamplesData = [
     salt: '0x000000000000000000000000feed000000000000000000000000000000000000',
     initCode: '0x00',
     gas: '32006',
-    result: '0xd04116cdd17bebe565eb2422f2497e06cc1c9833',
+    result: '0x3f2abacf9524762d484ceb3dfb79cb6735388075',
   },
   {
     comment: 'Example 3',
@@ -29,7 +29,7 @@ export const eip1404ExamplesData = [
     salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
     initCode: '0xdeadbeef',
     gas: '32006',
-    result: '0x70f2b2914a2a4b783faefb75f459a580616fcb5e',
+    result: '0x1b727c28d93f73a802e1881bf493870dcd9f78b9',
   },
   {
     comment: 'Example 4',
@@ -37,7 +37,7 @@ export const eip1404ExamplesData = [
     salt: '0x00000000000000000000000000000000000000000000000000000000cafebabe',
     initCode: '0xdeadbeef',
     gas: '32006',
-    result: '0x60f3f640a8508fc6a86d45df051962668e1e8ac7',
+    result: '0xece484536af6315b7af4b9f5ad31eb684e1b3aa4',
   },
   {
     comment: 'Example 5',
@@ -46,7 +46,7 @@ export const eip1404ExamplesData = [
     initCode:
       '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
     gas: '32012',
-    result: '0x1d8bfdc5d46dc4f61d6b6115972536ebe6a8854c',
+    result: '0x76bd998f6fa2831c60a0d211866232a75f4f0d92',
   },
   {
     comment: 'Example 6',
@@ -54,6 +54,6 @@ export const eip1404ExamplesData = [
     salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
     initCode: '0x',
     gas: '32000',
-    result: '0xe33c0c7f7df4809055c3eba6c09cfe4baf1bd9e0',
+    result: '0xfb3a2d661eb5d8b080361a50803c425352242465',
   },
 ]

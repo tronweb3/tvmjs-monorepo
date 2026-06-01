@@ -1,13 +1,7 @@
-# @ethereumjs/block `v10`
+# @tvmjs/block `1.0.0`
 
-[![NPM Package][block-npm-badge]][block-npm-link]
-[![GitHub Issues][block-issues-badge]][block-issues-link]
-[![Actions Status][block-actions-badge]][block-actions-link]
-[![Code Coverage][block-coverage-badge]][block-coverage-link]
-[![Discord][discord-badge]][discord-link]
-
-| Implements schema and functions related to Ethereum blocks. |
-| ----------------------------------------------------------- |
+| Implements schema and functions related to TRON-compatible blocks. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
+| --- |
 
 - 🦄 All block features till **Osaka**
 - 🌴 Tree-shakeable API
@@ -28,7 +22,7 @@
 - [Browser](#browser)
 - [API](#api)
 - [Testing](#testing)
-- [EthereumJS](#ethereumjs)
+- [Upstream](#upstream)
 - [License](#license)
 
 ## Installation
@@ -36,7 +30,7 @@
 To obtain the latest version, simply install the project using `npm`:
 
 ```shell
-npm install @ethereumjs/block
+npm install @tvmjs/block
 ```
 
 **Note:** If you want to work with `EIP-4844` related functionality, you will have additional initialization steps for the **KZG setup**, see related section below.
@@ -70,10 +64,10 @@ Instantiation Example:
 ```ts
 // ./examples/simple.ts
 
-import { createBlockHeader } from '@ethereumjs/block'
-import { bytesToHex } from '@ethereumjs/util'
+import { createBlockHeader } from '@tvmjs/block'
+import { bytesToHex } from '@tvmjs/util'
 
-import type { HeaderData } from '@ethereumjs/block'
+import type { HeaderData } from '@tvmjs/block'
 
 const headerData: HeaderData = {
   number: 15,
@@ -101,7 +95,7 @@ try {
 
 ### WASM Crypto Support
 
-This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification (for included txs). See `@ethereumjs/common` [README](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
+This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification (for included txs). See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
 
 ## EIP Integrations
 
@@ -112,9 +106,9 @@ By default (since `Hardfork.London`) blocks created with this library are [EIP-1
 ```ts
 // ./examples/1559.ts
 
-import { createBlock } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
-import { createTx } from '@ethereumjs/tx'
+import { createBlock } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
+import { createTx } from '@tvmjs/tx'
 const common = new Common({ chain: Mainnet })
 
 const block = createBlock(
@@ -172,11 +166,11 @@ Starting with the `v4.1.0` release there is support for [EIP-4895](https://eips.
 ```ts
 // ./examples/withdrawals.ts
 
-import { createBlock } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
-import { Address, hexToBytes } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
+import { Address, hexToBytes } from '@tvmjs/util'
 
-import type { WithdrawalData } from '@ethereumjs/util'
+import type { WithdrawalData } from '@tvmjs/util'
 
 const common = new Common({ chain: Mainnet })
 
@@ -214,10 +208,10 @@ This library supports the blob transaction type introduced with [EIP-4844](https
 ```ts
 // ./examples/4844.ts
 
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createBlob4844Tx } from '@ethereumjs/tx'
-import { createAddressFromPrivateKey } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createBlob4844Tx } from '@tvmjs/tx'
+import { createAddressFromPrivateKey } from '@tvmjs/util'
 import { randomBytes } from '@noble/hashes/utils.js'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
@@ -261,17 +255,17 @@ void main()
 
 ```
 
-**Note:** Working with blob transactions needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
+**Note:** Working with blob transactions needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
 
 ### Blocks with EIP-7685 Consensus Layer Requests
 
-Starting with v10 this library supports requests to the consensus layer which have been introduced with [EIP-7685](https://eips.ethereum.org/EIPS/eip-7685) (`Hardfork.Prague` or higher). See the `@ethereumjs/util` [Request](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/util#module-request) README section for an overview of current request types.
+Starting with v10 this library supports requests to the consensus layer which have been introduced with [EIP-7685](https://eips.ethereum.org/EIPS/eip-7685) (`Hardfork.Prague` or higher). See the `@tvmjs/util` [Request](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/util#module-request) README section for an overview of current request types.
 
 ```ts
 // ./examples/clrequests.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { CLRequestType, bytesToHex, createCLRequest, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { CLRequestType, bytesToHex, createCLRequest, hexToBytes } from '@tvmjs/util'
 import { sha256 } from '@noble/hashes/sha2.js'
 
 import { createBlock, genRequestsRoot } from '../src'
@@ -341,8 +335,8 @@ You can instantiate a Merge/PoS block like this:
 ```ts
 // ./examples/pos.ts
 
-import { createBlock } from '@ethereumjs/block'
-import { Common, Mainnet } from '@ethereumjs/common'
+import { createBlock } from '@tvmjs/block'
+import { Common, Mainnet } from '@tvmjs/common'
 
 const common = new Common({ chain: Mainnet })
 
@@ -363,8 +357,8 @@ Blocks before the Merge or blocks on dedicated PoW chains are created as Proof-o
 ```ts
 // ./examples/pow.ts
 
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
 
@@ -386,9 +380,9 @@ A clique block can be instantiated as follows:
 ```ts
 // ./examples/clique.ts
 
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork } from '@ethereumjs/common'
-import { goerliChainConfig } from '@ethereumjs/testdata'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork } from '@tvmjs/common'
+import { goerliChainConfig } from '@tvmjs/testdata'
 
 const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
 
@@ -413,7 +407,7 @@ See the API docs for detailed documentation on Clique/PoA related utility method
 
 We provide hybrid ESM/CJS builds for all our libraries. With the v10 breaking release round from Spring 2025, all libraries are "pure-JS" by default and we have eliminated all hard-wired WASM code. Additionally we have substantially lowered the bundle sizes, reduced the number of dependencies, and cut out all usages of Node.js-specific primitives (like the Node.js event emitter).
 
-It is easily possible to run a browser build of one of the EthereumJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
+It is easily possible to run a browser build of one of the TVMJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
 
 ## API
 
@@ -428,13 +422,13 @@ With the breaking releases from Summer 2023 we have started to ship our librarie
 If you use an ES6-style `import` in your code, the ESM build will be used:
 
 ```ts
-import { EthereumJSClass } from '@ethereumjs/[PACKAGE_NAME]'
+import { TVMJSClass } from '@tvmjs/[PACKAGE_NAME]'
 ```
 
 If you use Node.js specific `require`, the CJS build will be used:
 
 ```ts
-const { EthereumJSClass } = require('@ethereumjs/[PACKAGE_NAME]')
+const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
 ```
 
 Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS cannot provide.
@@ -442,25 +436,17 @@ Using ESM will give you additional advantages over CJS beyond browser usage like
 
 ## Testing
 
-Tests in the `tests` directory are partly outdated and testing is primarily done by running the `BlockchainTests` from within the [@ethereumjs/vm](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/vm) package.
+Tests in the `tests` directory are partly outdated and testing is primarily done by running the `BlockchainTests` from within the [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) package.
 
-To avoid bloating this repository with [ethereum/tests](https://github.com/ethereum/tests) JSON files, we usually copy specific JSON files and wrap them with some metadata (source, date, commit hash). There's a helper to aid in that process and can be found at [wrap-ethereum-test.sh](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/block/scripts/wrap-ethereum-test.sh).
+To avoid bloating this repository with [ethereum/tests](https://github.com/ethereum/tests) JSON files, we usually copy specific JSON files and wrap them with some metadata (source, date, commit hash). There's a helper to aid in that process and can be found at [wrap-ethereum-test.sh](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/block/scripts/wrap-ethereum-test.sh).
 
-## EthereumJS
+## Upstream
 
-The `EthereumJS` GitHub organization and its repositories are managed by members of the former Ethereum Foundation JavaScript team and the broader Ethereum community. If you want to join for work or carry out improvements on the libraries see the [developer docs](../../DEVELOPER.md) for an overview of current standards and tools and review our [code of conduct](../../CODE_OF_CONDUCT.md).
+This package is part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, a TypeScript implementation of the TRON Virtual Machine (TVM) forked from the [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo) monorepo. We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
 
+For development information, see the [developer docs](../../DEVELOPER.md) and our [code of conduct](../../CODE_OF_CONDUCT.md).
 ## License
 
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
-[discord-badge]: https://img.shields.io/static/v1?logo=discord&label=discord&message=Join&color=blue
-[discord-link]: https://discord.gg/TNwARpR
-[block-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/block.svg
-[block-npm-link]: https://www.npmjs.com/package/@ethereumjs/block
-[block-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20block?label=issues
-[block-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+block"
-[block-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/Block/badge.svg
-[block-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22Block%22
-[block-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=block
-[block-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/block
+This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.

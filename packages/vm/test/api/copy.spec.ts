@@ -1,4 +1,4 @@
-import { createAccount, createAddressFromString } from '@ethereumjs/util'
+import { createAccount, createAddressFromString } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { setupVM } from './utils.ts'

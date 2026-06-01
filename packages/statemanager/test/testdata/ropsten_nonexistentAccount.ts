@@ -1,4 +1,4 @@
-import type { Proof } from '@ethereumjs/common'
+import type { Proof } from '@tvmjs/common'
 
 export const ropstenNonexistentAccountData: Proof = {
   accountProof: [

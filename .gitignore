@@ -119,3 +119,8 @@ __snapshots__
 
 # CSpell
 .cspellcache
+
+.claude
+openspec
+# For local storage
+tmp/

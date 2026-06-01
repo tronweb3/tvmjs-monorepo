@@ -1,6 +1,6 @@
-import type { Block, BlockHeader } from '@ethereumjs/block'
-import type { Common, ConsensusAlgorithm, GenesisState } from '@ethereumjs/common'
-import type { DB, DBObject } from '@ethereumjs/util'
+import type { Block, BlockHeader } from '@tvmjs/block'
+import type { Common, ConsensusAlgorithm, GenesisState } from '@tvmjs/common'
+import type { DB, DBObject } from '@tvmjs/util'
 import type { EventEmitter } from 'eventemitter3'
 import type { Blockchain } from './index.ts'
 
@@ -196,8 +196,8 @@ export interface BlockchainOptions extends GenesisOptions {
    * respective consensus validation objects `EthashConsensus` or `CliqueConsensus`.
    *
    * ```ts
-   * import { CliqueConsensus, createBlockchain } from '@ethereumjs/blockchain'
-   * import type { ConsensusDict } from '@ethereumjs/blockchain'
+   * import { CliqueConsensus, createBlockchain } from '@tvmjs/blockchain'
+   * import type { ConsensusDict } from '@tvmjs/blockchain'
    *
    * const consensusDict: ConsensusDict = {}
    * consensusDict[ConsensusAlgorithm.Clique] = new CliqueConsensus()

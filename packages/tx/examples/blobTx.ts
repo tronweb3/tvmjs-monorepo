@@ -1,8 +1,8 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import type { BlobEIP4844TxData } from '@ethereumjs/tx'
-import { createBlob4844Tx } from '@ethereumjs/tx'
-import { bytesToHex, getBlobs, randomBytes } from '@ethereumjs/util'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import type { BlobEIP4844TxData } from '@tvmjs/tx'
+import { createBlob4844Tx } from '@tvmjs/tx'
+import { bytesToHex, getBlobs, randomBytes } from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
 const main = async () => {

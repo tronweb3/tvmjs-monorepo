@@ -1,7 +1,7 @@
 {
-  "name": "@ethereumjs/testdata",
+  "name": "@tvmjs/testdata",
   "version": "1.0.0",
-  "description": "Common test data for EthereumJS packages",
+  "description": "Common test data for TVMJS packages.",
   "type": "module",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -23,7 +23,18 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "devDependencies": {
-    "@ethereumjs/block": "^10.1.0",
-    "@ethereumjs/util": "^10.1.0"
-  }
+    "@tvmjs/block": "1.0.0",
+    "@tvmjs/util": "1.0.0"
+  },
+  "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tronweb3/tvmjs-monorepo.git"
+  },
+  "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/testdata#readme",
+  "bugs": {
+    "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+testdata%22"
+  },
+  "contributors": ["TVMJS Team"],
+  "keywords": ["tron", "tvm"]
 }

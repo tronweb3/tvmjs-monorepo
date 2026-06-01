@@ -9,7 +9,7 @@
     { "path": "../block/tsconfig.prod.cjs.json" },
     { "path": "../blockchain/tsconfig.prod.cjs.json" },
     { "path": "../common/tsconfig.prod.cjs.json" },
-    { "path": "../evm/tsconfig.prod.cjs.json" },
+    { "path": "../tvm/tsconfig.prod.cjs.json" },
     { "path": "../rlp/tsconfig.prod.cjs.json" },
     { "path": "../statemanager/tsconfig.prod.cjs.json" },
     { "path": "../mpt/tsconfig.prod.cjs.json" },

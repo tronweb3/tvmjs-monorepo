@@ -1,4 +1,5 @@
-import { Common, Hardfork, Mainnet, createCommonFromGethGenesis } from '@ethereumjs/common'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { Common, Hardfork, Mainnet, createCommonFromGethGenesis } from '@tvmjs/common'
 import {
   blobsToCommitments,
   blobsToProofs,
@@ -10,8 +11,7 @@ import {
   getBlobs,
   hexToBytes,
   randomBytes,
-} from '@ethereumjs/util'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/util'
 //import { loadKZG } from 'kzg-wasm'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 import { assert, beforeAll, describe, it } from 'vitest'
@@ -26,11 +26,11 @@ import {
   paramsTx,
 } from '../src/index.ts'
 
-import { eip4844GethGenesis } from '@ethereumjs/testdata'
+import { eip4844GethGenesis } from '@tvmjs/testdata'
 import { serialized4844TxData } from './testData/serialized4844tx.ts'
 
-import type { KZG, PrefixedHexString } from '@ethereumjs/util'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
+import type { KZG, PrefixedHexString } from '@tvmjs/util'
 import type { BlobEIP4844TxData } from '../src/index.ts'
 
 const pk = randomBytes(32)
@@ -266,7 +266,8 @@ describe('fromTxData using from a json', () => {
   })
 })
 
-describe('EIP4844 constructor tests - invalid scenarios', () => {
+// TRON does not support EIP 7594
+describe.skip('EIP4844 constructor tests - invalid scenarios', () => {
   it('should work', () => {
     for (const kzg of kzgs) {
       const baseTxData = {
@@ -319,7 +320,7 @@ describe('EIP4844 constructor tests - invalid scenarios', () => {
 
       const commonWithEIP7594 = new Common({
         chain: Mainnet,
-        hardfork: Hardfork.Osaka,
+        hardfork: Hardfork.Cancun,
         customCrypto: { kzg: kzg.lib },
       })
       assert.isTrue(commonWithEIP7594.isActivatedEIP(7594), 'EIP-7594 should be activated')

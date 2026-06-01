@@ -1,14 +1,14 @@
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { EVM, createEVM } from '@ethereumjs/evm'
-import { testnetMergeChainConfig } from '@ethereumjs/testdata'
-import { Account, KECCAK256_RLP, createAddressFromString, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { testnetMergeChainConfig } from '@tvmjs/testdata'
+import { TVM, createTVM } from '@tvmjs/tvm'
+import { Account, KECCAK256_RLP, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { type VMOpts, createVM, paramsVM } from '../../src/index.ts'
 
 import { setupVM } from './utils.ts'
 
-import type { MerkleStateManager } from '@ethereumjs/statemanager'
+import type { MerkleStateManager } from '@tvmjs/statemanager'
 
 /**
  * Tests for the main constructor API and
@@ -34,7 +34,7 @@ describe('VM -> basic instantiation / boolean switches', () => {
       KECCAK256_RLP,
       'it has default trie',
     )
-    assert.strictEqual(vm.common.hardfork(), Hardfork.Prague, 'it has correct default HF')
+    assert.strictEqual(vm.common.hardfork(), Hardfork.Tron, 'it has correct default HF')
   })
 
   it('should be able to activate precompiles', async () => {
@@ -47,62 +47,62 @@ describe('VM -> basic instantiation / boolean switches', () => {
   })
 })
 
-describe('VM -> Default EVM / Custom EVM Opts', () => {
-  it('Default EVM should have correct default EVM opts', async () => {
+describe('VM -> Default TVM / Custom TVM Opts', () => {
+  it('Default TVM should have correct default TVM opts', async () => {
     const vm = await createVM()
-    assert.isFalse((vm.evm as EVM).allowUnlimitedContractSize, 'allowUnlimitedContractSize=false')
+    assert.isFalse((vm.tvm as TVM).allowUnlimitedContractSize, 'allowUnlimitedContractSize=false')
   })
 
-  it('should throw if evm and evmOpts are both used', async () => {
+  it('should throw if tvm and tvmOpts are both used', async () => {
     try {
-      await createVM({ evmOpts: {}, evm: await createEVM() })
+      await createVM({ tvmOpts: {}, tvm: await createTVM() })
       assert.fail('should throw')
     } catch {
       assert.isTrue(true, 'correctly thrown')
     }
   })
 
-  it('Default EVM should use custom EVM opts', async () => {
-    const vm = await createVM({ evmOpts: { allowUnlimitedContractSize: true } })
-    assert.isTrue((vm.evm as EVM).allowUnlimitedContractSize, 'allowUnlimitedContractSize=true')
+  it('Default TVM should use custom TVM opts', async () => {
+    const vm = await createVM({ tvmOpts: { allowUnlimitedContractSize: true } })
+    assert.isTrue((vm.tvm as TVM).allowUnlimitedContractSize, 'allowUnlimitedContractSize=true')
     const copiedVM = await vm.shallowCopy()
     assert.isTrue(
-      (copiedVM.evm as EVM).allowUnlimitedContractSize,
+      (copiedVM.tvm as TVM).allowUnlimitedContractSize,
       'allowUnlimitedContractSize=true (for shallowCopied VM)',
     )
   })
 
-  it('Default EVM should use VM common', async () => {
+  it('Default TVM should use VM common', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Byzantium })
     const vm = await createVM({ common })
     assert.strictEqual(
-      (vm.evm as EVM).common.hardfork(),
+      (vm.tvm as TVM).common.hardfork(),
       'byzantium',
       'use modified HF from VM common',
     )
 
     const copiedVM = await vm.shallowCopy()
     assert.strictEqual(
-      (copiedVM.evm as EVM).common.hardfork(),
+      (copiedVM.tvm as TVM).common.hardfork(),
       'byzantium',
       'use modified HF from VM common (for shallowCopied VM)',
     )
   })
 
-  it('Default EVM should prefer common from evmOpts if provided (same logic for blockchain, statemanager)', async () => {
+  it('Default TVM should prefer common from tvmOpts if provided (same logic for blockchain, statemanager)', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Byzantium })
-    const vm = await createVM({ evmOpts: { common } })
+    const vm = await createVM({ tvmOpts: { common } })
     assert.strictEqual(
-      (vm.evm as EVM).common.hardfork(),
+      (vm.tvm as TVM).common.hardfork(),
       'byzantium',
-      'use modified HF from evmOpts',
+      'use modified HF from tvmOpts',
     )
 
     const copiedVM = await vm.shallowCopy()
     assert.strictEqual(
-      (copiedVM.evm as EVM).common.hardfork(),
+      (copiedVM.tvm as TVM).common.hardfork(),
       'byzantium',
-      'use modified HF from evmOpts (for shallowCopied VM)',
+      'use modified HF from tvmOpts (for shallowCopied VM)',
     )
   })
 })
@@ -110,8 +110,8 @@ describe('VM -> Default EVM / Custom EVM Opts', () => {
 describe('VM -> supportedHardforks', () => {
   it('should throw when common is set to an unsupported hardfork', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
-    const prevSupported = EVM['supportedHardforks']
-    EVM['supportedHardforks'] = [
+    const prevSupported = TVM['supportedHardforks']
+    TVM['supportedHardforks'] = [
       Hardfork.Chainstart,
       Hardfork.Homestead,
       Hardfork.Dao,
@@ -136,7 +136,7 @@ describe('VM -> supportedHardforks', () => {
       assert.isTrue(e.message.includes('supportedHardforks') === true)
     }
     // restore supported hardforks
-    EVM['supportedHardforks'] = prevSupported
+    TVM['supportedHardforks'] = prevSupported
   })
 
   it('should succeed when common is set to a supported hardfork', async () => {
@@ -150,7 +150,7 @@ describe('VM -> supportedHardforks', () => {
     assert.strictEqual(
       vm.common.param('elasticityMultiplier'),
       BigInt(2),
-      'should use correct default EVM parameters',
+      'should use correct default TVM parameters',
     )
 
     const params = JSON.parse(JSON.stringify(paramsVM))
@@ -166,7 +166,7 @@ describe('VM -> supportedHardforks', () => {
     assert.strictEqual(
       vm.common.param('elasticityMultiplier'),
       BigInt(2),
-      'should again use the correct default EVM parameters',
+      'should again use the correct default TVM parameters',
     )
   })
 })
@@ -182,7 +182,7 @@ describe('VM -> common (chain, HFs, EIPs)', () => {
     assert.strictEqual(
       vm.common.param('elasticityMultiplier'),
       BigInt(2),
-      'should use correct default EVM parameters',
+      'should use correct default TVM parameters',
     )
   })
 
@@ -330,8 +330,8 @@ describe('VM -> setHardfork, blockchain', () => {
         value: BigInt(1),
       }
 
-      const resultNotActivated = await vmNotActivated.evm.runCall(runCallArgs)
-      const resultActivated = await vmActivated.evm.runCall(runCallArgs)
+      const resultNotActivated = await vmNotActivated.tvm.runCall(runCallArgs)
+      const resultActivated = await vmActivated.tvm.runCall(runCallArgs)
 
       const diff =
         resultNotActivated.execResult.executionGasUsed - resultActivated.execResult.executionGasUsed

@@ -1,3 +1,4 @@
+import { isDebugEnabled } from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import type { Debugger } from 'debug'
@@ -26,10 +27,8 @@ export class Cache {
   protected readonly DEBUG: boolean = false
 
   constructor() {
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    // Additional window check is to prevent vite browser bundling (and potentially other) to break
-    this.DEBUG =
-      typeof window === 'undefined' ? (process?.env?.DEBUG?.includes('ethjs') ?? false) : false
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
 
     this._debug = debugDefault('statemanager:cache')
   }

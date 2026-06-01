@@ -1,4 +1,4 @@
-import type { JSONBlock } from '@ethereumjs/block'
+import type { JSONBlock } from '@tvmjs/block'
 
 export type SupportedMethods =
   | 'eth_getProof'

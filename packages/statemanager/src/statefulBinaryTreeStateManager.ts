@@ -1,7 +1,9 @@
-import { BinaryTree } from '@ethereumjs/binarytree'
-import { BinaryTreeAccessedStateType } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
-import type { Address, BinaryTreeExecutionWitness, PrefixedHexString } from '@ethereumjs/util'
+import { blake3 } from '@noble/hashes/blake3.js'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { BinaryTree } from '@tvmjs/binarytree'
+import { BinaryTreeAccessedStateType } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
+import type { Address, BinaryTreeExecutionWitness, PrefixedHexString } from '@tvmjs/util'
 import {
   Account,
   BINARY_TREE_CODE_CHUNK_SIZE,
@@ -27,14 +29,13 @@ import {
   getBinaryTreeStem,
   hexToBigInt,
   hexToBytes,
+  isDebugEnabled,
   padToEven,
   setLengthLeft,
   setLengthRight,
   short,
   unprefixedHexToBytes,
-} from '@ethereumjs/util'
-import { blake3 } from '@noble/hashes/blake3.js'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import { OriginalStorageCache } from './cache/originalStorageCache.ts'
@@ -49,7 +50,7 @@ import type {
   StorageDump,
   StoragePair,
   StorageRange,
-} from '@ethereumjs/common'
+} from '@tvmjs/common'
 import type { Debugger } from 'debug'
 import type { Caches } from './cache/caches.ts'
 import type { BinaryTreeState, StatefulBinaryTreeStateManagerOpts } from './types.ts'
@@ -84,10 +85,8 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
   private keccakFunction: Function
 
   constructor(opts: StatefulBinaryTreeStateManagerOpts) {
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    // Additional window check is to prevent vite browser bundling (and potentially other) to break
-    this.DEBUG =
-      typeof window === 'undefined' ? (process?.env?.DEBUG?.includes('ethjs') ?? false) : false
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
 
     this._checkpointCount = 0
 
@@ -786,5 +785,9 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
     }
     await this.commit()
     await this.flush()
+  }
+  // TODO TRON implement token in rpc state manager
+  async tokenIdExists(_tokenId: number): Promise<boolean> {
+    throw EthereumJSErrorWithoutCode('Method not implemented.')
   }
 }

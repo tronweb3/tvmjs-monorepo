@@ -1,7 +1,7 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import type { LegacyTxData } from '@ethereumjs/tx'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { bytesToHex, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import type { LegacyTxData } from '@tvmjs/tx'
+import { createLegacyTx } from '@tvmjs/tx'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 const txData: LegacyTxData = {
   nonce: '0x0',
@@ -15,6 +15,7 @@ const txData: LegacyTxData = {
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
 const tx = createLegacyTx(txData, { common })
 
+// WARNING: The private key in this example is for demonstration only. Never use in production.
 const privateKey = hexToBytes('0xe331b6d69882b4cb4ea581d88e0b604039a3de5967688d3dcffdd2270c0fd109')
 
 const signedTx = tx.sign(privateKey)

@@ -1,6 +1,6 @@
-import { RLP } from '@ethereumjs/rlp'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { RLP } from '@tvmjs/rlp'
 
 import {
   bigIntToUnpaddedBytes,
@@ -21,11 +21,75 @@ import { stripHexPrefix } from './internal.ts'
 
 import type { BigIntLike, BytesLike, NestedUint8Array, PrefixedHexString } from './types.ts'
 
+export interface Key {
+  address: Uint8Array
+  weight: number
+}
+
+export const PermissionType = {
+  Owner: 0,
+  Witness: 1,
+  Active: 2,
+} as const
+
+export type PermissionType = (typeof PermissionType)[keyof typeof PermissionType]
+
+export interface Permission {
+  type: PermissionType
+  id: number
+  permissionName: string
+  threshold: number
+  parentId: number
+  operations: BytesLike
+  keys: Key[]
+}
+
+function keysToRlp(keys: Key[]) {
+  return keys.map((ele) => [ele.address, ele.weight])
+}
+
+function permissionToRlp(permission: Permission) {
+  return [
+    permission.type,
+    permission.id,
+    permission.permissionName,
+    permission.threshold,
+    permission.parentId,
+    permission.operations,
+    keysToRlp(permission.keys),
+  ]
+}
+
+function keysFromRlp(arr: any[]): Key[] {
+  return arr.map((ele: any[]) => {
+    return {
+      address: ele[0],
+      weight: bytesToInt(ele[1]),
+    }
+  })
+}
+
+function permissionFromRlp(arr: any[]): Permission {
+  return {
+    type: bytesToInt(arr[0]) as PermissionType,
+    id: bytesToInt(arr[1]),
+    permissionName: new TextDecoder().decode(arr[2]),
+    threshold: bytesToInt(arr[3]),
+    parentId: bytesToInt(arr[4]),
+    operations: arr[5],
+    keys: keysFromRlp(arr[6]),
+  }
+}
+
 export interface AccountData {
   nonce?: BigIntLike
   balance?: BigIntLike
   storageRoot?: BytesLike
   codeHash?: BytesLike
+  asset?: {
+    [key: number]: bigint
+  }
+  activePermissions?: Permission[]
 }
 
 export interface PartialAccountData {
@@ -86,6 +150,10 @@ export class Account {
   // codeSize and version is separately stored in VKT
   _codeSize: number | null = null
   _version: number | null = null
+  _asset: {
+    [key: number | string]: bigint
+  } | null = null
+  _activePermissions: Permission[] | null = null
 
   get version() {
     if (this._version !== null) {
@@ -153,6 +221,51 @@ export class Account {
     this._codeSize = _codeSize
   }
 
+  get asset() {
+    if (this._asset !== null) {
+      return this._asset
+    } else {
+      throw Error(`asset=${this._asset} not loaded`)
+    }
+  }
+  set asset(_asset: { [key: number]: bigint } | null) {
+    this._asset = _asset
+  }
+
+  getTokenBalance(tokenId: bigint): bigint {
+    if (this._asset === null) {
+      throw Error(`asset=${this._asset} not loaded`)
+    }
+    return this._asset[Number(tokenId)] ?? BIGINT_0
+  }
+
+  get activePermissions() {
+    if (this._activePermissions !== null) {
+      return this._activePermissions
+    } else {
+      throw Error(`activePermissions=${this._activePermissions} not loaded`)
+    }
+  }
+  set activePermissions(_activePermissions: Permission[] | null) {
+    this._activePermissions = _activePermissions
+  }
+
+  updatePermissions({ activePermissions }: { activePermissions: Permission[] }): void {
+    this._activePermissions = activePermissions
+  }
+
+  getPermissionById(id: number): Permission | null {
+    if (this._activePermissions === null) {
+      throw Error(`activePermissions=${this._activePermissions} not loaded`)
+    }
+    for (const permission of this._activePermissions) {
+      if (permission.id === id) {
+        return permission
+      }
+    }
+    return null
+  }
+
   /**
    * This constructor assigns and validates the values.
    * It is not recommended to use this constructor directly. Instead use the static
@@ -167,11 +280,15 @@ export class Account {
     codeHash: Uint8Array | null = KECCAK256_NULL,
     codeSize: number | null = 0,
     version: number | null = 0,
+    asset: { [key: number]: bigint } | null = {},
+    activePermissions: Permission[] | null = [],
   ) {
     this._nonce = nonce
     this._balance = balance
     this._storageRoot = storageRoot
     this._codeHash = codeHash
+    this._asset = asset
+    this._activePermissions = activePermissions
 
     if (codeSize === null && codeHash !== null && !this.isContract()) {
       codeSize = 0
@@ -204,11 +321,19 @@ export class Account {
    * Returns an array of Uint8Arrays of the raw bytes for the account, in order.
    */
   raw(): Uint8Array[] {
+    const tokenIds = Object.keys(this.asset!)
+    const asset: any = []
+    tokenIds.forEach((_) => {
+      asset.push(bigIntToUnpaddedBytes(BigInt(_)), bigIntToUnpaddedBytes(this.asset![Number(_)]))
+    })
+    const activePermissions = (this.activePermissions ?? []).map((ele) => permissionToRlp(ele))
     return [
       bigIntToUnpaddedBytes(this.nonce),
       bigIntToUnpaddedBytes(this.balance),
       this.storageRoot,
       this.codeHash,
+      asset,
+      activePermissions,
     ]
   }
 
@@ -285,8 +410,12 @@ export class Account {
     // helpful for determination in partial accounts
     if (
       (this._balance !== null && this.balance !== BIGINT_0) ||
-      (this._nonce === null && this.nonce !== BIGINT_0) ||
-      (this._codeHash !== null && !equalsBytes(this.codeHash, KECCAK256_NULL))
+      (this._nonce !== null && this.nonce !== BIGINT_0) ||
+      (this._codeHash !== null && !equalsBytes(this.codeHash, KECCAK256_NULL)) ||
+      (this._asset !== null &&
+        Object.keys(this.asset || {}).some(
+          (tokenId: string) => this._asset?.[tokenId] !== BIGINT_0,
+        ))
     ) {
       return false
     }
@@ -294,7 +423,8 @@ export class Account {
     return (
       this.balance === BIGINT_0 &&
       this.nonce === BIGINT_0 &&
-      equalsBytes(this.codeHash, KECCAK256_NULL)
+      equalsBytes(this.codeHash, KECCAK256_NULL) &&
+      Object.keys(this.asset || {}).every((tokenId: string) => this._asset?.[tokenId] === BIGINT_0)
     )
   }
 }
@@ -302,7 +432,7 @@ export class Account {
 // Account constructors
 
 export function createAccount(accountData: AccountData) {
-  const { nonce, balance, storageRoot, codeHash } = accountData
+  const { nonce, balance, storageRoot, codeHash, asset, activePermissions } = accountData
   if (nonce === null || balance === null || storageRoot === null || codeHash === null) {
     throw Error(`Partial fields not supported in fromAccountData`)
   }
@@ -312,13 +442,41 @@ export function createAccount(accountData: AccountData) {
     balance !== undefined ? bytesToBigInt(toBytes(balance)) : undefined,
     storageRoot !== undefined ? toBytes(storageRoot) : undefined,
     codeHash !== undefined ? toBytes(codeHash) : undefined,
+    0,
+    0,
+    asset !== undefined && asset !== null ? asset : undefined,
+    activePermissions !== undefined && activePermissions !== null ? activePermissions : undefined,
   )
 }
 
 export function createAccountFromBytesArray(values: Uint8Array[]) {
-  const [nonce, balance, storageRoot, codeHash] = values
+  const [nonce, balance, storageRoot, codeHash, assetArr = [], activePermissionArr = []] = values
+  const asset: {
+    [key: number]: bigint
+  } = {}
 
-  return new Account(bytesToBigInt(nonce), bytesToBigInt(balance), storageRoot, codeHash)
+  for (let i = 0; i < assetArr.length; i++) {
+    const tokenId = assetArr[i] as unknown as Uint8Array
+    const tokenValue = assetArr[++i] as unknown as Uint8Array
+    asset[bytesToInt(tokenId)] = bytesToBigInt(tokenValue)
+  }
+
+  const activePermissions: Permission[] = []
+  for (let i = 0; i < activePermissionArr.length; ++i) {
+    const perm = activePermissionArr[i] as unknown as Uint8Array[]
+    activePermissions.push(permissionFromRlp(perm))
+  }
+
+  return new Account(
+    bytesToBigInt(nonce),
+    bytesToBigInt(balance),
+    storageRoot,
+    codeHash,
+    0,
+    0,
+    asset,
+    activePermissions,
+  )
 }
 
 export function createPartialAccount(partialAccountData: PartialAccountData) {
@@ -486,7 +644,9 @@ export const generateAddress2 = function (
     throw EthereumJSErrorWithoutCode('Expected salt to be of length 32')
   }
 
-  const address = keccak_256(concatBytes(hexToBytes('0xff'), from, salt, keccak_256(initCode)))
+  // const address = keccak_256(concatBytes(hexToBytes('0xff'), from, salt, keccak_256(initCode)))
+  // TRON create2 prefix is 0x41
+  const address = keccak_256(concatBytes(hexToBytes('0x41'), from, salt, keccak_256(initCode)))
 
   return address.subarray(-20)
 }

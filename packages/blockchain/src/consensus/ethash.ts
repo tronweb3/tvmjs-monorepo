@@ -1,8 +1,8 @@
-import { ConsensusAlgorithm } from '@ethereumjs/common'
-import { EthereumJSErrorWithoutCode, bytesToHex } from '@ethereumjs/util'
+import { ConsensusAlgorithm } from '@tvmjs/common'
+import { EthereumJSErrorWithoutCode, bytesToHex, isDebugEnabled } from '@tvmjs/util'
 import debugDefault from 'debug'
 
-import type { Block, BlockHeader } from '@ethereumjs/block'
+import type { Block, BlockHeader } from '@tvmjs/block'
 import type { Debugger } from 'debug'
 import type { Blockchain } from '../index.ts'
 import type { Consensus, ConsensusOptions } from '../types.ts'
@@ -24,8 +24,7 @@ export class EthashConsensus implements Consensus {
   private _debug: Debugger
 
   constructor(ethash: MinimalEthashInterface) {
-    this.DEBUG =
-      typeof window === 'undefined' ? (process?.env?.DEBUG?.includes('ethjs') ?? false) : false
+    this.DEBUG = isDebugEnabled('tvmjs')
     this._debug = debugDefault('blockchain:ethash')
 
     this.algorithm = ConsensusAlgorithm.Ethash

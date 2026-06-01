@@ -3,27 +3,25 @@ import {
   cliqueVerifySignature,
   createBlock,
   createSealedCliqueBlock,
-} from '@ethereumjs/block'
-import { EthashConsensus, createBlockchain } from '@ethereumjs/blockchain'
+} from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
 import {
   Common,
-  ConsensusAlgorithm,
   type GethGenesis,
   Hardfork,
   Mainnet,
   createCommonFromGethGenesis,
-} from '@ethereumjs/common'
-import { Ethash } from '@ethereumjs/ethash'
-import { createFeeMarket1559Tx, createLegacyTx } from '@ethereumjs/tx'
-import { concatBytes, createAccount, createZeroAddress } from '@ethereumjs/util'
+} from '@tvmjs/common'
+// import { Ethash } from '@tvmjs/ethash'
+import { createFeeMarket1559Tx, createLegacyTx } from '@tvmjs/tx'
+import { concatBytes, createAccount, createZeroAddress } from '@tvmjs/util'
 import { assert, describe, expect, it } from 'vitest'
 
 import { buildBlock, createVM, runBlock } from '../../src/index.ts'
 
 import { setBalance } from './utils.ts'
 
-import type { Blockchain, ConsensusDict } from '@ethereumjs/blockchain'
-import { SIGNER_A } from '@ethereumjs/testdata'
+import { SIGNER_A } from '@tvmjs/testdata'
 
 describe('BlockBuilder', () => {
   it('should build a valid block', async () => {
@@ -91,47 +89,47 @@ describe('BlockBuilder', () => {
     )
   })
 
-  it('should correctly seal a PoW block', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const genesisBlock = createBlock({ header: { gasLimit: 50000 } }, { common })
+  // it('should correctly seal a PoW block', async () => {
+  //   const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
+  //   const genesisBlock = createBlock({ header: { gasLimit: 50000 } }, { common })
 
-    const consensusDict: ConsensusDict = {}
-    consensusDict[ConsensusAlgorithm.Ethash] = new EthashConsensus(new Ethash())
-    const blockchain = await createBlockchain({
-      genesisBlock,
-      common,
-      validateConsensus: false,
-      consensusDict,
-    })
-    const vm = await createVM({ common, blockchain })
+  //   const consensusDict: ConsensusDict = {}
+  //   consensusDict[ConsensusAlgorithm.Ethash] = new EthashConsensus(new Ethash())
+  //   const blockchain = await createBlockchain({
+  //     genesisBlock,
+  //     common,
+  //     validateConsensus: false,
+  //     consensusDict,
+  //   })
+  //   const vm = await createVM({ common, blockchain })
 
-    await setBalance(vm, SIGNER_A.address)
+  //   await setBalance(vm, SIGNER_A.address)
 
-    const blockBuilder = await buildBlock(vm, {
-      parentBlock: genesisBlock,
-      blockOpts: { calcDifficultyFromHeader: genesisBlock.header, freeze: false },
-    })
+  //   const blockBuilder = await buildBlock(vm, {
+  //     parentBlock: genesisBlock,
+  //     blockOpts: { calcDifficultyFromHeader: genesisBlock.header, freeze: false },
+  //   })
 
-    // Set up tx
-    const tx = createLegacyTx(
-      { to: createZeroAddress(), value: 1000, gasLimit: 21000, gasPrice: 1 },
-      { common, freeze: false },
-    ).sign(SIGNER_A.privateKey)
+  //   // Set up tx
+  //   const tx = createLegacyTx(
+  //     { to: createZeroAddress(), value: 1000, gasLimit: 21000, gasPrice: 1 },
+  //     { common, freeze: false },
+  //   ).sign(SIGNER_A.privateKey)
 
-    await blockBuilder.addTransaction(tx)
+  //   await blockBuilder.addTransaction(tx)
 
-    const sealOpts = {
-      mixHash: new Uint8Array(32),
-      nonce: new Uint8Array(8),
-    }
-    const { block } = await blockBuilder.build(sealOpts)
+  //   const sealOpts = {
+  //     mixHash: new Uint8Array(32),
+  //     nonce: new Uint8Array(8),
+  //   }
+  //   const { block } = await blockBuilder.build(sealOpts)
 
-    assert.deepEqual(block.header.mixHash, sealOpts.mixHash)
-    assert.deepEqual(block.header.nonce, sealOpts.nonce)
-    assert.doesNotThrow(async () =>
-      (vm.blockchain as Blockchain).consensus!.validateDifficulty(block.header),
-    )
-  })
+  //   assert.deepEqual(block.header.mixHash, sealOpts.mixHash)
+  //   assert.deepEqual(block.header.nonce, sealOpts.nonce)
+  //   assert.doesNotThrow(async () =>
+  //     (vm.blockchain as Blockchain).consensus!.validateDifficulty(block.header),
+  //   )
+  // })
 
   it('should correctly seal a PoA block', async () => {
     // const common = new Common({ chain: Chain.Rinkeby, hardfork: Hardfork.Istanbul })

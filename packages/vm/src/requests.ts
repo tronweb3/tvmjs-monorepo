@@ -1,4 +1,5 @@
-import { Mainnet } from '@ethereumjs/common'
+import { Mainnet } from '@tvmjs/common'
+import type { BlockLevelAccessList, PrefixedHexString } from '@tvmjs/util'
 import {
   CLRequest,
   CLRequestType,
@@ -10,7 +11,7 @@ import {
   concatBytes,
   createAddressFromString,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
 import type { RunTxResult } from './types.ts'
 import type { VM } from './vm.ts'
@@ -28,6 +29,46 @@ const SIGNATURE_SIZE = BigInt(96)
 const INDEX_SIZE = BigInt(8)
 const LOG_SIZE = 576
 const LOG_LAYOUT_MISMATCH = 'invalid deposit log: unsupported data layout'
+
+function cloneSystemAccessEntry(vm: VM, systemAddressHex: PrefixedHexString) {
+  const access = vm.tvm.blockLevelAccessList?.accesses[systemAddressHex]
+  if (access === undefined) {
+    return undefined
+  }
+
+  const storageChanges: typeof access.storageChanges = {}
+  for (const [slot, changes] of Object.entries(access.storageChanges)) {
+    storageChanges[slot as PrefixedHexString] = changes.map(
+      ([index, value]) => [index, value] as const,
+    )
+  }
+
+  return {
+    nonceChanges: new Map(access.nonceChanges),
+    balanceChanges: new Map(access.balanceChanges),
+    codeChanges: access.codeChanges.map(([index, code]) => [index, code] as const),
+    storageChanges,
+    storageReads: new Set(access.storageReads),
+  }
+}
+
+function restoreSystemAccessEntry(
+  vm: VM,
+  systemAddressHex: PrefixedHexString,
+  snapshot: ReturnType<typeof cloneSystemAccessEntry>,
+) {
+  const bal = vm.tvm.blockLevelAccessList
+  if (bal === undefined) {
+    return
+  }
+
+  if (snapshot === undefined) {
+    delete bal.accesses[systemAddressHex]
+    return
+  }
+
+  bal.accesses[systemAddressHex] = snapshot as BlockLevelAccessList['accesses'][PrefixedHexString]
+}
 
 /**
  * This helper method generates a list of all CL requests that can be included in a pending block
@@ -85,11 +126,14 @@ const accumulateWithdrawalsRequest = async (
     return new CLRequest(CLRequestType.Withdrawal, new Uint8Array())
   }
 
-  const results = await vm.evm.runCall({
+  const systemAddressHex = systemAddress.toString()
+  const balSnapshot = cloneSystemAccessEntry(vm, systemAddressHex)
+  const results = await vm.tvm.runCall({
     caller: systemAddress,
     gasLimit: vm.common.param('systemCallGasLimit'),
     to: withdrawalsAddress,
   })
+  restoreSystemAccessEntry(vm, systemAddressHex, balSnapshot)
 
   if (systemAccount === undefined) {
     await vm.stateManager.deleteAccount(systemAddress)
@@ -121,11 +165,14 @@ const accumulateConsolidationsRequest = async (
     return new CLRequest(CLRequestType.Consolidation, new Uint8Array(0))
   }
 
-  const results = await vm.evm.runCall({
+  const systemAddressHex = systemAddress.toString()
+  const balSnapshot = cloneSystemAccessEntry(vm, systemAddressHex)
+  const results = await vm.tvm.runCall({
     caller: systemAddress,
     gasLimit: vm.common.param('systemCallGasLimit'),
     to: consolidationsAddress,
   })
+  restoreSystemAccessEntry(vm, systemAddressHex, balSnapshot)
 
   if (systemAccount === undefined) {
     await vm.stateManager.deleteAccount(systemAddress)

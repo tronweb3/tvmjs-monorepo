@@ -1,14 +1,14 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { Account, Address, bytesToInt, hexToBytes, privateToAddress } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import { Account, Address, bytesToInt, hexToBytes, privateToAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
-import { SIGNER_A } from '@ethereumjs/testdata'
-import type { TypedTransaction } from '@ethereumjs/tx'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import { SIGNER_A } from '@tvmjs/testdata'
+import type { InterpreterStep } from '@tvmjs/tvm'
+import type { TypedTransaction } from '@tvmjs/tx'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 interface Test {
   steps: { expectedOpcode: string; expectedGasUsed: number; expectedStack: bigint[] }[]
@@ -53,7 +53,7 @@ describe('EIP 1153: transient storage', () => {
       }
       i++
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     for (const { code, address } of test.contracts) {
       await vm.stateManager.putCode(address, hexToBytes(code as PrefixedHexString))
@@ -67,7 +67,7 @@ describe('EIP 1153: transient storage', () => {
       results.push(result)
     }
 
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
     return results
   }
 

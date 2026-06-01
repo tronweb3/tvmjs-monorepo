@@ -1,15 +1,15 @@
 {
-  "name": "@ethereumjs/util",
-  "version": "10.1.0",
-  "description": "A collection of utility functions for Ethereum",
-  "keywords": ["ethereum", "utilities", "utils"],
-  "homepage": "https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/util#readme",
+  "name": "@tvmjs/util",
+  "version": "1.0.0",
+  "description": "A collection of utility functions for the TRON Virtual Machine (TVM).",
+  "keywords": ["ethereum", "utilities", "utils", "tron", "tvm"],
+  "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/util#readme",
   "bugs": {
-    "url": "https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+util%22"
+    "url": "https://github.com/tronweb3/tvmjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+util%22"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ethereumjs/ethereumjs-monorepo.git"
+    "url": "https://github.com/tronweb3/tvmjs-monorepo.git"
   },
   "license": "MPL-2.0",
   "author": "EthereumJS Team",
@@ -28,7 +28,7 @@
       "url": "https://github.com/MrChico"
     },
     {
-      "name": "Dũng Trần",
+      "name": "D\u0169ng Tr\u1ea7n",
       "email": "tad88.dev@gmail.com",
       "url": "https://github.com/tad88dev"
     },
@@ -55,7 +55,8 @@
       "name": "Alexander Sinyagin",
       "email": "sinyagin.alexander@gmail.com",
       "url": "https://github.com/asinyagin"
-    }
+    },
+    "TVMJS Team"
   ],
   "type": "module",
   "sideEffects": false,
@@ -76,8 +77,8 @@
     "biome:fix": "npx @biomejs/biome check --write",
     "build": "../../config/cli/ts-build.sh",
     "clean": "../../config/cli/clean-package.sh",
-    "coverage": "DEBUG=ethjs npx vitest run -c ../../config/vitest.config.coverage.mts",
-    "coverage:istanbul": "DEBUG=ethjs npx vitest run -c ../../config/vitest.config.coverage.istanbul.mts",
+    "coverage": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.mts",
+    "coverage:istanbul": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.istanbul.mts",
     "docs:build": "npx typedoc --options typedoc.mjs",
     "examples": "tsx ../../scripts/examples-runner.ts -- util",
     "examples:build": "npx embedme README.md",
@@ -94,14 +95,14 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@ethereumjs/rlp": "^10.1.0",
-    "@noble/curves": "^2.0.1",
-    "@noble/hashes": "^2.0.1"
+    "@tvmjs/rlp": "1.0.0",
+    "@noble/curves": "2.0.1",
+    "@noble/hashes": "2.0.1"
   },
   "devDependencies": {
-    "@paulmillr/trusted-setups": "^0.2.0",
+    "@paulmillr/trusted-setups": "0.2.0",
     "kzg-wasm": "1.0.0",
-    "micro-eth-signer": "^0.15.0"
+    "micro-eth-signer": "0.15.0"
   },
   "engines": {
     "node": ">=20"

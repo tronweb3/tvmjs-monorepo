@@ -1,11 +1,11 @@
-import { Account, EthereumJSErrorWithoutCode, bytesToHex } from '@ethereumjs/util'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Account, EthereumJSErrorWithoutCode, bytesToHex } from '@tvmjs/util'
 
 import { OriginalStorageCache } from './cache/originalStorageCache.ts'
 import { modifyAccountFields } from './util.ts'
 
-import type { AccountFields, Common, StateManagerInterface } from '@ethereumjs/common'
-import type { Address, PrefixedHexString } from '@ethereumjs/util'
+import type { AccountFields, Common, StateManagerInterface } from '@tvmjs/common'
+import type { Address, PrefixedHexString } from '@tvmjs/util'
 import type { SimpleStateManagerOpts } from './index.ts'
 
 /**
@@ -17,11 +17,11 @@ import type { SimpleStateManagerOpts } from './index.ts'
  * implementation of checkpointing but lacks methods implementations of
  * state root related logic as well as some other non-core functions.
  *
- * Functionality provided is sufficient to be used for simple EVM use
+ * Functionality provided is sufficient to be used for simple TVM use
  * cases and the state manager is used as default there.
  *
  * For a more full fledged and MPT-backed state manager implementation
- * have a look at the [`@ethereumjs/statemanager` package docs](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/statemanager/docs/README.md).
+ * have a look at the [`@tvmjs/statemanager` package docs](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/statemanager/docs/README.md).
  */
 export class SimpleStateManager implements StateManagerInterface {
   public accountStack: Map<PrefixedHexString, Account | undefined>[] = []
@@ -149,6 +149,11 @@ export class SimpleStateManager implements StateManagerInterface {
     throw EthereumJSErrorWithoutCode('Method not implemented.')
   }
   hasStateRoot(): Promise<boolean> {
+    throw EthereumJSErrorWithoutCode('Method not implemented.')
+  }
+
+  // TODO TRON implement token in rpc state manager
+  async tokenIdExists(_tokenId: number): Promise<boolean> {
     throw EthereumJSErrorWithoutCode('Method not implemented.')
   }
 }

@@ -1,9 +1,9 @@
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { KeyEncoding, ValueEncoding } from '@ethereumjs/util'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { KeyEncoding, ValueEncoding } from '@tvmjs/util'
 import { Level } from 'level'
 import { MemoryLevel } from 'memory-level'
 
-import type { BatchDBOp, DB, DBObject, EncodingOpts } from '@ethereumjs/util'
+import type { BatchDBOp, DB, DBObject, EncodingOpts } from '@tvmjs/util'
 import type { AbstractLevel } from 'abstract-level'
 
 // Helper to infer the `valueEncoding` option for `putting` a value in a levelDB

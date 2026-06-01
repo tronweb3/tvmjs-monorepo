@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createVM } from '@ethereumjs/vm'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createVM } from '@tvmjs/vm'
 
 const main = async () => {
   const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })

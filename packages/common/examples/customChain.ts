@@ -1,5 +1,5 @@
-import { Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { customChainConfig } from '@ethereumjs/testdata'
+import { Mainnet, createCustomCommon } from '@tvmjs/common'
+import { customChainConfig } from '@tvmjs/testdata'
 
 // Add custom chain config
 const common1 = createCustomCommon(customChainConfig, Mainnet)

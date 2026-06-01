@@ -1,6 +1,6 @@
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
-import { Blob4844Tx } from '@ethereumjs/tx'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
+import { Blob4844Tx } from '@tvmjs/tx'
 import {
   BIGINT_0,
   BIGINT_1,
@@ -9,11 +9,11 @@ import {
   concatBytes,
   isHexString,
   toType,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 
-import { type Common } from '@ethereumjs/common'
-import type { TypedTransaction } from '@ethereumjs/tx'
-import type { CLRequest, CLRequestType, PrefixedHexString, Withdrawal } from '@ethereumjs/util'
+import { type Common } from '@tvmjs/common'
+import type { TypedTransaction } from '@tvmjs/tx'
+import type { CLRequest, CLRequestType, PrefixedHexString, Withdrawal } from '@tvmjs/util'
 import type { BlockHeaderBytes, HeaderData } from './types.ts'
 /**
  * Returns a 0x-prefixed hex number string from a hex string or string integer.
@@ -61,11 +61,12 @@ export function valuesArrayToHeaderData(values: BlockHeaderBytes): HeaderData {
     parentBeaconBlockRoot,
     requestsHash,
     blockAccessListHash,
+    slotNumber,
   ] = values
 
-  if (values.length > 22) {
+  if (values.length > 23) {
     throw EthereumJSErrorWithoutCode(
-      `invalid header. More values than expected were received. Max: 20, got: ${values.length}`,
+      `invalid header. More values than expected were received. Max: 23, got: ${values.length}`,
     )
   }
   if (values.length < 15) {
@@ -97,6 +98,7 @@ export function valuesArrayToHeaderData(values: BlockHeaderBytes): HeaderData {
     parentBeaconBlockRoot,
     requestsHash,
     blockAccessListHash,
+    slotNumber,
   }
 }
 

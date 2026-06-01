@@ -1,5 +1,5 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { Address, bytesToHex, createZeroAddress, equalsBytes, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Address, bytesToHex, createZeroAddress, equalsBytes, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM } from '../../../src/index.ts'
@@ -15,7 +15,7 @@ describe('EIP-2565 ModExp gas cost tests', () => {
     for (const test of eip2565Data) {
       const testName = test.Name
       const to = new Address(hexToBytes('0x0000000000000000000000000000000000000005'))
-      const result = await vm.evm.runCall({
+      const result = await vm.tvm.runCall({
         caller: createZeroAddress(),
         gasLimit: BigInt(0xffffffffff),
         to,

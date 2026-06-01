@@ -1,19 +1,19 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { Address, createAccount, createAddressFromPrivateKey, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import { Address, createAccount, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
-import { SIGNER_A } from '@ethereumjs/testdata'
-import type { PrefixedHexString } from '@ethereumjs/util'
+import { SIGNER_A } from '@tvmjs/testdata'
+import type { InterpreterStep } from '@tvmjs/tvm'
+import type { PrefixedHexString } from '@tvmjs/util'
 
 // Test cases source: https://gist.github.com/holiman/174548cad102096858583c6fbbb0649a
 describe('EIP 2929: gas cost tests', () => {
   const initialGas = BigInt(0xffffffffff)
   const address = new Address(hexToBytes('0x000000000000000000000000636F6E7472616374'))
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin, eips: [2929] })
+  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Tron, eips: [2929] })
 
   const runTest = async function (test: any) {
     let i = 0
@@ -47,22 +47,23 @@ describe('EIP 2929: gas cost tests', () => {
       }
       i++
     }
-    vm.evm.events!.on('step', handler)
+    vm.tvm.events!.on('step', handler)
 
     await vm.stateManager.putCode(address, hexToBytes(test.code))
 
     const unsignedTx = createLegacyTx({
       gasLimit: initialGas, // ensure we pass a lot of gas, so we do not run out of gas
       to: address, // call to the contract address,
+      gasPrice: BigInt(7),
     })
 
     const tx = unsignedTx.sign(SIGNER_A.privateKey)
 
-    const result = await runTx(vm, { tx, skipHardForkValidation: true })
+    const result = await runTx(vm, { tx, skipHardForkValidation: true, skipBalance: true })
 
     const totalGasUsed = initialGas - currentGas
     assert.strictEqual(true, totalGasUsed === BigInt(test.totalGasUsed) + BigInt(21000)) // Add tx upfront cost.
-    vm.evm.events!.removeListener('step', handler)
+    vm.tvm.events!.removeListener('step', handler)
     return result
   }
 
@@ -71,7 +72,7 @@ describe('EIP 2929: gas cost tests', () => {
     const privateKey = SIGNER_A.privateKey
     const contractAddress = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
 
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin, eips: [2929] })
+    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Tron, eips: [2929] })
     const vm = await createVM({ common })
 
     await vm.stateManager.putCode(contractAddress, hexToBytes(code)) // setup the contract code
@@ -81,6 +82,7 @@ describe('EIP 2929: gas cost tests', () => {
       gasLimit: BigInt(21000 + 9000), // ensure we pass a lot of gas, so we do not run out of gas
       to: contractAddress, // call to the contract address,
       value: BigInt(1),
+      gasPrice: BigInt(7),
     })
 
     const tx = unsignedTx.sign(privateKey)

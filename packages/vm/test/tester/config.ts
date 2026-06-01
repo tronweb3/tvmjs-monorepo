@@ -11,10 +11,10 @@
  * (USE COMMON SENSE).
  */
 import * as path from 'path'
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
 
-import type { HardforkTransitionConfig } from '@ethereumjs/common'
-import type { KZG } from '@ethereumjs/util'
+import type { HardforkTransitionConfig } from '@tvmjs/common'
+import type { KZG } from '@tvmjs/util'
 
 /**
  * Default tests path (git submodule: ethereum-tests)

@@ -223,12 +223,12 @@ It is also possible to only run the tests from the skip lists:
 The following command shows an example of how to get coverage for a set of the official spec test files:
 
 ```bash
-DEBUG=ethjs,dummy:* VITE_CUSTOM_TESTS_PATH=../execution-spec-tests/fusaka-devnet-5/state_tests/osaka/eip7951_p256verify_precompiles  VITE_FORK=Osaka npx vitest watch --coverage --coverage.reporter=html --ui --coverage.allowExternal --coverage.include=evm/src/precompiles/0c-bls12-g1msm.ts [--coverage.include=evm/src/precompiles/index.ts] test/tester/state.spec.ts
+DEBUG=tvmjs,dummy:* VITE_CUSTOM_TESTS_PATH=../execution-spec-tests/fusaka-devnet-5/state_tests/osaka/eip7951_p256verify_precompiles  VITE_FORK=Osaka npx vitest watch --coverage --coverage.reporter=html --ui --coverage.allowExternal --coverage.include=tvm/src/precompiles/0c-bls12-g1msm.ts [--coverage.include=tvm/src/precompiles/index.ts] test/tester/state.spec.ts
 ```
 
 This can be useful to identify gaps in the coverage of the official spec tests and see where additional tests are needed.
 
-The specific command stays in "watch" mode and opens a specific UI to see coverage also for EVM files (this needs the `coverage.allowExternal` flag to be set). The `DEBUG` part can be helpful to not have coverage being distorted by non-debug calls artificially lowering the coverage.
+The specific command stays in "watch" mode and opens a specific UI to see coverage also for TVM files (this needs the `coverage.allowExternal` flag to be set). The `DEBUG` part can be helpful to not have coverage being distorted by non-debug calls artificially lowering the coverage.
 
 ### Coverage Reporting
 
@@ -255,7 +255,7 @@ Ethereum's official test suite can be found in the [execution-specs](https://git
 
 ### Test Generation with EELS
 
-To use the built-in (so: on the test repo side) EELS EVM implementation, follow the installation instructions in the [execution-specs](https://github.com/ethereum/execution-specs) repository and e.g. fill tests with:
+To use the built-in (so: on the test repo side) EELS TVM implementation, follow the installation instructions in the [execution-specs](https://github.com/ethereum/execution-specs) repository and e.g. fill tests with:
 
 ```bash
 uv run fill -v tests/prague/eip2537_bls_12_381_precompiles/test_bls12_g1msm.py --fork Osaka --clean -m state_test
@@ -293,17 +293,17 @@ All/most State tests are replicated as Blockchain tests in a `GeneralStateTests`
 
 Other client implementations often also provide functionality for output trace information.
 
-A convenient way is to use a local `geth` installation (can be the binary installation and doesn't has to be build from source or something) and then use the included `evm` tool like:
+A convenient way is to use a local `geth` installation (can be the binary installation and doesn't has to be build from source or something) and then use the included `tvm` tool like:
 
 ```shell
-evm --json --nomemory statetest node_modules/ethereumjs-testing/tests/GeneralStateTests/stCreate2/create2collisionCode2.json
+tvm --json --nomemory statetest node_modules/ethereumjs-testing/tests/GeneralStateTests/stCreate2/create2collisionCode2.json
 ```
 
 If you want to have only the output for a specific fork you can go into the referenced json test file and temporarily delete the `post` section for the non-desired fork outputs (or, more safe and also more convenient on triggering later: copy the test files you are interested in to your working directory and then modify without further worrying).
 
 ### Debugging Tools
 
-For comparing `EVM` traces [here](https://gist.github.com/cdetrio/41172f374ae32047a6c9e97fa9d09ad0) are some instructions for setting up `pyethereum` to generate corresponding traces for state tests.
+For comparing `TVM` traces [here](https://gist.github.com/cdetrio/41172f374ae32047a6c9e97fa9d09ad0) are some instructions for setting up `pyethereum` to generate corresponding traces for state tests.
 
 Compare TAP output from blockchain/state tests and produces concise diff of the differences between them (example):
 
@@ -313,13 +313,13 @@ curl https://gist.githubusercontent.com/jwasinger/e7004e82426ff0a7137a88d273f118
 python utils/diffTestOutput.py output-wip-byzantium.txt output-master.txt
 ```
 
-An extremely rich and powerful toolbox is the [evmlab](https://github.com/holiman/evmlab) from `holiman`, both for debugging and creating new test cases or example data.
+An extremely rich and powerful toolbox is the [tvmlab](https://github.com/holiman/tvmlab) from `holiman`, both for debugging and creating new test cases or example data.
 
 ## PERFORMANCE
 
 ### Build-in Profiling
 
-Test runs can be profiled using the new EVM/VM profiling functionality by using the `--profile` option for test runs:
+Test runs can be profiled using the new TVM/VM profiling functionality by using the `--profile` option for test runs:
 
 `npm run test:state -- --test='CreateCollisionToEmpty' --data=0 --gas=1 --value=0 --profile`
 

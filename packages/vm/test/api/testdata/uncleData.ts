@@ -2,7 +2,7 @@
 export const uncleData = {
   _info: {
     comment: '',
-    'filling-rpc-server': 'evm version 1.9.24-unstable-b63e3c37-20201029',
+    'filling-rpc-server': 'tvm version 1.9.24-unstable-b63e3c37-20201029',
     'filling-tool-version': 'retesteth-0.0.9-berlin+commit.60bef1d7.Linux.g++',
     lllcversion: 'Version: 0.5.14-develop.2020.6.22+commit.9189ad7a.Linux.g++',
     source: 'src/BlockchainTestsFiller/ValidBlocks/bcUncleTest/oneUncleFiller.json',

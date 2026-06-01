@@ -1,5 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
-import { EthereumJSErrorWithoutCode, validateNoLeadingZeroes } from '@ethereumjs/util'
+import { RLP } from '@tvmjs/rlp'
+import { EthereumJSErrorWithoutCode, validateNoLeadingZeroes } from '@tvmjs/util'
 
 import { LegacyTx } from './tx.ts'
 
@@ -24,15 +24,20 @@ export function createLegacyTx(txData: TxData, opts: TxOptions = {}) {
  * Format: `[nonce, gasPrice, gasLimit, to, value, data, v, r, s]`
  */
 export function createLegacyTxFromBytesArray(values: TxValuesArray, opts: TxOptions = {}) {
-  // If length is not 6, it has length 9. If v/r/s are empty Uint8Arrays, it is still an unsigned transaction
+  // If length is not 8, it has length 11. If v/r/s are empty Uint8Arrays, it is still an unsigned transaction
   // This happens if you get the RLP data from `raw()`
-  if (values.length !== 6 && values.length !== 9) {
+  if (values.length !== 6 && values.length !== 9 && values.length !== 8 && values.length !== 11) {
     throw EthereumJSErrorWithoutCode(
-      'Invalid transaction. Only expecting 6 values (for unsigned tx) or 9 values (for signed tx).',
+      'Invalid transaction. Only expecting 6 (for eth unsigned tx)/9 values (for eth signed tx) 8 (for tron unsigned tx)/11 values (for tron signed tx).',
     )
   }
 
-  const [nonce, gasPrice, gasLimit, to, value, data, v, r, s] = values
+  let nonce, gasPrice, gasLimit, to, value, tokenId, tokenValue, data, v, r, s
+  if (values.length === 6 || values.length === 9) {
+    ;[nonce, gasPrice, gasLimit, to, value, data, v, r, s] = values
+  } else {
+    ;[nonce, gasPrice, gasLimit, to, value, tokenId, tokenValue, data, v, r, s] = values
+  }
 
   validateNoLeadingZeroes({ nonce, gasPrice, gasLimit, value, v, r, s })
 
@@ -43,6 +48,8 @@ export function createLegacyTxFromBytesArray(values: TxValuesArray, opts: TxOpti
       gasLimit,
       to,
       value,
+      tokenId,
+      tokenValue,
       data,
       v,
       r,

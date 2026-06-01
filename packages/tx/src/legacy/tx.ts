@@ -1,4 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { RLP } from '@tvmjs/rlp'
 import {
   BIGINT_2,
   EthereumJSErrorWithoutCode,
@@ -9,8 +10,7 @@ import {
   intToBytes,
   toBytes,
   unpadBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 
 import * as Legacy from '../capabilities/legacy.ts'
 import { paramsTx } from '../index.ts'
@@ -19,8 +19,8 @@ import { getBaseJSON, sharedConstructor, valueOverflowCheck } from '../util/inte
 
 import { createLegacyTx } from './constructors.ts'
 
-import type { Common } from '@ethereumjs/common'
-import type { Address } from '@ethereumjs/util'
+import type { Common } from '@tvmjs/common'
+import type { Address } from '@tvmjs/util'
 import type {
   TxData as AllTypesTxData,
   TxValuesArray as AllTypesTxValuesArray,
@@ -88,6 +88,8 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
   public readonly nonce!: bigint
   public readonly gasLimit!: bigint
   public readonly value!: bigint
+  public readonly tokenId!: bigint
+  public readonly tokenValue!: bigint
   public readonly data!: Uint8Array
   public readonly to?: Address
 
@@ -221,6 +223,8 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
       bigIntToUnpaddedBytes(this.gasLimit),
       this.to !== undefined ? this.to.bytes : new Uint8Array(0),
       bigIntToUnpaddedBytes(this.value),
+      bigIntToUnpaddedBytes(this.tokenId),
+      bigIntToUnpaddedBytes(this.tokenValue),
       this.data,
       this.v !== undefined ? bigIntToUnpaddedBytes(this.v) : new Uint8Array(0),
       this.r !== undefined ? bigIntToUnpaddedBytes(this.r) : new Uint8Array(0),
@@ -249,7 +253,7 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
    * and you might need to do yourself with:
    *
    * ```javascript
-   * import { RLP } from '@ethereumjs/rlp'
+   * import { RLP } from '@tvmjs/rlp'
    * const message = tx.getMessageToSign()
    * const serializedMessage = RLP.encode(message)) // use this for the HW wallet input
    * ```
@@ -262,6 +266,8 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
       bigIntToUnpaddedBytes(this.gasLimit),
       this.to !== undefined ? this.to.bytes : new Uint8Array(0),
       bigIntToUnpaddedBytes(this.value),
+      bigIntToUnpaddedBytes(this.tokenId),
+      bigIntToUnpaddedBytes(this.tokenValue),
       this.data,
     ]
 
@@ -382,6 +388,8 @@ export class LegacyTx implements TransactionInterface<typeof TransactionType.Leg
         gasLimit: this.gasLimit,
         to: this.to,
         value: this.value,
+        tokenId: this.tokenId,
+        tokenValue: this.tokenValue,
         data: this.data,
         v,
         r: bytesToBigInt(r),

@@ -1,5 +1,5 @@
-import type { BigIntLike, KZG, PrefixedHexString } from '@ethereumjs/util'
 import type { secp256k1 } from '@noble/curves/secp256k1.js'
+import type { BigIntLike, KZG, PrefixedHexString } from '@tvmjs/util'
 import type { ConsensusAlgorithm, ConsensusType, Hardfork } from './enums.ts'
 
 export interface ChainName {
@@ -109,7 +109,7 @@ export interface BaseOpts {
   eips?: number[]
   /**
    * Optionally pass in an EIP params dictionary, see one of the
-   * EthereumJS library `params.ts` files for an example (e.g. tx, evm).
+   * EthereumJS library `params.ts` files for an example (e.g. tx, tvm).
    * By default parameters are set by the respective library, so this
    * is only relevant if you want to use EthereumJS libraries with a
    * custom parameter set.

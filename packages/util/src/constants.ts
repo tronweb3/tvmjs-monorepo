@@ -9,14 +9,14 @@ import { hexToBytes } from './bytes.ts'
 export const MAX_UINT64 = BigInt('0xffffffffffffffff')
 
 /**
- * The max integer that the evm can handle (2^256-1)
+ * The max integer that the tvm can handle (2^256-1)
  */
 export const MAX_INTEGER = BigInt(
   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
 )
 
 /**
- * The max integer that the evm can handle (2^256-1) as a bigint
+ * The max integer that the tvm can handle (2^256-1) as a bigint
  * 2^256-1 equals to 340282366920938463463374607431768211455
  * We use literal value instead of calculated value for compatibility issue.
  */
@@ -77,12 +77,21 @@ export const MAX_WITHDRAWALS_PER_PAYLOAD = 16
 export const RIPEMD160_ADDRESS_STRING = '0000000000000000000000000000000000000003'
 
 /**
+ * System address used by various EIPs (EIP-2935, EIP-7002, EIP-7251, EIP-7708, BAL).
+ * Single canonical definition to avoid duplication across packages.
+ */
+export const SYSTEM_ADDRESS = '0xfffffffffffffffffffffffffffffffffffffffe'
+export const SYSTEM_ADDRESS_BYTES = hexToBytes(SYSTEM_ADDRESS)
+
+/**
  * EIP-7934: RLP Execution Block Size Limit constants
  * Maximum RLP-encoded block size to 10 MiB, with a 2 MiB margin for beacon block sizes
  */
 export const MAX_BLOCK_SIZE = 10_485_760 // 10 MiB
 export const SAFETY_MARGIN = 2_097_152 // 2 MiB
 export const MAX_RLP_BLOCK_SIZE = MAX_BLOCK_SIZE - SAFETY_MARGIN // 8 MiB
+
+export const MIN_TOKEN_ID = 1000000n
 
 /**
  * BigInt constants

@@ -1,8 +1,8 @@
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
-import type { InterpreterStep } from '@ethereumjs/evm'
-import { bytesToHex } from '@ethereumjs/util'
+import type { InterpreterStep } from '@tvmjs/tvm'
+import { bytesToHex } from '@tvmjs/util'
 import type { AfterTxEvent } from '../../src/types.ts'
 import type { VM } from '../../src/vm.ts'
 import type { T8NOptions } from './types.ts'
@@ -69,7 +69,7 @@ export function getArguments() {
       default: false,
     })
     .option('trace', {
-      describe: 'Write EVM traces as JSON to trace-<tx-number>-<tx-hash>.json',
+      describe: 'Write TVM traces as JSON to trace-<tx-number>-<tx-hash>.json',
       type: 'boolean',
       default: false,
     })
@@ -135,8 +135,8 @@ export function normalizeNumbers(input: any) {
 }
 
 /**
- * Formats an individual EVM step trace as a JSON object
- * @param step an {@link InterpreterStep} emitted by the EVM `step` event
+ * Formats an individual TVM step trace as a JSON object
+ * @param step an {@link InterpreterStep} emitted by the TVM `step` event
  * @param memory whether to include the memory in the trace
  * @returns a JSON object that matches the EIP-7756 trace format
  */
@@ -174,7 +174,7 @@ export const stepTraceJSON = (step: InterpreterStep, memory: boolean = false) =>
 }
 
 /**
- * Formats an individual EVM summary trace as a JSON object
+ * Formats an individual TVM summary trace as a JSON object
  * @param event an {@link AfterTxEvent} emitted by the vm `afterTx` event
  * @param vm a {@link VM} instance
  * @returns a JSON object that matches the EIP-7756 summary object format

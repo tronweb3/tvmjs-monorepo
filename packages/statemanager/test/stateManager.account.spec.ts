@@ -4,7 +4,7 @@ import {
   createAddressFromString,
   equalsBytes,
   hexToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Caches, MerkleStateManager } from '../src/index.ts'

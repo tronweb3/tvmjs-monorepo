@@ -3,7 +3,7 @@ import type { ChainConfig } from './types.ts'
 export const Mainnet: ChainConfig = {
   name: 'mainnet',
   chainId: 1,
-  defaultHardfork: 'prague',
+  defaultHardfork: 'tron',
   consensus: {
     type: 'pow',
     algorithm: 'ethash',
@@ -65,11 +65,6 @@ export const Mainnet: ChainConfig = {
       forkHash: '0x879d6e30',
     },
     {
-      name: 'muirGlacier',
-      block: 9200000,
-      forkHash: '0xe029e991',
-    },
-    {
       name: 'berlin',
       block: 12244000,
       forkHash: '0x0eb440f6',
@@ -80,26 +75,11 @@ export const Mainnet: ChainConfig = {
       forkHash: '0xb715077d',
     },
     {
-      name: 'arrowGlacier',
-      block: 13773000,
-      forkHash: '0x20c327fc',
-    },
-    {
-      name: 'grayGlacier',
-      block: 15050000,
-      forkHash: '0xf0afd0e3',
-    },
-    {
       // The forkHash will remain same as mergeNetsplitBlock is post merge
       // terminal block: https://etherscan.io/block/15537393
       name: 'paris',
       block: 15537394,
       forkHash: '0xf0afd0e3',
-    },
-    {
-      name: 'mergeNetsplitBlock',
-      block: null,
-      forkHash: null,
     },
     {
       name: 'shanghai',
@@ -114,62 +94,18 @@ export const Mainnet: ChainConfig = {
       forkHash: '0x9f3d2254',
     },
     {
-      name: 'prague',
+      name: 'tron',
       block: null,
-      timestamp: '1746612311',
-      forkHash: '0xc376cf8b',
-    },
-    {
-      name: 'osaka',
-      block: null,
-      timestamp: '1764798551',
-      forkHash: '0x5167e2a6',
-    },
-    {
-      name: 'bpo1',
-      block: null,
-      timestamp: '1765290071',
-      forkHash: '0xcba2a1c0',
-    },
-    {
-      name: 'bpo2',
-      block: null,
-      timestamp: '1767747671',
-      forkHash: '0x07c9462e',
-    },
-    {
-      name: 'amsterdam',
-      block: null,
+      forkHash: '0xcb6b9941',
     },
   ],
   bootstrapNodes: [
     {
-      ip: '18.138.108.67',
-      port: 30303,
-      id: 'd860a01f9722d78051619d1e2351aba3f43f943f6f00718d1b9baa4101932a1f5011f16bb2b1bb35db20d6fe28fa0bf09636d26a87d31de9ec6203eeedb1f666',
-      location: 'ap-southeast-1-001',
-      comment: 'bootnode-aws-ap-southeast-1-001',
-    },
-    {
-      ip: '3.209.45.79',
-      port: 30303,
-      id: '22a8232c3abc76a16ae9d6c3b164f98775fe226f0917b0ca871128a74a8e9630b458460865bab457221f1d448dd9791d24c4e5d88786180ac185df813a68d4de',
-      location: 'us-east-1-001',
-      comment: 'bootnode-aws-us-east-1-001',
-    },
-    {
-      ip: '65.108.70.101',
-      port: 30303,
-      id: '2b252ab6a1d0f971d9722cb839a42cb81db019ba44c08754628ab4a823487071b5695317c8ccd085219c3a03af063495b2f1da8d18218da2d6a82981b45e6ffc',
-      location: 'eu-west-1-001',
-      comment: 'bootnode-hetzner-hel',
-    },
-    {
-      ip: '157.90.35.166',
-      port: 30303,
-      id: '4aeb4ab6c14b23e2c4cfdce879c04b0748a20d8e9b59e25ded2a08143e265c6c25936e74cbc8e641e3312ca288673d91f2f93f8e277de3cfa444ecdaaf982052',
-      location: 'eu-central-1-001',
-      comment: 'bootnode-hetzner-fsn',
+      ip: '127.0.0.1',
+      port: 9090,
+      id: '10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+      location: '',
+      comment: '',
     },
   ],
   dnsNetworks: [

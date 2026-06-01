@@ -1,4 +1,4 @@
-import { BIGINT_0, hexToBytes } from '@ethereumjs/util'
+import { BIGINT_0, hexToBytes } from '@tvmjs/util'
 
 export type Chain = (typeof Chain)[keyof typeof Chain]
 
@@ -85,6 +85,7 @@ export const Hardfork = {
   Bpo4: 'bpo4',
   Bpo5: 'bpo5',
   Amsterdam: 'amsterdam',
+  Tron: 'tron',
 } as const
 
 export type ConsensusType = (typeof ConsensusType)[keyof typeof ConsensusType]

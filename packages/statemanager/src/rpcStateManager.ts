@@ -1,5 +1,6 @@
-import { Common, Mainnet } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Common, Mainnet } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
 import {
   Account,
   EthereumJSErrorWithoutCode,
@@ -11,16 +12,16 @@ import {
   fetchFromProvider,
   hexToBytes,
   intToHex,
+  isDebugEnabled,
   toBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import { Caches, OriginalStorageCache } from './cache/index.ts'
 import { modifyAccountFields } from './util.ts'
 
-import type { AccountFields, StateManagerInterface, StorageDump } from '@ethereumjs/common'
-import type { Address } from '@ethereumjs/util'
+import type { AccountFields, StateManagerInterface, StorageDump } from '@tvmjs/common'
+import type { Address } from '@tvmjs/util'
 import type { Debugger } from 'debug'
 import type { RPCStateManagerOpts } from './index.ts'
 
@@ -37,10 +38,8 @@ export class RPCStateManager implements StateManagerInterface {
   public readonly common: Common
 
   constructor(opts: RPCStateManagerOpts) {
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    // Additional window check is to prevent vite browser bundling (and potentially other) to break
-    this.DEBUG =
-      typeof window === 'undefined' ? (process?.env?.DEBUG?.includes('ethjs') ?? false) : false
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
 
     this._debug = debugDefault('statemanager:rpc')
     if (typeof opts.provider === 'string' && opts.provider.startsWith('http')) {
@@ -356,6 +355,11 @@ export class RPCStateManager implements StateManagerInterface {
    */
   hasStateRoot = () => {
     throw EthereumJSErrorWithoutCode('function not implemented')
+  }
+
+  // TODO TRON implement token in rpc state manager
+  async tokenIdExists(_tokenId: number): Promise<boolean> {
+    throw EthereumJSErrorWithoutCode('Method not implemented.')
   }
 }
 

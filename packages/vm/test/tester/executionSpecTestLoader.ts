@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import {
   type ChainConfig,
   Common,
@@ -7,9 +8,8 @@ import {
   type HardforkTransitionConfig,
   type HardforksDict,
   Mainnet,
-} from '@ethereumjs/common'
-import { TypeOutput, toType } from '@ethereumjs/util'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/common'
+import { TypeOutput, toType } from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
 export type ExecutionSpecFixtureType = 'state_tests' | 'blockchain_tests'

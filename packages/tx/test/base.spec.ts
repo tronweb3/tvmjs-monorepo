@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import {
   SECP256K1_ORDER,
   bytesToBigInt,
@@ -6,7 +6,7 @@ import {
   hexToBytes,
   privateToPublic,
   utf8ToBytes,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {
@@ -197,7 +197,7 @@ describe('[BaseTransaction]', () => {
       )
     }
     rlpData[0] = hexToBytes('0x')
-    rlpData[6] = hexToBytes('0x0')
+    rlpData[8] = hexToBytes('0x0')
     try {
       createLegacyTxFromBytesArray(rlpData)
       assert.fail('should have thrown when v has leading zeroes')

@@ -1,9 +1,9 @@
-import { createBlockFromJSONRPCProvider, createBlockFromRPC } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createEVM } from '@ethereumjs/evm'
-import type { EVMMockBlockchainInterface, EVMRunCallOpts } from '@ethereumjs/evm'
-import { verifyMerkleProof } from '@ethereumjs/mpt'
-import { createFeeMarket1559Tx, createTxFromRPC } from '@ethereumjs/tx'
+import { createBlockFromJSONRPCProvider, createBlockFromRPC } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { verifyMerkleProof } from '@tvmjs/mpt'
+import { createTVM } from '@tvmjs/tvm'
+import type { TVMMockBlockchainInterface, TVMRunCallOpts } from '@tvmjs/tvm'
+import { createFeeMarket1559Tx, createTxFromRPC } from '@tvmjs/tx'
 import {
   Address,
   bigIntToBytes,
@@ -15,8 +15,8 @@ import {
   hexToBytes,
   setLengthLeft,
   utf8ToBytes,
-} from '@ethereumjs/util'
-import { createVM, runBlock, runTx } from '@ethereumjs/vm'
+} from '@tvmjs/util'
+import { createVM, runBlock, runTx } from '@tvmjs/vm'
 import { assert, describe, expect, it, vi } from 'vitest'
 
 import { MerkleStateManager } from '../src/merkleStateManager.ts'
@@ -33,8 +33,8 @@ const provider = process.env.PROVIDER ?? 'http://cheese'
 // `PROVIDER=https://mainnet.infura.io/v3/[mySuperS3cretproviderKey] npx vitest run test/rpcStateManager.spec.ts
 
 describe('RPC State Manager initialization tests', async () => {
-  vi.mock('@ethereumjs/util', async () => {
-    const util = await vi.importActual('@ethereumjs/util')
+  vi.mock('@tvmjs/util', async () => {
+    const util = await vi.importActual('@tvmjs/util')
     return {
       ...util,
       fetchFromProvider: vi.fn().mockImplementation(async (url, { method, params }: any) => {
@@ -43,7 +43,7 @@ describe('RPC State Manager initialization tests', async () => {
       }),
     }
   })
-  await import('@ethereumjs/util')
+  await import('@tvmjs/util')
 
   it('should work', () => {
     let state = new RPCStateManager({ provider, blockTag: 1n })
@@ -323,27 +323,27 @@ describe('runBlock test', () => {
 
 describe('blockchain', () =>
   it('uses blockhash', async () => {
-    const blockchain = new RPCBlockChain(provider) as unknown as EVMMockBlockchainInterface
+    const blockchain = new RPCBlockChain(provider) as unknown as TVMMockBlockchainInterface
     const blockTag = 1n
     const state = new RPCStateManager({ provider, blockTag })
-    const evm = await createEVM({ blockchain, stateManager: state })
+    const tvm = await createTVM({ blockchain, stateManager: state })
     // Bytecode for returning the blockhash of the block previous to `blockTag`
     const code = '0x600143034060005260206000F3'
     const contractAddress = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
 
     const caller = createAddressFromString('0xd8da6bf26964af9d7eed9e03e53415d37aa96045')
-    await evm.stateManager.setStateRoot(
+    await tvm.stateManager.setStateRoot(
       hexToBytes('0xf8506f559699a58a4724df4fcf2ad4fd242d20324db541823f128f5974feb6c7'),
     )
     const block = await createBlockFromJSONRPCProvider(provider, 500000n, { setHardfork: true })
-    await evm.stateManager.putCode(contractAddress, hexToBytes(code))
-    const runCallArgs: Partial<EVMRunCallOpts> = {
+    await tvm.stateManager.putCode(contractAddress, hexToBytes(code))
+    const runCallArgs: Partial<TVMRunCallOpts> = {
       caller,
       gasLimit: BigInt(0xffffffffff),
       to: contractAddress,
       block,
     }
-    const res = await evm.runCall(runCallArgs)
+    const res = await tvm.runCall(runCallArgs)
     assert.strictEqual(
       bytesToHex(res.execResult.returnValue),
       '0x794a1bef434928ce3aadd2f5eced2bf72ac714a30e9e4ab5965d7d9760300d84',

@@ -1,3 +1,4 @@
+import { keccak_256 } from '@noble/hashes/sha3.js'
 import {
   BIGINT_0,
   BIGINT_1,
@@ -14,8 +15,7 @@ import {
   randomBytes,
   unprefixedHexToBytes,
   utf8ToBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { ROOT_DB_KEY as BASE_DB_KEY, MerklePatriciaTrie, createMPT } from '../../src/index.ts'

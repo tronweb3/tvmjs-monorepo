@@ -1,9 +1,9 @@
-import { Account, Address, hexToBytes } from '@ethereumjs/util'
+import { Account, Address, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { MerkleStateManager, SimpleStateManager } from '../src/index.ts'
 
-import type { StateManagerInterface } from '@ethereumjs/common'
+import type { StateManagerInterface } from '@tvmjs/common'
 
 const storageEval = async (
   sm: StateManagerInterface,

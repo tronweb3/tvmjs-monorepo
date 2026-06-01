@@ -1,0 +1,667 @@
+# @tvmjs/tvm `1.0.0`
+
+| TypeScript implementation of the TRON Virtual Machine (TVM). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
+| --- |
+
+- 🦄 All hardforks up to **Osaka**
+- 🌴 Tree-shakeable API
+- 👷🏼 Controlled dependency set (7 external + `@Noble` crypto)
+- 🧩 Flexible EIP on/off engine
+- 🛠️ Custom precompiles
+- 🚀 Built-in profiler
+- 🪢 User-friendly colored debugging
+- 🛵 422KB bundle size (110KB gzipped)
+- 🏄🏾‍♂️ WASM-free default + Fully browser ready
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [Examples](#examples)
+- [Browser](#browser)
+- [API](#api)
+- [Architecture](#architecture)
+- [Supported Hardforks](#supported-hardforks)
+- [Supported EIPs](#supported-eips)
+- [Precompiles](#precompiles)
+- [Events](#events)
+- [Understanding the TVM](#understanding-the-tvm)
+- [Profiling the TVM](#profiling-the-tvm)
+- [Development](#development)
+- [Upstream](#upstream)
+- [License](#license)
+
+
+## Installation
+
+To obtain the latest version, simply require the project using `npm`:
+
+```shell
+npm install @tvmjs/tvm
+```
+
+This package provides the core TRON Virtual Machine (TVM) implementation which is capable of executing TVM-compatible bytecode. The package has been extracted from the [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) package along the VM `v6` release.
+
+## Getting Started
+
+### Basic
+
+The following is the simplest example for an TVM instantiation with reasonable defaults for state and blockchain information (like blockhashes):
+
+```ts
+// ./examples/simple.ts
+
+import { createTVM } from '@tvmjs/tvm'
+import { hexToBytes } from '@tvmjs/util'
+
+const main = async () => {
+  const tvm = await createTVM()
+  const res = await tvm.runCode({ code: hexToBytes('0x6001') }) // PUSH1 01 -- simple bytecode to push 1 onto the stack
+  console.log(res.executionGasUsed) // 3n
+}
+
+void main()
+```
+
+### Blockchain, State and Events
+
+If you want the TVM to run against a specific state, you need an `@tvmjs/statemanager`. An `@tvmjs/blockchain` instance can be passed in to provide access to external interface information like a blockhash:
+
+```ts
+// ./examples/withBlockchain.ts
+
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createTVM } from '@tvmjs/tvm'
+import { MerkleStateManager } from '@tvmjs/statemanager'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
+
+import type { PrefixedHexString } from '@tvmjs/util'
+
+const main = async () => {
+  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
+  const stateManager = new MerkleStateManager()
+  const blockchain = await createBlockchain()
+
+  const tvm = await createTVM({
+    common,
+    stateManager,
+    blockchain,
+  })
+
+  const STOP = '00'
+  const ADD = '01'
+  const PUSH1 = '60'
+
+  // Note that numbers added are hex values, so '20' would be '32' as decimal e.g.
+  const code = [PUSH1, '03', PUSH1, '05', ADD, STOP]
+
+  tvm.events.on('step', function (data) {
+    // Note that data.stack is not immutable, i.e. it is a reference to the vm's internal stack object
+    console.log(`Opcode: ${data.opcode.name}\tStack: ${data.stack}`)
+  })
+
+  const results = await tvm.runCode({
+    code: hexToBytes(('0x' + code.join('')) as PrefixedHexString),
+    gasLimit: BigInt(0xffff),
+  })
+
+  console.log(`Returned: ${bytesToHex(results.returnValue)}`)
+  console.log(`gasUsed: ${results.executionGasUsed.toString()}`)
+}
+
+void main()
+```
+
+Additionally, this example shows how to use events to listen to the inner workings and procedural updates
+(`step` event) of the TVM.
+
+### WASM Crypto Support
+
+This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification (for included txs). See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace them with, e.g., a more performant WASM implementation by using a shared `common` instance.
+
+## Examples
+
+See the [examples](./examples/) folder for different meaningful examples on how to use the TVM package and invoke certain aspects of it, e.g. running a bytecode snippet, listening to events, or to activate an TVM with a certain EIP for experimental purposes.
+
+## Browser
+
+We provide hybrid ESM/CJS builds for all our libraries. With the v10 breaking release round from Spring 2025, all libraries are "pure-JS" by default and we have eliminated all hard-wired WASM code. Additionally we have substantially lowered the bundle sizes, reduced the number of dependencies, and cut out all usages of Node.js-specific primitives (like the Node.js event emitter).
+
+It is easily possible to run a browser build of one of the TVMJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
+
+## API
+
+### Docs
+
+For documentation on `TVM` instantiation, exposed API and emitted `events` see generated [API docs](./docs/README.md).
+
+### Hybrid CJS/ESM Builds
+
+With the breaking releases from Summer 2023 we have started to ship our libraries with both CommonJS (`cjs` folder) and ESM builds (`esm` folder), see `package.json` for the detailed setup.
+
+If you use an ES6-style `import` in your code files, the ESM build will be used:
+
+```ts
+import { TVMJSClass } from '@tvmjs/[PACKAGE_NAME]'
+```
+
+If you use Node.js specific `require`, the CJS build will be used:
+
+```ts
+const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
+```
+
+Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS can not provide.
+
+## Architecture
+
+### VM/TVM Relation
+
+This package contains the inner TRON Virtual Machine (TVM) core functionality which was included in the [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) package up to v5 and has been extracted along the v6 release.
+
+This will make it easier to customize the inner TVM, which can now be passed as an optional argument to the outer `VM` instance.
+
+### State and Blockchain Information
+
+For the TVM to properly work it needs access to a respective execution environment (to e.g. request on information like block hashes) as well as the connection to an outer account and contract state.
+
+With the v2 release TVM, VM and StateManager have been substantially reworked in this regard, see PR [#2649](https://github.com/ethereumjs/ethereumjs-monorepo/pull/2649/) and PR [#2702](https://github.com/ethereumjs/ethereumjs-monorepo/pull/2702) for further deepening context.
+
+The interfaces (in a non-TypeScript sense) between these packages have been simplified and the `EEI` package has been completely removed. Most of the EEI related logic is now either handled internally or more generic functionality being taken over by the `@tvmjs/statemanager` package.
+
+This allows for both a standalone TVM instantiation with reasonable defaults as well as for a simplified TVM -> VM passing if a customized TVM is needed.
+
+## Supported Hardforks
+
+The TVMJS TVM implements all hardforks from `Frontier` (`chainstart`) up to the latest active mainnet hardfork.
+
+Currently the following hardfork rules are supported:
+
+- `chainstart` (a.k.a. Frontier)
+- `homestead`
+- `tangerineWhistle`
+- `spuriousDragon`
+- `byzantium`
+- `constantinople`
+- `petersburg`
+- `istanbul`
+- `muirGlacier` (only `mainnet`)
+- `berlin`
+- `london`
+- `arrowGlacier` (only `mainnet`)
+- `merge`
+- `shanghai`
+- `cancun`
+- `prague`
+- `tron`
+
+Default: `tron` (taken from `Common.DEFAULT_HARDFORK`)
+
+A specific hardfork TVM ruleset can be activated by passing in the hardfork
+along the `Common` instance to the outer `@tvmjs/vm` instance.
+
+## Supported EIPs
+
+If you want to activate an EIP not currently active on the hardfork your `common` instance is set to, it is possible to individually activate EIP support in the TVM by specifying the desired EIPs using the `eips` property in your `CommonOpts` setup, e.g.:
+
+```ts
+// ./examples/eips.ts
+
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createTVM } from '@tvmjs/tvm'
+
+const main = async () => {
+  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7702] })
+  const tvm = await createTVM({ common })
+  console.log(
+    `EIP 7702 is active in isolation on top of the Cancun HF - ${tvm.common.isActivatedEIP(7702)}`,
+  )
+}
+
+void main()
+
+```
+
+Currently supported EIPs:
+
+- [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153) - Transient storage opcodes (Cancun)
+- [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) - Fee market change for ETH 1.0 chain
+- [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537) - Precompile for BLS12-381 curve operations (Prague)
+- [EIP-2565](https://eips.ethereum.org/EIPS/eip-2565) - ModExp gas cost
+- [EIP-2718](https://eips.ethereum.org/EIPS/eip-2718) - Transaction Types
+- [EIP-2935](https://eips.ethereum.org/EIPS/eip-2935) - Serve historical block hashes in state (Prague)
+- [EIP-2929](https://eips.ethereum.org/EIPS/eip-2929) - gas cost increases for state access opcodes
+- [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) - Optional access list tx type
+- [EIP-3074](https://eips.ethereum.org/EIPS/eip-3074) - AUTH and AUTHCALL opcodes
+- [EIP-3198](https://eips.ethereum.org/EIPS/eip-3198) - Base fee Opcode
+- [EIP-3529](https://eips.ethereum.org/EIPS/eip-3529) - Reduction in refunds
+- [EIP-3541](https://eips.ethereum.org/EIPS/eip-3541) - Reject new contracts starting with the 0xEF byte
+- [EIP-3554](https://eips.ethereum.org/EIPS/eip-3554) - Difficulty Bomb Delay to December 2021 (only PoW networks)
+- [EIP-3607](https://eips.ethereum.org/EIPS/eip-3607) - Reject transactions from senders with deployed code
+- [EIP-3651](https://eips.ethereum.org/EIPS/eip-3651) - Warm COINBASE (Shanghai)
+- [EIP-3675](https://eips.ethereum.org/EIPS/eip-3675) - Upgrade consensus to Proof-of-Stake
+- [EIP-3855](https://eips.ethereum.org/EIPS/eip-3855) - Push0 opcode (Shanghai)
+- [EIP-3860](https://eips.ethereum.org/EIPS/eip-3860) - Limit and meter initcode (Shanghai)
+- [EIP-4345](https://eips.ethereum.org/EIPS/eip-4345) - Difficulty Bomb Delay to June 2022
+- [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) - Supplant DIFFICULTY opcode with PREVRANDAO (Merge)
+- [EIP-4788](https://eips.ethereum.org/EIPS/eip-4788) - Beacon block root in the TVM (Cancun)
+- [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) - Shard Blob Transactions (Cancun)
+- [EIP-4895](https://eips.ethereum.org/EIPS/eip-4895) - Beacon chain push withdrawals as operations (Shanghai)
+- [EIP-5133](https://eips.ethereum.org/EIPS/eip-5133) - Delaying Difficulty Bomb to mid-September 2022 (Gray Glacier)
+- [EIP-5656](https://eips.ethereum.org/EIPS/eip-5656) - MCOPY - Memory copying instruction (Cancun)
+- [EIP-6110](https://eips.ethereum.org/EIPS/eip-6110) - Supply validator deposits on chain (Prague)
+- [EIP-6780](https://eips.ethereum.org/EIPS/eip-6780) - SELFDESTRUCT only in same transaction (Cancun)
+- [EIP-7002](https://eips.ethereum.org/EIPS/eip-7002) - Execution layer triggerable exits (Prague)
+- [EIP-7251](https://eips.ethereum.org/EIPS/eip-7251) - Increase the MAX_EFFECTIVE_BALANCE (Prague)
+- [EIP-7516](https://eips.ethereum.org/EIPS/eip-7516) - BLOBBASEFEE opcode (Cancun)
+- [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623) - Increase calldata cost (Prague)
+- [EIP-7685](https://eips.ethereum.org/EIPS/eip-7685) - General purpose execution layer requests (Prague)
+- [EIP-7691](https://eips.ethereum.org/EIPS/eip-7691) - Blob throughput increase (Prague)
+- [EIP-7692](https://eips.ethereum.org/EIPS/eip-7692) - TVM Object Format (EOF) v1 (`experimental`)
+- [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) - Set EOA account code (Prague)
+- [EIP-7709](https://eips.ethereum.org/EIPS/eip-7709) - Read BLOCKHASH from storage and update cost (Verkle)
+
+## Precompiles
+
+This library supports all TVM precompiles up to the `tron` hardfork.
+
+In our `examples` folder we provide a helper function for simple direct precompile runs in the `precompiles` folder.
+
+This is an example of a simple precompile run (BLS12_G1ADD precompile):
+
+```ts
+// ./examples/precompiles/0b-bls12-g1add.ts
+
+import { runPrecompile } from './util.ts'
+
+const main = async () => {
+  // BLS12_G1ADD precompile (address 0xb)
+  // Data taken from test/eips/precompiles/bls/add_G1_bls.json
+  // Input: G1 and G2 points (each 128 bytes = 256 hex characters)
+  const g1Point =
+    '0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1'
+  const g2Point =
+    '00000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca942600000000000000000000000000000000186b28d92356c4dfec4b5201ad099dbdede3781f8998ddf929b4cd7756192185ca7b8f4ef7088f813270ac3d48868a21'
+  const data = `0x${g1Point}${g2Point}`
+
+  await runPrecompile('BLS12_G1ADD', '0xb', data)
+}
+
+void main()
+
+```
+
+
+### EIP-2537 BLS Precompiles (Prague)
+
+Starting with `v10` the TVM supports the BLS precompiles introduced with [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537) in its final version introduced with the `Prague` hardfork. These precompiles run natively using the [@noble/curves](https://github.com/paulmillr/noble-curves) library (❤️ to `@paulmillr`!).
+
+An alternative WASM implementation (using [bls-wasm](https://github.com/herumi/bls-wasm)) can be optionally used like this if needed for performance reasons:
+
+```ts
+import { TVM, MCLBLS } from '@tvmjs/tvm'
+
+const common = new Common({ chain: Chain.Mainnet, hardfork: Hardfork.Prague })
+await mcl.init(mcl.BLS12_381)
+const mclbls = new MCLBLS(mcl)
+const tvm = await createTVM({ common, bls })
+```
+
+### EIP-7823/EIP-7883 MODEXP Precompile (Osaka)
+
+The Osaka hardfork introduces some behavioral changes with [EIP-7823](https://eips.ethereum.org/EIPS/eip-7823) as well as a gas cost increase for the MODEXP precompile with [EIP-7883](https://eips.ethereum.org/EIPS/eip-7883).
+
+You can use the following example as a starting point to compare on the changes between hardforks:
+
+```ts
+// ./examples/precompiles/05-modexp.ts
+
+import { Hardfork } from '@tvmjs/common'
+import { runPrecompile } from './util.ts'
+
+const main = async () => {
+  // MODEXP precompile (address 0x05)
+  // Calculate: 2^3 mod 5 = 8 mod 5 = 3
+  //
+  // Input format:
+  // - First 32 bytes: base length (0x01 = 1 byte)
+  // - Next 32 bytes: exponent length (0x01 = 1 byte)
+  // - Next 32 bytes: modulus length (0x01 = 1 byte)
+  // - Next 1 byte: base value (0x02 = 2)
+  // - Next 1 byte: exponent value (0x03 = 3)
+  // - Next 1 byte: modulus value (0x05 = 5)
+
+  const baseLen = '0000000000000000000000000000000000000000000000000000000000000001' // 1 byte
+  const expLen = '0000000000000000000000000000000000000000000000000000000000000001' // 1 byte
+  const modLen = '0000000000000000000000000000000000000000000000000000000000000001' // 1 byte
+  const base = '02' // 2
+  const exponent = '03' // 3
+  const modulus = '05' // 5
+
+  const data = `0x${baseLen}${expLen}${modLen}${base}${exponent}${modulus}`
+
+  await runPrecompile('MODEXP', '0x05', data)
+  await runPrecompile('MODEXP', '0x05', data, Hardfork.Cancun)
+}
+
+void main()
+
+```
+
+### EIP-7951 Precompile for secp256r1 Curve Support (Osaka)
+
+The Osaka hardfork introduces a new precompile for secp256r1 curve support with [EIP-7951](https://eips.ethereum.org/EIPS/eip-7951).
+
+The following example code allows you to generate input values for the precompile using Noble Curves [v2.0.0](https://github.com/paulmillr/noble-curves/releases/tag/2.0.0) or later.
+
+```ts
+// No direct examples integration (library version not taken in as a dependency)
+import { p256 } from '@noble/curves/nist.js'
+import { sha256 } from '@noble/hashes/sha2.js'
+import { bigIntToHex, bytesToHex } from '@tvmjs/util'
+
+// Private/public key
+const { secretKey, publicKey } = p256.keygen()
+const pointPubKey = p256.Point.fromBytes(publicKey)
+const pointX = bigIntToHex(pointPubKey.X)
+const pointY = bigIntToHex(pointPubKey.Y)
+
+// Message (hash) / signature
+const msg = new TextEncoder().encode('Hello Fusaka!')
+const sig = p256.sign(msg, secretKey, { lowS: false, prehash: false })
+const msgHash = bytesToHex(sha256(msg))
+const sigR = bytesToHex(sig).substring(2, 64 + 2)
+const sigS = bytesToHex(sig).substring(64 + 2)
+```
+
+### Custom Precompiles
+
+The TVM supports registering custom precompiles at arbitrary addresses. Custom precompiles can **add** new precompiles, **override** existing ones, or **delete** built-in precompiles.
+
+Pass an array of `CustomPrecompile` entries to the `customPrecompiles` option when creating the TVM:
+
+```ts
+// ./examples/precompiles/customPrecompile.ts
+
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createTVM } from '@tvmjs/tvm'
+import {
+  bigIntToBytes,
+  bytesToBigInt,
+  bytesToHex,
+  createAddressFromString,
+  setLengthLeft,
+} from '@tvmjs/util'
+
+import type { ExecResult, PrecompileInput } from '@tvmjs/tvm'
+
+// Custom precompile that adds two 32-byte big-endian unsigned integers (mod 2^256).
+const ADDITION_GAS = 15n
+
+function additionPrecompile(input: PrecompileInput): ExecResult {
+  const a = bytesToBigInt(input.data.subarray(0, 32))
+  const b = bytesToBigInt(input.data.subarray(32, 64))
+  const sum = (a + b) % 2n ** 256n
+  return {
+    executionGasUsed: ADDITION_GAS,
+    returnValue: setLengthLeft(bigIntToBytes(sum), 32),
+  }
+}
+
+const main = async () => {
+  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Prague })
+  const ADDRESS = '0x000000000000000000000000000000000000ff01'
+
+  // Register the custom precompile with a hex string address
+  const tvm = await createTVM({
+    common,
+    customPrecompiles: [{ address: ADDRESS, function: additionPrecompile }],
+  })
+
+  // Verify it is registered
+  const fn = tvm.getPrecompile(ADDRESS)
+  console.log(`Precompile registered at ${ADDRESS}: ${fn !== undefined}`)
+
+  // Build call data: two 32-byte values (7 + 35)
+  const a = setLengthLeft(bigIntToBytes(7n), 32)
+  const b = setLengthLeft(bigIntToBytes(35n), 32)
+  const callData = new Uint8Array(64)
+  callData.set(a, 0)
+  callData.set(b, 32)
+
+  // Execute via runCall
+  const result = await tvm.runCall({
+    to: createAddressFromString(ADDRESS),
+    gasLimit: BigInt(30000),
+    data: callData,
+  })
+
+  console.log('--------------------------------')
+  console.log('Custom Addition Precompile')
+  console.log(`Input    : 7 + 35`)
+  console.log(`Result   : ${bytesToBigInt(result.execResult.returnValue)} (${bytesToHex(result.execResult.returnValue)})`)
+  console.log(`Gas used : ${result.execResult.executionGasUsed}`)
+  console.log('--------------------------------')
+}
+
+void main()
+
+```
+
+The address for custom precompiles can be specified as either an `Address` instance or a `0x`-prefixed hex string. All relevant types (`CustomPrecompile`, `AddPrecompile`, `DeletePrecompile`, `PrecompileFunc`, `PrecompileInput`) are exported from `@tvmjs/tvm`.
+
+You can use `tvm.getPrecompile(address)` to retrieve a registered precompile function at any address (works for both built-in and custom precompiles):
+
+```ts
+const fn = tvm.getPrecompile('0x0000000000000000000000000000000000000002') // SHA256
+const custom = tvm.getPrecompile('0x000000000000000000000000000000000000ff01') // custom
+```
+
+To **override** a built-in precompile, register a custom precompile at the same address. To **delete** a precompile, pass an entry with only the `address` field (no `function`):
+
+```ts
+const tvm = await createTVM({
+  customPrecompiles: [
+    { address: '0x0000000000000000000000000000000000000002' }, // deletes SHA256
+  ],
+})
+```
+
+## Events
+
+### Tracing Events
+
+The TVM emits events that support async listeners (using [EventEmitter3](https://github.com/primus/eventemitter3)).
+
+You can subscribe to the following events:
+
+- `beforeMessage`: Emits a `Message` right after running it.
+- `afterMessage`: Emits an `TVMResult` right after running a message.
+- `step`: Emits an `InterpreterStep` right before running an TVM step.
+- `newContract`: Emits a `NewContractEvent` right before creating a contract. This event contains the deployment code, not the deployed code, as the creation message may not return such a code.
+
+#### Event listeners
+
+You can perform asynchronous operations from within an event handler
+and prevent the TVM from continuing until they finish.
+
+If subscribing to events with an async listener, specify the second
+parameter of your listener as a `resolve` function that must be called once your listener code has finished.
+
+See below for example usage:
+
+```ts
+// ./examples/eventListener.ts#L7-L14
+
+tvm.events.on('beforeMessage', (event) => {
+  console.log('synchronous listener to beforeMessage', event)
+})
+tvm.events.on('afterMessage', (event, resolve) => {
+  console.log('asynchronous listener to beforeMessage', event)
+  // we need to call resolve() to avoid the event listener hanging
+  resolve?.()
+})
+```
+
+If an exception is passed to that function, or thrown from within the
+handler or a function called by it, the exception will bubble into the
+TVM and interrupt it, possibly corrupting its state. It's strongly
+recommended not to do that.
+
+## Understanding the TVM
+
+If you want to understand your TVM runs we have added a hierarchically structured list of debug loggers for your convenience which can be activated in arbitrary combinations. We also use these loggers internally for development and testing. These loggers use the [debug](https://github.com/visionmedia/debug) library and can be activated on the CLI with `DEBUG=tvmjs,[Logger Selection] node [Your Script to Run].js` and produce output like the following:
+
+![TVMJS TVM Debug Logger](./debug.png?raw=true)
+
+The following loggers are currently available:
+
+| Logger                             | Description                                         |
+| ---------------------------------- | --------------------------------------------------- |
+| `tvm:tvm`                          |  TVM control flow, CALL or CREATE message execution |
+| `tvm:gas`                          |  TVM gas logger                                     |
+| `tvm:precompiles`                  |  TVM precompiles logger                             |
+| `tvm:journal`                      |  TVM journal logger                                 |
+| `tvm:ops`                          |  Opcode traces                                      |
+| `tvm:ops:[Lower-case opcode name]` | Traces on a specific opcode                         |
+
+Here are some examples of useful logger combinations.
+
+Run one specific logger:
+
+```shell
+DEBUG=tvmjs,tvm tsx test.ts
+```
+
+Run all loggers currently available:
+
+```shell
+DEBUG=tvmjs,tvm:*,tvm:*:* tsx test.ts
+```
+
+Run only the gas loggers:
+
+```shell
+DEBUG=tvmjs,tvm:*:gas tsx test.ts
+```
+
+Excluding the ops logger:
+
+```shell
+DEBUG=tvmjs,tvm:*,tvm:*:*,-tvm:ops tsx test.ts
+```
+
+Run some specific loggers including a logger specifically logging the `SSTORE` executions from the TVM (this is from the screenshot above):
+
+```shell
+DEBUG=tvmjs,tvm,tvm:ops:sstore,tvm:*:gas tsx test.ts
+```
+
+`tvmjs` **must** be included in the `DEBUG` environment variables to enable **any** logs.
+Additional log selections can be added with a comma separated list (no spaces). Logs with extensions can be enabled with a colon `:`, and `*` can be used to include all extensions.
+
+`DEBUG=tvmjs,tvm:journal,tvm:ops:* npx vitest test/runCall.spec.ts`
+
+### Internal Structure
+
+The TVM processes state changes through a hierarchical flow of execution:
+
+#### Top Level: Message Execution (`runCall`)
+The `runCall` method handles the execution of messages, which can be either contract calls or contract creations:
+- Creates a checkpoint in the state
+- Sets up the execution environment (block context, transaction origin, etc.)
+- Manages account nonce updates
+- Handles value transfers between accounts
+- Delegates to either `_executeCall` or `_executeCreate` based on whether the message has a `to` address
+- **Both `_executeCall` and `_executeCreate` call into `runInterpreter` to actually execute the bytecode**
+- Processes any errors or exceptions
+- Manages selfdestruct sets and created contract addresses
+- Commits or reverts state changes based on execution result
+- Triggers events (`beforeMessage`, `afterMessage`)
+
+#### Code Execution (`runCode` / `runInterpreter`)
+The `runCode` method is a helper for directly running TVM bytecode (e.g., for testing or utility purposes) without the full message/transaction context:
+- Sets up a minimal message context for code execution
+- **Directly calls `runInterpreter` to execute the provided bytecode**
+- Does not go through the full message handling logic of `runCall`
+
+The `runInterpreter` method is used by both `runCall` (via `_executeCall`/`_executeCreate`) and `runCode` to process the actual bytecode.
+
+#### Bytecode Processing (Interpreter)
+The Interpreter class is the core bytecode processor:
+- Manages execution state (program counter, stack, memory, gas)
+- Executes a loop that:
+  - Analyzes jump destinations
+  - Fetches the next opcode
+  - Calculates gas costs (static and dynamic)
+  - Executes the opcode handler
+  - Updates the program counter
+  - Emits step events for debugging/tracing
+- Handles stack, memory, and storage operations
+- Processes call and creation operations by delegating back to the TVM
+
+#### Opcode Functions
+Each opcode has an associated handler function that:
+- Validates inputs
+- Calculates dynamic gas costs
+- Performs the opcode's logic (stack operations, memory operations, etc.)
+- Updates the TVM state
+- The program counter is incremented in between the execution of the gas handler and opcode logic handler functions, this should be considered e.g. if parsing immediate input parameters
+- Special opcodes like `CALL`, `CREATE`, `DELEGATECALL` create a new message and call back to the TVM's `runCall` method
+
+#### Journal and State Management
+- State changes are tracked in a journal system
+- The journal supports checkpointing and reversion
+- Transient storage (EIP-1153) has its own checkpoint mechanism
+- When a message completes successfully, changes are committed to the state
+- On failure (exceptions), changes are reverted
+
+This layered architecture provides separation of concerns while allowing for the complex interactions needed to execute smart contracts on the TRON platform.
+
+## Profiling the TVM
+
+The TVMJS TVM comes with built-in profiling capabilities to detect performance bottlenecks and to generally support the targeted evolution of the JavaScript TVM performance.
+
+To repeatedly run the TVM profiler within the client sync the client on mainnet or a larger testnet to the desired block. Then the profiler should be run without sync (to not distort the results) by using the `--executeBlocks` and the `--vmProfileBlocks` (or `--vmProfileTxs`) flags in conjunction like:
+
+```shell
+npm run client:start -- --sync=none --vmProfileBlocks --executeBlocks=962720
+```
+
+This will give a profile output like the following:
+
+![TVMJS TVM Profiler](./profiler.png?raw=true)
+
+The `total (ms)` column gives you a good overview what takes the most significant amount of time, to be put in relation with the number of calls.
+
+The number to optimize for is the `Mgas/s` value. This value indicates how much gas (being a measure for the computational cost for an opcode) can be processed by the second.
+
+A good measure to putting this relation with is by taking both the Ethereum gas limit (the max amount of "computation" per block) and the time/slot into account. With a gas limit of 30 Mio and a 12 sec slot time this leads to a following (very) minimum `Mgas/s` value:
+
+```shell
+30M / 12 sec = 2.5 Million gas per second
+```
+
+Note that this is nevertheless a very theoretical value but pretty valuable for some first rough orientation though.
+
+Another note: profiler results for at least some opcodes are heavily distorted, first to mention the `SSTORE` opcode where the major "cost" occurs after block execution on checkpoint commit, which is not taken into account by the profiler.
+
+Generally all results should rather encourage and need "self thinking" 😋 and are not suited to be blindly taken over without a deeper understanding/grasping of the underlying measurement conditions.
+
+Happy TVM Profiling! 🎉 🤩
+
+## Development
+
+See [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) README.
+
+## Upstream
+
+This package is part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, a TypeScript implementation of the TRON Virtual Machine (TVM) forked from the [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo) monorepo. We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
+
+For development information, see the [developer docs](../../DEVELOPER.md) and our [code of conduct](../../CODE_OF_CONDUCT.md).
+## License
+
+[MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
+
+This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.

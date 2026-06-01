@@ -1,12 +1,7 @@
-import {
-  KeyEncoding,
-  ValueEncoding,
-  bytesToUnprefixedHex,
-  unprefixedHexToBytes,
-} from '@ethereumjs/util'
+import { KeyEncoding, ValueEncoding, bytesToUnprefixedHex, unprefixedHexToBytes } from '@tvmjs/util'
 import { LRUCache } from 'lru-cache'
 
-import type { BatchDBOp, DB, EncodingOpts } from '@ethereumjs/util'
+import type { BatchDBOp, DB, EncodingOpts } from '@tvmjs/util'
 import type { Checkpoint, CheckpointDBOpts } from '../types.ts'
 
 /**

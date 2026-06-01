@@ -2,12 +2,7 @@
  * External Interfaces for other EthereumJS libraries
  */
 
-import type {
-  Account,
-  Address,
-  BinaryTreeExecutionWitness,
-  PrefixedHexString,
-} from '@ethereumjs/util'
+import type { Account, Address, BinaryTreeExecutionWitness, PrefixedHexString } from '@tvmjs/util'
 
 export interface StorageDump {
   [key: string]: string
@@ -37,7 +32,10 @@ export interface StorageRange {
 }
 
 export type AccountFields = Partial<
-  Pick<Account, 'nonce' | 'balance' | 'storageRoot' | 'codeHash' | 'codeSize'>
+  Pick<
+    Account,
+    'nonce' | 'balance' | 'storageRoot' | 'codeHash' | 'codeSize' | 'asset' | 'activePermissions'
+  >
 >
 
 export type StorageProof = {
@@ -120,7 +118,7 @@ export interface BinaryTreeAccessWitnessInterface {
 }
 
 /*
- * Generic StateManager interface corresponding with the @ethereumjs/statemanager package
+ * Generic StateManager interface corresponding with the @tvmjs/statemanager package
  *
  */
 export interface StateManagerInterface {
@@ -142,6 +140,9 @@ export interface StateManagerInterface {
   getStorage(address: Address, key: Uint8Array): Promise<Uint8Array>
   putStorage(address: Address, key: Uint8Array, value: Uint8Array): Promise<void>
   clearStorage(address: Address): Promise<void>
+
+  // Token methods
+  tokenIdExists(tokenId: number): Promise<boolean>
 
   /*
    * Checkpointing Functionality
@@ -168,7 +169,7 @@ export interface StateManagerInterface {
   dumpStorageRange?(address: Address, startKey: bigint, limit: number): Promise<StorageRange>
 
   /*
-   * EVM/VM Specific Functionality
+   * TVM/VM Specific Functionality
    */
   originalStorageCache: {
     get(address: Address, key: Uint8Array): Promise<Uint8Array>

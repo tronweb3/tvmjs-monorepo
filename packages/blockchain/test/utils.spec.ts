@@ -1,11 +1,7 @@
-import {
-  type GethGenesis,
-  createCommonFromGethGenesis,
-  parseGethGenesisState,
-} from '@ethereumjs/common'
-import { genesisMPTStateRoot } from '@ethereumjs/mpt'
-import { postMergeGethGenesis } from '@ethereumjs/testdata'
-import { bytesToHex } from '@ethereumjs/util'
+import { type GethGenesis, createCommonFromGethGenesis, parseGethGenesisState } from '@tvmjs/common'
+import { genesisMPTStateRoot } from '@tvmjs/mpt'
+import { postMergeGethGenesis } from '@tvmjs/testdata'
+import { bytesToHex } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createBlockchain } from '../src/index.ts'
@@ -28,7 +24,7 @@ describe('[Utils/Parse]', () => {
     const stateRoot = await genesisMPTStateRoot(genesisState)
     assert.strictEqual(
       bytesToHex(stateRoot),
-      '0xca3149fa9e37db08d1cd49c9061db1002ef1cd58db2210f2115c8c989b2bdf45',
+      '0x1e39548b7c454d2077df14e898d4b0cda4359367afec3043b1ec46ea8c236912',
       'stateRoot matches',
     )
   })
@@ -39,7 +35,7 @@ describe('[Utils/Parse]', () => {
 
     assert.strictEqual(
       bytesToHex(genesisHash),
-      '0x3b8fb240d288781d4aac94d3fd16809ee413bc99294a085798a589dae51ddd4a',
+      '0x35c2c2f4056b3bae4069bd6d889f1600a415bbe5e350f62fa90923108571b7be',
       'genesis hash matches',
     )
   })

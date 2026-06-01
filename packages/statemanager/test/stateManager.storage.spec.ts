@@ -1,3 +1,4 @@
+import { keccak_256 } from '@noble/hashes/sha3.js'
 import {
   Address,
   bytesToHex,
@@ -6,8 +7,7 @@ import {
   equalsBytes,
   hexToBytes,
   unpadBytes,
-} from '@ethereumjs/util'
-import { keccak_256 } from '@noble/hashes/sha3.js'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { Caches, MerkleStateManager } from '../src/index.ts'

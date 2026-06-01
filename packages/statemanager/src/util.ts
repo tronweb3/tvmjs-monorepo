@@ -1,7 +1,7 @@
-import { Account, bytesToHex } from '@ethereumjs/util'
+import { Account, bytesToHex } from '@tvmjs/util'
 
-import type { AccountFields, StateManagerInterface } from '@ethereumjs/common'
-import type { Address } from '@ethereumjs/util'
+import type { AccountFields, StateManagerInterface } from '@tvmjs/common'
+import type { Address } from '@tvmjs/util'
 
 export async function modifyAccountFields(
   stateManager: StateManagerInterface,
@@ -15,6 +15,8 @@ export async function modifyAccountFields(
   account.storageRoot = accountFields.storageRoot ?? account.storageRoot
   account.codeHash = accountFields.codeHash ?? account.codeHash
   account.codeSize = accountFields.codeSize ?? account.codeSize
+  account.asset = accountFields.asset ?? account.asset
+  account.activePermissions = accountFields.activePermissions ?? account.activePermissions
   //@ts-expect-error -- Checking for an instantiated property that is not part of the interface
   if (stateManager['_debug'] !== undefined) {
     for (const [field, value] of Object.entries(accountFields)) {

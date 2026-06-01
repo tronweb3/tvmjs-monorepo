@@ -1,5 +1,5 @@
-import { RLP } from '@ethereumjs/rlp'
 import { keccak_256 } from '@noble/hashes/sha3.js'
+import { RLP } from '@tvmjs/rlp'
 import { assert, describe, it } from 'vitest'
 import { Address } from '../src/address.ts'
 import {
@@ -33,6 +33,7 @@ const EXPECTED_RLP_BYTES = hexToBytes(
 )
 
 // Taken from execution-spec-tests (`TestAddress`)
+// The private key in this example is for demonstration only. Never use in production.
 const PRIVATE_KEY = hexToBytes('0x45A915E4D060149EB4365960E6A7A45F334393093061116B197E3240065FF2D8')
 const EXPECTED_SIGNER = new Address(hexToBytes('0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b'))
 

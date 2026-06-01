@@ -1,11 +1,5 @@
-import {
-  KeyEncoding,
-  MapDB,
-  ValueEncoding,
-  bytesToHex,
-  unprefixedHexToBytes,
-} from '@ethereumjs/util'
 import { blake3 } from '@noble/hashes/blake3.js'
+import { KeyEncoding, MapDB, ValueEncoding, bytesToHex, unprefixedHexToBytes } from '@tvmjs/util'
 
 import { BinaryTree } from './binaryTree.ts'
 import { ROOT_DB_KEY } from './types.ts'

@@ -3,9 +3,9 @@ import {
   cliqueIsEpochTransition,
   cliqueSigner,
   cliqueVerifySignature,
-} from '@ethereumjs/block'
-import { ConsensusAlgorithm } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
+} from '@tvmjs/block'
+import { ConsensusAlgorithm } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
 import {
   Address,
   BIGINT_0,
@@ -18,12 +18,13 @@ import {
   bytesToBigInt,
   equalsBytes,
   hexToBytes,
+  isDebugEnabled,
   toType,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
-import type { Block, BlockHeader } from '@ethereumjs/block'
-import type { CliqueConfig } from '@ethereumjs/common'
+import type { Block, BlockHeader } from '@tvmjs/block'
+import type { CliqueConfig } from '@tvmjs/common'
 import type { Blockchain } from '../index.ts'
 import type { Consensus, ConsensusOptions } from '../types.ts'
 
@@ -120,10 +121,8 @@ export class CliqueConsensus implements Consensus {
 
   DEBUG: boolean // Guard for debug logs
   constructor() {
-    // Skip DEBUG calls unless 'ethjs' included in environmental DEBUG variables
-    // Additional window check is to prevent vite browser bundling (and potentially other) to break
-    this.DEBUG =
-      typeof window === 'undefined' ? (process?.env?.DEBUG?.includes('ethjs') ?? false) : false
+    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
+    this.DEBUG = isDebugEnabled('tvmjs')
 
     this.algorithm = ConsensusAlgorithm.Clique
   }

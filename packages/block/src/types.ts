@@ -1,5 +1,5 @@
-import type { Common, ParamsDict } from '@ethereumjs/common'
-import type { JSONRPCTx, JSONTx, TransactionType, TxData } from '@ethereumjs/tx'
+import type { Common, ParamsDict } from '@tvmjs/common'
+import type { JSONRPCTx, JSONTx, TransactionType, TxData } from '@tvmjs/tx'
 import type {
   AddressLike,
   BigIntLike,
@@ -9,7 +9,7 @@ import type {
   PrefixedHexString,
   WithdrawalBytes,
   WithdrawalData,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import type { BlockHeader } from './index.ts'
 
 /**
@@ -39,7 +39,7 @@ export interface BlockOptions {
   setHardfork?: boolean
   /**
    * Block parameters sorted by EIP can be found in the exported `paramsBlock` dictionary,
-   * which is internally passed to the associated `@ethereumjs/common` instance which
+   * which is internally passed to the associated `@tvmjs/common` instance which
    * manages parameter selection based on the hardfork and EIP settings.
    *
    * This option allows providing a custom set of parameters. Note that parameters
@@ -110,6 +110,10 @@ export interface HeaderData {
    * 32 bytes hash of the block access list (EIP-7928)
    */
   blockAccessListHash?: BytesLike
+  /**
+   * Slot number (EIP-7843)
+   */
+  slotNumber?: BigIntLike
 }
 
 /**
@@ -179,6 +183,7 @@ export interface JSONHeader {
   parentBeaconBlockRoot?: PrefixedHexString
   requestsHash?: PrefixedHexString
   blockAccessListHash?: PrefixedHexString
+  slotNumber?: PrefixedHexString
 }
 
 /*
@@ -213,6 +218,7 @@ export interface JSONRPCBlock {
   parentBeaconBlockRoot?: PrefixedHexString // If EIP-4788 is enabled for this block, returns parent beacon block root
   requestsHash?: PrefixedHexString // If EIP-7685 is enabled for this block, returns the requests root
   blockAccessListHash?: PrefixedHexString // If EIP-7928 is enabled for this block, returns the hash of the block access list
+  slotNumber?: PrefixedHexString // If EIP-7843 is enabled for this block, returns the slot number
 }
 
 export type WithdrawalV1 = {
@@ -244,4 +250,5 @@ export type ExecutionPayload = {
   parentBeaconBlockRoot?: PrefixedHexString // QUANTITY, 64 Bits
   requestsHash?: PrefixedHexString
   blockAccessListHash?: PrefixedHexString // DATA, 32 Bytes
+  slotNumber?: PrefixedHexString // QUANTITY, 64 Bits (EIP-7843)
 }

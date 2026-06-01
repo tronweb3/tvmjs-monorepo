@@ -1,4 +1,4 @@
-import type { ExecutionPayload } from '@ethereumjs/block'
+import type { ExecutionPayload } from '@tvmjs/block'
 
 /**
  * Beacon chain execution payload test data.

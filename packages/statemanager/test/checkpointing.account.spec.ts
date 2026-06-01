@@ -1,10 +1,10 @@
-import { Address, createAccount, hexToBytes } from '@ethereumjs/util'
+import { Address, createAccount, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { MerkleStateManager, SimpleStateManager } from '../src/index.ts'
 
-import type { StateManagerInterface } from '@ethereumjs/common'
-import type { Account } from '@ethereumjs/util'
+import type { StateManagerInterface } from '@tvmjs/common'
+import type { Account } from '@tvmjs/util'
 
 /**
  * Compares account read to none or undefined

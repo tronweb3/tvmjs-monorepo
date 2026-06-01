@@ -1,7 +1,7 @@
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import type { AccessList2930TxData } from '@ethereumjs/tx'
-import { createAccessList2930Tx } from '@ethereumjs/tx'
-import { bytesToHex } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import type { AccessList2930TxData } from '@tvmjs/tx'
+import { createAccessList2930Tx } from '@tvmjs/tx'
+import { bytesToHex } from '@tvmjs/util'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
 

@@ -1,9 +1,10 @@
-import { createBlock, genRequestsRoot } from '@ethereumjs/block'
-import { ConsensusType, Hardfork } from '@ethereumjs/common'
-import { type EVM, type EVMInterface } from '@ethereumjs/evm'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
-import { TransactionType } from '@ethereumjs/tx'
+import { sha256 } from '@noble/hashes/sha2.js'
+import { createBlock, genRequestsRoot } from '@tvmjs/block'
+import { ConsensusType, Hardfork } from '@tvmjs/common'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
+import { type TVM, type TVMInterface } from '@tvmjs/tvm'
+import { TransactionType } from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -18,24 +19,24 @@ import {
   bytesToHex,
   concatBytes,
   createAddressFromString,
+  createBlockLevelAccessList,
   equalsBytes,
   hexToBytes,
   intToBytes,
   setLengthLeft,
   short,
   unprefixedHexToBytes,
-} from '@ethereumjs/util'
-import { sha256 } from '@noble/hashes/sha2.js'
+} from '@tvmjs/util'
 import debugDefault from 'debug'
 
 import { Bloom } from './bloom/index.ts'
-import { emitEVMProfile } from './emitEVMProfile.ts'
+import { emitTVMProfile } from './emitTVMProfile.ts'
 import { runTx } from './index.ts'
 import { accumulateRequests } from './requests.ts'
 
-import type { Block } from '@ethereumjs/block'
-import type { Common } from '@ethereumjs/common'
-import type { CLRequest, CLRequestType, PrefixedHexString } from '@ethereumjs/util'
+import type { Block } from '@tvmjs/block'
+import type { Common } from '@tvmjs/common'
+import type { CLRequest, CLRequestType, PrefixedHexString } from '@tvmjs/util'
 import type {
   AfterBlockEvent,
   ApplyBlockResult,
@@ -57,7 +58,7 @@ const parentBeaconBlockRootAddress = createAddressFromString(
 let enableProfiler = false
 const stateRootCPLabel = 'New state root, DAO HF, checkpoints, block validation'
 const processTxsLabel = 'Tx processing [ use per-tx profiler for more details ]'
-const withdrawalsRewardsCommitLabel = 'Withdrawals, Rewards, EVM journal commit'
+const withdrawalsRewardsCommitLabel = 'Withdrawals, Rewards, TVM journal commit'
 const entireBlockLabel = 'Entire block'
 
 /**
@@ -76,12 +77,10 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
     // eslint-disable-next-line no-console
     console.time(entireBlockLabel)
   }
-
   const stateManager = vm.stateManager
 
   const { root } = opts
   const clearCache = opts.clearCache ?? true
-  const setHardfork = opts.setHardfork ?? false
   let { block } = opts
   const generateFields = opts.generate === true
 
@@ -104,14 +103,16 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
    */
   await vm._emit('beforeBlock', block)
 
-  if (setHardfork !== false || vm['_setHardfork'] !== false) {
-    const setHardforkUsed = setHardfork ?? vm['_setHardfork']
-    if (setHardforkUsed === true) {
-      vm.common.setHardforkBy({
-        blockNumber: block.header.number,
-        timestamp: block.header.timestamp,
-      })
-    }
+  const setHardforkUsed = opts.setHardfork ?? vm['_setHardfork']
+  if (setHardforkUsed === true) {
+    vm.common.setHardforkBy({
+      blockNumber: block.header.number,
+      timestamp: block.header.timestamp,
+    })
+  }
+
+  if (vm.common.isActivatedEIP(7928)) {
+    vm.tvm.blockLevelAccessList = createBlockLevelAccessList()
   }
 
   if (vm.DEBUG) {
@@ -151,13 +152,13 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
       debug(`Apply DAO hardfork`)
     }
 
-    await vm.evm.journal.checkpoint()
-    await _applyDAOHardfork(vm.evm)
-    await vm.evm.journal.commit()
+    await vm.tvm.journal.checkpoint()
+    await _applyDAOHardfork(vm.tvm)
+    await vm.tvm.journal.commit()
   }
 
   // Checkpoint state
-  await vm.evm.journal.checkpoint()
+  await vm.tvm.journal.checkpoint()
   if (vm.DEBUG) {
     debug(`block checkpoint`)
   }
@@ -176,7 +177,7 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
       )
     }
   } catch (err: any) {
-    await vm.evm.journal.revert()
+    await vm.tvm.journal.revert()
     if (vm.DEBUG) {
       debug(`block checkpoint reverted`)
     }
@@ -186,7 +187,6 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
     }
     throw err
   }
-
   let requestsHash: Uint8Array | undefined
   let requests: CLRequest<CLRequestType>[] | undefined
   if (block.common.isActivatedEIP(7685)) {
@@ -282,13 +282,13 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
       }
 
       if (vm.common.isActivatedEIP(7864)) {
-        if (vm.evm.binaryTreeAccessWitness === undefined) {
+        if (vm.tvm.binaryTreeAccessWitness === undefined) {
           throw Error(`binaryTreeAccessWitness required if binary tree (EIP-7864) is activated`)
         }
         // If binary tree is activated and executing statelessly, only validate the post-state
         if (
           (await vm['_opts'].stateManager!.verifyBinaryTreePostState!(
-            vm.evm.binaryTreeAccessWitness,
+            vm.tvm.binaryTreeAccessWitness,
           )) === false
         ) {
           throw EthereumJSErrorWithoutCode(
@@ -298,7 +298,7 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
         debug(`Binary tree post state verification succeeded`)
       }
     } catch (err) {
-      await vm.evm.journal.revert()
+      await vm.tvm.journal.revert()
       if (vm.DEBUG) {
         debug(`block checkpoint reverted`)
       }
@@ -307,7 +307,7 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
   }
 
   // Persist state
-  await vm.evm.journal.commit()
+  await vm.tvm.journal.commit()
   if (vm.DEBUG) {
     debug(`block checkpoint committed`)
   }
@@ -327,6 +327,7 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
     preimages: result.preimages,
     requestsHash,
     requests,
+    blockLevelAccessList: vm.tvm.blockLevelAccessList,
   }
 
   const afterBlockEvent: AfterBlockEvent = { ...results, block }
@@ -350,15 +351,15 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
   if (enableProfiler) {
     // eslint-disable-next-line no-console
     console.timeEnd(entireBlockLabel)
-    const logs = (vm.evm as EVM).getPerformanceLogs()
+    const logs = (vm.tvm as TVM).getPerformanceLogs()
     if (logs.precompiles.length === 0 && logs.opcodes.length === 0) {
       // eslint-disable-next-line no-console
       console.log('No block txs with precompile or opcode execution.')
     }
 
-    emitEVMProfile(logs.precompiles, 'Precompile performance')
-    emitEVMProfile(logs.opcodes, 'Opcodes performance')
-    ;(vm.evm as EVM).clearPerformanceLogs()
+    emitTVMProfile(logs.precompiles, 'Precompile performance')
+    emitTVMProfile(logs.opcodes, 'Opcodes performance')
+    ;(vm.tvm as TVM).clearPerformanceLogs()
   }
 
   return results
@@ -434,13 +435,13 @@ async function applyBlock(vm: VM, block: Block, opts: RunBlockOpts): Promise<App
   // Also add the coinbase preimage
 
   if (opts.reportPreimages === true) {
-    if (vm.evm.stateManager.getAppliedKey === undefined) {
+    if (vm.tvm.stateManager.getAppliedKey === undefined) {
       throw EthereumJSErrorWithoutCode(
-        'applyBlock: evm.stateManager.getAppliedKey can not be undefined if reportPreimages is true',
+        'applyBlock: tvm.stateManager.getAppliedKey can not be undefined if reportPreimages is true',
       )
     }
     blockResults.preimages.set(
-      bytesToHex(vm.evm.stateManager.getAppliedKey(block.header.coinbase.toBytes())),
+      bytesToHex(vm.tvm.stateManager.getAppliedKey(block.header.coinbase.toBytes())),
       block.header.coinbase.toBytes(),
     )
     for (const txResult of blockResults.results) {
@@ -453,37 +454,38 @@ async function applyBlock(vm: VM, block: Block, opts: RunBlockOpts): Promise<App
   }
 
   if (vm.common.isActivatedEIP(4895)) {
-    if (opts.reportPreimages === true) vm.evm.journal.startReportingPreimages!()
+    if (opts.reportPreimages === true) vm.tvm.journal.startReportingPreimages!()
     await assignWithdrawals(vm, block)
-    if (opts.reportPreimages === true && vm.evm.journal.preimages !== undefined) {
-      for (const [key, preimage] of vm.evm.journal.preimages) {
+    if (opts.reportPreimages === true && vm.tvm.journal.preimages !== undefined) {
+      for (const [key, preimage] of vm.tvm.journal.preimages) {
         blockResults.preimages.set(key, preimage)
       }
     }
-    await vm.evm.journal.cleanup()
+    await vm.tvm.journal.cleanup()
   }
   // Pay ommers and miners
   if (block.common.consensusType() === ConsensusType.ProofOfWork) {
     await assignBlockRewards(vm, block)
   }
 
-  if (vm.common.isActivatedEIP(7864) && vm.evm.systemBinaryTreeAccessWitness !== undefined) {
-    vm.evm.systemBinaryTreeAccessWitness?.commit()
+  if (vm.common.isActivatedEIP(7864) && vm.tvm.systemBinaryTreeAccessWitness !== undefined) {
+    vm.tvm.systemBinaryTreeAccessWitness?.commit()
     if (vm.DEBUG) {
       debug('Binary tree access witness aggregate costs:')
-      vm.evm.binaryTreeAccessWitness?.debugWitnessCost()
+      vm.tvm.binaryTreeAccessWitness?.debugWitnessCost()
       debug('System binary tree access witness aggregate costs:')
-      vm.evm.systemBinaryTreeAccessWitness?.debugWitnessCost()
+      vm.tvm.systemBinaryTreeAccessWitness?.debugWitnessCost()
     }
-    vm.evm.binaryTreeAccessWitness?.merge(vm.evm.systemBinaryTreeAccessWitness)
+    vm.tvm.binaryTreeAccessWitness?.merge(vm.tvm.systemBinaryTreeAccessWitness)
   }
+
   return blockResults
 }
 
 /**
  * vm method runs the logic of EIP 2935 (save blockhashes to state)
  * It will put the `parentHash` of the block to the storage slot of `block.number - 1` of the history storage contract.
- * vm contract is used to retrieve BLOCKHASHes in EVM if EIP 2935 is activated.
+ * vm contract is used to retrieve BLOCKHASHes in TVM if EIP 2935 is activated.
  * In case that the previous block of `block` is pre-EIP-2935 (so we are on the EIP 2935 fork block), additionally
  * also add the currently available past blockhashes which are available by BLOCKHASH (so, the past 256 block hashes)
  * @param vm The VM to run on
@@ -516,19 +518,27 @@ export async function accumulateParentBlockHash(
     const ringKey = number % historyServeWindow
 
     if (vm.common.isActivatedEIP(7864)) {
-      if (vm.evm.systemBinaryTreeAccessWitness === undefined) {
+      if (vm.tvm.systemBinaryTreeAccessWitness === undefined) {
         throw Error(`systemBinaryTreeAccessWitness required if binary tree (EIP-7864) is activated`)
       }
       // Add to system binary tree access witness so that it doesn't warm up tx accesses
-      vm.evm.systemBinaryTreeAccessWitness.writeAccountStorage(historyAddress, ringKey)
+      vm.tvm.systemBinaryTreeAccessWitness.writeAccountStorage(historyAddress, ringKey)
     }
     const key = setLengthLeft(bigIntToBytes(ringKey), 32)
+    if (vm.common.isActivatedEIP(7928)) {
+      vm.tvm.blockLevelAccessList!.addStorageWrite(
+        historyAddress.toString(),
+        key,
+        hash,
+        vm.tvm.blockLevelAccessList!.blockAccessIndex,
+      )
+    }
     await vm.stateManager.putStorage(historyAddress, key, hash)
   }
   await putBlockHash(vm, parentHash, currentBlockNumber - BIGINT_1)
 
   // do cleanup if the code was not deployed
-  await vm.evm.journal.cleanup()
+  await vm.tvm.journal.cleanup()
 }
 
 export async function accumulateParentBeaconBlockRoot(vm: VM, root: Uint8Array, timestamp: bigint) {
@@ -554,12 +564,27 @@ export async function accumulateParentBeaconBlockRoot(vm: VM, root: Uint8Array, 
     // TODO: verify with Gabriel that this is fine regarding binary trees (should we put an empty account?)
     return
   }
-
+  if (vm.common.isActivatedEIP(7928)) {
+    vm.tvm.blockLevelAccessList!.addStorageWrite(
+      parentBeaconBlockRootAddress.toString(),
+      setLengthLeft(bigIntToBytes(timestampIndex), 32),
+      bigIntToBytes(timestamp),
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
+    )
+  }
   await vm.stateManager.putStorage(
     parentBeaconBlockRootAddress,
     setLengthLeft(bigIntToBytes(timestampIndex), 32),
     bigIntToBytes(timestamp),
   )
+  if (vm.common.isActivatedEIP(7928)) {
+    vm.tvm.blockLevelAccessList!.addStorageWrite(
+      parentBeaconBlockRootAddress.toString(),
+      setLengthLeft(bigIntToBytes(timestampExtended), 32),
+      root,
+      vm.tvm.blockLevelAccessList!.blockAccessIndex,
+    )
+  }
   await vm.stateManager.putStorage(
     parentBeaconBlockRootAddress,
     setLengthLeft(bigIntToBytes(timestampExtended), 32),
@@ -567,7 +592,7 @@ export async function accumulateParentBeaconBlockRoot(vm: VM, root: Uint8Array, 
   )
 
   // do cleanup if the code was not deployed
-  await vm.evm.journal.cleanup()
+  await vm.tvm.journal.cleanup()
 }
 
 /**
@@ -584,8 +609,10 @@ async function applyTransactions(vm: VM, block: Block, opts: RunBlockOpts) {
   }
 
   const bloom = new Bloom(undefined, vm.common)
-  // the total amount of gas used processing these transactions
+  // Block header gas accounting (EIP-7778: no refund subtraction)
   let gasUsed = BIGINT_0
+  // Receipt cumulative gas accounting (keeps tx refund subtraction semantics)
+  let receiptGasUsed = BIGINT_0
 
   let receiptTrie: MerklePatriciaTrie | undefined = undefined
   if (block.transactions.length !== 0) {
@@ -599,7 +626,16 @@ async function applyTransactions(vm: VM, block: Block, opts: RunBlockOpts) {
    * Process transactions
    */
   for (let txIdx = 0; txIdx < block.transactions.length; txIdx++) {
+    if (vm.common.isActivatedEIP(7928)) {
+      vm.tvm.blockLevelAccessList!.blockAccessIndex = txIdx + 1
+    }
     const tx = block.transactions[txIdx]
+
+    if (vm.DEBUG) {
+      debug(
+        `Run tx ${txIdx + 1}/${block.transactions.length} gasLimit=${tx.gasLimit} type=${tx.type} (block gas used so far: ${gasUsed}/${block.header.gasLimit})`,
+      )
+    }
 
     const gasLimitIsHigherThanBlock = block.header.gasLimit < tx.gasLimit + gasUsed
     if (gasLimitIsHigherThanBlock) {
@@ -616,7 +652,7 @@ async function applyTransactions(vm: VM, block: Block, opts: RunBlockOpts) {
       skipBalance,
       skipNonce,
       skipHardForkValidation,
-      blockGasUsed: gasUsed,
+      blockGasUsed: receiptGasUsed,
       reportPreimages,
     })
     txResults.push(txRes)
@@ -625,9 +661,10 @@ async function applyTransactions(vm: VM, block: Block, opts: RunBlockOpts) {
     }
 
     // Add to total block gas usage
-    gasUsed += txRes.totalGasSpent
+    gasUsed += txRes.blockGasSpent
+    receiptGasUsed += txRes.totalGasSpent
     if (vm.DEBUG) {
-      debug(`Add tx gas used (${txRes.totalGasSpent}) to total block gas usage (-> ${gasUsed})`)
+      debug(`Add tx gas used (${txRes.blockGasSpent}) to total block gas usage (-> ${gasUsed})`)
     }
 
     // Combine blooms via bitwise OR
@@ -657,6 +694,9 @@ async function applyTransactions(vm: VM, block: Block, opts: RunBlockOpts) {
 }
 
 async function assignWithdrawals(vm: VM, block: Block): Promise<void> {
+  if (vm.common.isActivatedEIP(7928)) {
+    vm.tvm.blockLevelAccessList!.blockAccessIndex = block.transactions.length + 1
+  }
   const withdrawals = block.withdrawals!
   for (const withdrawal of withdrawals) {
     const { address, amount } = withdrawal
@@ -664,7 +704,7 @@ async function assignWithdrawals(vm: VM, block: Block): Promise<void> {
     // converted to wei
     // Note: event if amount is 0, still reward the account
     // such that the account is touched and marked for cleanup if it is empty
-    await rewardAccount(vm.evm, address, amount * GWEI_TO_WEI, vm.common)
+    await rewardAccount(vm.tvm, address, amount * GWEI_TO_WEI, vm.common)
   }
 }
 
@@ -681,14 +721,14 @@ async function assignBlockRewards(vm: VM, block: Block): Promise<void> {
   // Reward ommers
   for (const ommer of ommers) {
     const reward = calculateOmmerReward(ommer.number, block.header.number, minerReward)
-    const account = await rewardAccount(vm.evm, ommer.coinbase, reward, vm.common)
+    const account = await rewardAccount(vm.tvm, ommer.coinbase, reward, vm.common)
     if (vm.DEBUG) {
       debug(`Add uncle reward ${reward} to account ${ommer.coinbase} (-> ${account.balance})`)
     }
   }
   // Reward miner
   const reward = calculateMinerReward(minerReward, ommers.length)
-  const account = await rewardAccount(vm.evm, block.header.coinbase, reward, vm.common)
+  const account = await rewardAccount(vm.tvm, block.header.coinbase, reward, vm.common)
   if (vm.DEBUG) {
     debug(`Add miner reward ${reward} to account ${block.header.coinbase} (-> ${account.balance})`)
   }
@@ -716,30 +756,43 @@ export function calculateMinerReward(minerReward: bigint, ommersNum: number): bi
 }
 
 export async function rewardAccount(
-  evm: EVMInterface,
+  tvm: TVMInterface,
   address: Address,
   reward: bigint,
   common: Common,
 ): Promise<Account> {
-  let account = await evm.stateManager.getAccount(address)
+  let account = await tvm.stateManager.getAccount(address)
   if (account === undefined) {
     if (common.isActivatedEIP(7864) === true && reward !== BIGINT_0) {
-      if (evm.systemBinaryTreeAccessWitness === undefined) {
+      if (tvm.systemBinaryTreeAccessWitness === undefined) {
         throw Error(`systemBinaryTreeAccessWitness required if binary tree (EIP-7864) is activated`)
       }
-      evm.systemBinaryTreeAccessWitness.writeAccountHeader(address)
+      tvm.systemBinaryTreeAccessWitness.writeAccountHeader(address)
     }
     account = new Account()
   }
+  const originalBalance = account.balance
   account.balance += reward
-  await evm.journal.putAccount(address, account)
+  if (common.isActivatedEIP(7928)) {
+    if (reward === BIGINT_0) {
+      tvm.blockLevelAccessList?.addAddress(address.toString())
+    } else {
+      tvm.blockLevelAccessList!.addBalanceChange(
+        address.toString(),
+        account.balance,
+        tvm.blockLevelAccessList!.blockAccessIndex,
+        originalBalance,
+      )
+    }
+  }
+  await tvm.journal.putAccount(address, account)
 
   if (common.isActivatedEIP(7864) === true && reward !== BIGINT_0) {
-    if (evm.systemBinaryTreeAccessWitness === undefined) {
+    if (tvm.systemBinaryTreeAccessWitness === undefined) {
       throw Error(`systemBinaryTreeAccessWitness required if binary tree (EIP-7864) is activated`)
     }
-    evm.systemBinaryTreeAccessWitness.writeAccountBasicData(address)
-    evm.systemBinaryTreeAccessWitness.readAccountCodeHash(address)
+    tvm.systemBinaryTreeAccessWitness.writeAccountBasicData(address)
+    tvm.systemBinaryTreeAccessWitness.readAccountCodeHash(address)
   }
   return account
 }
@@ -771,8 +824,8 @@ export function encodeReceipt(
 /**
  * Apply the DAO fork changes to the VM
  */
-async function _applyDAOHardfork(evm: EVMInterface) {
-  const state = evm.stateManager
+async function _applyDAOHardfork(tvm: TVMInterface) {
+  const state = tvm.stateManager
 
   /* DAO account list */
   const DAOAccountList = DAOConfig.DAOAccounts
@@ -780,13 +833,14 @@ async function _applyDAOHardfork(evm: EVMInterface) {
 
   const DAORefundContractAddress = new Address(unprefixedHexToBytes(DAORefundContract))
   if ((await state.getAccount(DAORefundContractAddress)) === undefined) {
-    await evm.journal.putAccount(DAORefundContractAddress, new Account())
+    await tvm.journal.putAccount(DAORefundContractAddress, new Account())
   }
   let DAORefundAccount = await state.getAccount(DAORefundContractAddress)
   if (DAORefundAccount === undefined) {
     DAORefundAccount = new Account()
   }
 
+  const originalDAORefundAccountBalance = DAORefundAccount.balance
   for (const addr of DAOAccountList) {
     // retrieve the account and add it to the DAO's Refund accounts' balance.
     const address = new Address(unprefixedHexToBytes(addr))
@@ -796,12 +850,29 @@ async function _applyDAOHardfork(evm: EVMInterface) {
     }
     DAORefundAccount.balance += account.balance
     // clear the accounts' balance
+    const originalBalance = account.balance
     account.balance = BIGINT_0
-    await evm.journal.putAccount(address, account)
+    await tvm.journal.putAccount(address, account)
+    if (tvm.common.isActivatedEIP(7928)) {
+      tvm.blockLevelAccessList!.addBalanceChange(
+        address.toString(),
+        account.balance,
+        tvm.blockLevelAccessList!.blockAccessIndex,
+        originalBalance,
+      )
+    }
   }
 
   // finally, put the Refund Account
-  await evm.journal.putAccount(DAORefundContractAddress, DAORefundAccount)
+  await tvm.journal.putAccount(DAORefundContractAddress, DAORefundAccount)
+  if (tvm.common.isActivatedEIP(7928)) {
+    tvm.blockLevelAccessList!.addBalanceChange(
+      DAORefundContractAddress.toString(),
+      DAORefundAccount.balance,
+      tvm.blockLevelAccessList!.blockAccessIndex,
+      originalDAORefundAccountBalance,
+    )
+  }
 }
 
 async function _genTxTrie(block: Block) {

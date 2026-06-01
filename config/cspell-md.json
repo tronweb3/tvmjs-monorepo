@@ -48,7 +48,7 @@
     "chaindata",
     "leveldb",
     "Gitter",
-    "ethjs",
+    "tvmjs",
     "ruleset",
     "polkadot",
     "stabilizations",
@@ -61,7 +61,6 @@
     "libp2p",
     "forkchoice",
     "blockhash",
-    "Dockerfiles",
     "blockfetcher",
     "txpool",
     "subchain",
@@ -263,7 +262,7 @@
     "nomemory",
     "statetest",
     "pyethereum",
-    "evmlab",
+    "tvmlab",
     "holiman",
     "flamegraphs",
     "testpath",
@@ -320,7 +319,7 @@
     "heartedly",
     "beaconroot",
     "Grandine",
-    "EVMBN",
+    "TVMBN",
     "kaust",
     "Scotty",
     "ScottyPoi",
@@ -329,6 +328,7 @@
     "unsnappy",
     "ethportal",
     "bytevector",
-    "hoodi"
+    "hoodi",
+    "feelyourprotocol"
   ]
 }

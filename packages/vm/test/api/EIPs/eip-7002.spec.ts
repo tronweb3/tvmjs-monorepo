@@ -1,6 +1,6 @@
-import { createBlock } from '@ethereumjs/block'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
 import {
   Account,
   CLRequestType,
@@ -9,16 +9,17 @@ import {
   concatBytes,
   createAddressFromPrivateKey,
   createAddressFromString,
+  createContractAddress,
   equalsBytes,
   hexToBytes,
   setLengthLeft,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { runBlock } from '../../../src/index.ts'
 import { setupVM } from '../utils.ts'
 
-import type { Block } from '@ethereumjs/block'
+import type { Block } from '@tvmjs/block'
 
 const pkey = hexToBytes(`0x${'20'.repeat(32)}`)
 const addr = createAddressFromPrivateKey(pkey)
@@ -82,14 +83,51 @@ describe('EIP-7002 tests', () => {
     await vm.stateManager.putAccount(addr, acc)
 
     // Deploy withdrawals contract
-    const results = await runBlock(vm, {
+    await runBlock(vm, {
       block,
       skipHeaderValidation: true,
       skipBlockValidation: true,
       generate: true,
     })
 
-    const root = results.stateRoot
+    // The deployment tx in the EIP was signed so the recovered Ethereum sender
+    // creates the contract exactly at the predeploy address. Under the Tron tx
+    // format the signing preimage differs, so the recovered sender (and thus
+    // the deployed contract address) is different. Copy the deployed code and
+    // its constructor-initialized storage[0] over to the predeploy address.
+    const deployedAddr = createContractAddress(sender, BigInt(0))
+    const deployedCode = await vm.stateManager.getCode(deployedAddr)
+    const predeployAddressBytes = setLengthLeft(
+      bigIntToBytes(common.param('withdrawalRequestPredeployAddress')),
+      20,
+    )
+    const predeployAddr = createAddressFromString(bytesToHex(predeployAddressBytes))
+    await vm.stateManager.putAccount(predeployAddr, new Account())
+    await vm.stateManager.putCode(predeployAddr, deployedCode)
+    const storageKey = new Uint8Array(32)
+    const storage0 = await vm.stateManager.getStorage(deployedAddr, storageKey)
+    await vm.stateManager.putStorage(predeployAddr, storageKey, storage0)
+
+    // Run an empty block: the EIP-7002 system call fires at end-of-block and
+    // clears the constructor's storage[0] sentinel (0xff..ff). Without this,
+    // the contract reverts on every user call.
+    const initBlock = createBlock(
+      {
+        header: {
+          number: 2,
+          parentBeaconBlockRoot: new Uint8Array(32),
+        },
+      },
+      { common },
+    )
+    await runBlock(vm, {
+      block: initBlock,
+      skipHeaderValidation: true,
+      skipBlockValidation: true,
+      generate: true,
+    })
+
+    const root = await vm.stateManager.getStateRoot()
 
     const tx = generateTx(BigInt(0))
 
@@ -97,7 +135,7 @@ describe('EIP-7002 tests', () => {
     const block2 = createBlock(
       {
         header: {
-          number: 2,
+          number: 3,
           parentBeaconBlockRoot: new Uint8Array(32),
         },
         transactions: [tx],

@@ -1,3 +1,4 @@
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 //import * as fs from 'fs'
 import {
   type PrefixedHexString,
@@ -5,8 +6,7 @@ import {
   blobsToProofs,
   computeVersionedHash,
   hexToBytes,
-} from '@ethereumjs/util'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
 const kzg = new microEthKZG(trustedSetup)

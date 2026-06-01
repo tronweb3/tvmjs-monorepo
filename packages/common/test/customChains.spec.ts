@@ -1,4 +1,4 @@
-import { customChainConfig } from '@ethereumjs/testdata'
+import { customChainConfig } from '@tvmjs/testdata'
 import { assert, describe, it } from 'vitest'
 
 import { Common, Hardfork, Mainnet, createCustomCommon } from '../src/index.ts'
@@ -94,7 +94,7 @@ describe('[Common]: Custom chains', () => {
     )
     // Note: default HF of Common is currently Prague
     // Did not pass any "hardfork" param
-    assert.strictEqual(c.hardfork(), Hardfork.Prague)
+    assert.strictEqual(c.hardfork(), Hardfork.Tron)
     c.setHardforkBy({
       blockNumber: 0,
     })
@@ -138,7 +138,7 @@ describe('[Common]: Custom chains', () => {
     }
     const c = createCustomCommon({ chainId: 123 }, chainConfig)
     assert.strictEqual(c.hardfork(), c.DEFAULT_HARDFORK)
-    assert.strictEqual(c.hardfork(), Hardfork.Prague)
+    assert.strictEqual(c.hardfork(), Hardfork.Tron)
   })
 
   it('customHardforks: override params', () => {

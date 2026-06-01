@@ -7,9 +7,10 @@ import {
   concatBytes,
   equalsBits,
   equalsBytes,
+  isDebugEnabled,
   matchingBitsLength,
   setLengthRight,
-} from '@ethereumjs/util'
+} from '@tvmjs/util'
 import debug from 'debug'
 
 import { CheckpointDB } from './db/index.ts'
@@ -18,7 +19,7 @@ import { StemBinaryNode } from './node/stemNode.ts'
 import { decodeBinaryNode, isInternalBinaryNode, isStemBinaryNode } from './node/util.ts'
 import { type BinaryTreeOpts, ROOT_DB_KEY } from './types.ts'
 
-import type { PutBatch } from '@ethereumjs/util'
+import type { PutBatch } from '@tvmjs/util'
 import type { Debugger } from 'debug'
 import type { BinaryNode } from './node/types.ts'
 
@@ -29,7 +30,7 @@ interface Path {
 }
 
 /**
- * The basic binary tree interface, use with `import { BinaryTree } from '@ethereumjs/binarytree'`.
+ * The basic binary tree interface, use with `import { BinaryTree } from '@tvmjs/binarytree'`.
  *
  * A BinaryTree object can be created with the constructor method:
  *
@@ -72,8 +73,7 @@ export class BinaryTree {
       this.root(opts.root)
     }
 
-    this.DEBUG =
-      typeof window === 'undefined' ? (process?.env?.DEBUG?.includes('ethjs') ?? false) : false
+    this.DEBUG = isDebugEnabled('tvmjs')
     this.debug = this.DEBUG
       ? (message: string, namespaces: string[] = []) => {
           let log = this._debug

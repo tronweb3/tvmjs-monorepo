@@ -1,7 +1,7 @@
-import { createBlock } from '@ethereumjs/block'
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { bytesToHex } from '@ethereumjs/util'
+import { createBlock } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { bytesToHex } from '@tvmjs/util'
 
 const main = async () => {
   const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })

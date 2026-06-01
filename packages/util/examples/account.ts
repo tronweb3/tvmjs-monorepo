@@ -1,4 +1,4 @@
-import { createAccount } from '@ethereumjs/util'
+import { createAccount } from '@tvmjs/util'
 
 const account = createAccount({
   nonce: '0x02',

@@ -1,12 +1,12 @@
-import { bytesToUnprefixedHex } from '@ethereumjs/util'
 import { OrderedMap } from '@js-sdsl/ordered-map'
+import { bytesToUnprefixedHex } from '@tvmjs/util'
 import debugDefault from 'debug'
 import { LRUCache } from 'lru-cache'
 
 import { Cache } from './cache.ts'
 import { CacheType } from './types.ts'
 
-import type { Account, Address } from '@ethereumjs/util'
+import type { Account, Address } from '@tvmjs/util'
 import type { CacheOpts } from './types.ts'
 
 /**

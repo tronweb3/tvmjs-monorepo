@@ -1,13 +1,7 @@
-# @ethereumjs/tx `v10`
+# @tvmjs/tx `1.0.0`
 
-[![NPM Package][tx-npm-badge]][tx-npm-link]
-[![GitHub Issues][tx-issues-badge]][tx-issues-link]
-[![Actions Status][tx-actions-badge]][tx-actions-link]
-[![Code Coverage][tx-coverage-badge]][tx-coverage-link]
-[![Discord][discord-badge]][discord-link]
-
-| Implements schema and functions for the different Ethereum transaction types |
-| ---------------------------------------------------------------------------- |
+| Implements schema and functions for TRON-compatible transaction types (including TRC-10 token transfers). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
+| --- |
 
 - 🦄 All tx types up to **Osaka**
 - 🌴 Tree-shakeable API
@@ -35,7 +29,7 @@
 - [Browser](#browser)
 - [Hardware Wallets](#hardware-wallets)
 - [API](#api)
-- [EthereumJS](#ethereumjs)
+- [Upstream](#upstream)
 - [License](#license)
 
 ## Installation
@@ -43,7 +37,7 @@
 To obtain the latest version, simply require the project using `npm`:
 
 ```shell
-npm install @ethereumjs/tx
+npm install @tvmjs/tx
 ```
 
 ## Getting Started
@@ -62,11 +56,11 @@ All types of transaction objects are frozen with `Object.freeze()` which gives y
 
 ### WASM Crypto Support
 
-This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification. See `@ethereumjs/common` [README](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
+This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification. See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
 
 ## Chain and Hardfork Support
 
-To use a chain other than the default Mainnet chain, or a different hardfork than the default [`@ethereumjs/common`](https://github.com/ethereumjs/ethereumjs-monorepo/blob/master/packages/common) hardfork (`Hardfork.Prague`), provide a `common` object in the constructor of the tx.
+To use a chain other than the default Mainnet chain, or a different hardfork than the default [`@tvmjs/common`](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/common) hardfork (`Hardfork.Prague`), provide a `common` object in the constructor of the tx.
 
 Base default HF (determined by `Common`): `Hardfork.Prague`
 
@@ -106,10 +100,10 @@ This is the recommended tx type starting with the activation of the `london` HF,
 ```ts
 // ./examples/londonTx.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import type { FeeMarketEIP1559TxData } from '@ethereumjs/tx'
-import { createFeeMarket1559Tx } from '@ethereumjs/tx'
-import { bytesToHex } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import type { FeeMarketEIP1559TxData } from '@tvmjs/tx'
+import { createFeeMarket1559Tx } from '@tvmjs/tx'
+import { bytesToHex } from '@tvmjs/util'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
 
@@ -146,10 +140,10 @@ This transaction type has been introduced along the `berlin` HF. See the followi
 ```ts
 // ./examples/accessListTx.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import type { AccessList2930TxData } from '@ethereumjs/tx'
-import { createAccessList2930Tx } from '@ethereumjs/tx'
-import { bytesToHex } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import type { AccessList2930TxData } from '@tvmjs/tx'
+import { createAccessList2930Tx } from '@tvmjs/tx'
+import { bytesToHex } from '@tvmjs/util'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
 
@@ -182,7 +176,7 @@ console.log(bytesToHex(tx.hash())) // 0x9150cdebad74e88b038e6c6b964d99af705f9c08
 ```
 
 For generating access lists from tx data based on a certain network state there is a `reportAccessList` option
-on the `VM.runTx()` method of the `@ethereumjs/vm` `TypeScript` VM implementation.
+on the `VM.runTx()` method of the `@tvmjs/vm` `TypeScript` VM implementation.
 
 ### Blob Transactions (EIP-4844 / EIP-7594)
 
@@ -197,7 +191,7 @@ This library supports the blob transaction type introduced with [EIP-4844](https
 Additionally it is able to process blobs in the "PeerDAS way" - introduced with [EIP-7594](https://eips.ethereum.org/EIPS/eip-7594) along the
 `osaka` hardfork and generate cell proofs instead of blob proofs.
 
-**Note:** This functionality needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
+**Note:** This functionality needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
 
 #### Example
 
@@ -207,10 +201,10 @@ and one taking EIP-7594 into the mix:
 ```ts
 // ./examples/blobTx.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import type { BlobEIP4844TxData } from '@ethereumjs/tx'
-import { createBlob4844Tx } from '@ethereumjs/tx'
-import { bytesToHex, getBlobs, randomBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import type { BlobEIP4844TxData } from '@tvmjs/tx'
+import { createBlob4844Tx } from '@tvmjs/tx'
+import { bytesToHex, getBlobs, randomBytes } from '@tvmjs/util'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
@@ -298,7 +292,7 @@ You can either pass in blobs as the initial `blobsData` (the data you want to st
 
 The `kzgProofs` field is used for both blob proofs (EIP-4844) and cell proofs (EIP-7594). Note that the amount of proofs increases by a factor of 128 when EIP-7594 is activated, since proofs are then computed per cell instead of per blob (128 cells per blob).
 
-For manually deriving commitments, proofs and versioned hashes, there are dedicated helpers available in the [@ethereumjs/util](https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/util) package.
+For manually deriving commitments, proofs and versioned hashes, there are dedicated helpers available in the [@tvmjs/util](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/util) package.
 
 #### Serialization
 
@@ -324,9 +318,9 @@ The following is a simple example how to use an `EOACodeEIP7702Tx` with one auth
 ```ts
 // ./examples/EOACodeTx.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { createEOACode7702Tx } from '@ethereumjs/tx'
-import { type PrefixedHexString, createAddressFromPrivateKey, randomBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createEOACode7702Tx } from '@tvmjs/tx'
+import { type PrefixedHexString, createAddressFromPrivateKey, randomBytes } from '@tvmjs/util'
 
 const ones32 = `0x${'01'.repeat(32)}` as PrefixedHexString
 
@@ -365,10 +359,10 @@ See this [example script](./examples/transactions.ts) or the following code exam
 ```ts
 // ./examples/legacyTx.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import type { LegacyTxData } from '@ethereumjs/tx'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { bytesToHex, hexToBytes } from '@ethereumjs/util'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import type { LegacyTxData } from '@tvmjs/tx'
+import { createLegacyTx } from '@tvmjs/tx'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 const txData: LegacyTxData = {
   nonce: '0x0',
@@ -398,10 +392,10 @@ If you only know at runtime which tx type will be used within your code or if yo
 ```ts
 // ./examples/txFactory.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
-import { Capability, createTx } from '@ethereumjs/tx'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Capability, createTx } from '@tvmjs/tx'
 
-import type { EIP1559CompatibleTx } from '@ethereumjs/tx'
+import type { EIP1559CompatibleTx } from '@tvmjs/tx'
 
 const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
 
@@ -426,14 +420,14 @@ The correct tx type class for instantiation will then be chosen at runtime based
 
 ## KZG Setup
 
-This library fully supports `EIP-4844` blob transactions. For blob transactions and other KZG related proof functionality (e.g. for EVM precompiles) KZG has to be manually installed and initialized in the `common` instance to be used in instantiating blob transactions.
+This library fully supports `EIP-4844` blob transactions. For blob transactions and other KZG related proof functionality (e.g. for TVM precompiles) KZG has to be manually installed and initialized in the `common` instance to be used in instantiating blob transactions.
 
 As a first step add the [micro-eth-signer](https://github.com/paulmillr/micro-eth-signer) package for KZG and [@paulmillr/trusted-setups](https://github.com/paulmillr/trusted-setups) for the trusted setup data as dependencies to your `package.json` file and install the libraries. Then initialization can be done like the following:
 
 ```ts
 // ./examples/initKzg.ts
 
-import { Common, Hardfork, Mainnet } from '@ethereumjs/common'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 
@@ -463,9 +457,9 @@ This library has been tested to work with various L2 networks. To set an associa
 ```ts
 // ./examples/l2tx.ts
 
-import { Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { createLegacyTx } from '@ethereumjs/tx'
-import { bytesToHex, createAddressFromString, hexToBytes } from '@ethereumjs/util'
+import { Mainnet, createCustomCommon } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import { bytesToHex, createAddressFromString, hexToBytes } from '@tvmjs/util'
 
 const pk = hexToBytes('0x076247989df60a82f6e86e58104368676096f84e60972282ee00d4673a2bc9b9')
 // xDai chain ID
@@ -489,7 +483,7 @@ console.log(bytesToHex(signedTx.hash())) // 0xbf98f6f8700812ed6f2314275070256e11
 
 We provide hybrid ESM/CJS builds for all our libraries. With the v10 breaking release round from Spring 2025, all libraries are "pure-JS" by default and we have eliminated all hard-wired WASM code. Additionally we have substantially lowered the bundle sizes, reduced the number of dependencies, and cut out all usages of Node.js-specific primitives (like the Node.js event emitter).
 
-It is easily possible to run a browser build of one of the EthereumJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
+It is easily possible to run a browser build of one of the TVMJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
 
 ## Hardware Wallets
 
@@ -503,15 +497,15 @@ Here is an example of signing txs with `@ledgerhq/hw-app-eth` with `v6.45.4` and
 ```ts
 // examples/ledgerSigner.mts
 
-import { Common, Sepolia } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
+import { Common, Sepolia } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
 import {
   type FeeMarketEIP1559TxData,
   type LegacyTxData,
   createFeeMarket1559Tx,
   createLegacyTx,
-} from '@ethereumjs/tx'
-import { bytesToHex } from '@ethereumjs/util'
+} from '@tvmjs/tx'
+import { bytesToHex } from '@tvmjs/util'
 import Eth from '@ledgerhq/hw-app-eth'
 import TransportNodeHid from '@ledgerhq/hw-transport-node-hid'
 
@@ -589,32 +583,24 @@ With the breaking releases from Summer 2023 we have started to ship our librarie
 If you use an ES6-style `import` in your code files from the ESM build will be used:
 
 ```ts
-import { EthereumJSClass } from '@ethereumjs/[PACKAGE_NAME]'
+import { TVMJSClass } from '@tvmjs/[PACKAGE_NAME]'
 ```
 
 If you use Node.js specific `require`, the CJS build will be used:
 
 ```ts
-const { EthereumJSClass } = require('@ethereumjs/[PACKAGE_NAME]')
+const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
 ```
 
 Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS can not provide.
 
-## EthereumJS
+## Upstream
 
-The `EthereumJS` GitHub organization and its repositories are managed by members of the former Ethereum Foundation JavaScript team and the broader Ethereum community. If you want to join for work or carry out improvements on the libraries see the [developer docs](../../DEVELOPER.md) for an overview of current standards and tools and review our [code of conduct](../../CODE_OF_CONDUCT.md).
+This package is part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, a TypeScript implementation of the TRON Virtual Machine (TVM) forked from the [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo) monorepo. We gratefully acknowledge the EthereumJS team for building and maintaining the original implementation.
 
+For development information, see the [developer docs](../../DEVELOPER.md) and our [code of conduct](../../CODE_OF_CONDUCT.md).
 ## License
 
 [MPL-2.0](<https://tldrlegal.com/license/mozilla-public-license-2.0-(mpl-2)>)
 
-[discord-badge]: https://img.shields.io/static/v1?logo=discord&label=discord&message=Join&color=blue
-[discord-link]: https://discord.gg/TNwARpR
-[tx-npm-badge]: https://img.shields.io/npm/v/@ethereumjs/tx.svg
-[tx-npm-link]: https://www.npmjs.com/package/@ethereumjs/tx
-[tx-issues-badge]: https://img.shields.io/github/issues/ethereumjs/ethereumjs-monorepo/package:%20tx?label=issues
-[tx-issues-link]: https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aopen+is%3Aissue+label%3A"package%3A+tx"
-[tx-actions-badge]: https://github.com/ethereumjs/ethereumjs-monorepo/workflows/Tx/badge.svg
-[tx-actions-link]: https://github.com/ethereumjs/ethereumjs-monorepo/actions?query=workflow%3A%22Tx%22
-[tx-coverage-badge]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/branch/master/graph/badge.svg?flag=tx
-[tx-coverage-link]: https://codecov.io/gh/ethereumjs/ethereumjs-monorepo/tree/master/packages/tx
+This package is derived from the original [@ethereumjs](https://github.com/ethereumjs/ethereumjs-monorepo) implementation, licensed under MPL-2.0. All original source files retain their MPL-2.0 license.

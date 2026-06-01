@@ -1,18 +1,15 @@
+import { sha256 } from '@noble/hashes/sha2.js'
 import {
   createBlock,
   createSealedCliqueBlock,
   genRequestsRoot,
   genTransactionsTrieRoot,
   genWithdrawalsTrieRoot,
-} from '@ethereumjs/block'
-import { ConsensusType, Hardfork } from '@ethereumjs/common'
-import { MerklePatriciaTrie } from '@ethereumjs/mpt'
-import { RLP } from '@ethereumjs/rlp'
-import {
-  Blob4844Tx,
-  NetworkWrapperType,
-  createMinimal4844TxFromNetworkWrapper,
-} from '@ethereumjs/tx'
+} from '@tvmjs/block'
+import { ConsensusType, Hardfork } from '@tvmjs/common'
+import { MerklePatriciaTrie } from '@tvmjs/mpt'
+import { RLP } from '@tvmjs/rlp'
+import { Blob4844Tx, NetworkWrapperType, createMinimal4844TxFromNetworkWrapper } from '@tvmjs/tx'
 import {
   Address,
   BIGINT_0,
@@ -26,8 +23,7 @@ import {
   createZeroAddress,
   toBytes,
   toType,
-} from '@ethereumjs/util'
-import { sha256 } from '@noble/hashes/sha2.js'
+} from '@tvmjs/util'
 
 import { Bloom } from './bloom/index.ts'
 import { runTx } from './index.ts'
@@ -40,9 +36,9 @@ import {
   rewardAccount,
 } from './runBlock.ts'
 
-import type { Block, HeaderData } from '@ethereumjs/block'
-import type { TypedTransaction } from '@ethereumjs/tx'
-import type { Withdrawal } from '@ethereumjs/util'
+import type { Block, HeaderData } from '@tvmjs/block'
+import type { TypedTransaction } from '@tvmjs/tx'
+import type { Withdrawal } from '@tvmjs/util'
 import type { BuildBlockOpts, BuilderOpts, RunTxResult, SealBlockOpts } from './types.ts'
 import type { VM } from './vm.ts'
 
@@ -193,7 +189,7 @@ export class BlockBuilder {
       this.headerData.coinbase !== undefined
         ? new Address(toBytes(this.headerData.coinbase))
         : createZeroAddress()
-    await rewardAccount(this.vm.evm, coinbase, reward, this.vm.common)
+    await rewardAccount(this.vm.tvm, coinbase, reward, this.vm.common)
   }
 
   /**
@@ -209,7 +205,7 @@ export class BlockBuilder {
       if (amount === BIGINT_0) continue
       // Withdrawal amount is represented in Gwei so needs to be
       // converted to wei
-      await rewardAccount(this.vm.evm, address, amount * GWEI_TO_WEI, this.vm.common)
+      await rewardAccount(this.vm.tvm, address, amount * GWEI_TO_WEI, this.vm.common)
     }
   }
 
@@ -229,7 +225,7 @@ export class BlockBuilder {
     this.checkStatus()
 
     if (!this.checkpointed) {
-      await this.vm.evm.journal.checkpoint()
+      await this.vm.tvm.journal.checkpoint()
       this.checkpointed = true
     }
 
@@ -313,7 +309,7 @@ export class BlockBuilder {
    */
   async revert() {
     if (this.checkpointed) {
-      await this.vm.evm.journal.revert()
+      await this.vm.tvm.journal.revert()
       this.checkpointed = false
     }
     this.blockStatus = { status: BuildStatus.Reverted }
@@ -410,7 +406,7 @@ export class BlockBuilder {
 
     this.blockStatus = { status: BuildStatus.Build, block }
     if (this.checkpointed) {
-      await this.vm.evm.journal.commit()
+      await this.vm.tvm.journal.commit()
       this.checkpointed = false
     }
 
@@ -420,7 +416,7 @@ export class BlockBuilder {
   async initState() {
     if (this.vm.common.isActivatedEIP(4788)) {
       if (!this.checkpointed) {
-        await this.vm.evm.journal.checkpoint()
+        await this.vm.tvm.journal.checkpoint()
         this.checkpointed = true
       }
 
@@ -434,7 +430,7 @@ export class BlockBuilder {
     }
     if (this.vm.common.isActivatedEIP(2935)) {
       if (!this.checkpointed) {
-        await this.vm.evm.journal.checkpoint()
+        await this.vm.tvm.journal.checkpoint()
         this.checkpointed = true
       }
 

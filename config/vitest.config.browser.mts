@@ -3,6 +3,7 @@ import { playwright } from '@vitest/browser-playwright'
 
 const config = defineConfig({
   test: {
+    exclude: ['**/test/**/_*.spec.ts'],
     browser: {
       enabled: true,
       headless: true,

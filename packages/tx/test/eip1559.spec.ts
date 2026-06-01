@@ -1,6 +1,6 @@
-import { Hardfork, Mainnet, createCustomCommon } from '@ethereumjs/common'
-import { RLP } from '@ethereumjs/rlp'
-import { TWO_POW256, bytesToHex, equalsBytes, hexToBytes } from '@ethereumjs/util'
+import { Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
+import { TWO_POW256, bytesToHex, equalsBytes, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createFeeMarket1559Tx } from '../src/index.ts'

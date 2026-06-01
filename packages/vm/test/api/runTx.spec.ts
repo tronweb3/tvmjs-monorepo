@@ -1,6 +1,7 @@
-import { createBlock, createBlockHeader } from '@ethereumjs/block'
-import { Blockchain, createBlockchain } from '@ethereumjs/blockchain'
-import { Common, Hardfork, Mainnet, createCommonFromGethGenesis } from '@ethereumjs/common'
+import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+import { createBlock, createBlockHeader } from '@tvmjs/block'
+import { Blockchain, createBlockchain } from '@tvmjs/blockchain'
+import { Common, Hardfork, Mainnet, createCommonFromGethGenesis } from '@tvmjs/common'
 import {
   Blob4844Tx,
   EOACode7702Tx,
@@ -9,7 +10,7 @@ import {
   createFeeMarket1559Tx,
   createLegacyTx,
   createTx,
-} from '@ethereumjs/tx'
+} from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -22,17 +23,16 @@ import {
   createZeroAddress,
   equalsBytes,
   hexToBytes,
-} from '@ethereumjs/util'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
+} from '@tvmjs/util'
 import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
 import { assert, describe, it } from 'vitest'
 
 import { createVM, runTx } from '../../src/index.ts'
 
-import { SIGNER_A, goerliChainConfig } from '@ethereumjs/testdata'
+import { SIGNER_A, goerliChainConfig } from '@tvmjs/testdata'
 import { createAccountWithDefaults, getTransaction, setBalance } from './utils.ts'
 
-import type { FeeMarketEIP1559TxData, LegacyTx, TypedTxData } from '@ethereumjs/tx'
+import type { FeeMarketEIP1559TxData, LegacyTx, TypedTxData } from '@tvmjs/tx'
 import type { VM } from '../../src/vm.ts'
 
 const TRANSACTION_TYPES = [
@@ -647,14 +647,18 @@ describe('runTx() -> consensus bugs', () => {
     common.setHardforkBy({ blockNumber: 2772981 })
     const vm = await createVM({ common })
 
-    const addr = createAddressFromString('0xd3563d8f19a85c95beab50901fd59ca4de69174c')
+    const tx = createLegacyTx(txData, { common })
+    // Tron tx format changes the signing preimage, so the hardcoded r/s/v
+    // recover to a different sender than under Ethereum. Use the recovered
+    // sender at runtime (the consensus bug being exercised is in EVM gas
+    // accounting and is independent of which address signs the tx).
+    const addr = tx.getSenderAddress()
     await vm.stateManager.putAccount(addr, new Account())
     const acc = await vm.stateManager.getAccount(addr)
     acc!.balance = beforeBalance
     acc!.nonce = BigInt(2)
     await vm.stateManager.putAccount(addr, acc!)
 
-    const tx = createLegacyTx(txData, { common })
     await runTx(vm, { tx })
 
     const newBalance = (await vm.stateManager.getAccount(addr))!.balance
@@ -860,7 +864,7 @@ it('Validate SELFDESTRUCT does not charge new account gas when calling CALLER an
 describe('EIP 4844 transaction tests', () => {
   const kzg = new microEthKZG(trustedSetup)
   it('should work', async () => {
-    const { eip4844GethGenesis } = await import('@ethereumjs/testdata')
+    const { eip4844GethGenesis } = await import('@tvmjs/testdata')
     const common = createCommonFromGethGenesis(eip4844GethGenesis, {
       chain: 'customChain',
       hardfork: Hardfork.Cancun,

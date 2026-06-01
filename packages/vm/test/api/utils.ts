@@ -1,16 +1,16 @@
-import { createBlockchain } from '@ethereumjs/blockchain'
-import { TransactionType, createTx } from '@ethereumjs/tx'
-import { Account, blobsToCommitments, computeVersionedHash, getBlobs } from '@ethereumjs/util'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { TransactionType, createTx } from '@tvmjs/tx'
+import { Account, blobsToCommitments, computeVersionedHash, getBlobs } from '@tvmjs/util'
 import { MemoryLevel } from 'memory-level'
 
 import { createVM } from '../../src/index.ts'
 
 import { LevelDB } from './level.ts'
 
-import type { Block } from '@ethereumjs/block'
-import type { Common } from '@ethereumjs/common'
-import { SIGNER_G } from '@ethereumjs/testdata'
-import type { Address, PrefixedHexString } from '@ethereumjs/util'
+import type { Block } from '@tvmjs/block'
+import type { Common } from '@tvmjs/common'
+import { SIGNER_G } from '@tvmjs/testdata'
+import type { Address, PrefixedHexString } from '@tvmjs/util'
 import type { VMOpts } from '../../src/types.ts'
 import type { VM } from '../../src/vm.ts'
 

@@ -1,4 +1,4 @@
-import { EthereumJSErrorWithoutCode } from '@ethereumjs/util'
+import { EthereumJSErrorWithoutCode } from '@tvmjs/util'
 
 import type { EIP1559CompatibleTx } from '../types.ts'
 
