@@ -63,7 +63,7 @@
     "@rollup/rollup-linux-x64-gnu": "*"
   },
   "overrides": {
-    "axios": "1.15.2",
+    "axios": "1.16.1",
     "ws": "8.20.1",
     "tmp": "0.2.7"
   },

@@ -70,7 +70,7 @@
   },
   "devDependencies": {
     "@noble/curves": "2.0.1",
-    "@polkadot/util": "13.4.3",
+    "@polkadot/util": "14.0.3",
     "@polkadot/wasm-crypto": "7.5.1"
   },
   "contributors": ["TVMJS Team"]
