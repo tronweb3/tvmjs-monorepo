@@ -3,10 +3,10 @@
  * Simple release script for in-between releases (nightly, alpha, etc.)
  * 
  * Usage:
- *   tsx scripts/simple-release.ts <version> <tag>
+ *   tsx scripts/simple-release.ts <tag> [--dry-run]
  * 
  * Example:
- *   tsx scripts/simple-release.ts 10.1.1-nightly.1 nightly
+ *   tsx scripts/simple-release.ts nightly --dry-run
  */
 
 import { readFileSync, writeFileSync } from 'fs'
@@ -43,18 +43,18 @@ interface PackageInfo {
   packageJson: PackageJson
 }
 
-function parseArgs(): { version: string; tag: string } {
+function parseArgs(): { dryRun: boolean; tag: string } {
   const args = process.argv.slice(2)
   
-  if (args.length !== 2) {
-    console.error('Usage: tsx scripts/simple-release.ts <version> <tag>')
-    console.error('Example: tsx scripts/simple-release.ts 10.1.1-nightly.1 nightly')
+  if (args.length > 2 || args.length === 0) {
+    console.error('Usage: tsx scripts/simple-release.ts <tag> [--dry-run]')
+    console.error('Example: tsx scripts/simple-release.ts latest --dry-run')
     process.exit(1)
   }
 
   return {
-    version: args[0],
-    tag: args[1],
+    tag: args[0],
+    dryRun: args[1] === '--dry-run',
   }
 }
 
@@ -122,14 +122,14 @@ function updatePackageVersions(
   console.log('\n✅ All package versions updated\n')
 }
 
-function publishPackages(packages: PackageInfo[], tag: string): void {
+function publishPackages(packages: PackageInfo[], tag: string, dryRun: boolean): void {
   console.log(`\n🚀 Publishing packages with tag "${tag}"...\n`)
 
   for (const pkg of packages) {
     console.log(`  Publishing ${pkg.name}...`)
     
     try {    
-      execSync(`npm publish --access public --tag=${tag}`, {
+      execSync(`npm publish --access public --tag=${tag} ${dryRun ? '--dry-run' : ''}`, {
         cwd: pkg.path,
         stdio: 'inherit',
         env: {
@@ -164,13 +164,13 @@ function revertChanges(): void {
 }
 
 async function main(): Promise<void> {
-  const { version, tag } = parseArgs()
+  const { tag, dryRun } = parseArgs()
 
   console.log('\n' + '='.repeat(60))
   console.log('Simple Release Script')
   console.log('='.repeat(60))
-  console.log(`Version: ${version}`)
   console.log(`Tag: ${tag}`)
+  console.log(`Dry run: ${dryRun}`)
   console.log('='.repeat(60) + '\n')
 
   const rootPath = process.cwd()
@@ -197,13 +197,13 @@ async function main(): Promise<void> {
 
   try {
     // Step 1: Update versions
-    updatePackageVersions(packages, version)
+    // updatePackageVersions(packages, version)
 
     // Step 2: Publish packages
-    publishPackages(packages, tag)
+    publishPackages(packages, tag, dryRun)
 
     // Step 3: Revert changes
-    revertChanges()
+    // revertChanges()
 
     console.log('\n' + '='.repeat(60))
     console.log('✅ Release completed successfully!')
@@ -217,7 +217,7 @@ async function main(): Promise<void> {
     // Try to revert changes even on error
     console.error('\nAttempting to revert changes...')
     try {
-      revertChanges()
+      // revertChanges()
     } catch (revertError) {
       console.error('Failed to revert changes automatically')
       console.error('Please manually revert package.json files')
