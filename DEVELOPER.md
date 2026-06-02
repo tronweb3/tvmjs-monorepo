@@ -123,13 +123,13 @@ We have a simple release script for lightweight in-between releases like nightly
 for e.g. external targeted testing and releases are not mentioned in CHANGELOG.md files.
 
 ```sh
-tsx scripts/simple-release.ts <version> <tag>
+tsx scripts/simple-release.ts <tag> [--dry-run]
 ```
 
 Example:
 
 ```sh
-tsx scripts/simple-release.ts 1.0.1-nightly.1 nightly
+tsx scripts/simple-release.ts nightly --dry-run
 ```
 
 #### Windows Users Note
