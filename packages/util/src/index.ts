@@ -31,6 +31,11 @@ export * from './bal.ts'
 export * from './address.ts'
 
 /**
+ * TRON address format utilities
+ */
+export * from './tronAddress.ts'
+
+/**
  * DB type
  */
 export * from './db.ts'

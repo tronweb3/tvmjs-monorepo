@@ -63,6 +63,15 @@ beforeAll(async () => {
 }, 60000)
 
 describe('EIP4844 addSignature tests', () => {
+  it('rejects unsigned token fields', () => {
+    for (const kzg of kzgs) {
+      assert.throws(
+        () => createBlob4844Tx({ tokenId: 1000001n, tokenValue: 1n }, { common: kzg.common }),
+        /tokenId and tokenValue are not supported by typed transaction formats/,
+      )
+    }
+  })
+
   it('addSignature() -> correctly adds correct signature values', () => {
     for (const kzg of kzgs) {
       const privateKey = pk

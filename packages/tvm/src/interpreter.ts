@@ -1,4 +1,4 @@
-import { ConsensusAlgorithm } from '@tvmjs/common'
+import { ConsensusAlgorithm, Hardfork } from '@tvmjs/common'
 import {
   Account,
   BIGINT_0,
@@ -37,6 +37,7 @@ import type { BinaryTreeAccessWitnessInterface, Common, StateManagerInterface } 
 import type { Address, PrefixedHexString } from '@tvmjs/util'
 import { stackDelta } from './eof/stackDelta.ts'
 import type { Journal } from './journal.ts'
+import type { TronTransactionContext } from './message.ts'
 import type { AsyncOpHandler, Opcode, OpcodeMapEntry } from './opcodes/index.ts'
 import type { TVM } from './tvm.ts'
 import type {
@@ -49,6 +50,7 @@ import type {
 } from './types.ts'
 
 const debugGas = debugDefault('tvm:gas')
+const TRON_ADDRESS_PREFIX_WORD = 0x41n << 160n
 
 export interface InterpreterOpts {
   pc?: number
@@ -92,11 +94,12 @@ export interface Env {
   gasRefund: bigint /* Current value (at begin of the frame) of the gas refund */
   eof?: EOFEnv /* Optional EOF environment in case of EOF execution */
   blobVersionedHashes: PrefixedHexString[] /** Versioned hashes for blob transactions */
-  createdAddresses?: Set<string>
+  createdAddresses?: Set<PrefixedHexString>
   accessWitness?: BinaryTreeAccessWitnessInterface
   chargeCodeAccesses?: boolean
   /** Logs to prepend (e.g. EIP-7708 ETH transfer log from message-level value transfer) */
   initialLogs?: Log[]
+  tronTransactionContext?: TronTransactionContext
 }
 
 export interface RunState {
@@ -172,10 +175,12 @@ export class Interpreter {
 
   private profilerOpts?: TVMProfilerOpts
   private performanceLogger: TVMPerformanceLogger
+  private readonly _runCall: (message: Message) => Promise<TVMResult>
 
   // TODO remove gasLeft as constructor argument
   constructor(
     tvm: TVM,
+    runCall: (message: Message) => Promise<TVMResult>,
     stateManager: StateManagerInterface,
     blockchain: TVMMockBlockchainInterface,
     env: Env,
@@ -185,6 +190,7 @@ export class Interpreter {
     profilerOpts?: TVMProfilerOpts,
   ) {
     this._tvm = tvm
+    this._runCall = runCall
     this._stateManager = stateManager
     this.common = this._tvm.common
 
@@ -1121,6 +1127,7 @@ export class Interpreter {
     const selfdestruct = new Map(this._result.selfdestruct)
     msg.selfdestruct = selfdestruct
     msg.gasRefund = this._runState.gasRefund
+    msg.tronTransactionContext = this._env.tronTransactionContext
 
     if (this._env.address.equals(msg.codeAddress)) {
       if (msg.value > BIGINT_0) {
@@ -1145,12 +1152,18 @@ export class Interpreter {
     // Check if account has enough ether and max depth not exceeded
     if (
       this._env.depth >= Number(this.common.param('stackLimit')) ||
-      (msg.delegatecall !== true && this._env.contract.balance < msg.value)
+      (msg.delegatecall !== true && this._env.contract.balance < msg.value) ||
+      (msg.tokenValue > BIGINT_0 &&
+        this._env.contract.getTokenBalance(msg.tokenId) < msg.tokenValue)
     ) {
       return BIGINT_0
     }
 
-    const results = await this._tvm.runCall({ message: msg })
+    if (this.common.gteHardfork(Hardfork.Tron) && this._env.tronTransactionContext !== undefined) {
+      this._env.tronTransactionContext.nonce += BIGINT_1
+    }
+
+    const results = await this._runCall(msg)
 
     if (results.execResult.logs) {
       this._result.logs = this._result.logs.concat(results.execResult.logs)
@@ -1233,7 +1246,7 @@ export class Interpreter {
       )
     }
 
-    if (this.common.isActivatedEIP(3860)) {
+    if (this.common.isActivatedEIP(3860) && !this.common.isTron()) {
       if (
         codeToRun.length > Number(this.common.param('maxInitCodeSize')) &&
         this._tvm.allowUnlimitedInitCodeSize === false
@@ -1254,6 +1267,7 @@ export class Interpreter {
       gasRefund: this._runState.gasRefund,
       blobVersionedHashes: this._env.blobVersionedHashes,
       accessWitness: this._env.accessWitness,
+      tronTransactionContext: this._env.tronTransactionContext,
     })
 
     let createdAddresses: Set<PrefixedHexString>
@@ -1262,7 +1276,7 @@ export class Interpreter {
       message.createdAddresses = createdAddresses
     }
 
-    const results = await this._tvm.runCall({ message })
+    const results = await this._runCall(message)
 
     if (results.execResult.logs) {
       this._result.logs = this._result.logs.concat(results.execResult.logs)
@@ -1300,8 +1314,11 @@ export class Interpreter {
       this._env.contract = account
       this._runState.gasRefund = results.execResult.gasRefund ?? BIGINT_0
       if (results.createdAddress) {
-        // push the created address to the stack
-        return bytesToBigInt(results.createdAddress.bytes)
+        const createdAddress = bytesToBigInt(results.createdAddress.bytes)
+        // java-tron right-aligns its 21-byte TRON address in the 32-byte stack word.
+        return this.common.gteHardfork(Hardfork.Tron)
+          ? TRON_ADDRESS_PREFIX_WORD | createdAddress
+          : createdAddress
       }
     }
 
@@ -1350,6 +1367,12 @@ export class Interpreter {
     const selfdestructAddressHex = bytesToHex(this._env.address.bytes)
     if (!this._result.selfdestruct.has(selfdestructAddressHex)) {
       this.refundGas(this.common.param('selfdestructRefundGas'))
+    }
+
+    // TRON: advance internal nonce for SELFDESTRUCT (java-tron increaseNonce behavior)
+    // This happens on EVERY suicide() call, not just the first one
+    if (this.common.gteHardfork(Hardfork.Tron) && this._env.tronTransactionContext !== undefined) {
+      this._env.tronTransactionContext.nonce += BIGINT_1
     }
 
     this._result.selfdestruct.set(selfdestructAddressHex, toAddress.toString())
@@ -1407,7 +1430,7 @@ export class Interpreter {
       // If 6780 is active, check if current address is being created. If so
       // old behavior of SELFDESTRUCT exists and balance should be set to 0 of this account
       // (i.e. burn the ETH in current account)
-      doModify = this._env.createdAddresses!.has(this._env.address.toString())
+      doModify = this._env.createdAddresses?.has(this._env.address.toString()) ?? false
       // If contract is not being created in this tx...
       if (!doModify) {
         // Check if ETH being sent to another account (thus set balance to 0)

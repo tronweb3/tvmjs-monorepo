@@ -23,6 +23,18 @@ describe('[Common/EIPs]: Initialization / Chain params', () => {
     assert.throws(f, undefined, undefined, msg)
   })
 
+  it('supports explicitly activating EIP-7939 without changing the default', () => {
+    const defaultCommon = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })
+    const explicitCommon = new Common({
+      chain: Mainnet,
+      hardfork: Hardfork.Cancun,
+      eips: [7939],
+    })
+
+    assert.isFalse(defaultCommon.isActivatedEIP(7939))
+    assert.isTrue(explicitCommon.isActivatedEIP(7939))
+  })
+
   it('Initialization errors', () => {
     const UNSUPPORTED_EIP = 1000000
     const eips = [UNSUPPORTED_EIP]

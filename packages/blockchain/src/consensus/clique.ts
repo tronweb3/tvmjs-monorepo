@@ -166,6 +166,11 @@ export class CliqueConsensus implements Consensus {
 
       const checkpointSigners = cliqueEpochTransitionSigners(header)
       const activeSigners = this.cliqueActiveSigners(header.number)
+      if (checkpointSigners.length !== activeSigners.length) {
+        throw EthereumJSErrorWithoutCode(
+          `checkpoint signer count (${checkpointSigners.length}) does not match active signer count (${activeSigners.length})`,
+        )
+      }
       for (const [i, cSigner] of checkpointSigners.entries()) {
         if (activeSigners[i]?.equals(cSigner) !== true) {
           throw EthereumJSErrorWithoutCode(

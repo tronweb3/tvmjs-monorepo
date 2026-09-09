@@ -1,7 +1,34 @@
-import { ecrecover, publicToAddress, short } from '@tvmjs/util'
+import { Hardfork } from '@tvmjs/common'
+import { EthereumJSErrorWithoutCode, ecrecover, publicToAddress, short } from '@tvmjs/util'
 
 import { DataWord } from './dataWord.ts'
 import type { PrecompileInput } from './index.ts'
+
+const TRON_OSAKA_PROPOSAL = 96
+const SIGNATURE_CALLDATA_HEADER_WORDS = 5
+export const SIGNATURE_LENGTH = 65
+
+/**
+ * Returns whether TRON's Osaka proposal is active for this execution profile.
+ * Ethereum hardforks and proposal metadata must not enable TIP-854.
+ */
+export function isTronOsakaEnabled(opts: Pick<PrecompileInput, 'common'>): boolean {
+  return (
+    opts.common.gteHardfork(Hardfork.Tron) && opts.common.isActivatedProposal(TRON_OSAKA_PROPOSAL)
+  )
+}
+
+/**
+ * TIP-854 ABI shape check shared by the TRON signature precompiles.
+ */
+export function isValidTronSignatureCalldata(data: Uint8Array, itemWords: number): boolean {
+  const headerBytes = SIGNATURE_CALLDATA_HEADER_WORDS * DataWord.WORD_SIZE
+  return (
+    data.length % DataWord.WORD_SIZE === 0 &&
+    data.length > headerBytes &&
+    (data.length - headerBytes) % (itemWords * DataWord.WORD_SIZE) === 0
+  )
+}
 
 /**
  * Checks that the gas used remain under the gas limit.
@@ -70,32 +97,67 @@ export const moduloLengthCheck = (opts: PrecompileInput, length: number, pName: 
   return true
 }
 
-export function extractBytes32Array(words: DataWord[], offset: number): Buffer[] {
-  const len = words[offset].intValueSafe()
-  const result = new Array(len)
-  for (let i = 0; i < len; ++i) {
+function assertArrayElementsAvailable(words: DataWord[], offset: number, count: number): void {
+  if (
+    !Number.isSafeInteger(offset) ||
+    offset < 0 ||
+    !Number.isSafeInteger(count) ||
+    count < 0 ||
+    offset >= words.length ||
+    count > words.length - offset - 1
+  ) {
+    throw EthereumJSErrorWithoutCode('ABI array elements exceed calldata bounds')
+  }
+}
+
+export function extractBytes32Array(words: DataWord[], offset: number, count: number): Buffer[] {
+  if (count === 0) {
+    return []
+  }
+  assertArrayElementsAvailable(words, offset, count)
+  const result = new Array(count)
+  for (let i = 0; i < count; ++i) {
     result[i] = words[offset + i + 1].data
   }
   return result
 }
 
-export function extractBytesArray(
+export function extractArrayLength(words: DataWord[], offset: number): number {
+  if (!Number.isSafeInteger(offset) || offset < 0) {
+    throw EthereumJSErrorWithoutCode('ABI array offset is not word-aligned')
+  }
+  if (offset > words.length - 1) {
+    return 0
+  }
+  return words[offset].intValueSafe()
+}
+
+/**
+ * Extracts ABI-encoded signatures using TRON's fixed 65-byte signature length.
+ *
+ * The ABI bytes length word is intentionally ignored. It is caller-controlled and must not be
+ * used as an allocation size. This matches java-tron's `extractSigArray` behavior.
+ * The caller must pass a count which has already been checked against the precompile's limit.
+ */
+export function extractSigArray(
   words: DataWord[],
   offset: number,
+  count: number,
   data: Uint8Array,
 ): Uint8Array[] {
-  if (offset > words.length - 1) {
+  if (count === 0) {
     return []
   }
-
-  const len = words[offset].intValueSafe()
-  const result = new Array<Uint8Array>(len)
-  for (let i = 0; i < len; ++i) {
+  assertArrayElementsAvailable(words, offset, count)
+  const result = new Array<Uint8Array>(count)
+  for (let i = 0; i < count; ++i) {
     const bytesOffset = words[offset + i + 1].intValueSafe() / DataWord.WORD_SIZE
-    const bytesLen = words[offset + bytesOffset + 1].intValueSafe()
-    const bytes = new Uint8Array(bytesLen)
+    if (!Number.isSafeInteger(bytesOffset) || offset + bytesOffset + 1 >= words.length) {
+      throw EthereumJSErrorWithoutCode('ABI signature offset exceeds calldata bounds')
+    }
+    const bytes = new Uint8Array(SIGNATURE_LENGTH)
     const start = (bytesOffset + offset + 2) * DataWord.WORD_SIZE
-    const end = start + bytesLen
+    const end = start + SIGNATURE_LENGTH
     bytes.set(data.subarray(start, end), 0)
     result[i] = bytes
   }

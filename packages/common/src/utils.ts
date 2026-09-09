@@ -6,7 +6,7 @@ import {
   stripHexPrefix,
 } from '@tvmjs/util'
 
-import { Holesky, Hoodi, Mainnet, Sepolia } from './chains.ts'
+import { Holesky, Hoodi, Mainnet, Sepolia, TronMainnet, TronNile, TronShasta } from './chains.ts'
 import { Hardfork } from './enums.ts'
 import { hardforksDict } from './hardforks.ts'
 
@@ -307,6 +307,15 @@ export function parseGethGenesis(gethGenesis: GethGenesis, name?: string) {
  */
 export const getPresetChainConfig = (chain: string | number) => {
   switch (chain) {
+    case 'tron-mainnet':
+    case 728126428:
+      return TronMainnet
+    case 'tron-nile':
+    case 3448148188:
+      return TronNile
+    case 'tron-shasta':
+    case 2494104990:
+      return TronShasta
     case 'holesky':
     case 17000:
       return Holesky

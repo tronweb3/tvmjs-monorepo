@@ -304,26 +304,28 @@ describe('Review Findings - Precompile Utilities', () => {
     assert.equal(result, addr) // same reference
   })
 
-  it('extractBytesArray returns empty for offset beyond words', async () => {
-    const { extractBytesArray } = await import('../../../../tvm/src/precompiles/util.ts')
+  it('extractSigArray returns empty for offset beyond words', async () => {
+    const { extractSigArray } = await import('../../../../tvm/src/precompiles/util.ts')
     const { DataWord } = await import('../../../../tvm/src/precompiles/dataWord.ts')
     const data = new Uint8Array(32)
     const words = DataWord.parseArray(data)
-    const result = extractBytesArray(words, 10, data) // offset=10, but only 1 word
+    const result = extractSigArray(words, 10, 0, data) // offset=10, but only 1 word
     assert.equal(result.length, 0)
   })
 })
 
 describe('Review Findings - CREATE2 Address Generation', () => {
-  it('generateAddress2 uses 0x41 prefix instead of 0xff', async () => {
-    const { generateAddress2 } = await import('@tvmjs/util')
+  it('keeps Ethereum and TRON CREATE2 derivation separate', async () => {
+    const { generateAddress2, generateTronAddress2 } = await import('@tvmjs/util')
     const from = new Uint8Array(20).fill(1)
     const salt = new Uint8Array(32).fill(2)
     const initCode = new Uint8Array([0x60, 0x00]) // minimal bytecode
 
-    const addr = generateAddress2(from, salt, initCode)
-    assert.equal(addr.length, 20)
-    // Just verify it returns a valid 20-byte address (actual value depends on keccak)
+    const ethereumAddress = generateAddress2(from, salt, initCode)
+    const tronAddress = generateTronAddress2(from, salt, initCode)
+    assert.equal(ethereumAddress.length, 20)
+    assert.equal(tronAddress.length, 20)
+    assert.notDeepEqual(ethereumAddress, tronAddress)
   })
 
   it('generateAddress2 throws for invalid from length', async () => {

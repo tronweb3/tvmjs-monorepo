@@ -1,3 +1,5 @@
+import Eth from '@ledgerhq/hw-app-eth'
+import TransportNodeHid from '@ledgerhq/hw-transport-node-hid'
 import { Common, Sepolia } from '@tvmjs/common'
 import { RLP } from '@tvmjs/rlp'
 import {
@@ -7,8 +9,6 @@ import {
   createLegacyTx,
 } from '@tvmjs/tx'
 import { bytesToHex } from '@tvmjs/util'
-import Eth from '@ledgerhq/hw-app-eth'
-import TransportNodeHid from '@ledgerhq/hw-transport-node-hid'
 
 const transport = await TransportNodeHid.default.open()
 const eth = new Eth.default(transport)

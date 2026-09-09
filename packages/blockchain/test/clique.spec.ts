@@ -8,7 +8,7 @@ import {
 } from '@tvmjs/common'
 import type { Address } from '@tvmjs/util'
 import { concatBytes, createAddressFromString, createZeroAddress } from '@tvmjs/util'
-import { assert, describe, it } from 'vitest'
+import { assert, describe, expect, it } from 'vitest'
 
 import { CLIQUE_NONCE_AUTH, CLIQUE_NONCE_DROP, CliqueConsensus } from '../src/consensus/clique.ts'
 import { createBlockchain } from '../src/index.ts'
@@ -173,7 +173,6 @@ describe('Clique: Initialization', () => {
     const unauthorizedSigner = createAddressFromString('0x00a839de7922491683f547a67795204763ff8237')
     const extraData = concatBytes(
       new Uint8Array(32),
-      SIGNER_A.address.toBytes(),
       unauthorizedSigner.toBytes(),
       new Uint8Array(65),
     )
@@ -189,6 +188,67 @@ describe('Clique: Initialization', () => {
         error.message.includes('checkpoint signer not found in active signers list'),
         'correct error',
       )
+    }
+  })
+
+  it('should require the checkpoint signer list to exactly match the active signers', async () => {
+    const cases: Array<{
+      name: string
+      checkpointSigners: (activeSigners: Signer[]) => Signer[]
+      error: RegExp
+    }> = [
+      {
+        name: 'empty',
+        checkpointSigners: () => [],
+        error: /checkpoint signer count \(0\) does not match active signer count \(2\)/,
+      },
+      {
+        name: 'truncated',
+        checkpointSigners: (activeSigners) => activeSigners.slice(0, 1),
+        error: /checkpoint signer count \(1\) does not match active signer count \(2\)/,
+      },
+      {
+        name: 'extended',
+        checkpointSigners: (activeSigners) => [...activeSigners, SIGNER_C],
+        error: /checkpoint signer count \(3\) does not match active signer count \(2\)/,
+      },
+      {
+        name: 'duplicated',
+        checkpointSigners: (activeSigners) => [activeSigners[0], activeSigners[0]],
+        error: /checkpoint signer not found in active signers list/,
+      },
+      {
+        name: 'reordered',
+        checkpointSigners: (activeSigners) => [...activeSigners].reverse(),
+        error: /checkpoint signer not found in active signers list/,
+      },
+    ]
+
+    for (const testCase of cases) {
+      const { blockchain } = await initWithSigners([SIGNER_A, SIGNER_B])
+      // @ts-expect-error -- Assign to read-only property
+      blockchain['_validateBlocks'] = false
+      // @ts-expect-error -- Assign to read-only property
+      blockchain['_validateConsensus'] = true
+      const number = BigInt((COMMON.consensusConfig() as CliqueConfig).epoch)
+      const activeAddresses = (blockchain.consensus as CliqueConsensus).cliqueActiveSigners(number)
+      const availableSigners = [SIGNER_A, SIGNER_B]
+      const activeSigners = activeAddresses.map(
+        (address) => availableSigners.find((signer) => signer.address.equals(address))!,
+      )
+      const checkpointSigners = testCase.checkpointSigners(activeSigners)
+      const extraData = concatBytes(
+        new Uint8Array(32),
+        ...checkpointSigners.map((signer) => signer.address.toBytes()),
+        new Uint8Array(65),
+      )
+      const block = createSealedCliqueBlock(
+        { header: { number, extraData } },
+        activeSigners[0].privateKey,
+        { common: COMMON, freeze: false },
+      )
+
+      await expect(blockchain.putBlock(block), testCase.name).rejects.toThrow(testCase.error)
     }
   })
 

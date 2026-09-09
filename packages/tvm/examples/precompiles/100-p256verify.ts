@@ -34,12 +34,12 @@ const main = async () => {
   const data: PrefixedHexString = `${msgHashHex}${rHex}${sHex}${qxHex}${qyHex}`
 
   // Valid signature: returns 0x0000000000000000000000000000000000000000000000000000000000000001
-  await runPrecompile('P256VERIFY', '0x100', data, Hardfork.Osaka)
+  await runPrecompile('P256VERIFY', '0x100', data, Hardfork.Cancun, [7951])
 
   // Signature verification fails: returns 0x (0 bytes)
   const randomMsgHash = bytesToHex(randomBytes(32))
   const badData: PrefixedHexString = `${randomMsgHash}${rHex}${sHex}${qxHex}${qyHex}`
-  await runPrecompile('P256VERIFY', '0x100', badData, Hardfork.Osaka)
+  await runPrecompile('P256VERIFY', '0x100', badData, Hardfork.Cancun, [7951])
 }
 
 void main()

@@ -1,4 +1,4 @@
-# @tvmjs/tx `1.0.0`
+# @tvmjs/tx `1.0.1`
 
 | Implements schema and functions for TRON-compatible transaction types (including TRC-10 token transfers). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |

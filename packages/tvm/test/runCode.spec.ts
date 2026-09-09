@@ -101,6 +101,7 @@ describe('VM.runCode: interpreter', () => {
     } catch (e: any) {
       assert.isTrue(e.toString().includes('Test'), 'error thrown')
     }
+    assert.strictEqual((tvm as any)._activeExecutions, 0, 'execution lock must be released')
   })
 })
 

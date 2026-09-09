@@ -1,6 +1,7 @@
 import { Common, Mainnet } from '@tvmjs/common'
 import {
   Address,
+  BIGINT_0,
   EthereumJSErrorWithoutCode,
   MAX_INTEGER,
   MAX_UINT64,
@@ -12,8 +13,9 @@ import {
 } from '@tvmjs/util'
 
 import { paramsTx } from '../params.ts'
+import { TransactionType } from '../types.ts'
 
-import type { TransactionInterface, TransactionType, TxData, TxOptions } from '../types.ts'
+import type { TransactionInterface, TxData, TxOptions } from '../types.ts'
 
 /**
  * Gets a Common instance, creating a new one if none provided
@@ -167,6 +169,17 @@ export function sharedConstructor(
   tx.tokenValue = bytesToBigInt(toBytes(tokenValue))
   tx.data = toBytes(data === '' ? '0x' : data)
 
+  // Existing EIP-2718 transaction formats do not encode these TRON-specific fields, so accepting
+  // them would let callers attach an unsigned token transfer to an otherwise valid signature.
+  if (
+    tx.type !== TransactionType.Legacy &&
+    (tx.tokenId !== BIGINT_0 || tx.tokenValue !== BIGINT_0)
+  ) {
+    throw EthereumJSErrorWithoutCode(
+      'tokenId and tokenValue are not supported by typed transaction formats',
+    )
+  }
+
   // Set signature values (if the tx is signed)
   tx.v = vB.length > 0 ? bytesToBigInt(vB) : undefined
   tx.r = rB.length > 0 ? bytesToBigInt(rB) : undefined
@@ -196,7 +209,12 @@ export function sharedConstructor(
   const createContract = tx.to === undefined || tx.to === null
   const allowUnlimitedInitCodeSize = opts.allowUnlimitedInitCodeSize ?? false
 
-  if (createContract && tx.common.isActivatedEIP(3860) && allowUnlimitedInitCodeSize === false) {
+  if (
+    createContract &&
+    tx.common.isActivatedEIP(3860) &&
+    !tx.common.isTron() &&
+    allowUnlimitedInitCodeSize === false
+  ) {
     checkMaxInitCodeSize(tx.common, tx.data.length)
   }
 }

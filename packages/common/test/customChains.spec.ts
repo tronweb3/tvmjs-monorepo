@@ -94,7 +94,7 @@ describe('[Common]: Custom chains', () => {
     )
     // Note: default HF of Common is currently Prague
     // Did not pass any "hardfork" param
-    assert.strictEqual(c.hardfork(), Hardfork.Tron)
+    assert.strictEqual(c.hardfork(), Hardfork.Prague)
     c.setHardforkBy({
       blockNumber: 0,
     })

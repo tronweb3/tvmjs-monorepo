@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, Mainnet, TronMainnet } from '@tvmjs/common'
 import { createZeroAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -20,6 +20,24 @@ const txTypes = [
 ]
 const addressZero = createZeroAddress()
 describe('[EIP3860 tests]', () => {
+  it('does not apply initcode size limits or word gas to TRON deployment transactions', () => {
+    const data = new Uint8Array(Number(maxInitCodeSize) + 1)
+
+    for (const hardfork of [undefined, Hardfork.Shanghai]) {
+      const tronCommon = new Common({ chain: TronMainnet, hardfork, params: paramsTx })
+      for (const txType of txTypes) {
+        const createTxData = createTx({ data, type: txType }, { common: tronCommon })
+        const callTxData = createTx({ data, type: txType, to: addressZero }, { common: tronCommon })
+
+        assert.strictEqual(
+          createTxData.getDataGas(),
+          callTxData.getDataGas(),
+          `did not charge EIP-3860 initcode word gas for txType: ${txType}, hardfork: ${hardfork ?? 'default'}`,
+        )
+      }
+    }
+  })
+
   it(`Should instantiate create txs with MAX_INITCODE_SIZE`, () => {
     const data = new Uint8Array(Number(maxInitCodeSize))
     for (const txType of txTypes) {

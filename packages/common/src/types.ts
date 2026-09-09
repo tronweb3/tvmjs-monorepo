@@ -136,6 +136,16 @@ export interface BaseOpts {
    * and be made with eventual security implications considered.
    */
   customCrypto?: CustomCrypto
+  /**
+   * Activated TRON governance proposal IDs (e.g. `activatedProposals: [95, 96]`),
+   * see the `tronProposalsDict` for supported proposals.
+   *
+   * Common stores proposal state without mutating EIPs or params. Execution
+   * consumers can use `Common.isActivatedProposal()` to gate protocol
+   * behavior. IDs are deduplicated and kept in ascending order; unknown IDs
+   * throw on instantiation. No proposal is activated by default.
+   */
+  activatedProposals?: number[]
 }
 
 /**
@@ -184,6 +194,14 @@ export type ParamsDict = {
 
 export type HardforksDict = {
   [key: string]: HardforkConfig
+}
+
+export type TronProposalConfig = {
+  readonly name: string
+}
+
+export type TronProposalsDict = {
+  readonly [proposalId: string]: TronProposalConfig
 }
 
 export type BpoSchedule = {

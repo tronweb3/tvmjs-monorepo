@@ -48,7 +48,7 @@
     "clean": "../../config/cli/clean-package.sh",
     "coverage": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.mts",
     "coverage:istanbul": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.istanbul.mts",
-    "examples": "tsx ../../scripts/examples-runner.ts -- rlp",
+    "examples": "node --import tsx ../../scripts/examples-runner.ts -- rlp",
     "examples:build": "npx embedme README.md",
     "lint": "npm run biome && eslint  --config ./eslint.config.mjs .",
     "lint:fix": "npm run biome:fix && eslint  --fix --config ./eslint.config.mjs .",

@@ -10,10 +10,12 @@ import {
 } from '@tvmjs/util'
 import { EventEmitter } from 'eventemitter3'
 
+import { Mainnet, TronMainnet } from './chains.ts'
 import { crc32 } from './crc.ts'
 import { tipsDict } from './eips.ts'
 import { Hardfork } from './enums.ts'
 import { hardforksDict } from './hardforks.ts'
+import { tronProposalsDict } from './proposals.ts'
 
 import type { BigIntLike, PrefixedHexString } from '@tvmjs/util'
 import type { ConsensusAlgorithm, ConsensusType } from './enums.ts'
@@ -58,6 +60,7 @@ export class Common {
 
   protected _paramsCache: ParamsConfig = {}
   protected _activatedEIPsCache: number[] = []
+  protected _activatedProposals: number[] = []
 
   protected HARDFORK_CHANGES: [string, HardforkConfig][]
 
@@ -66,7 +69,12 @@ export class Common {
   constructor(opts: CommonOpts) {
     this.events = new EventEmitter<CommonEvent>()
 
-    this._chainParams = JSON.parse(JSON.stringify(opts.chain)) // copy
+    // 1.0.x documented TRON usage as Mainnet + the `tron` hardfork. Keep that
+    // source-compatible in 1.1.x, but normalize it to the correct TRON Mainnet
+    // execution preset instead of preserving the old chainId=1 hybrid.
+    const chain =
+      opts.chain === Mainnet && opts.hardfork === Hardfork.Tron ? TronMainnet : opts.chain
+    this._chainParams = JSON.parse(JSON.stringify(chain)) // copy
     this.DEFAULT_HARDFORK = this._chainParams.defaultHardfork ?? Hardfork.Tron
     // Assign hardfork changes in the sequence of the applied hardforks
     this.HARDFORK_CHANGES = this.hardforks().map((hf) => [
@@ -83,6 +91,22 @@ export class Common {
     }
     if (opts.eips) {
       this.setEIPs(opts.eips)
+    }
+    if (opts.activatedProposals !== undefined) {
+      const supported = Object.keys(tronProposalsDict).join(', ')
+      for (const proposalId of opts.activatedProposals) {
+        if (!Number.isSafeInteger(proposalId) || proposalId <= 0) {
+          throw EthereumJSErrorWithoutCode(
+            `Invalid proposal ID: ${proposalId} (must be a positive safe integer), supported proposals: ${supported}`,
+          )
+        }
+        if (!Object.prototype.hasOwnProperty.call(tronProposalsDict, proposalId)) {
+          throw EthereumJSErrorWithoutCode(
+            `Proposal with ID ${proposalId} not supported, supported proposals: ${supported}`,
+          )
+        }
+      }
+      this._activatedProposals = [...new Set(opts.activatedProposals)].sort((a, b) => a - b)
     }
     this.customCrypto = opts.customCrypto ?? {}
 
@@ -485,6 +509,41 @@ export class Common {
       return true
     }
     return false
+  }
+
+  /**
+   * Returns whether this Common instance uses a TRON execution chain profile.
+   *
+   * Unlike `gteHardfork(Hardfork.Tron)`, this identifies the chain independently of the currently
+   * selected hardfork. This is intended for chain-level execution differences which must still
+   * apply when a TRON preset explicitly selects an earlier hardfork such as Shanghai.
+   */
+  isTron(): boolean {
+    return this._chainParams.hardforks.some(({ name }) => name === Hardfork.Tron)
+  }
+
+  /**
+   * Checks if a TRON governance proposal is activated, i.e. was passed in
+   * with the {@link CommonOpts.activatedProposals} constructor option.
+   *
+   * Common exposes proposal state without mutating EIPs or params. Execution
+   * consumers may use this state to gate protocol behavior. Unknown proposal
+   * IDs return `false`.
+   * @param proposalId
+   */
+  isActivatedProposal(proposalId: number): boolean {
+    return this._activatedProposals.includes(proposalId)
+  }
+
+  /**
+   * Returns the activated TRON governance proposal IDs
+   * (deduplicated, in ascending order).
+   *
+   * A new array is returned on each call, modifying it does not
+   * affect the internal state.
+   */
+  activatedProposals(): number[] {
+    return [...this._activatedProposals]
   }
 
   /**
@@ -906,6 +965,7 @@ export class Common {
   copy(): Common {
     const copy = Object.assign(Object.create(Object.getPrototypeOf(this)), this)
     copy.events = new EventEmitter()
+    copy._activatedProposals = [...this._activatedProposals]
     return copy
   }
 }

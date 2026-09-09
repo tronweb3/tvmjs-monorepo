@@ -34,7 +34,7 @@ describe('Create2Test', async () => {
       'fffffffffffffffffffffffff831681526020810185905281517fb03c53b28e78a88e31607a27e1fa48234dc' +
       'e28d5d9d9ec7b295aeb02e674a1e1929181900390910190a1939250505056fea165627a7a7230582079653f6' +
       '506bd7d3bdf4954ec98c452c5455d2b11444642db00b38fa422b25a650029'
-    const testcode =
+    const testCode =
       '608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57' +
       '600080fd5b5060d7806100396000396000f3fe608060405260043610602c5760003560e01c63ffffffff1680' +
       '6368e5c066146031578063e5aa3d5814606d575b600080fd5b348015603c57600080fd5b50d3801560485760' +
@@ -57,7 +57,7 @@ describe('Create2Test', async () => {
       caller,
       contractAddress,
       abi: abiItem,
-      params: [hexToBytes(`0x${testcode}`), salt],
+      params: [hexToBytes(`0x${testCode}`), salt],
     })
 
     const actualAddress = bytesToHex(unpadBytes(output.results[0].execResult.returnValue))

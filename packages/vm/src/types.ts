@@ -14,6 +14,15 @@ import type { Bloom } from './bloom/index.ts'
 export type TxReceipt = PreByzantiumTxReceipt | PostByzantiumTxReceipt | EIP4844BlobTxReceipt
 
 /**
+ * Controls how TRON execution obtains the transaction ID used for contract address derivation.
+ *
+ * `fallback-to-tx-hash` preserves compatibility with callers that do not have a java-tron
+ * transaction ID by using the signed TVMJS transaction hash as a deterministic simulation ID.
+ * `require-explicit` disables that fallback for real-chain replay and consistency testing.
+ */
+export type TronTransactionIdPolicy = 'require-explicit' | 'fallback-to-tx-hash'
+
+/**
  * Abstract interface with common transaction receipt fields
  */
 export interface BaseTxReceipt {
@@ -109,8 +118,8 @@ export interface VMOpts {
    *
    * Default setup if no `Common` instance is provided:
    *
-   * - `chain`: `mainnet`
-   * - `hardfork`: `paris`
+   * - `chain`: `tron-mainnet` (execution-only chain configuration)
+   * - `hardfork`: `tron`
    * - `eips`: `[]`
    */
   common?: Common
@@ -166,13 +175,19 @@ export interface VMOpts {
   params?: ParamsDict
 
   /**
-   * Use a custom TVM to run Messages on. If this is not present, use the default TVM.
+   * Use a custom TVM to run Messages on. If this is not present, use the default TVM. The custom
+   * TVM's `Common` and `StateManager` instances take precedence over their top-level counterparts.
+   * If the custom TVM exposes a blockchain, that instance also takes precedence. This keeps VM
+   * validation/state updates and TVM execution on the same resources whenever the interface makes
+   * those resources available.
    */
   tvm?: TVMInterface
 
   /**
    * Often there is no need to provide a full custom TVM but only a few options need to be
-   * adopted. This option allows to provide a custom set of TVM options to be passed.
+   * adopted. This option allows to provide a custom set of TVM options to be passed. Its `common`,
+   * `stateManager`, and `blockchain` values take precedence over the corresponding top-level VM
+   * options so both layers use the same instances.
    *
    * Note: This option will throw if used in conjunction with a full custom TVM passed.
    */
@@ -249,6 +264,16 @@ export interface RunBlockOpts {
    * The @tvmjs/block to process
    */
   block: Block
+  /**
+   * Explicit TRON root transaction IDs indexed to `block.transactions`. Missing entries follow
+   * `tronTransactionIdPolicy` when a transaction deploys a contract or reaches internal CREATE.
+   */
+  rootTransactionIds?: readonly (Uint8Array | undefined)[]
+  /**
+   * Policy forwarded to each `runTx()` call when a transaction-indexed ID is missing.
+   * Defaults to `fallback-to-tx-hash`.
+   */
+  tronTransactionIdPolicy?: TronTransactionIdPolicy
   /**
    * Root of the state trie
    */
@@ -393,6 +418,16 @@ export interface RunTxOpts {
    * An `@tvmjs/tx` to run
    */
   tx: TypedTransaction
+  /**
+   * The 32-byte TRON root transaction ID used for top-level deployment and internal CREATE
+   * address derivation. An explicit ID always takes precedence over the compatibility fallback.
+   */
+  rootTransactionId?: Uint8Array
+  /**
+   * Controls whether a missing TRON transaction ID falls back to the signed TVMJS transaction
+   * hash. Defaults to `fallback-to-tx-hash`; use `require-explicit` for real-chain replay.
+   */
+  tronTransactionIdPolicy?: TronTransactionIdPolicy
   /**
    * If true, skips the nonce check
    */

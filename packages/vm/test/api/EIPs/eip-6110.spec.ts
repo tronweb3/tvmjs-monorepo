@@ -9,10 +9,11 @@ import {
   createAccount,
   createAddressFromPrivateKey,
   createAddressFromString,
+  equalsBytes,
   hexToBytes,
   randomBytes,
 } from '@tvmjs/util'
-import { assert, describe, it } from 'vitest'
+import { assert, describe, expect, it } from 'vitest'
 
 import { buildBlock, runBlock } from '../../../src/index.ts'
 import { setupVM } from '../utils.ts'
@@ -40,7 +41,7 @@ const depositContractByteCode = hexToBytes(
 )
 const common = new Common({
   chain: Mainnet,
-  hardfork: Hardfork.Tron,
+  hardfork: Hardfork.Prague,
 })
 // Remove 7002 so won't trigger error
 common['_activatedEIPsCache'] = [
@@ -53,7 +54,40 @@ const DEPOSIT_CONTRACT_ADDRESS = getPresetChainConfig('mainnet')
 const pubkey =
   '0xac842878bb70009552a4cfcad801d6e659c50bd50d7d03306790cb455ce7363c5b6972f0159d170f625a99b2064dbefc'
 
+const malformedDepositLoggerByteCode = hexToBytes(
+  '0x7f649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c560006000a100',
+)
+
 describe('EIP-6110 runBlock tests', () => {
+  it('reverts the block checkpoint when deposit request parsing fails', async () => {
+    const vm = await setupVM({ common })
+    const pk = randomBytes(32)
+    const sender = createAddressFromPrivateKey(pk)
+    const depositContractAddress = createAddressFromString(DEPOSIT_CONTRACT_ADDRESS)
+    const depositTx = createTx(
+      {
+        gasLimit: 100000n,
+        maxFeePerGas: 100n,
+        type: 2,
+        to: DEPOSIT_CONTRACT_ADDRESS,
+      },
+      { common },
+    ).sign(pk)
+
+    await vm.stateManager.putCode(depositContractAddress, malformedDepositLoggerByteCode)
+    await vm.stateManager.putAccount(sender, createAccount({ balance: Units.ether(1) }))
+    const stateRootBefore = await vm.stateManager.getStateRoot()
+    const checkpointCountBefore = (vm.stateManager as any)._checkpointCount
+    const block = createBlock({ transactions: [depositTx] }, { common })
+
+    await expect(
+      runBlock(vm, { block, generate: true, skipBlockValidation: true }),
+    ).rejects.toThrow('invalid deposit log: unsupported data layout')
+
+    assert.strictEqual((vm.stateManager as any)._checkpointCount, checkpointCountBefore)
+    assert.isTrue(equalsBytes(await vm.stateManager.getStateRoot(), stateRootBefore))
+  })
+
   it('should generate a valid deposit request', async () => {
     const vm = await setupVM({ common })
     const pk = randomBytes(32)

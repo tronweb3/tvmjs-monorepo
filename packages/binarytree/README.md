@@ -1,4 +1,4 @@
-# @tvmjs/binarytree `1.0.0` (EXPERIMENTAL)
+# @tvmjs/binarytree `1.0.1` (EXPERIMENTAL)
 
 | Implementation of Binary Trees as specified in [EIP-7864](https://eips.ethereum.org/EIPS/eip-7864). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |

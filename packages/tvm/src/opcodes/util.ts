@@ -229,6 +229,13 @@ export function maxCallGas(
   runState: RunState,
   common: Common,
 ): bigint {
+  // java-tron currently deploys version-0 contracts when
+  // allowTvmCompatibleEvm is disabled. Version-0 forwards the requested
+  // amount up to all available energy; version-1 can restore the EIP-150
+  // 63/64 rule when contract-version state is modeled.
+  if (common.gteHardfork(Hardfork.Tron)) {
+    return gasLimit > gasLeft ? gasLeft : gasLimit
+  }
   if (common.gteHardfork(Hardfork.TangerineWhistle)) {
     const gasAllowed = gasLeft - gasLeft / BIGINT_64
     return gasLimit > gasAllowed ? gasAllowed : gasLimit

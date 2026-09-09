@@ -562,7 +562,7 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
           )
         }
 
-        if (common.isActivatedEIP(3860)) {
+        if (common.isActivatedEIP(3860) && !common.isTron()) {
           gas += ((length + BIGINT_31) / BIGINT_32) * common.param('initCodeWordGas')
         }
 
@@ -932,7 +932,7 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
           )
         }
 
-        if (common.isActivatedEIP(3860)) {
+        if (common.isActivatedEIP(3860) && !common.isTron()) {
           gas += ((length + BIGINT_31) / BIGINT_32) * common.param('initCodeWordGas')
         }
 
@@ -1234,14 +1234,22 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
 
         // Calculate new account gas first (needed for checkpoint ordering)
         let newAccountGas = BIGINT_0
-        if (common.gteHardfork(Hardfork.SpuriousDragon)) {
-          // EIP-161: State Trie Clearing
-          if (balance > BIGINT_0) {
-            // This technically checks if account is empty or non-existent
-            const account = await runState.stateManager.getAccount(selfdestructToAddress)
-            if (account === undefined || account.isEmpty()) {
-              newAccountGas = common.param('callNewAccountGas')
-            }
+        if (common.gteHardfork(Hardfork.Tron)) {
+          // TRON: java-tron getSuicideCost2/3 + isDeadAccount logic:
+          // - Only checks if beneficiary account does NOT exist (account === undefined)
+          // - Does NOT check isEmpty() (existing empty accounts don't charge)
+          // - Does NOT check transfer amount (charges even if TRX=0 and Token=0)
+          // This differs from EIP-161 which requires both transfersValue AND isEmpty().
+          const account = await runState.stateManager.getAccount(selfdestructToAddress)
+          if (account === undefined) {
+            newAccountGas = common.param('callNewAccountGas')
+          }
+        } else if (common.gteHardfork(Hardfork.SpuriousDragon)) {
+          // EIP-161 (Spurious Dragon): charge newAccountGas if transferring value to empty account
+          const account = await runState.stateManager.getAccount(selfdestructToAddress)
+          const transfersValue = balance > BIGINT_0
+          if (transfersValue && (account === undefined || account.isEmpty())) {
+            newAccountGas = common.param('callNewAccountGas')
           }
         } else if (common.gteHardfork(Hardfork.TangerineWhistle)) {
           // EIP-150 (Tangerine Whistle) gas semantics

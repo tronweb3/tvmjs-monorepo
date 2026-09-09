@@ -14,17 +14,10 @@ export class CheckpointDB implements DB {
   public readonly cacheSize: number
   private readonly valueEncoding: ValueEncoding
 
-  // Starting with lru-cache v8 undefined and null are not allowed any more
-  // as cache values. At the same time our design works well, since undefined
-  // indicates for us that we know that the value is not present in the
-  // underlying trie database as well (so it carries real value).
-  //
-  // Solution here seems therefore adequate, other solutions would rather
-  // be some not so clean workaround.
-  //
-  // (note that @ts-ignore doesn't work since stripped on declaration (.d.ts) files)
+  // lru-cache v8+ does not store undefined: set(key, undefined) is an alias for delete(key).
+  // Missing database values are therefore not negatively cached, and deletions explicitly evict
+  // the corresponding entry.
   protected _cache?: LRUCache<string, Uint8Array>
-  // protected _cache?: LRUCache<string, Uint8Array | undefined>
 
   _stats = {
     cache: {
@@ -133,6 +126,15 @@ export class CheckpointDB implements DB {
   async get(key: Uint8Array): Promise<Uint8Array | undefined> {
     // Using deprecated bytesToUnprefixedHex for performance: used as cache/database keys (string encoding).
     const keyHex = bytesToUnprefixedHex(key)
+
+    // Checkpointed values are newer than the shared read cache and must take precedence. Otherwise
+    // a cached disk value can mask a put or deletion made by speculative execution.
+    for (let index = this.checkpoints.length - 1; index >= 0; index--) {
+      if (this.checkpoints[index].keyValueMap.has(keyHex)) {
+        return this.checkpoints[index].keyValueMap.get(keyHex)
+      }
+    }
+
     if (this._cache !== undefined) {
       const value = this._cache.get(keyHex)
       this._stats.cache.reads += 1
@@ -142,12 +144,6 @@ export class CheckpointDB implements DB {
       }
     }
 
-    // Lookup the value in our diff cache. We return the latest checkpointed value (which should be the value on disk)
-    for (let index = this.checkpoints.length - 1; index >= 0; index--) {
-      if (this.checkpoints[index].keyValueMap.has(keyHex)) {
-        return this.checkpoints[index].keyValueMap.get(keyHex)
-      }
-    }
     // Nothing has been found in diff cache, look up from disk
     const value = await this.db.get(keyHex, {
       keyEncoding: KeyEncoding.String,
@@ -163,7 +159,11 @@ export class CheckpointDB implements DB {
           ? value
           : unprefixedHexToBytes(value as string)
         : undefined
-    this._cache?.set(keyHex, returnValue)
+    if (returnValue !== undefined) {
+      this._cache?.set(keyHex, returnValue)
+    } else {
+      this._cache?.delete(keyHex)
+    }
     if (this.hasCheckpoints()) {
       // Since we are a checkpoint, put this value in diff cache,
       // so future `get` calls will not look the key up again from disk.
@@ -215,7 +215,7 @@ export class CheckpointDB implements DB {
       this._stats.db.writes += 1
 
       if (this._cache !== undefined) {
-        this._cache.set(keyHex, undefined)
+        this._cache.delete(keyHex)
         this._stats.cache.writes += 1
       }
     }
@@ -253,6 +253,21 @@ export class CheckpointDB implements DB {
         return convertedOp
       })
       await this.db.batch(convertedOps as any)
+
+      // Keep the performance cache coherent with the successfully persisted batch. Final
+      // checkpoint commits use this path, so omitting this update would leak stale values into
+      // later transactions and blocks.
+      if (this._cache !== undefined) {
+        for (const op of opStack) {
+          const keyHex = bytesToUnprefixedHex(op.key)
+          if (op.type === 'put') {
+            this._cache.set(keyHex, op.value)
+          } else {
+            this._cache.delete(keyHex)
+          }
+          this._stats.cache.writes += 1
+        }
+      }
     }
   }
 

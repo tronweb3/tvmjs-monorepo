@@ -21,6 +21,8 @@ import {
   equalsBytes,
   generateAddress,
   generateAddress2,
+  generateTronContractAddress,
+  generateTronCreateAddress,
   hexToBytes,
   importPublic,
   intToBytes,
@@ -244,7 +246,6 @@ describe('Utility Functions', () => {
     )
 
     assert.isFalse(
-      // @ts-expect-error -- This syntax is not allowed when 'erasableSyntaxOnly' is enabled.
       isValidPrivate((<unknown>'WRONG_INPUT_TYPE') as Uint8Array),
       'should fail on wrong input type',
     )
@@ -519,6 +520,71 @@ describe('Utility Functions', () => {
     )
   })
 
+  it('generateTronCreateAddress matches java-tron fixed vectors', () => {
+    // Source of truth: java-tron GreatVoyage-v4.8.2
+    // actuator/src/main/java/org/tron/core/utils/TransactionUtil.java:162-168
+    // generateContractAddress(transactionRootId, nonce) hashes the 32-byte root
+    // transaction ID followed by Guava Longs.toByteArray(nonce), i.e. an
+    // 8-byte big-endian value, and returns the low 20 bytes (sha3omit12).
+    // https://github.com/tronprotocol/java-tron/blob/GreatVoyage-v4.8.2/actuator/src/main/java/org/tron/core/utils/TransactionUtil.java#L162-L168
+    const rootTransactionId = hexToBytes(
+      '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+    )
+    const vectors = [
+      [0n, '0xe5732ce09bab3ecf290d7a67c4bbbf294ecec649'],
+      [1n, '0x92c8a5a62642e1621a9b7c850eec3e8023251dbf'],
+      [2n, '0xb0e9579bf706a1a5615857179942fcd54ed5fa1f'],
+      [255n, '0xeaa5699d81176fb65119bc3ec2034f1dac9697fc'],
+      [256n, '0x4750ec36e1db3d7748ef10c823d13b4f36bf3114'],
+    ] as const
+
+    for (const [nonce, expected] of vectors) {
+      assert.strictEqual(bytesToHex(generateTronCreateAddress(rootTransactionId, nonce)), expected)
+    }
+  })
+
+  it('generateTronCreateAddress validates its execution context', () => {
+    const rootTransactionId = new Uint8Array(32)
+    assert.throws(
+      () => generateTronCreateAddress(new Uint8Array(31), 0n),
+      /rootTransactionId to be of length 32/,
+    )
+    assert.throws(
+      () => generateTronCreateAddress(rootTransactionId, -1n),
+      /unsigned 64-bit integer/,
+    )
+    assert.throws(
+      () => generateTronCreateAddress(rootTransactionId, 0x10000000000000000n),
+      /unsigned 64-bit integer/,
+    )
+  })
+
+  it('generateTronContractAddress matches java-tron top-level deployment derivation', () => {
+    const transactionId = hexToBytes(
+      '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+    )
+    const ownerAddress = hexToBytes('0x11223344556677889900aabbccddeeff00112233')
+
+    assert.strictEqual(
+      bytesToHex(generateTronContractAddress(transactionId, ownerAddress)),
+      '0x878f4dfdb3020231fa47ca6f950a711dd16465c6',
+    )
+  })
+
+  it('generateTronContractAddress validates transaction and owner address lengths', () => {
+    const transactionId = new Uint8Array(32)
+    const ownerAddress = new Uint8Array(20)
+
+    assert.throws(
+      () => generateTronContractAddress(new Uint8Array(31), ownerAddress),
+      /transactionId to be of length 32/,
+    )
+    assert.throws(
+      () => generateTronContractAddress(transactionId, new Uint8Array(21)),
+      /ownerAddress to be of length 20/,
+    )
+  })
+
   // cspell:disable
   it('generateAddress wt.testh nonce 0 (special case)', () => {
     // cspell:enable
@@ -539,7 +605,6 @@ describe('Utility Functions', () => {
     assert.throws(
       function () {
         generateAddress(
-          // @ts-expect-error -- This syntax is not allowed when 'erasableSyntaxOnly' is enabled.
           (<unknown>'0x990ccf8a0de58091c028d6ff76bb235ee67c1c39') as Uint8Array,
           intToBytes(0),
         )
@@ -553,7 +618,6 @@ describe('Utility Functions', () => {
       function () {
         generateAddress(
           hexToBytes('0x990ccf8a0de58091c028d6ff76bb235ee67c1c39'),
-          // @ts-expect-error -- This syntax is not allowed when 'erasableSyntaxOnly' is enabled.
           (<unknown>0) as Uint8Array,
         )
       },

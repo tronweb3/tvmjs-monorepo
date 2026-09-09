@@ -1,4 +1,6 @@
-# @tvmjs/tvm `1.0.0`
+<!-- cspell:ignore blockhashes Fusaka prehash subarray -->
+
+# @tvmjs/tvm `1.1.0`
 
 | TypeScript implementation of the TRON Virtual Machine (TVM). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -47,6 +49,13 @@ This package provides the core TRON Virtual Machine (TVM) implementation which i
 ### Basic
 
 The following is the simplest example for an TVM instantiation with reasonable defaults for state and blockchain information (like blockhashes):
+
+`createTVM()` defaults to the execution-only `TronMainnet` configuration. To run Ethereum rules,
+pass an explicit `Common`, for example `new Common({ chain: Mainnet })`. This selects Ethereum
+Mainnet at its current Prague hardfork; it does not recreate the 1.0.0 default combination of
+chainId 1 with the TRON hardfork. The legacy explicit form
+`new Common({ chain: Mainnet, hardfork: 'tron' })` remains accepted and is normalized to
+`TronMainnet` with chainId 728126428; new TRON code should use `TronMainnet` directly.
 
 ```ts
 // ./examples/simple.ts

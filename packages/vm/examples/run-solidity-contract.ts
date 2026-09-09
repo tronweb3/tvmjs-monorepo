@@ -47,10 +47,10 @@ function getSolcInput() {
         enabled: true,
         runs: 200,
       },
-      tvmVersion: 'petersburg',
+      evmVersion: 'petersburg',
       outputSelection: {
         '*': {
-          '*': ['abi', 'tvm.bytecode'],
+          '*': ['abi', 'evm.bytecode'],
         },
       },
     },
@@ -88,7 +88,7 @@ function compileContracts() {
 }
 
 function getGreeterDeploymentBytecode(solcOutput: any): any {
-  return solcOutput.contracts['helpers/Greeter.sol'].Greeter.tvm.bytecode.object
+  return solcOutput.contracts['helpers/Greeter.sol'].Greeter.evm.bytecode.object
 }
 
 async function deployContract(
@@ -246,4 +246,7 @@ async function main() {
   console.log('Everything ran correctly!')
 }
 
-void main()
+void main().catch((err) => {
+  console.error(err)
+  process.exitCode = 1
+})

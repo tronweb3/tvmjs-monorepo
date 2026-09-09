@@ -1,4 +1,4 @@
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { SimpleStateManager } from '@tvmjs/statemanager'
 
 import { TVM } from './index.ts'
@@ -20,7 +20,7 @@ export async function createTVM(createOpts?: TVMOpts) {
   opts.bn254 = new NobleBN254()
 
   if (opts.common === undefined) {
-    opts.common = new Common({ chain: Mainnet })
+    opts.common = new Common({ chain: TronMainnet })
   }
 
   if (opts.blockchain === undefined) {

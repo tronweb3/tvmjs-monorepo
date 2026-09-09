@@ -102,6 +102,11 @@ interface TVMRunOpts {
    * Versioned hashes for each blob in a blob transaction
    */
   blobVersionedHashes?: PrefixedHexString[]
+  /**
+   * The 32-byte root transaction ID used by java-tron to derive top-level
+   * deployment and internal CREATE addresses. Required for TRON contract creation.
+   */
+  rootTransactionId?: Uint8Array
 }
 
 export interface TVMRunCodeOpts extends TVMRunOpts {
@@ -109,6 +114,10 @@ export interface TVMRunCodeOpts extends TVMRunOpts {
    * The initial program counter. Defaults to `0`
    */
   pc?: number
+  /**
+   * Created addresses in the current context. Defaults to an empty set when EIP-6780 is active.
+   */
+  createdAddresses?: Set<PrefixedHexString>
 }
 
 /**
@@ -124,12 +133,14 @@ export interface TVMRunCallOpts extends TVMRunOpts {
    */
   salt?: Uint8Array
   /**
-   * Created addresses in current context. Used in EIP 6780
+   * Created addresses in the current context. Used by EIP-6780.
    */
   createdAddresses?: Set<PrefixedHexString>
   /**
    * Skip balance checks if true. If caller balance is less than message value,
    * sets balance to message value to ensure execution doesn't fail.
+   * When `message` is also supplied, this is only honored for top-level
+   * (`depth === 0`) messages.
    */
   skipBalance?: boolean
   /**
@@ -179,6 +190,11 @@ export interface TVMInterface {
     startReportingPreimages?(): void
   }
   stateManager: StateManagerInterface
+  /**
+   * Blockchain used by this TVM. Optional for compatibility with custom TVM implementations;
+   * built-in TVM instances expose it so VM and TVM can share the same instance.
+   */
+  blockchain?: TVMMockBlockchainInterface
   precompiles: Map<string, PrecompileFunc>
   getPrecompile?(address: Address | PrefixedHexString): PrecompileFunc | undefined
   runCall(opts: TVMRunCallOpts): Promise<TVMResult>
@@ -248,16 +264,22 @@ export interface TVMOpts {
   common?: Common
 
   /**
-   * Allows unlimited contract sizes while debugging. By setting this to `true`, the check for
-   * contract size limit of 24KB (see [EIP-170](https://git.io/vxZkK)) is bypassed.
+   * Allows unlimited contract sizes while debugging Ethereum or a custom chain. By setting this
+   * to `true`, the check for the 24KB contract size limit (see
+   * [EIP-170](https://git.io/vxZkK)) is bypassed.
+   *
+   * TRON chain profiles do not apply EIP-170 regardless of this option.
    *
    * Default: `false` [ONLY set to `true` during debugging]
    */
   allowUnlimitedContractSize?: boolean
 
   /**
-   * Allows unlimited contract code-size init while debugging. This (partially) disables EIP-3860.
-   * Gas cost for initcode size analysis will still be charged. Use with caution.
+   * Allows unlimited initcode while debugging Ethereum or a custom chain. This partially disables
+   * EIP-3860: the initcode size check is bypassed, but initcode word gas is still charged.
+   *
+   * TRON chain profiles do not apply EIP-3860 size checks or word gas regardless of this option.
+   * Use with caution.
    */
   allowUnlimitedInitCodeSize?: boolean
 

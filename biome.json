@@ -18,7 +18,9 @@
       "**/4844-interop/**",
       "**/scripts/**",
       "**/rlp/bin/**",
-      "**/benchmarks/fixture/**"
+      "**/benchmarks/fixture/**",
+      "**/soljson.js",
+      "**/test/t8n/testdata/output/**"
     ]
   },
   "formatter": {

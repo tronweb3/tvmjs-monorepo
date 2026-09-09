@@ -7,6 +7,9 @@ import {
   ConsensusType,
   Hardfork,
   Mainnet,
+  TronMainnet,
+  TronNile,
+  TronShasta,
   getPresetChainConfig,
 } from '../src/index.ts'
 
@@ -19,7 +22,7 @@ describe('[Common/Chains]: Initialization / Chain params', () => {
     assert.strictEqual(c.chainId(), BigInt(1), 'should return correct chain Id')
     assert.strictEqual(
       c.hardfork(),
-      Hardfork.Tron,
+      Hardfork.Prague,
       'should set hardfork to current default hardfork',
     )
     assert.strictEqual(
@@ -59,6 +62,16 @@ describe('[Common/Chains]: Initialization / Chain params', () => {
     chain = getPresetChainConfig(123)
     c = new Common({ chain })
     assert.strictEqual(c.chainName(), 'mainnet')
+
+    const tronPresets = [
+      ['tron-mainnet', 728126428, TronMainnet],
+      ['tron-nile', 3448148188, TronNile],
+      ['tron-shasta', 2494104990, TronShasta],
+    ] as const
+    for (const [name, chainId, expected] of tronPresets) {
+      assert.strictEqual(getPresetChainConfig(name), expected)
+      assert.strictEqual(getPresetChainConfig(chainId), expected)
+    }
   })
 
   it('Should initialize with chain and hardfork provided', () => {

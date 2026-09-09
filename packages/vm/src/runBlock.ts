@@ -31,8 +31,9 @@ import debugDefault from 'debug'
 
 import { Bloom } from './bloom/index.ts'
 import { emitTVMProfile } from './emitTVMProfile.ts'
-import { runTx } from './index.ts'
 import { accumulateRequests } from './requests.ts'
+import { runTx } from './runTx.ts'
+import { validateTronTransactionIdPolicy } from './tronTransactionId.ts'
 
 import type { Block } from '@tvmjs/block'
 import type { Common } from '@tvmjs/common'
@@ -72,6 +73,8 @@ const entireBlockLabel = 'Entire block'
  *  - `generate`: false
  */
 export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResult> {
+  validateTronTransactionIdPolicy(opts.tronTransactionIdPolicy)
+
   if (vm['_opts'].profilerOpts?.reportAfterBlock === true) {
     enableProfiler = true
     // eslint-disable-next-line no-console
@@ -164,6 +167,9 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
   }
 
   let result: ApplyBlockResult
+  let requestsHash: Uint8Array | undefined
+  let requests: CLRequest<CLRequestType>[] | undefined
+  let stateRoot: Uint8Array
 
   try {
     result = await applyBlock(vm, block, opts)
@@ -176,50 +182,37 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
         } txResults=${result.results.length}`,
       )
     }
-  } catch (err: any) {
-    await vm.tvm.journal.revert()
-    if (vm.DEBUG) {
-      debug(`block checkpoint reverted`)
-    }
-    if (enableProfiler) {
-      // eslint-disable-next-line no-console
-      console.timeEnd(withdrawalsRewardsCommitLabel)
-    }
-    throw err
-  }
-  let requestsHash: Uint8Array | undefined
-  let requests: CLRequest<CLRequestType>[] | undefined
-  if (block.common.isActivatedEIP(7685)) {
-    const sha256Function = vm.common.customCrypto.sha256 ?? sha256
-    requests = await accumulateRequests(vm, result.results)
-    requestsHash = genRequestsRoot(requests, sha256Function)
-  }
 
-  const stateRoot = await stateManager.getStateRoot()
+    if (block.common.isActivatedEIP(7685)) {
+      const sha256Function = vm.common.customCrypto.sha256 ?? sha256
+      requests = await accumulateRequests(vm, result.results)
+      requestsHash = genRequestsRoot(requests, sha256Function)
+    }
 
-  // Given the generate option, either set resulting header
-  // values to the current block, or validate the resulting
-  // header values against the current block.
-  if (generateFields) {
-    const logsBloom = result.bloom.bitvector
-    const gasUsed = result.gasUsed
-    const receiptTrie = result.receiptsRoot
-    const transactionsTrie = await _genTxTrie(block)
-    const generatedFields = {
-      stateRoot,
-      logsBloom,
-      gasUsed,
-      receiptTrie,
-      transactionsTrie,
-      requestsHash,
-    }
-    const blockData = {
-      ...block,
-      header: { ...block.header, ...generatedFields },
-    }
-    block = createBlock(blockData, { common: vm.common })
-  } else {
-    try {
+    stateRoot = await stateManager.getStateRoot()
+
+    // Given the generate option, either set resulting header
+    // values to the current block, or validate the resulting
+    // header values against the current block.
+    if (generateFields) {
+      const logsBloom = result.bloom.bitvector
+      const gasUsed = result.gasUsed
+      const receiptTrie = result.receiptsRoot
+      const transactionsTrie = await _genTxTrie(block)
+      const generatedFields = {
+        stateRoot,
+        logsBloom,
+        gasUsed,
+        receiptTrie,
+        transactionsTrie,
+        requestsHash,
+      }
+      const blockData = {
+        ...block,
+        header: { ...block.header, ...generatedFields },
+      }
+      block = createBlock(blockData, { common: vm.common })
+    } else {
       if (vm.common.isActivatedEIP(7685)) {
         if (!equalsBytes(block.header.requestsHash!, requestsHash!)) {
           if (vm.DEBUG)
@@ -297,16 +290,23 @@ export async function runBlock(vm: VM, opts: RunBlockOpts): Promise<RunBlockResu
         }
         debug(`Binary tree post state verification succeeded`)
       }
-    } catch (err) {
-      await vm.tvm.journal.revert()
-      if (vm.DEBUG) {
-        debug(`block checkpoint reverted`)
-      }
-      throw err
     }
+  } catch (err) {
+    await vm.tvm.journal.revert()
+    if (vm.DEBUG) {
+      debug(`block checkpoint reverted`)
+    }
+    if (enableProfiler) {
+      // eslint-disable-next-line no-console
+      console.timeEnd(withdrawalsRewardsCommitLabel)
+    }
+    throw err
   }
 
-  // Persist state
+  // Persist state. Deliberately outside the rollback catch above: the StateManager pops the
+  // underlying trie checkpoint before it can fail on a DB write or flush, so reverting a failed
+  // commit would target a checkpoint that no longer exists and mask the original error with
+  // 'trying to revert when not checkpointed'. Only pre-commit failures are rolled back.
   await vm.tvm.journal.commit()
   if (vm.DEBUG) {
     debug(`block checkpoint committed`)
@@ -649,6 +649,8 @@ async function applyTransactions(vm: VM, block: Block, opts: RunBlockOpts) {
     const txRes = await runTx(vm, {
       tx,
       block,
+      rootTransactionId: opts.rootTransactionIds?.[txIdx],
+      tronTransactionIdPolicy: opts.tronTransactionIdPolicy,
       skipBalance,
       skipNonce,
       skipHardForkValidation,

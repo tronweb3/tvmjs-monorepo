@@ -1,7 +1,13 @@
 import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
 import { testnetMergeChainConfig } from '@tvmjs/testdata'
 import { TVM, createTVM } from '@tvmjs/tvm'
-import { Account, KECCAK256_RLP, createAddressFromString, hexToBytes } from '@tvmjs/util'
+import {
+  Account,
+  KECCAK256_RLP,
+  bytesToBigInt,
+  createAddressFromString,
+  hexToBytes,
+} from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { type VMOpts, createVM, paramsVM } from '../../src/index.ts'
@@ -35,6 +41,12 @@ describe('VM -> basic instantiation / boolean switches', () => {
       'it has default trie',
     )
     assert.strictEqual(vm.common.hardfork(), Hardfork.Tron, 'it has correct default HF')
+    assert.strictEqual(vm.common.chainName(), 'tron-mainnet')
+    assert.strictEqual(vm.common.chainId(), 728126428n)
+    assert.strictEqual(vm.tvm.common, vm.common, 'VM and TVM should share the default Common')
+
+    const result = await vm.tvm.runCode({ code: hexToBytes('0x46') })
+    assert.strictEqual(result.runState!.stack.peek()[0], 728126428n, 'CHAINID uses TRON Mainnet')
   })
 
   it('should be able to activate precompiles', async () => {
@@ -62,6 +74,24 @@ describe('VM -> Default TVM / Custom TVM Opts', () => {
     }
   })
 
+  it('should use the Common owned by a custom TVM', async () => {
+    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Byzantium })
+    const tvm = await createTVM({ common })
+    const vm = await createVM({ tvm })
+
+    assert.strictEqual(vm.common, common)
+    assert.strictEqual(vm.tvm.common, vm.common)
+    assert.strictEqual(vm.common.chainId(), 1n)
+    assert.strictEqual(vm.common.hardfork(), Hardfork.Byzantium)
+    assert.strictEqual(vm.stateManager, tvm.stateManager)
+    assert.strictEqual(vm.blockchain, tvm.blockchain)
+
+    const contract = createAddressFromString('0x0000000000000000000000000000000000000100')
+    await vm.stateManager.putCode(contract, hexToBytes('0x602a60005260206000f3'))
+    const result = await vm.tvm.runCall({ to: contract })
+    assert.strictEqual(bytesToBigInt(result.execResult.returnValue), 42n)
+  })
+
   it('Default TVM should use custom TVM opts', async () => {
     const vm = await createVM({ tvmOpts: { allowUnlimitedContractSize: true } })
     assert.isTrue((vm.tvm as TVM).allowUnlimitedContractSize, 'allowUnlimitedContractSize=true')
@@ -80,6 +110,8 @@ describe('VM -> Default TVM / Custom TVM Opts', () => {
       'byzantium',
       'use modified HF from VM common',
     )
+    assert.strictEqual(vm.common.chainId(), 1n, 'explicit Ethereum Mainnet should keep chainId 1')
+    assert.strictEqual(vm.tvm.common, vm.common, 'VM and TVM should share the explicit Common')
 
     const copiedVM = await vm.shallowCopy()
     assert.strictEqual(
@@ -91,12 +123,25 @@ describe('VM -> Default TVM / Custom TVM Opts', () => {
 
   it('Default TVM should prefer common from tvmOpts if provided (same logic for blockchain, statemanager)', async () => {
     const common = new Common({ chain: Mainnet, hardfork: Hardfork.Byzantium })
-    const vm = await createVM({ tvmOpts: { common } })
+    const resources = await createTVM({ common })
+    const vm = await createVM({
+      tvmOpts: {
+        common,
+        stateManager: resources.stateManager,
+        blockchain: resources.blockchain,
+      },
+    })
     assert.strictEqual(
       (vm.tvm as TVM).common.hardfork(),
       'byzantium',
       'use modified HF from tvmOpts',
     )
+    assert.strictEqual(vm.common, common, 'VM should use the Common selected by tvmOpts')
+    assert.strictEqual(vm.tvm.common, vm.common, 'VM and TVM should not diverge')
+    assert.strictEqual(vm.stateManager, resources.stateManager)
+    assert.strictEqual(vm.tvm.stateManager, vm.stateManager)
+    assert.strictEqual(vm.blockchain, resources.blockchain)
+    assert.strictEqual(vm.tvm.blockchain, vm.blockchain)
 
     const copiedVM = await vm.shallowCopy()
     assert.strictEqual(
@@ -264,6 +309,9 @@ describe('VM -> setHardfork, blockchain', () => {
 
     let vm = await createVM(opts)
     let vmCopy = await vm.shallowCopy()
+    assert.strictEqual(vmCopy.common.chainName(), 'tron-mainnet')
+    assert.strictEqual(vmCopy.common.chainId(), 728126428n)
+    assert.strictEqual(vmCopy.tvm.common.chainId(), 728126428n)
     assert.deepEqual(
       (vmCopy as any)._setHardfork,
       true,

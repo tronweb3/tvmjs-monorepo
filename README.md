@@ -40,11 +40,11 @@ TVMJS is a monorepo of modular packages that together implement the full TRON ex
 
 | Address | Name | Description |
 |---------|------|-------------|
+| 0x03 | "RIPEMD-160" (TRON variant) | Computes `sha256(sha256(input)[0:20])` (32-byte output) — not actual RIPEMD-160, matching java-tron's `Ripempd160` precompile for consensus compatibility |
 | 0x09 | BatchValidateSign | Batch signature validation |
 | 0x0a | ValidateMultiSign | Multi-signature permission validation |
-| 0x03 | RIPEMD-160 | TRON-specific RIPEMD-160 hash(Double hash) |
-| 0x20003 | RIPEMD-160 | TVM-specific RIPEMD-160 hash |
-| 0x20009 | BLAKE2F | TVM-specific BLAKE2F compression |
+
+> Source files for `0x20003` (RIPEMD-160) and `0x20009` (BLAKE2F) exist but are **not yet registered** in the precompile table (`packages/tvm/src/precompiles/index.ts`).
 
 ### Account Model Extensions
 
@@ -52,20 +52,22 @@ TVMJS is a monorepo of modular packages that together implement the full TRON ex
 - **Multi-signature permissions**: Owner / Active / Witness permission types with threshold-based validation
 - **TRON address generation**: `CREATE2` uses `0x41` prefix instead of `0xff`
 
-### Energy Model
+### Resource Model (gas / energy)
 
-TRON uses an **energy** model (analogous to Ethereum's gas) with TRON-specific parameters:
+The project currently retains the EthereumJS **gas** API and accounting framework (`gasLimit`/`gasPrice`/`gasUsed`, Ethereum-style refunds and miner rewards), with TRON-specific parameters and opcode costs added on top:
 
 - `stackLimit`: 64 (vs Ethereum's 1024)
-- Custom energy costs for all TRON-specific opcodes
+- Custom costs for all TRON-specific opcodes
 - Contract deployment cost: `200 * code.length + base`
+
+java-tron's full resource system (bandwidth, staking, energy delegation, feeLimit deduction order) is not implemented yet.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js >= 20
-- npm >= 10
+- npm >= 9
 
 ### Install
 
@@ -125,7 +127,7 @@ This project is forked from [EthereumJS](https://github.com/ethereumjs/ethereumj
 
 Key differences from upstream:
 
-- TRON energy model replaces Ethereum gas model
+- TRON-specific parameters and opcode costs added on top of the EthereumJS gas framework (full TRON energy/bandwidth resource model not yet implemented)
 - 5 new opcodes for TRC-10 token operations
 - TRON-specific precompiled contracts
 - Account model extended with asset balances and multi-sig permissions

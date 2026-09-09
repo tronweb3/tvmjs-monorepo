@@ -99,7 +99,7 @@ Thanks, that was great!
 
 Last release round has been done on April 29 2025 along commit 9e461f54312bf20c710b43ab73f7d3ad753f8765.
 
-We now would want to deal with the rather minor changes being done since then and include them in the new section fo the CHANGELOG.md files for the active repositories that you just prepared for.
+We now would want to deal with the rather minor changes being done since then and include them in the new section for the CHANGELOG.md files for the active repositories that you just prepared for.
 
 As a first step can you go through all commits after the mentioned last release round and identify PRs (one commit is the same as one PR in our specific work setup) where active production code in the respective src directories has been touched. You can leave out PRs only updating documentation, code in the examples folder or tests. Also tooling infrastructure (linting,...) and CI updating PRs can be left out. New support for new and deprecation for older Node.js as well as TypeScript versions should be added. Version updates for external dependencies - so not from within the monorepo - should be added as well.
 
@@ -120,17 +120,33 @@ For the CHANGELOG files you have not added lines in this step please enter the f
 #### In-between Releases
 
 We have a simple release script for lightweight in-between releases like nightly or non-official alpha releases. This is meant
-for e.g. external targeted testing and releases are not mentioned in CHANGELOG.md files.
+for e.g. external targeted testing and releases are not mentioned in CHANGELOG.md files. The script uses the versions already
+present in each package and skips versions that already exist in the npm Registry.
 
 ```sh
-tsx scripts/simple-release.ts <tag> [--dry-run]
+npm run release:simple -- <tag> [--dry-run]
 ```
 
 Example:
 
 ```sh
-tsx scripts/simple-release.ts nightly --dry-run
+npm run release:simple -- nightly --dry-run
 ```
+
+The dry run builds each package and prints a table containing the npm tarball metadata for packages that still need to be
+published:
+
+- `shasum` is the SHA-1 checksum (not MD5).
+- `integrity` is the SHA-512 SRI value (`sha512-...`).
+- `latest` or `nightly` is the npm dist-tag; it does not change the package version.
+
+The dry run does not publish anything. After reviewing the table, publish with:
+
+```sh
+npm run release:simple -- <tag>
+```
+
+If a publish stops part-way through, fix the error and rerun the same command. Already published package versions are skipped.
 
 #### Windows Users Note
 
@@ -204,7 +220,7 @@ Each package includes:
 
 #### Commands
 
-Commands area available on both root and package levels.
+Commands are available on both root and package levels.
 
 Run `npm run lint` to find lint issues and `npm run lint:fix` to fix fixable lint issues.
 
@@ -222,7 +238,7 @@ The following two configuration files include a list of allowed words (add yours
 
 #### Commands
 
-Commands area available on both root and package levels.
+Commands are available on both root and package levels.
 
 ```json
 {

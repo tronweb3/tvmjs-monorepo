@@ -45,6 +45,13 @@ function getTxData(override: Partial<EOACode7702AuthorizationListItem> = {}): Tx
 }
 
 describe('[EOACode7702Transaction]', () => {
+  it('rejects unsigned token fields', () => {
+    assert.throws(
+      () => createEOACode7702Tx({ ...getTxData(), tokenId: 1000001n, tokenValue: 1n }, { common }),
+      /tokenId and tokenValue are not supported by typed transaction formats/,
+    )
+  })
+
   it('sign()', () => {
     const txn = createEOACode7702Tx(
       {

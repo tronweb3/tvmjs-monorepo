@@ -1,7 +1,8 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, Mainnet, TronMainnet } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
 import { createTVM } from '../src/index.ts'
+import { maxCallGas } from '../src/opcodes/util.ts'
 
 describe('TVM -> getActiveOpcodes()', () => {
   const DIFFICULTY_PREVRANDAO = 0x44
@@ -62,5 +63,20 @@ describe('TVM -> getActiveOpcodes()', () => {
       'CHAINID',
       'opcode exposed after HF change (-> istanbul)',
     )
+  })
+
+  it('uses full energy forwarding for TRON version-0 calls', () => {
+    const common = new Common({ chain: TronMainnet })
+    const runState = undefined as never
+
+    assert.strictEqual(maxCallGas(1000n, 1000n, runState, common), 1000n)
+    assert.strictEqual(maxCallGas(2000n, 1000n, runState, common), 1000n)
+  })
+
+  it('keeps EIP-150 forwarding for Ethereum', () => {
+    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+    const runState = undefined as never
+
+    assert.strictEqual(maxCallGas(1000n, 1000n, runState, common), 985n)
   })
 })

@@ -7,12 +7,13 @@ import type { PutBatch } from '@tvmjs/util'
 /**
  * An (EIP-1186)[https://eips.ethereum.org/EIPS/eip-1186] proof contains the encoded trie nodes
  * from the root node to the leaf node storing state data.
- * @param rootHash Root hash of the trie that this proof was created from and is being verified for
  * @param key Key that is being verified and that the proof is created for
  * @param proof An (EIP-1186)[https://eips.ethereum.org/EIPS/eip-1186] proof contains the encoded trie nodes from the root node to the leaf node storing state data.
  * @param opts optional, the opts may include a custom hashing function to use with the trie for proof verification
  * @throws If proof is found to be invalid.
  * @returns The value from the key, or null if valid proof of non-existence.
+ * @remarks This only checks consistency against the root encoded by the proof itself. To authenticate
+ * against a trusted root, use {@link verifyMPTWithMerkleProof}.
  */
 export async function verifyMerkleProof(
   key: Uint8Array,

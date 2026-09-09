@@ -1,94 +1,87 @@
-// The example does these things:
-//
-// 1. Instantiates a VM and a Blockchain
-// 2. Creates the accounts from ../utils/blockchain-mock-data "pre" attribute
-// 3. Creates a genesis block
-// 4. Puts the blocks from ../utils/blockchain-mock-data "blocks" attribute into the Blockchain
-// 5. Runs the Blockchain on the VM.
-
-import { createBlock, createBlockFromRLP } from '@tvmjs/block'
-import { EthashConsensus, createBlockchain } from '@tvmjs/blockchain'
-import { Common, ConsensusAlgorithm, ConsensusType, Mainnet } from '@tvmjs/common'
-import { Ethash } from '@tvmjs/ethash'
-import { Address, bytesToHex, createAccount, hexToBytes, setLengthLeft } from '@tvmjs/util'
+import { createBlock } from '@tvmjs/block'
+import { createBlockchain } from '@tvmjs/blockchain'
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createLegacyTx } from '@tvmjs/tx'
+import {
+  Account,
+  bytesToHex,
+  createAddressFromPrivateKey,
+  createAddressFromString,
+  equalsBytes,
+  hexToBytes,
+} from '@tvmjs/util'
 import { createVM, runBlock } from '@tvmjs/vm'
 
-import { blockchainMockData } from './helpers/blockchain-mock-data.ts'
+const main = async () => {
+  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
+  const blockchain = await createBlockchain({
+    common,
+    validateBlocks: false,
+    validateConsensus: false,
+  })
+  const vm = await createVM({ blockchain, common })
 
-import type { Block, HeaderData } from '@tvmjs/block'
-import type { Blockchain, ConsensusDict } from '@tvmjs/blockchain'
-import type { PrefixedHexString } from '@tvmjs/util'
-import type { VM } from '@tvmjs/vm'
+  const privateKey = hexToBytes(
+    '0x46b9e86af35a6a1e153b5655b7bb77645b3e7d12057526428653ba7db66c5b89',
+  )
+  const sender = createAddressFromPrivateKey(privateKey)
+  const receiver = createAddressFromString('0x00000000000000000000000000000000000000ff')
+  await vm.stateManager.putAccount(sender, new Account(0n, 1_000_000n))
 
-async function setupPreConditions(vm: VM, data: any) {
-  await vm.stateManager.checkpoint()
+  const tx = createLegacyTx(
+    {
+      nonce: 0,
+      gasPrice: 10,
+      gasLimit: 21_000,
+      to: receiver,
+      value: 1,
+    },
+    { common },
+  ).sign(privateKey)
 
-  for (const [addr, acct] of Object.entries(data.pre)) {
-    const { nonce, balance, storage, code } = acct as any
-
-    const address = new Address(hexToBytes(addr))
-    const account = createAccount({ nonce, balance })
-    await vm.stateManager.putAccount(address, account)
-
-    for (const [key, val] of Object.entries(storage)) {
-      const storageKey = setLengthLeft(hexToBytes(key), 32)
-      const storageVal = hexToBytes(val as PrefixedHexString)
-      await vm.stateManager.putStorage(address, storageKey, storageVal)
-    }
-
-    const codeBuf = hexToBytes(`0x${code}`)
-    await vm.stateManager.putCode(address, codeBuf)
-  }
-
-  await vm.stateManager.commit()
-}
-
-async function putBlocks(blockchain: Blockchain, common: Common, data: typeof blockchainMockData) {
-  for (const blockData of data.blocks) {
-    const blockRlp = hexToBytes(blockData.rlp as PrefixedHexString)
-    const block = createBlockFromRLP(blockRlp, { common })
-    await blockchain.putBlock(block)
-  }
-}
-
-async function main() {
-  const common = new Common({ chain: Mainnet, hardfork: blockchainMockData.network.toLowerCase() })
-  const validatePow = common.consensusType() === ConsensusType.ProofOfWork
-  const validateBlocks = true
-
-  const genesisBlock = createBlock(
-    { header: blockchainMockData.genesisBlockHeader as HeaderData },
+  const block = createBlock(
+    {
+      header: {
+        number: 1,
+        parentHash: blockchain.genesisBlock.hash(),
+        difficulty: blockchain.genesisBlock.header.difficulty + 1n,
+        gasLimit: 30_000_000,
+        timestamp: blockchain.genesisBlock.header.timestamp + 1n,
+      },
+      transactions: [tx],
+    },
     { common },
   )
 
-  const consensusDict: ConsensusDict = {}
-  consensusDict[ConsensusAlgorithm.Ethash] = new EthashConsensus(new Ethash())
-  const blockchain = await createBlockchain({
-    common,
-    validateBlocks,
-    validateConsensus: validatePow,
-    consensusDict,
-    genesisBlock,
+  const result = await runBlock(vm, {
+    block,
+    generate: true,
+    skipBlockValidation: true,
+    skipHardForkValidation: true,
   })
 
-  const vm = await createVM({ blockchain, common })
+  if (result.results.length !== 1 || result.results[0].execResult.exceptionError !== undefined) {
+    throw new Error('Block transaction execution failed')
+  }
 
-  await setupPreConditions(vm, blockchainMockData)
+  const receiverAccount = await vm.stateManager.getAccount(receiver)
+  if (receiverAccount?.balance !== 1n) {
+    throw new Error(`Unexpected receiver balance: ${receiverAccount?.balance}`)
+  }
 
-  await putBlocks(blockchain, common, blockchainMockData)
+  await blockchain.putBlock(block)
+  const head = await blockchain.getCanonicalHeadBlock()
+  if (!equalsBytes(head.hash(), block.hash())) {
+    throw new Error('Canonical head does not match the inserted block')
+  }
 
-  await blockchain.iterator('vm', async (block: Block, _reorg: boolean) => {
-    const parentBlock = await blockchain!.getBlock(block.header.parentHash)
-    const parentState = parentBlock.header.stateRoot
-    // run block
-    await runBlock(vm, { block, root: parentState, skipHardForkValidation: true })
-  })
-
-  const blockchainHead = await vm.blockchain['getIteratorHead']()
-
-  console.log('--- Finished processing the Blockchain ---')
-  console.log('New head:', bytesToHex(blockchainHead.hash()))
-  console.log('Expected:', blockchainMockData.lastblockhash)
+  console.log('--- Finished processing the blockchain ---')
+  console.log(`Executed transactions: ${result.results.length}`)
+  console.log(`Receiver balance: ${receiverAccount.balance}`)
+  console.log(`Canonical head: ${bytesToHex(head.hash())}`)
 }
 
-void main()
+void main().catch((err) => {
+  console.error(err)
+  process.exitCode = 1
+})

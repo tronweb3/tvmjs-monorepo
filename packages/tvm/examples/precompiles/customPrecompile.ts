@@ -24,7 +24,7 @@ function additionPrecompile(input: PrecompileInput): ExecResult {
 }
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Prague })
+  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })
   const ADDRESS = '0x000000000000000000000000000000000000ff01'
 
   // Register the custom precompile with a hex string address
@@ -61,4 +61,7 @@ const main = async () => {
   console.log('--------------------------------')
 }
 
-void main()
+void main().catch((err) => {
+  console.error(err)
+  process.exitCode = 1
+})

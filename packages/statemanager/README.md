@@ -1,4 +1,4 @@
-# @tvmjs/statemanager `1.0.0`
+# @tvmjs/statemanager `1.0.1`
 
 | Library to provide high level access to TRON-compatible state. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |

@@ -110,6 +110,21 @@ describe('[BaseTransaction]', () => {
     },
   ]
 
+  it('rejects unsigned token fields on typed transaction formats', () => {
+    const typedFactories = [createAccessList2930Tx, createFeeMarket1559Tx]
+
+    for (const createTypedTx of typedFactories) {
+      assert.throws(
+        () => createTypedTx({ tokenId: 1000001n, tokenValue: 1n } as never, { common } as never),
+        /tokenId and tokenValue are not supported by typed transaction formats/,
+      )
+    }
+
+    const legacyTx = createLegacyTx({ tokenId: 1000001n, tokenValue: 1n }, { common })
+    assert.strictEqual(legacyTx.tokenId, 1000001n)
+    assert.strictEqual(legacyTx.tokenValue, 1n)
+  })
+
   it('Initialization', () => {
     for (const txType of txTypes) {
       let tx = txType.create.txData({}, { common })

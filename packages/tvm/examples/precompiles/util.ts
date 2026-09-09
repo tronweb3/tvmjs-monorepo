@@ -8,16 +8,18 @@ import type { PrefixedHexString } from '@tvmjs/util'
  * @param name - Descriptive name for console output
  * @param precompile - The `0x`-prefixed hex address for the precompile (e.g., '0xb' for BLS12_G1ADD)
  * @param data - The `0x`-prefixed hex input data for the precompile
- * @param hardfork - The hardfork to use (defaults to Osaka)
+ * @param hardfork - The hardfork to use (defaults to Cancun)
+ * @param eips - Optional array of EIP numbers to activate on top of the hardfork
  * @returns The precompile execution result
  */
 export async function runPrecompile(
   name: string,
   precompile: PrefixedHexString,
   data: PrefixedHexString,
-  hardfork: Hardfork = Hardfork.Osaka,
+  hardfork: Hardfork = Hardfork.Cancun,
+  eips?: number[],
 ) {
-  const common = new Common({ chain: Mainnet, hardfork })
+  const common = new Common({ chain: Mainnet, hardfork, eips })
   const tvm = await createTVM({ common })
 
   const precompileFunction = tvm.getPrecompile(precompile)

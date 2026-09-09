@@ -4,7 +4,13 @@ import { join } from 'path'
 import type { Block } from '@tvmjs/block'
 import { createBlock } from '@tvmjs/block'
 import { createTx } from '@tvmjs/tx'
-import { type Address, BIGINT_0, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
+import {
+  type Address,
+  BIGINT_0,
+  createAddressFromPrivateKey,
+  hexToBytes,
+  randomBytes,
+} from '@tvmjs/util'
 // @ts-expect-error missing types
 import wrapper from 'solc/wrapper'
 import { utils } from 'tronweb'
@@ -68,24 +74,28 @@ export async function deployContract(vm: VM, contract: ContractData, opt?: any) 
 
   let tx
   if (opt?.pk) {
-    tx = createTx(txData).sign(hexToBytes(opt.pk))
+    tx = createTx(txData, { common: vm.common }).sign(hexToBytes(opt.pk))
   } else {
     if (!opt?.skipBalance) {
       await setBalance(vm, createAddressFromPrivateKey(hexToBytes(PK)), 100_000_000_000n)
     }
-    tx = createTx(txData).sign(hexToBytes(PK))
+    tx = createTx(txData, { common: vm.common }).sign(hexToBytes(PK))
   }
 
-  const block = createBlock({
-    header: {
-      gasLimit: 1_000_000_000_000n,
+  const block = createBlock(
+    {
+      header: {
+        gasLimit: 1_000_000_000_000n,
+      },
+      transactions: [tx],
     },
-    transactions: [tx],
-  })
+    { common: vm.common },
+  )
 
   await vm.stateManager.checkpoint()
   const result = await runBlock(vm, {
     block,
+    rootTransactionIds: [opt?.rootTransactionId ?? randomBytes(32)],
     generate: true,
     skipBlockValidation: true,
     skipBalance: false,
@@ -112,7 +122,7 @@ export async function trigger(vm: VM, triggerOption: TriggerOption) {
     contractAddress,
     abi,
     params,
-    block = createBlock({}),
+    block = createBlock({}, { common: vm.common }),
     value,
     tokenId,
     tokenValue,
@@ -138,14 +148,17 @@ export async function trigger(vm: VM, triggerOption: TriggerOption) {
     tokenValue,
   }
 
-  const tx = createTx(txData).sign(hexToBytes(PK))
+  const tx = createTx(txData, { common: vm.common }).sign(hexToBytes(PK))
 
-  const newBlock = createBlock({
-    header: {
-      gasLimit: 1_000_000_000_000n,
+  const newBlock = createBlock(
+    {
+      header: {
+        gasLimit: 1_000_000_000_000n,
+      },
+      transactions: [tx],
     },
-    transactions: [tx],
-  })
+    { common: vm.common },
+  )
 
   await vm.stateManager.checkpoint()
   const result = await runBlock(vm, {
@@ -160,7 +173,14 @@ export async function trigger(vm: VM, triggerOption: TriggerOption) {
 }
 
 export async function triggerConstant(vm: VM, triggerOption: TriggerConstantOption) {
-  const { caller, contractAddress, abi, params, block = createBlock({}), input } = triggerOption
+  const {
+    caller,
+    contractAddress,
+    abi,
+    params,
+    block = createBlock({}, { common: vm.common }),
+    input,
+  } = triggerOption
 
   const data = (() => {
     if (input) return input
@@ -257,11 +277,11 @@ export function setLibraryAddress(
 ) {
   if (positions) {
     for (const pos of positions) {
-      const regpos = bytecodeToLink.match(
+      const regexMatch = bytecodeToLink.match(
         new RegExp(`(.{${2 * pos.start}})(.{${2 * pos.length}})(.*)`),
       )
-      if (regpos) {
-        bytecodeToLink = regpos[1] + address.replace('0x', '') + regpos[3]
+      if (regexMatch) {
+        bytecodeToLink = regexMatch[1] + address.replace('0x', '') + regexMatch[3]
       }
     }
   }

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 (modification: no type change headlines) and this project adheres to
 [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chores
+
+- Update internal `@tvmjs/*` dependencies for the coordinated TVMJS release
+
 ## 1.0.0
 
 ### Bug Fixes

@@ -1,4 +1,4 @@
-# @tvmjs/common `1.0.0`
+# @tvmjs/common `1.1.0`
 
 | Resources common to all TVMJS implementations. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -207,7 +207,22 @@ Supported chains:
 - `sepolia` (`Sepolia`) (`v2.6.1`+)
 - `holesky` (`Holesky`) (`v4.1.0`+)
 - `hoodi` (`Hoodi`) (`v10+` (new versioning scheme))
+- `tron-mainnet` (`TronMainnet`, execution-only)
+- `tron-nile` (`TronNile`, execution-only)
+- `tron-shasta` (`TronShasta`, execution-only)
 - Private/custom chain parameters
+
+The TRON presets provide chainId and local execution settings only. They inherit unverified genesis,
+consensus, and hardfork data from the Mainnet execution baseline and intentionally contain no peer
+discovery data. Do not use them as complete node or production network configurations.
+
+Use these presets for `Common.chainId()`, the `CHAINID` opcode, and controlled local TVM/VM execution.
+Do not use them for TRON genesis validation, consensus or block validation, chain synchronization, or
+P2P network discovery.
+
+For TRON Mainnet execution, use `new Common({ chain: TronMainnet })`. The legacy 1.0.x form
+`new Common({ chain: Mainnet, hardfork: 'tron' })` remains accepted in 1.1.x and is normalized to
+`TronMainnet` (chainId 728126428). Plain `new Common({ chain: Mainnet })` remains Ethereum Mainnet.
 
 The following chain-specific parameters are provided:
 
