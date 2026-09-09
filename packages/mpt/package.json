@@ -1,6 +1,6 @@
 {
   "name": "@tvmjs/mpt",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Implementation of the modified merkle patricia tree as used in the TRON Virtual Machine (TVM).",
   "keywords": ["merkle", "radix", "trie", "ethereum", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/mpt#readme",
@@ -40,7 +40,7 @@
     "coverage": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.mts",
     "coverage:istanbul": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.istanbul.mts",
     "docs:build": "typedoc --options typedoc.mjs",
-    "examples": "tsx ../../scripts/examples-runner.ts -- mpt",
+    "examples": "node --import tsx ../../scripts/examples-runner.ts -- mpt",
     "examples:build": "npx embedme README.md",
     "lint": "npm run biome && eslint  --config ./eslint.config.mjs .",
     "lint:fix": "npm run biome:fix && eslint  --fix --config ./eslint.config.mjs .",
@@ -57,13 +57,12 @@
   },
   "dependencies": {
     "@tvmjs/rlp": "1.0.0",
-    "@tvmjs/util": "1.0.0",
+    "@tvmjs/util": "1.1.0",
     "@noble/hashes": "2.0.1",
     "debug": "4.4.0",
     "lru-cache": "11.0.2"
   },
   "devDependencies": {
-    "@types/benchmark": "2.1.5",
     "@types/debug": "4.1.12",
     "abstract-level": "3.0.1",
     "level": "9.0.0",

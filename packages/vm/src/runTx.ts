@@ -32,6 +32,7 @@ import debugDefault from 'debug'
 
 import { Bloom } from './bloom/index.ts'
 import { emitTVMProfile } from './emitTVMProfile.ts'
+import { validateTronTransactionIdPolicy } from './tronTransactionId.ts'
 
 import type { Block } from '@tvmjs/block'
 import type { Common } from '@tvmjs/common'
@@ -241,7 +242,13 @@ async function processSelfdestructs(vm: VM, results: RunTxResult): Promise<void>
 
     // EIP-6780: Only delete contracts created in the same transaction
     if (vm.common.isActivatedEIP(6780)) {
-      if (!results.execResult.createdAddresses!.has(address.toString())) {
+      const createdAddresses = results.execResult.createdAddresses
+      if (createdAddresses === undefined) {
+        throw EthereumJSErrorWithoutCode(
+          'createdAddresses is required to finalize SELFDESTRUCT entries when EIP-6780 is active',
+        )
+      }
+      if (!createdAddresses.has(address.toString())) {
         continue
       }
     }
@@ -360,6 +367,15 @@ async function updateMinerBalance(
  * @ignore
  */
 export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
+  const tronTransactionIdPolicy = validateTronTransactionIdPolicy(opts.tronTransactionIdPolicy)
+  const rootTransactionId =
+    opts.rootTransactionId ??
+    (tronTransactionIdPolicy === 'fallback-to-tx-hash' &&
+    vm.common.gteHardfork(Hardfork.Tron) &&
+    opts.tx.isSigned()
+      ? opts.tx.hash()
+      : undefined)
+
   if (vm['_opts'].profilerOpts?.reportAfterTx === true) {
     enableProfiler = true
   }
@@ -384,6 +400,21 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
       const msg = _errorMsg('block has a different hardfork than the vm', vm, opts.block, opts.tx)
       throw EthereumJSErrorWithoutCode(msg)
     }
+  }
+
+  // Chain-bound transactions use EIP-155 `v` or a typed transaction chainId. Unprotected legacy
+  // transactions intentionally remain valid across chains.
+  const isChainBound =
+    opts.tx.supports(Capability.EIP2718TypedTransaction) ||
+    opts.tx.supports(Capability.EIP155ReplayProtection)
+  if (isChainBound && opts.tx.common.chainId() !== vm.common.chainId()) {
+    const msg = _errorMsg(
+      `tx has a different chainId (${opts.tx.common.chainId()}) than the vm (${vm.common.chainId()})`,
+      vm,
+      opts.block,
+      opts.tx,
+    )
+    throw EthereumJSErrorWithoutCode(msg)
   }
 
   const gasLimit = opts.block?.header.gasLimit ?? DEFAULT_HEADER.gasLimit
@@ -447,7 +478,7 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   }
 
   try {
-    const result = await _runTx(vm, opts)
+    const result = await _runTx(vm, opts, rootTransactionId)
     await vm.tvm.journal.commit()
     if (vm.DEBUG) {
       debug(`tx checkpoint committed`)
@@ -479,8 +510,13 @@ export async function runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   }
 }
 
-async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
+async function _runTx(
+  vm: VM,
+  opts: RunTxOpts,
+  rootTransactionId: Uint8Array | undefined,
+): Promise<RunTxResult> {
   const state = vm.stateManager
+  const { tx, block } = opts
 
   // ===========================
   // SETUP: Binary Tree Witness
@@ -508,8 +544,6 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
   // ===========================
   // SETUP: Transaction and Events
   // ===========================
-  const { tx, block } = opts
-
   /** The `beforeTx` event - emits the Transaction that is about to be processed */
   await vm._emit('beforeTx', tx)
 
@@ -878,6 +912,7 @@ async function _runTx(vm: VM, opts: RunTxOpts): Promise<RunTxResult> {
     data,
     blobVersionedHashes,
     accessWitness: txAccesses,
+    rootTransactionId,
   })) as RunTxResult
 
   if (vm.common.isActivatedEIP(7864)) {

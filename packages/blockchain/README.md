@@ -1,4 +1,4 @@
-# @tvmjs/blockchain `1.0.0`
+# @tvmjs/blockchain `1.0.1`
 
 | A module to store and interact with TRON-compatible blocks. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -126,7 +126,7 @@ Note, if you construct a blockchain with a custom consensus implementation, tran
 
 ### Genesis State
 
-Genesis state for the 4 supported networks (mainnet, sepolia, hoodi, holesky) is stored in an auxiliary package [@tvmjs/genesis](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/genesis), from which it can be included if needed (for most - especially VM - use cases it is not necessary), see PR [#2844](https://github.com/tronweb3/tvmjs-monorepo/pull/2844).
+Genesis state can be supplied directly with the `genesisState` constructor option when creating a blockchain. This repository does not currently publish a separate genesis-data package.
 
 
 ### Custom genesis from a Geth genesis config

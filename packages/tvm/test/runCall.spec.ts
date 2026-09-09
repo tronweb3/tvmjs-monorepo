@@ -1,10 +1,11 @@
 import { keccak_256 } from '@noble/hashes/sha3.js'
-import { Common, Hardfork, Mainnet, createCommonFromGethGenesis } from '@tvmjs/common'
+import { Common, Hardfork, Mainnet, TronMainnet, createCommonFromGethGenesis } from '@tvmjs/common'
 import { SIGNER_G, eip4844GethGenesis } from '@tvmjs/testdata'
 import {
   Account,
   Address,
   MAX_UINT64,
+  MIN_TOKEN_ID,
   bytesToBigInt,
   bytesToHex,
   concatBytes,
@@ -24,7 +25,7 @@ import type { TVMRunCallOpts } from '../src/types.ts'
 
 // Non-protected Create2Address generator. Does not check if Uint8Arrays have the right padding.
 function create2address(sourceAddress: Address, codeHash: Uint8Array, salt: Uint8Array): Address {
-  const rlp_proc_bytes = hexToBytes('0x41')
+  const rlp_proc_bytes = hexToBytes('0xff')
   const hashBytes = concatBytes(rlp_proc_bytes, sourceAddress.bytes, salt, codeHash)
   return new Address(keccak_256(hashBytes).slice(12))
 }
@@ -303,6 +304,157 @@ describe('RunCall tests', () => {
     assert.strictEqual(result.execResult.executionGasUsed, BigInt(30003), 'gas used correct')
     // selfdestruct refund
     assert.strictEqual(result.execResult.gasRefund, BigInt(24000), 'gas refund correct')
+  })
+
+  const selfdestructNewAccountCases = (['missing', 'empty', 'existing', 'self'] as const).flatMap(
+    (beneficiaryState) =>
+      [0n, 1n].flatMap((trxBalance) =>
+        [0n, 100n].map((tokenBalance) => ({ beneficiaryState, tokenBalance, trxBalance })),
+      ),
+  )
+
+  it.each(selfdestructNewAccountCases)(
+    'charges SELFDESTRUCT new-account gas correctly for beneficiary=$beneficiaryState, TRX=$trxBalance, Token=$tokenBalance',
+    async ({ beneficiaryState, tokenBalance, trxBalance }) => {
+      const caller = new Address(hexToBytes('0x00000000000000000000000000000000000000ee'))
+      const address = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
+      const externalBeneficiary = new Address(
+        hexToBytes('0x00000000000000000000000000000000000000fe'),
+      )
+      const beneficiary = beneficiaryState === 'self' ? address : externalBeneficiary
+      const tokenId = MIN_TOKEN_ID + 1n
+      const common = new Common({ chain: TronMainnet })
+      const tvm = await createTVM({ common })
+      const code = `0x73${beneficiary.toString().slice(2)}ff` as `0x${string}`
+      let initialBeneficiaryBalance = 0n
+
+      if (beneficiaryState === 'empty') {
+        await tvm.stateManager.putAccount(beneficiary, new Account())
+      } else if (beneficiaryState === 'existing') {
+        initialBeneficiaryBalance = 1n
+        await tvm.stateManager.putAccount(beneficiary, new Account(0n, 1n))
+      }
+
+      await tvm.stateManager.putCode(address, hexToBytes(code))
+      const contractAccount = await tvm.stateManager.getAccount(address)
+      contractAccount!.balance = trxBalance
+      contractAccount!.asset = { [Number(tokenId)]: tokenBalance }
+      await tvm.stateManager.putAccount(address, contractAccount!)
+
+      const result = await tvm.runCall({
+        caller,
+        to: address,
+        gasLimit: BigInt(0xffffffffff),
+      })
+
+      // TRON: java-tron getSuicideCost2/3 + isDeadAccount logic:
+      // - Charges newAccountGas ONLY when beneficiary does NOT exist (account === undefined)
+      // - Does NOT check isEmpty() (existing empty accounts don't charge)
+      // - Does NOT check transfer amount (charges even if TRX=0 and Token=0)
+      // This differs from EIP-161 which requires both transfersValue AND isEmpty().
+      const beneficiaryDoesNotExist = beneficiaryState === 'missing'
+      // The current tron profile still activates EIP-2929, so the beneficiary
+      // access adds 2600 gas independently of the java-tron new-account decision.
+      const expectedGas = 5003n + 2600n + (beneficiaryDoesNotExist ? 25000n : 0n)
+      assert.strictEqual(result.execResult.executionGasUsed, expectedGas, 'gas used correct')
+      assert.strictEqual(result.execResult.gasRefund, 0n, 'EIP-3529 removes selfdestruct refund')
+
+      if (beneficiaryState !== 'self') {
+        const beneficiaryAccount = await tvm.stateManager.getAccount(beneficiary)
+        assert.strictEqual(
+          beneficiaryAccount?.balance,
+          initialBeneficiaryBalance + trxBalance,
+          'TRX balance transferred to beneficiary',
+        )
+        assert.strictEqual(
+          beneficiaryAccount?.getTokenBalance(tokenId),
+          tokenBalance,
+          'token balance transferred to beneficiary',
+        )
+        // Verify source account is cleared
+        const sourceAccount = await tvm.stateManager.getAccount(address)
+        assert.strictEqual(sourceAccount?.balance, 0n, 'source TRX balance cleared')
+        assert.strictEqual(
+          sourceAccount?.getTokenBalance(tokenId),
+          0n,
+          'source token balance cleared',
+        )
+      } else {
+        // The current tron profile activates EIP-6780. A pre-existing contract
+        // that selfdestructs to itself retains its balance and token state.
+        const selfAccount = await tvm.stateManager.getAccount(address)
+        assert.strictEqual(selfAccount?.balance, trxBalance, 'self TRX balance preserved')
+        assert.strictEqual(
+          selfAccount?.getTokenBalance(tokenId),
+          tokenBalance,
+          'self token balance preserved',
+        )
+      }
+    },
+  )
+
+  it('charges SELFDESTRUCT new-account gas on tron hardfork with EIP-2929/3529/6780 active', async () => {
+    // Regression: verify the fix works on the default tron hardfork, which has
+    // different gas schedule (EIP-2929 warm/cold, EIP-3529 reduced refund, EIP-6780
+    // same-tx destruction) than SpuriousDragon.
+    const caller = new Address(hexToBytes('0x00000000000000000000000000000000000000ee'))
+    const address = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
+    const beneficiary = new Address(hexToBytes('0x00000000000000000000000000000000000000fe'))
+    const tokenId = MIN_TOKEN_ID + 1n
+    const tokenBalance = 100n
+    const common = new Common({ chain: TronMainnet })
+    const tvm = await createTVM({ common })
+    const code = `0x73${beneficiary.toString().slice(2)}ff` as `0x${string}`
+
+    await tvm.stateManager.putCode(address, hexToBytes(code))
+    const contractAccount = await tvm.stateManager.getAccount(address)
+    contractAccount!.asset = { [Number(tokenId)]: tokenBalance }
+    await tvm.stateManager.putAccount(address, contractAccount!)
+
+    const result = await tvm.runCall({
+      caller,
+      to: address,
+      gasLimit: BigInt(0xffffffffff),
+    })
+
+    // Tron hardfork: base 5003 + new-account 25000 + EIP-2929 cold beneficiary 2600 = 32603
+    // EIP-3529 reduces refund from 24000 to 0
+    assert.strictEqual(result.execResult.executionGasUsed, 32603n, 'gas used correct on tron')
+    assert.strictEqual(result.execResult.gasRefund, 0n, 'EIP-3529 reduced refund on tron')
+
+    const beneficiaryAccount = await tvm.stateManager.getAccount(beneficiary)
+    assert.strictEqual(
+      beneficiaryAccount?.getTokenBalance(tokenId),
+      tokenBalance,
+      'token transferred on tron hardfork',
+    )
+  })
+
+  it('rolls back SELFDESTRUCT token transfer when new-account gas runs out', async () => {
+    const caller = new Address(hexToBytes('0x00000000000000000000000000000000000000ee'))
+    const address = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
+    const beneficiary = new Address(hexToBytes('0x00000000000000000000000000000000000000fe'))
+    const tokenId = MIN_TOKEN_ID + 1n
+    const tokenBalance = 100n
+    const common = new Common({ chain: TronMainnet })
+    const tvm = await createTVM({ common })
+
+    await tvm.stateManager.putCode(address, hexToBytes('0x60FEFF'))
+    const contractAccount = await tvm.stateManager.getAccount(address)
+    contractAccount!.asset = { [Number(tokenId)]: tokenBalance }
+    await tvm.stateManager.putAccount(address, contractAccount!)
+
+    // 5003 base + 2600 EIP-2929 cold access + 25000 new-account gas = 32603.
+    const result = await tvm.runCall({ caller, to: address, gasLimit: 32602n })
+
+    assert.strictEqual(result.execResult.executionGasUsed, 32602n, 'all available gas consumed')
+    assert.strictEqual(result.execResult.exceptionError?.error, TVMError.errorMessages.OUT_OF_GAS)
+    assert.isUndefined(await tvm.stateManager.getAccount(beneficiary), 'beneficiary not created')
+    assert.strictEqual(
+      (await tvm.stateManager.getAccount(address))?.getTokenBalance(tokenId),
+      tokenBalance,
+      'source token balance preserved',
+    )
   })
 
   it('ensure that sstores pay for the right gas costs pre-byzantium', async () => {

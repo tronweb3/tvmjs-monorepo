@@ -71,6 +71,28 @@ describe('Basic initialization', () => {
   })
 })
 
+describe('Checkpoints', () => {
+  it('restores internal net-zero tracking on an exact revert', () => {
+    const bal = new BlockLevelAccessList()
+    const address = '0x0000000000000000000000000000000000000001'
+
+    bal.checkpoint()
+    bal.addBalanceChange(address, 200n, 1, 100n)
+    bal.addCodeChange(address, hexToBytes('0x03'), 1, hexToBytes('0x01'))
+    bal.revert(false)
+
+    // A later execution at the same block access index must use its own original values rather
+    // than the values captured by the rejected attempt above.
+    bal.addBalanceChange(address, 100n, 1, 50n)
+    bal.cleanupNetZeroBalanceChanges()
+    bal.addCodeChange(address, hexToBytes('0x03'), 1, hexToBytes('0x02'))
+    bal.addCodeChange(address, hexToBytes('0x01'), 1, hexToBytes('0x03'))
+
+    assert.deepEqual(bal.accesses[address].balanceChanges.get(1), '0x64')
+    assert.deepEqual(bal.accesses[address].codeChanges, [[1, hexToBytes('0x01')]])
+  })
+})
+
 describe('JSON', () => {
   it('should convert to JSON', () => {
     const bal = createBlockLevelAccessListFromJSON(

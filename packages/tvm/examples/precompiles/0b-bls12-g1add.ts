@@ -1,3 +1,4 @@
+import { Hardfork } from '@tvmjs/common'
 import { runPrecompile } from './util.ts'
 
 const main = async () => {
@@ -10,7 +11,7 @@ const main = async () => {
     '00000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca942600000000000000000000000000000000186b28d92356c4dfec4b5201ad099dbdede3781f8998ddf929b4cd7756192185ca7b8f4ef7088f813270ac3d48868a21'
   const data = `0x${g1Point}${g2Point}`
 
-  await runPrecompile('BLS12_G1ADD', '0xb', data)
+  await runPrecompile('BLS12_G1ADD', '0xb', data, Hardfork.Cancun, [2537])
 }
 
 void main()

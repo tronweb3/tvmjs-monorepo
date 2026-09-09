@@ -45,6 +45,32 @@ interface MessageOpts {
   gasRefund?: bigint
   blobVersionedHashes?: PrefixedHexString[]
   accessWitness?: BinaryTreeAccessWitnessInterface
+  tronTransactionContext?: TronTransactionContext
+}
+
+/**
+ * Mutable transaction-wide TRON execution state shared by all nested messages.
+ */
+export interface TronTransactionContext {
+  readonly rootTransactionId: Uint8Array
+  nonce: bigint
+}
+
+export function createTronTransactionContext(
+  rootTransactionId: Uint8Array,
+): TronTransactionContext {
+  if (!(rootTransactionId instanceof Uint8Array)) {
+    throw EthereumJSErrorWithoutCode(
+      `This method only supports Uint8Array but input was: ${rootTransactionId}`,
+    )
+  }
+  if (rootTransactionId.length !== 32) {
+    throw EthereumJSErrorWithoutCode('Expected rootTransactionId to be of length 32')
+  }
+  return {
+    rootTransactionId: Uint8Array.from(rootTransactionId),
+    nonce: BIGINT_0,
+  }
 }
 
 export class Message {
@@ -80,6 +106,7 @@ export class Message {
    */
   blobVersionedHashes?: PrefixedHexString[]
   accessWitness?: BinaryTreeAccessWitnessInterface
+  tronTransactionContext?: TronTransactionContext
 
   constructor(opts: MessageOpts) {
     this.to = opts.to
@@ -102,6 +129,7 @@ export class Message {
     this.gasRefund = opts.gasRefund ?? defaults.gasRefund
     this.blobVersionedHashes = opts.blobVersionedHashes
     this.accessWitness = opts.accessWitness
+    this.tronTransactionContext = opts.tronTransactionContext
     if (this.tokenId !== BIGINT_0 && this.tokenId <= MIN_TOKEN_ID) {
       throw EthereumJSErrorWithoutCode(
         `tokenId field cannot be less than ${MIN_TOKEN_ID}, received ${this.tokenId}`,

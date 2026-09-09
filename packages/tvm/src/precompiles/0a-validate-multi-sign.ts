@@ -7,7 +7,14 @@ import { OOGResult } from '../tvm.ts'
 import type { ExecResult } from '../types.ts'
 import { DataWord } from './dataWord.ts'
 import type { PrecompileInput } from './types.ts'
-import { convertToTronAddress, extractBytesArray, recoverAddrBySign } from './util.ts'
+import {
+  convertToTronAddress,
+  extractArrayLength,
+  extractSigArray,
+  isTronOsakaEnabled,
+  isValidTronSignatureCalldata,
+  recoverAddrBySign,
+} from './util.ts'
 
 export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
   const rawData = opts.data
@@ -17,6 +24,10 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
   const MAX_SIZE = 5
   const cnt = Math.max(Math.floor((Math.floor(rawData.length / DataWord.WORD_SIZE) - 5) / 5), 0)
   const gasUsed = BigInt(cnt) * ENGERYPERSIGN
+
+  if (isTronOsakaEnabled(opts) && !isValidTronSignatureCalldata(rawData, 5)) {
+    return OOGResult(opts.gasLimit)
+  }
 
   if (opts.gasLimit < gasUsed) {
     return OOGResult(opts.gasLimit)
@@ -35,18 +46,15 @@ export async function precompile0a(opts: PrecompileInput): Promise<ExecResult> {
 
     const hash = sha256(combine)
 
-    const signatures = extractBytesArray(
-      words,
-      words[3].intValueSafe() / DataWord.WORD_SIZE,
-      rawData,
-    )
-
-    if (signatures.length === 0 || signatures.length > MAX_SIZE) {
+    const signaturesOffset = words[3].intValueSafe() / DataWord.WORD_SIZE
+    const signatureCount = extractArrayLength(words, signaturesOffset)
+    if (signatureCount === 0 || signatureCount > MAX_SIZE) {
       return {
         executionGasUsed: gasUsed,
         returnValue: new Uint8Array(DataWord.WORD_SIZE),
       }
     }
+    const signatures = extractSigArray(words, signaturesOffset, signatureCount, rawData)
 
     const address = new Address(addr)
     const account = await vm.stateManager.getAccount(address)

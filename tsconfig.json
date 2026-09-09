@@ -18,5 +18,6 @@
     "target": "es2020",
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true
-  }
+  },
+  "exclude": ["**/test/_*.spec.ts"]
 }

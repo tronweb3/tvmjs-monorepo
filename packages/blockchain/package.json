@@ -1,6 +1,6 @@
 {
   "name": "@tvmjs/blockchain",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A module to store and interact with TRON blocks and the TVM blockchain.",
   "keywords": ["ethereum", "blockchain", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/blockchain#readme",
@@ -35,7 +35,7 @@
     "coverage": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.mts",
     "coverage:istanbul": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.istanbul.mts",
     "docs:build": "typedoc --options typedoc.mjs",
-    "examples": "tsx ../../scripts/examples-runner.ts -- blockchain",
+    "examples": "node --import tsx ../../scripts/examples-runner.ts -- blockchain",
     "examples:build": "npx embedme README.md",
     "lint": "npm run biome && eslint --config ./eslint.config.mjs .",
     "lint:fix": "npm run biome:fix && eslint --fix --config ./eslint.config.mjs .",
@@ -50,11 +50,11 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@tvmjs/block": "1.0.0",
-    "@tvmjs/common": "1.0.0",
-    "@tvmjs/mpt": "1.0.0",
+    "@tvmjs/block": "1.0.1",
+    "@tvmjs/common": "1.1.0",
+    "@tvmjs/mpt": "1.0.1",
     "@tvmjs/rlp": "1.0.0",
-    "@tvmjs/util": "1.0.0",
+    "@tvmjs/util": "1.1.0",
     "debug": "4.4.0",
     "eventemitter3": "5.0.1",
     "lru-cache": "11.0.2"

@@ -199,6 +199,7 @@ describe('EIP-7002 tests', () => {
       { common },
     )
 
+    vm.events.once('afterBlock', handler)
     runBlockResults = await runBlock(vm, {
       block: block3,
       skipHeaderValidation: true,

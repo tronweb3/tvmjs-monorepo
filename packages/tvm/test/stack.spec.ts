@@ -159,21 +159,24 @@ describe('Stack', () => {
 
   it('stack should return the padded value', async () => {
     const tvm = await createTVM()
+    const target = new Address(new Uint8Array(20))
 
     for (let pushN = 0x60; pushN <= 0x7f; pushN++) {
       const expectedStack = new Stack(1024)
       expectedStack.push(bytesToBigInt(setLengthRight(new Uint8Array([0x01]), pushN - 0x5f)))
 
       const resWithoutJumps = await tvm.runCall({
+        to: target,
         // PUSHx 01
-        data: hexToBytes(`0x${pushN.toString(16)}01`),
+        code: hexToBytes(`0x${pushN.toString(16)}01`),
       })
       const executionStack = resWithoutJumps.execResult.runState?.stack
       assert.deepEqual(executionStack, expectedStack, 'code without jumps ok')
 
       const resWithJumps = await tvm.runCall({
+        to: target,
         // PUSH 0x03 JUMP JUMPDEST < PUSHx 01 >
-        data: hexToBytes(`0x6003565B${pushN.toString(16)}01`),
+        code: hexToBytes(`0x6003565B${pushN.toString(16)}01`),
       })
       const executionStackWithJumps = resWithJumps.execResult.runState?.stack
       assert.deepEqual(executionStackWithJumps, expectedStack, 'code with jumps ok')

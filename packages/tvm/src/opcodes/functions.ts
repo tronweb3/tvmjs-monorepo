@@ -63,6 +63,14 @@ export interface AsyncOpHandler {
 
 export type OpHandler = SyncOpHandler | AsyncOpHandler
 
+// java-tron converts TRC-10 token IDs with BigInteger.longValueExact(), so values above the
+// positive signed 64-bit range are invalid even though the TVM stack itself stores uint256 values.
+const MAX_TRON_TOKEN_ID = (BIGINT_1 << 63n) - BIGINT_1
+
+function isValidTronTokenId(tokenId: bigint): boolean {
+  return tokenId > MIN_TOKEN_ID && tokenId <= MAX_TRON_TOKEN_ID
+}
+
 // the opcode functions
 export const handlers: Map<number, OpHandler> = new Map([
   // 0x00: STOP
@@ -1367,6 +1375,7 @@ export const handlers: Map<number, OpHandler> = new Map([
 
       if (
         common.isActivatedEIP(3860) &&
+        !common.isTron() &&
         length > Number(common.param('maxInitCodeSize')) &&
         !runState.interpreter._tvm.allowUnlimitedInitCodeSize
       ) {
@@ -1403,6 +1412,7 @@ export const handlers: Map<number, OpHandler> = new Map([
 
       if (
         common.isActivatedEIP(3860) &&
+        !common.isTron() &&
         length > Number(common.param('maxInitCodeSize')) &&
         !runState.interpreter._tvm.allowUnlimitedInitCodeSize
       ) {
@@ -1714,15 +1724,11 @@ export const handlers: Map<number, OpHandler> = new Map([
         trap(TVMError.errorMessages.STATIC_STATE_CHANGE)
       }
 
-      if (tokenId !== BIGINT_0 && tokenId <= MIN_TOKEN_ID) {
+      if (tokenId !== BIGINT_0 && !isValidTronTokenId(tokenId)) {
         trap(TVMError.errorMessages.INVALID_TOKENID)
       }
 
       if (tokenId === BIGINT_0 && value > BIGINT_0) {
-        trap(TVMError.errorMessages.INVALID_TOKENID)
-      }
-
-      if (tokenId !== BIGINT_0 && !(await runState.stateManager.tokenIdExists(Number(tokenId)))) {
         trap(TVMError.errorMessages.INVALID_TOKENID)
       }
 
@@ -1761,8 +1767,8 @@ export const handlers: Map<number, OpHandler> = new Map([
       const addressBigInt = runState.stack.pop()
       const address = createAddressFromStackBigInt(addressBigInt)
 
-      if (!(await runState.stateManager.tokenIdExists(Number(tokenIdBigInt)))) {
-        throw new TVMError(TVMError.errorMessages.UNKNOWN)
+      if (!isValidTronTokenId(tokenIdBigInt)) {
+        trap(TVMError.errorMessages.INVALID_TOKENID)
       }
       const balance = await runState.interpreter.getExternalTokenBalance(address, tokenIdBigInt)
       runState.stack.push(balance)

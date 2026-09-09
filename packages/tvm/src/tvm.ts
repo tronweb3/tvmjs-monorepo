@@ -16,6 +16,9 @@ import {
   equalsBytes,
   generateAddress,
   generateAddress2,
+  generateTronAddress2,
+  generateTronContractAddress,
+  generateTronCreateAddress,
   isDebugEnabled,
   short,
 } from '@tvmjs/util'
@@ -29,7 +32,7 @@ import { TVMError } from './errors.ts'
 import { Interpreter } from './interpreter.ts'
 import { Journal } from './journal.ts'
 import { TVMPerformanceLogger } from './logger.ts'
-import { Message } from './message.ts'
+import { Message, createTronTransactionContext } from './message.ts'
 import { getOpcodesForHF } from './opcodes/index.ts'
 import { paramsTVM } from './params.ts'
 import { NobleBLS, getActivePrecompiles, getPrecompileName } from './precompiles/index.ts'
@@ -63,6 +66,27 @@ import type { CustomPrecompile, PrecompileFunc } from './precompiles/index.ts'
 const debug = debugDefault('tvm:tvm')
 const debugGas = debugDefault('tvm:gas')
 const debugPrecompiles = debugDefault('tvm:precompiles')
+
+type EventRegistration = {
+  fn: (...args: any[]) => void
+  context: any
+  once: boolean
+}
+
+function getEventRegistrations(emitter: EventEmitter<any>, event: string): EventRegistration[] {
+  // EventEmitter3's public listeners() API discards per-registration `once` and `context`
+  // metadata. Snapshot the v5 registration records so async serial dispatch can match emit().
+  const eventKey = EventEmitter.prefixed ? `${EventEmitter.prefixed}${event}` : event
+  const registered = (
+    emitter as EventEmitter<any> & {
+      _events: Record<string, EventRegistration | EventRegistration[] | undefined>
+    }
+  )._events[eventKey]
+  if (registered === undefined) {
+    return []
+  }
+  return Array.isArray(registered) ? registered.slice() : [registered]
+}
 
 /**
  * Creates a standardized ExecResult for out-of-gas errors.
@@ -198,6 +222,8 @@ export class TVM implements TVMInterface {
     origin: Address
   }
   protected _block?: Block
+  /** Number of active public execution entry points on this shared TVM instance. */
+  protected _activeExecutions = 0
 
   public readonly common: Common
   public readonly events: EventEmitter<TVMEvent>
@@ -338,14 +364,21 @@ export class TVM implements TVMInterface {
     this._bn254 = opts.bn254!
 
     this._emit = async (topic: string, data: any): Promise<void> => {
-      const listeners = this.events.listeners(topic as keyof TVMEvent)
-      for (const listener of listeners) {
-        if (listener.length === 2) {
+      const event = topic as keyof TVMEvent
+      const registrations = getEventRegistrations(this.events, topic)
+      for (const { fn, context, once } of registrations) {
+        // `_emit` invokes listeners directly so callback-style listeners can be awaited in series.
+        // Mirror EventEmitter.emit() by removing one-time registrations immediately before their
+        // callback is invoked, including when it throws.
+        if (once) {
+          this.events.removeListener(event, fn, undefined, true)
+        }
+        if (fn.length === 2) {
           await new Promise<void>((resolve) => {
-            listener(data, resolve)
+            fn.call(context, data, resolve)
           })
         } else {
-          listener(data)
+          fn.call(context, data)
         }
       }
     }
@@ -573,6 +606,12 @@ export class TVM implements TVMInterface {
   }
 
   protected async _executeCreate(message: Message): Promise<TVMResult> {
+    if (this.common.isActivatedEIP(6780) && message.createdAddresses === undefined) {
+      throw EthereumJSErrorWithoutCode(
+        'createdAddresses must be initialized when EIP-6780 is active',
+      )
+    }
+
     let gasLimit = message.gasLimit
     const fromAddress = message.caller
 
@@ -591,7 +630,7 @@ export class TVM implements TVMInterface {
     await this._reduceSenderBalance(account, message)
     await this._reduceSenderTokenBalance(account, message)
 
-    if (this.common.isActivatedEIP(3860)) {
+    if (this.common.isActivatedEIP(3860) && !this.common.isTron()) {
       if (
         message.data.length > Number(this.common.param('maxInitCodeSize')) &&
         !this.allowUnlimitedInitCodeSize
@@ -658,6 +697,14 @@ export class TVM implements TVMInterface {
       if (this.common.isActivatedEIP(7928)) {
         this.blockLevelAccessList!.addAddress(message.to.toString())
       }
+      // TRON: advance internal nonce even on collision, so the next CREATE uses nonce+1
+      if (
+        message.depth > 0 &&
+        this.common.gteHardfork(Hardfork.Tron) &&
+        message.tronTransactionContext !== undefined
+      ) {
+        message.tronTransactionContext.nonce += BIGINT_1
+      }
       return {
         createdAddress: message.to,
         execResult: {
@@ -666,6 +713,14 @@ export class TVM implements TVMInterface {
           executionGasUsed: message.gasLimit,
         },
       }
+    }
+
+    if (
+      message.depth > 0 &&
+      this.common.gteHardfork(Hardfork.Tron) &&
+      message.tronTransactionContext !== undefined
+    ) {
+      message.tronTransactionContext.nonce += BIGINT_1
     }
 
     await this.journal.putAccount(message.to, toAccount)
@@ -795,6 +850,7 @@ export class TVM implements TVMInterface {
     let allowedCodeSize = true
     if (
       !result.exceptionError &&
+      !this.common.isTron() &&
       this.common.gteHardfork(Hardfork.SpuriousDragon) &&
       result.returnValue.length > Number(this.common.param('maxCodeSize'))
     ) {
@@ -953,6 +1009,10 @@ export class TVM implements TVMInterface {
     message: Message,
     opts: InterpreterOpts = {},
   ): Promise<ExecResult> {
+    if (this.common.isActivatedEIP(6780)) {
+      message.createdAddresses ??= new Set()
+    }
+
     let contract = await this.stateManager.getAccount(message.to ?? createZeroAddress())
     if (!contract) {
       contract = new Account()
@@ -980,10 +1040,12 @@ export class TVM implements TVMInterface {
       accessWitness: message.accessWitness,
       createdAddresses: message.createdAddresses,
       initialLogs: opts.initialLogs,
+      tronTransactionContext: message.tronTransactionContext,
     }
 
     const interpreter = new Interpreter(
       this,
+      (nestedMessage) => this._runCallFromInterpreter(nestedMessage),
       this.stateManager,
       this.blockchain,
       env,
@@ -1040,47 +1102,84 @@ export class TVM implements TVMInterface {
    * Executes an TVM message, determining whether it's a call or create
    * based on the `to` address. It checkpoints the state and reverts changes
    * if an exception happens during the message execution.
+   *
+   * When `opts.message` is supplied with `depth === 0`, the message is treated as a new top-level
+   * transaction and is mutated in place: `selfdestruct`, `createdAddresses`, `gasRefund`, and
+   * `tronTransactionContext` are reset so state from a previous run cannot leak into this one.
+   * To seed those transaction-level values, pass `opts.selfdestruct`, `opts.createdAddresses`,
+   * `opts.gasRefund`, and `opts.rootTransactionId` instead of pre-setting them on the message.
+   *
+   * `opts.skipBalance` applies to messages built by this method at any depth. When `opts.message`
+   * is supplied it is only honored for top-level (`depth === 0`) messages.
+   *
+   * A TVM instance does not support concurrent standalone execution invocations because execution
+   * context and journals are shared. Recursive calls made by the interpreter use a private entry
+   * point; every overlapping public invocation is rejected regardless of its supplied depth.
    */
   async runCall(opts: TVMRunCallOpts): Promise<TVMResult> {
+    const messageDepth = opts.message?.depth ?? opts.depth ?? 0
+    this._acquireExecutionLock()
+    try {
+      return await this._runCall(opts, true, messageDepth)
+    } catch (error) {
+      if (this._optsCached.profiler?.enabled === true) {
+        this.performanceLogger.cancelTimer()
+      }
+      throw error
+    } finally {
+      this._activeExecutions--
+    }
+  }
+
+  private _acquireExecutionLock(): void {
+    if (this._activeExecutions > 0) {
+      throw EthereumJSErrorWithoutCode(
+        'Concurrent public TVM execution invocations on the same TVM instance are not supported',
+      )
+    }
+    this._activeExecutions++
+  }
+
+  private async _runCallFromInterpreter(message: Message): Promise<TVMResult> {
+    return this._runCall({ message }, false, message.depth)
+  }
+
+  private async _runCall(
+    opts: TVMRunCallOpts,
+    isStandaloneCall: boolean,
+    messageDepth: number,
+  ): Promise<TVMResult> {
+    // The effective depth must be resolved the same way here and at the stop site below, otherwise
+    // the profiler starts a timer it never stops (or stops one it never started).
+    const isTopLevelCall = messageDepth === 0
+    const profilerEnabled = this._optsCached.profiler?.enabled === true
     let timer: Timer | undefined
-    if (
-      (opts.depth === 0 || opts.message === undefined) &&
-      this._optsCached.profiler?.enabled === true
-    ) {
+    if (isTopLevelCall && profilerEnabled) {
       timer = this.performanceLogger.startTimer('Initialization')
     }
     let message = opts.message
     let callerAccount
-    if (!message) {
+    if (isStandaloneCall || isTopLevelCall) {
+      const caller = message?.caller ?? opts.caller ?? createZeroAddress()
       this._block = opts.block ?? defaultBlock()
-      const caller = opts.caller ?? createZeroAddress()
       this._tx = {
         gasPrice: opts.gasPrice ?? BIGINT_0,
         origin: opts.origin ?? caller,
       }
+    }
+    if (message !== undefined && isTopLevelCall) {
+      message.selfdestruct = opts.selfdestruct ?? new Map()
+      message.createdAddresses = opts.createdAddresses ?? new Set()
+      message.gasRefund = opts.gasRefund ?? BIGINT_0
+      message.tronTransactionContext =
+        opts.rootTransactionId === undefined
+          ? undefined
+          : createTronTransactionContext(opts.rootTransactionId)
+    }
+    if (!message) {
+      const caller = opts.caller ?? createZeroAddress()
 
       const value = opts.value ?? BIGINT_0
-      if (opts.skipBalance === true) {
-        callerAccount = await this.stateManager.getAccount(caller)
-        if (!callerAccount) {
-          callerAccount = new Account()
-        }
-        const originalBalance = callerAccount.balance
-        if (callerAccount.balance < value) {
-          // if skipBalance and balance less than value, set caller balance to `value` to ensure sufficient funds
-          callerAccount.balance = value
-          await this.journal.putAccount(caller, callerAccount)
-          if (this.common.isActivatedEIP(7928)) {
-            this.blockLevelAccessList!.addBalanceChange(
-              caller.toString(),
-              callerAccount.balance,
-              this.blockLevelAccessList!.blockAccessIndex,
-              originalBalance,
-            )
-          }
-        }
-      }
-
       message = new Message({
         caller,
         gasLimit: opts.gasLimit ?? BigInt(0xffffff),
@@ -1098,116 +1197,305 @@ export class TVM implements TVMInterface {
         createdAddresses: opts.createdAddresses ?? new Set(),
         delegatecall: opts.delegatecall,
         blobVersionedHashes: opts.blobVersionedHashes,
+        tronTransactionContext:
+          opts.rootTransactionId === undefined
+            ? undefined
+            : createTronTransactionContext(opts.rootTransactionId),
       })
-    }
-
-    if (message.depth === 0) {
-      if (!callerAccount) {
-        callerAccount = await this.stateManager.getAccount(message.caller)
-      }
-      if (!callerAccount) {
-        callerAccount = new Account()
-      }
-      callerAccount.nonce++
-      await this.journal.putAccount(message.caller, callerAccount)
-      if (this.common.isActivatedEIP(7928)) {
-        this.blockLevelAccessList!.addNonceChange(
-          message.caller.toString(),
-          callerAccount.nonce,
-          this.blockLevelAccessList!.blockAccessIndex,
-        )
-      }
-      if (this.DEBUG) {
-        debug(`Update fromAccount (caller) nonce (-> ${callerAccount.nonce}))`)
-      }
-    }
-
-    await this._emit('beforeMessage', message)
-
-    if (!message.to && this.common.isActivatedEIP(2929)) {
-      message.code = message.data
-      this.journal.addWarmedAddress((await this._generateAddress(message)).bytes)
-    }
-
-    if (this.common.isActivatedEIP(7928)) {
-      this.blockLevelAccessList?.checkpoint()
-    }
-    await this.journal.checkpoint()
-    if (this.common.isActivatedEIP(1153)) this.transientStorage.checkpoint()
-    if (this.DEBUG) {
-      debug('-'.repeat(100))
-      debug(`message checkpoint`)
-    }
-
-    let result
-    if (this.DEBUG) {
-      const { caller, gasLimit, to, value, delegatecall } = message
-      debug(
-        `New message caller=${caller} gasLimit=${gasLimit} to=${
-          to?.toString() ?? 'none'
-        } value=${value} delegatecall=${delegatecall ? 'yes' : 'no'}`,
-      )
-    }
-    if (message.to) {
-      if (this.DEBUG) {
-        debug(`Message CALL execution (to: ${message.to})`)
-      }
-      result = await this._executeCall(message as MessageWithTo)
-    } else {
-      if (this.DEBUG) {
-        debug(`Message CREATE execution (to: undefined)`)
-      }
-      result = await this._executeCreate(message)
-    }
-    if (this.DEBUG) {
-      const { executionGasUsed, exceptionError, returnValue } = result.execResult
-      debug(
-        `Received message execResult: [ gasUsed=${executionGasUsed} exceptionError=${
-          exceptionError ? `'${exceptionError.error}'` : 'none'
-        } returnValue=${short(returnValue)} gasRefund=${result.execResult.gasRefund ?? 0} ]`,
-      )
-    }
-    const err = result.execResult.exceptionError
-    // This clause captures any error which happened during execution
-    // If that is the case, then all refunds are forfeited
-    // There is one exception: if the CODESTORE_OUT_OF_GAS error is thrown
-    // (this only happens the Frontier/Chainstart fork)
-    // then the error is dismissed
-    if (err && err.error !== TVMError.errorMessages.CODESTORE_OUT_OF_GAS) {
-      result.execResult.selfdestruct = new Map()
-      result.execResult.createdAddresses = new Set()
-      result.execResult.gasRefund = BIGINT_0
+    } else if (
+      message.depth > 0 &&
+      opts.rootTransactionId !== undefined &&
+      message.tronTransactionContext === undefined
+    ) {
+      message.tronTransactionContext = createTronTransactionContext(opts.rootTransactionId)
     }
     if (
-      err &&
-      !(
-        this.common.hardfork() === Hardfork.Chainstart &&
-        err.error === TVMError.errorMessages.CODESTORE_OUT_OF_GAS
-      )
+      isStandaloneCall &&
+      this.common.isActivatedEIP(6780) &&
+      message.createdAddresses === undefined
     ) {
-      result.execResult.logs = []
-      await this.journal.revert()
-      if (this.common.isActivatedEIP(1153)) this.transientStorage.revert()
+      message.createdAddresses = opts.createdAddresses ?? new Set()
+    }
+
+    // Validate transaction-level TRON deployment context before skipBalance or the top-level nonce
+    // can write the caller account. Internal CREATE is validated later inside its own checkpoint.
+    if (
+      message.depth === 0 &&
+      message.to === undefined &&
+      message.salt === undefined &&
+      this.common.gteHardfork(Hardfork.Tron) &&
+      message.tronTransactionContext === undefined
+    ) {
+      throw EthereumJSErrorWithoutCode(
+        'rootTransactionId is required for TRON contract deployment address derivation',
+      )
+    }
+
+    type CheckpointState = {
+      journal: boolean
+      transientStorage: boolean
+      blockLevelAccessList: boolean
+    }
+
+    const outerCheckpoint: CheckpointState = {
+      journal: false,
+      transientStorage: false,
+      blockLevelAccessList: false,
+    }
+    const executionCheckpoint: CheckpointState = {
+      journal: false,
+      transientStorage: false,
+      blockLevelAccessList: false,
+    }
+
+    const checkpoint = async (state: CheckpointState) => {
       if (this.common.isActivatedEIP(7928)) {
-        this.blockLevelAccessList?.revert()
+        this.blockLevelAccessList?.checkpoint()
+        state.blockLevelAccessList = true
       }
-      if (this.DEBUG) {
-        debug(`message checkpoint reverted`)
-      }
-    } else {
-      await this.journal.commit()
-      if (this.common.isActivatedEIP(1153)) this.transientStorage.commit()
-      if (this.common.isActivatedEIP(7928)) {
-        this.blockLevelAccessList?.commit()
-      }
-      if (this.DEBUG) {
-        debug(`message checkpoint committed`)
+      await this.journal.checkpoint()
+      state.journal = true
+      if (this.common.isActivatedEIP(1153)) {
+        this.transientStorage.checkpoint()
+        state.transientStorage = true
       }
     }
-    await this._emit('afterMessage', result)
 
-    if (message.depth === 0 && this._optsCached.profiler?.enabled === true) {
-      this.performanceLogger.stopTimer(timer!, 0)
+    const commit = async (state: CheckpointState) => {
+      if (state.journal) {
+        await this.journal.commit()
+        state.journal = false
+      }
+      if (state.transientStorage) {
+        this.transientStorage.commit()
+        state.transientStorage = false
+      }
+      if (state.blockLevelAccessList) {
+        this.blockLevelAccessList?.commit()
+        state.blockLevelAccessList = false
+      }
+    }
+
+    const revert = async (state: CheckpointState, preserveBlockAccessReads: boolean = true) => {
+      let revertError: unknown
+
+      if (state.journal) {
+        try {
+          await this.journal.revert()
+          state.journal = false
+        } catch (error) {
+          revertError = error
+        }
+      }
+      if (state.transientStorage) {
+        try {
+          this.transientStorage.revert()
+          state.transientStorage = false
+        } catch (error) {
+          revertError ??= error
+        }
+      }
+      if (state.blockLevelAccessList) {
+        try {
+          const blockLevelAccessList = this.blockLevelAccessList as
+            | (BlockLevelAccessList & { revert(preserveReads?: boolean): void })
+            | undefined
+          blockLevelAccessList?.revert(preserveBlockAccessReads)
+          state.blockLevelAccessList = false
+        } catch (error) {
+          revertError ??= error
+        }
+      }
+
+      if (revertError !== undefined) {
+        throw revertError
+      }
+    }
+
+    const isCheckpointActive = (state: CheckpointState) =>
+      state.journal || state.transientStorage || state.blockLevelAccessList
+
+    const revertForCleanup = async (
+      state: CheckpointState,
+      preserveBlockAccessReads: boolean,
+    ): Promise<unknown> => {
+      try {
+        await revert(state, preserveBlockAccessReads)
+        return undefined
+      } catch (firstError) {
+        if (!isCheckpointActive(state)) {
+          return firstError
+        }
+        // Journal operations retain their bookkeeping when the StateManager rejects, so a
+        // transient backend failure can be retried without pairing against the wrong checkpoint.
+        try {
+          await revert(state, preserveBlockAccessReads)
+          return undefined
+        } catch (retryError) {
+          return retryError
+        }
+      }
+    }
+
+    let result: TVMResult
+    try {
+      // The outer checkpoint owns initialization and execution so a thrown event listener cannot
+      // leave balance, nonce, access-list, or contract changes behind.
+      await checkpoint(outerCheckpoint)
+      if (this.DEBUG) {
+        debug('-'.repeat(100))
+        debug(`outer message checkpoint`)
+      }
+
+      // `skipBalance` is a caller-facing convenience for funding the sender, so it stays available to
+      // messages this method builds itself (any depth, as before). For a caller-supplied `Message` it
+      // is limited to top-level calls so it cannot relax balance checks for nested execution.
+      if (opts.skipBalance === true && (opts.message === undefined || message.depth === 0)) {
+        callerAccount = await this.stateManager.getAccount(message.caller)
+        if (!callerAccount) {
+          callerAccount = new Account()
+        }
+        const originalBalance = callerAccount.balance
+        if (callerAccount.balance < message.value) {
+          // Set the caller balance to `value` to ensure sufficient funds.
+          callerAccount.balance = message.value
+          await this.journal.putAccount(message.caller, callerAccount)
+          if (this.common.isActivatedEIP(7928)) {
+            this.blockLevelAccessList!.addBalanceChange(
+              message.caller.toString(),
+              callerAccount.balance,
+              this.blockLevelAccessList!.blockAccessIndex,
+              originalBalance,
+            )
+          }
+        }
+      }
+
+      if (message.depth === 0) {
+        if (!callerAccount) {
+          callerAccount = await this.stateManager.getAccount(message.caller)
+        }
+        if (!callerAccount) {
+          callerAccount = new Account()
+        }
+        callerAccount.nonce++
+        await this.journal.putAccount(message.caller, callerAccount)
+        if (this.common.isActivatedEIP(7928)) {
+          this.blockLevelAccessList!.addNonceChange(
+            message.caller.toString(),
+            callerAccount.nonce,
+            this.blockLevelAccessList!.blockAccessIndex,
+          )
+        }
+        if (this.DEBUG) {
+          debug(`Update fromAccount (caller) nonce (-> ${callerAccount.nonce}))`)
+        }
+      }
+
+      await this._emit('beforeMessage', message)
+
+      if (!message.to && this.common.isActivatedEIP(2929)) {
+        message.code = message.data
+        this.journal.addWarmedAddress((await this._generateAddress(message)).bytes)
+      }
+
+      // A nested execution checkpoint preserves the existing semantics for VM-level failures: the
+      // call/create changes are reverted while the top-level nonce remains in the outer checkpoint.
+      await checkpoint(executionCheckpoint)
+      if (this.DEBUG) {
+        debug('-'.repeat(100))
+        debug(`execution checkpoint`)
+        const { caller, gasLimit, to, value, delegatecall } = message
+        debug(
+          `New message caller=${caller} gasLimit=${gasLimit} to=${
+            to?.toString() ?? 'none'
+          } value=${value} delegatecall=${delegatecall ? 'yes' : 'no'}`,
+        )
+      }
+
+      if (message.to) {
+        if (this.DEBUG) {
+          debug(`Message CALL execution (to: ${message.to})`)
+        }
+        result = await this._executeCall(message as MessageWithTo)
+      } else {
+        if (this.DEBUG) {
+          debug(`Message CREATE execution (to: undefined)`)
+        }
+        result = await this._executeCreate(message)
+      }
+
+      if (this.DEBUG) {
+        const { executionGasUsed, exceptionError, returnValue } = result.execResult
+        debug(
+          `Received message execResult: [ gasUsed=${executionGasUsed} exceptionError=${
+            exceptionError ? `'${exceptionError.error}'` : 'none'
+          } returnValue=${short(returnValue)} gasRefund=${result.execResult.gasRefund ?? 0} ]`,
+        )
+      }
+      const err = result.execResult.exceptionError
+      // This clause captures any error which happened during execution
+      // If that is the case, then all refunds are forfeited
+      // There is one exception: if the CODESTORE_OUT_OF_GAS error is thrown
+      // (this only happens the Frontier/Chainstart fork)
+      // then the error is dismissed
+      if (err && err.error !== TVMError.errorMessages.CODESTORE_OUT_OF_GAS) {
+        result.execResult.selfdestruct = new Map()
+        result.execResult.createdAddresses = new Set()
+        result.execResult.gasRefund = BIGINT_0
+      }
+      if (
+        err &&
+        !(
+          this.common.hardfork() === Hardfork.Chainstart &&
+          err.error === TVMError.errorMessages.CODESTORE_OUT_OF_GAS
+        )
+      ) {
+        result.execResult.logs = []
+        await revert(executionCheckpoint)
+        if (this.DEBUG) {
+          debug(`execution checkpoint reverted`)
+        }
+      } else {
+        await commit(executionCheckpoint)
+        if (this.DEBUG) {
+          debug(`execution checkpoint committed`)
+        }
+      }
+
+      // Event hooks remain inside the outer checkpoint. If one throws, every state mutation made by
+      // this public call, including initialization and a successfully committed execution, reverts.
+      await this._emit('afterMessage', result)
+      await commit(outerCheckpoint)
+      if (this.DEBUG) {
+        debug(`outer message checkpoint committed`)
+      }
+    } catch (error) {
+      let revertError = await revertForCleanup(executionCheckpoint, true)
+      const executionCheckpointActive = isCheckpointActive(executionCheckpoint)
+      // Reverting an outer layer while an inner layer is still active would pair it with the wrong
+      // StateManager checkpoint. Preserve the aligned stack and surface the inner revert failure.
+      if (!executionCheckpointActive) {
+        // A host-level exception rejects the entire public invocation, so restore the exact BAL
+        // snapshot instead of preserving reads as an ordinary EVM frame revert would.
+        const outerError = await revertForCleanup(outerCheckpoint, false)
+        revertError ??= outerError
+      }
+
+      // An interpreter or precompile timer can be active here instead of the outer call timer.
+      // Only the standalone invocation owns the full profiling session.
+      if (isStandaloneCall && profilerEnabled) {
+        this.performanceLogger.cancelTimer()
+      }
+      if (revertError !== undefined) {
+        throw revertError
+      }
+      throw error
+    }
+
+    // Mirror the start condition exactly: only stop a timer this invocation actually started.
+    if (timer !== undefined) {
+      this.performanceLogger.stopTimer(timer, 0)
     }
 
     message.accessWitness?.commit()
@@ -1216,32 +1504,46 @@ export class TVM implements TVMInterface {
 
   /**
    * Bound to the global VM and therefore
-   * shouldn't be used directly from the tvm class
+   * shouldn't be used directly from the tvm class.
+   *
+   * `runCode()` shares transaction and block context with `runCall()`; do not overlap either method
+   * on the same TVM instance. Interpreter-driven recursive calls use a private entry point and are
+   * not subject to this public execution lock.
    */
   async runCode(opts: TVMRunCodeOpts): Promise<ExecResult> {
-    this._block = opts.block ?? defaultBlock()
+    this._acquireExecutionLock()
+    try {
+      this._block = opts.block ?? defaultBlock()
 
-    this._tx = {
-      gasPrice: opts.gasPrice ?? BIGINT_0,
-      origin: opts.origin ?? opts.caller ?? createZeroAddress(),
+      this._tx = {
+        gasPrice: opts.gasPrice ?? BIGINT_0,
+        origin: opts.origin ?? opts.caller ?? createZeroAddress(),
+      }
+
+      const message = new Message({
+        code: opts.code,
+        data: opts.data,
+        gasLimit: opts.gasLimit ?? BigInt(0xffffff),
+        to: opts.to ?? createZeroAddress(),
+        caller: opts.caller,
+        value: opts.value,
+        tokenId: opts.tokenId,
+        tokenValue: opts.tokenValue,
+        depth: opts.depth,
+        selfdestruct: opts.selfdestruct ?? new Map(),
+        createdAddresses: opts.createdAddresses,
+        isStatic: opts.isStatic,
+        blobVersionedHashes: opts.blobVersionedHashes,
+        tronTransactionContext:
+          opts.rootTransactionId === undefined
+            ? undefined
+            : createTronTransactionContext(opts.rootTransactionId),
+      })
+
+      return await this.runInterpreter(message, { pc: opts.pc })
+    } finally {
+      this._activeExecutions--
     }
-
-    const message = new Message({
-      code: opts.code,
-      data: opts.data,
-      gasLimit: opts.gasLimit ?? BigInt(0xffffff),
-      to: opts.to ?? createZeroAddress(),
-      caller: opts.caller,
-      value: opts.value,
-      tokenId: opts.tokenId,
-      tokenValue: opts.tokenValue,
-      depth: opts.depth,
-      selfdestruct: opts.selfdestruct ?? new Map(),
-      isStatic: opts.isStatic,
-      blobVersionedHashes: opts.blobVersionedHashes,
-    })
-
-    return this.runInterpreter(message, { pc: opts.pc })
   }
 
   /**
@@ -1322,7 +1624,23 @@ export class TVM implements TVMInterface {
   protected async _generateAddress(message: Message): Promise<Address> {
     let addr
     if (message.salt) {
-      addr = generateAddress2(message.caller.bytes, message.salt, message.code as Uint8Array)
+      const generateCreate2Address = this.common.gteHardfork(Hardfork.Tron)
+        ? generateTronAddress2
+        : generateAddress2
+      addr = generateCreate2Address(message.caller.bytes, message.salt, message.code as Uint8Array)
+    } else if (this.common.gteHardfork(Hardfork.Tron)) {
+      const context = message.tronTransactionContext
+      if (context === undefined) {
+        throw EthereumJSErrorWithoutCode(
+          `rootTransactionId is required for TRON ${
+            message.depth === 0 ? 'contract deployment' : 'internal CREATE'
+          } address derivation`,
+        )
+      }
+      addr =
+        message.depth === 0
+          ? generateTronContractAddress(context.rootTransactionId, message.caller.bytes)
+          : generateTronCreateAddress(context.rootTransactionId, context.nonce)
     } else {
       let acc = await this.stateManager.getAccount(message.caller)
       if (!acc) {

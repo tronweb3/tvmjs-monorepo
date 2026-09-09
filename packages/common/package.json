@@ -1,6 +1,6 @@
 {
   "name": "@tvmjs/common",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Common configuration and resources for the TRON Virtual Machine (TVM) implementation.",
   "keywords": [
     "ethereum",
@@ -50,7 +50,7 @@
     "coverage": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.mts",
     "coverage:istanbul": "DEBUG=tvmjs npx vitest run -c ../../config/vitest.config.coverage.istanbul.mts",
     "docs:build": "typedoc --options typedoc.mjs",
-    "examples": "tsx ../../scripts/examples-runner.ts -- common",
+    "examples": "node --import tsx ../../scripts/examples-runner.ts -- common",
     "examples:build": "npx embedme README.md",
     "lint": "npm run biome && eslint  --config ./eslint.config.mjs .",
     "lint:fix": "npm run biome:fix && eslint  --fix --config ./eslint.config.mjs .",
@@ -65,13 +65,17 @@
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@tvmjs/util": "1.0.0",
+    "@tvmjs/util": "1.1.0",
     "eventemitter3": "5.0.1"
   },
   "devDependencies": {
     "@noble/curves": "2.0.1",
+    "@paulmillr/trusted-setups": "0.2.0",
     "@polkadot/util": "14.0.3",
-    "@polkadot/wasm-crypto": "7.5.1"
+    "@polkadot/wasm-crypto": "7.5.1",
+    "@tvmjs/block": "1.0.1",
+    "@tvmjs/testdata": "1.0.0",
+    "micro-eth-signer": "0.15.0"
   },
   "contributors": ["TVMJS Team"]
 }

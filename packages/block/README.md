@@ -1,4 +1,4 @@
-# @tvmjs/block `1.0.0`
+# @tvmjs/block `1.0.1`
 
 | Implements schema and functions related to TRON-compatible blocks. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |

@@ -1,3 +1,4 @@
+import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import {
   createAddressFromString,
   createZeroAddress,
@@ -12,6 +13,8 @@ import { createTVM } from '../src/index.ts'
 import { TransientStorage } from '../src/transientStorage.ts'
 
 describe('Transient Storage', () => {
+  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })
+
   it('should set and get storage', () => {
     const transientStorage = new TransientStorage()
 
@@ -186,7 +189,7 @@ describe('Transient Storage', () => {
   })
 
   it('should cleanup after a message create', async () => {
-    const tvm = await createTVM()
+    const tvm = await createTVM({ common })
     // PUSH 1 PUSH 1 TSTORE
     const code = hexToBytes('0x600160015D')
     const keyBuf = setLengthLeft(new Uint8Array([1]), 32)
@@ -203,13 +206,14 @@ describe('Transient Storage', () => {
   })
 
   it('should cleanup after a message call', async () => {
-    const tvm = await createTVM()
+    const tvm = await createTVM({ common })
     const contractAddress = createZeroAddress()
     // PUSH 1 PUSH 1 TSTORE
     const code = hexToBytes('0x600160015D')
     await tvm.stateManager.putCode(contractAddress, code)
     const keyBuf = setLengthLeft(new Uint8Array([1]), 32)
     await tvm.runCall({
+      to: contractAddress,
       gasLimit: BigInt(100_000),
     })
     const stored = tvm.transientStorage.get(contractAddress, keyBuf)

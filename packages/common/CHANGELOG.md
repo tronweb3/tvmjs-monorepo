@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 (modification: no type change headlines) and this project adheres to
 [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+## 1.1.0
+
+### Features
+
+- **TRON execution profile identity**: Add `Common.isTron()` for chain-level TRON behavior that must remain active when a TRON preset explicitly selects an earlier hardfork
+- **TRON chainId presets**: Add execution-only `TronMainnet`, `TronNile`, and `TronShasta` chain configs plus the `createTronChainIdCommon(network, opts?)` factory; provides the corresponding chainIds 728126428, 3448148188, and 2494104990 while explicitly omitting network discovery data and not claiming to be a complete TRON network configuration
+- **TRON hardfork wiring**: Wire `tronHardforksDict` into the TRON execution presets; `Common` resolves per-hardfork config as `customHardforks[name] ?? hardforksDict[name]`
+- **TRON Proposal gating**: Add `activatedProposals` option to `BaseOpts`; expose `Common.activatedProposals()` and `Common.isActivatedProposal(id)` for Proposal 95 (`ALLOW_TVM_PRAGUE`) and 96 (`ALLOW_TVM_OSAKA`); IDs are validated, deduplicated, and stored in ascending order. `Common` does not mutate EIPs or params from proposal state; execution consumers can use it for feature gates such as TVM's Proposal 96 / TIP-854 behavior
+- **Constructor forwarding**: `createCommonFromGethGenesis` now forwards `activatedProposals` to the underlying `Common` instance
+
+### Bug Fixes
+
+- Restore the Ethereum `Mainnet` preset to the Prague hardfork and keep the TRON hardfork and parameter overlay isolated to the `TronMainnet`, `TronNile`, and `TronShasta` presets
+- Preserve the legacy `new Common({ chain: Mainnet, hardfork: 'tron' })` call form by normalizing that exact combination to `TronMainnet` (chainId 728126428); new code should use `TronMainnet` directly
+- Add the missing EIP-7939 entry to `tipsDict` so the implemented CLZ opcode can be enabled explicitly with `eips: [7939]`; default hardfork and Proposal 96 activation behavior remain unchanged
+
 ## 1.0.0
 
 ### Features
@@ -33,4 +51,3 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 - Rename package namespace from `@ethereumjs/common` to `@tvmjs/common`; update all internal imports
 - Bump package version to `1.0.0`
 - Lock all dependency versions by removing `^` and `~` prefixes
-

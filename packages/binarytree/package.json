@@ -1,6 +1,6 @@
 {
   "name": "@tvmjs/binarytree",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Implementation of binary trees as used in the TRON Virtual Machine (TVM).",
   "keywords": ["binary", "tree", "trie", "ethereum", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/binarytree#readme",
@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "@tvmjs/rlp": "1.0.0",
-    "@tvmjs/util": "1.0.0",
+    "@tvmjs/util": "1.1.0",
     "@noble/hashes": "2.0.1",
     "debug": "4.4.0",
     "lru-cache": "11.0.2"

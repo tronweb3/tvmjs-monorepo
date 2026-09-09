@@ -3,7 +3,35 @@
   "ignoreRegExpList": [
     "/0x[0-9A-Fa-f]+/"
   ],
+  "overrides": [
+    {
+      "filename": "**/README.md",
+      "ignoreWords": [
+        "Ripempd"
+      ]
+    }
+  ],
   "words": [
+    "CALLTOKEN",
+    "CHAINID",
+    "getaccount",
+    "triggerconstantcontract",
+    "Pectra",
+    "Fastjson",
+    "secp",
+    "RETURNDATASIZE",
+    "RETURNDATACOPY",
+    "CALLTOKENID",
+    "CALLTOKENVALUE",
+    "ISCONTRACT",
+    "TOKENBALANCE",
+    "tronprotocol",
+    "tronweb",
+    "batchvalidatesign",
+    "validatemultisign",
+    "soljson",
+    "TOKENID",
+    "multisign",
     "binarytree",
     "trienode",
     "t8ntool",
@@ -214,6 +242,7 @@
     "totalgas",
     "RETURNDATA",
     "STATICCALL",
+    "DELEGATECALL",
     "sstore",
     "CALLCODE",
     "Mgas",

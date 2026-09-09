@@ -25,7 +25,7 @@ const setEnv = (key: string, value: unknown) => {
 }
 
 // Map CLI args to VITE_* env vars
-setEnv('VITE_FORK', argv.fork ?? env.VITE_FORK ?? 'Prague')
+setEnv('VITE_FORK', argv.fork ?? env.VITE_FORK ?? 'Cancun')
 setEnv('VITE_TEST', argv.test)
 setEnv('VITE_FILE', argv.file)
 setEnv('VITE_DIR', argv.dir)

@@ -14,7 +14,8 @@ import { type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 
 const common = new Common({
   chain: Mainnet,
-  hardfork: Hardfork.Osaka,
+  hardfork: Hardfork.Cancun,
+  eips: [7939],
 })
 
 const assembleCode = (x: Uint8Array) => {
@@ -30,10 +31,14 @@ const assembleCode = (x: Uint8Array) => {
   return code
 }
 
-const runCase = async (tvm: TVM, x: PrefixedHexString) => {
+const runCase = async (tvm: TVM, x: PrefixedHexString, expected: bigint) => {
   const code = assembleCode(hexToBytes(x))
 
   const res = await tvm.runCode({ code })
+
+  if (res.exceptionError) {
+    throw new Error(`Execution failed: ${res.exceptionError.error}`)
+  }
 
   const stack = res.runState?.stack
   if (!stack) {
@@ -41,6 +46,9 @@ const runCase = async (tvm: TVM, x: PrefixedHexString) => {
   }
 
   const [top] = stack.peek(1)
+  if (top !== expected) {
+    throw new Error(`Unexpected CLZ result for ${x}: expected ${expected}, got ${top}`)
+  }
   const hexValue = `0x${top.toString(16)}`
   const gas = res.executionGasUsed
   console.log('--------------------------------')
@@ -53,16 +61,16 @@ const main = async () => {
   const tvm = await createTVM({ common })
 
   // Case 1: x == 0x00..00 -> expect 256
-  await runCase(tvm, `0x${'00'.repeat(32)}` as PrefixedHexString)
+  await runCase(tvm, `0x${'00'.repeat(32)}` as PrefixedHexString, 256n)
 
   // Case 2: x == 0x0..01 -> MSB at bit 0 -> expect 255
-  await runCase(tvm, `0x${'00'.repeat(31)}01` as PrefixedHexString)
+  await runCase(tvm, `0x${'00'.repeat(31)}01` as PrefixedHexString, 255n)
 
   // Case 3: x == 0x40..00 -> MSB at bit 254 -> expect 1
-  await runCase(tvm, `0x40${'00'.repeat(31)}` as PrefixedHexString)
+  await runCase(tvm, `0x40${'00'.repeat(31)}` as PrefixedHexString, 1n)
 
   // Case 4: x == 0x80..00 -> MSB at bit 255 -> expect 0
-  await runCase(tvm, `0x80${'00'.repeat(31)}` as PrefixedHexString)
+  await runCase(tvm, `0x80${'00'.repeat(31)}` as PrefixedHexString, 0n)
   console.log('--------------------------------')
 }
 

@@ -1,6 +1,7 @@
-import { readdirSync } from 'fs'
-import { extname, join, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { spawn } from 'node:child_process'
+import { readdirSync } from 'node:fs'
+import { dirname, extname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -13,21 +14,36 @@ const subDir = process.argv[4] ?? ''
 const examplesPath = `../packages/${pkg}/examples/${subDir}/`
 const path = join(__dirname, examplesPath)
 
-const getExample = (fileName: string): Promise<NodeModule> | undefined => {
-  if (extname(fileName) === '.cts' || extname(fileName) === '.ts') {
-    return import(examplesPath + fileName)
-  }
+const runExample = (fileName: string): Promise<void> => {
+  const examplePath = join(path, fileName)
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ['--import', 'tsx', examplePath], {
+      stdio: 'inherit',
+    })
+
+    child.on('error', reject)
+    child.on('close', (code, signal) => {
+      if (code === 0) {
+        resolve()
+        return
+      }
+      const reason = signal === null ? `exit code ${code}` : `signal ${signal}`
+      reject(new Error(`Example ${fileName} failed with ${reason}`))
+    })
+  })
 }
 
 const main = async () => {
   const files = readdirSync(path)
+    .filter((file) => extname(file) === '.cts' || extname(file) === '.ts')
+    .sort()
   for (const file of files) {
-    const runner = getExample(file)
-    if (runner !== undefined) {
-      console.log(` ---- Run example: ${file} ----`)
-      await runner
-    }
+    console.log(` ---- Run example: ${file} ----`)
+    await runExample(file)
   }
 }
 
-main()
+void main().catch((err) => {
+  console.error(err)
+  process.exitCode = 1
+})

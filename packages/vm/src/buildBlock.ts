@@ -26,7 +26,6 @@ import {
 } from '@tvmjs/util'
 
 import { Bloom } from './bloom/index.ts'
-import { runTx } from './index.ts'
 import { accumulateRequests } from './requests.ts'
 import {
   accumulateParentBeaconBlockRoot,
@@ -35,11 +34,19 @@ import {
   encodeReceipt,
   rewardAccount,
 } from './runBlock.ts'
+import { runTx } from './runTx.ts'
+import { validateTronTransactionIdPolicy } from './tronTransactionId.ts'
 
 import type { Block, HeaderData } from '@tvmjs/block'
 import type { TypedTransaction } from '@tvmjs/tx'
 import type { Withdrawal } from '@tvmjs/util'
-import type { BuildBlockOpts, BuilderOpts, RunTxResult, SealBlockOpts } from './types.ts'
+import type {
+  BuildBlockOpts,
+  BuilderOpts,
+  RunTxResult,
+  SealBlockOpts,
+  TronTransactionIdPolicy,
+} from './types.ts'
 import type { VM } from './vm.ts'
 
 export type BuildStatus = (typeof BuildStatus)[keyof typeof BuildStatus]
@@ -220,9 +227,17 @@ export class BlockBuilder {
     {
       skipHardForkValidation,
       allowNoBlobs,
-    }: { skipHardForkValidation?: boolean; allowNoBlobs?: boolean } = {},
+      rootTransactionId,
+      tronTransactionIdPolicy,
+    }: {
+      skipHardForkValidation?: boolean
+      allowNoBlobs?: boolean
+      rootTransactionId?: Uint8Array
+      tronTransactionIdPolicy?: TronTransactionIdPolicy
+    } = {},
   ) {
     this.checkStatus()
+    validateTronTransactionIdPolicy(tronTransactionIdPolicy)
 
     if (!this.checkpointed) {
       await this.vm.tvm.journal.checkpoint()
@@ -286,7 +301,13 @@ export class BlockBuilder {
     const blockData = { header, transactions: this.transactions }
     const block = createBlock(blockData, this.blockOpts)
 
-    const result = await runTx(this.vm, { tx, block, skipHardForkValidation })
+    const result = await runTx(this.vm, {
+      tx,
+      block,
+      skipHardForkValidation,
+      rootTransactionId,
+      tronTransactionIdPolicy,
+    })
 
     // If tx is a blob transaction, remove blobs/kzg commitments before adding to block per EIP-4844
     if (tx instanceof Blob4844Tx) {

@@ -111,6 +111,12 @@ export class TVMPerformanceLogger {
     return this.currentTimer !== undefined
   }
 
+  // Abandon the entire profiling session after execution fails. Partial measurements, including
+  // the currently active child timer, are intentionally discarded rather than recorded.
+  cancelTimer() {
+    this.currentTimer = undefined
+  }
+
   // Start a new timer
   // Only one timer can be timing at the same time
   startTimer(tag: string) {

@@ -114,18 +114,31 @@ export class Journal {
     }
   }
   async commit() {
+    await this.stateManager.commit()
     this.journalHeight--
     this.journalDiff.push([this.journalHeight, [new Set(), new Map(), new Set()]])
-    await this.stateManager.commit()
   }
 
   async checkpoint() {
     this.journalHeight++
     this.journalDiff.push([this.journalHeight, [new Set(), new Map(), new Set()]])
-    await this.stateManager.checkpoint()
+    try {
+      await this.stateManager.checkpoint()
+    } catch (error) {
+      // Keep Journal bookkeeping atomic with the StateManager call. Without this cleanup, a
+      // rejected checkpoint leaves the Journal one level too deep and corrupts subsequent
+      // commit/revert pairing on the same TVM instance.
+      this.journalDiff.pop()
+      this.journalHeight--
+      throw error
+    }
   }
 
   async revert() {
+    // Do not mutate Journal bookkeeping until the StateManager has successfully reverted. This
+    // keeps both layers aligned and allows callers to retry a rejected revert.
+    await this.stateManager.revert()
+
     // Loop backwards over the journal diff and stop if we are at a lower height than current journal height
     // During this process, delete all items.
     // TODO check this logic, if there is this array: height [4,3,4] and we revert height 4, then the final
@@ -173,8 +186,6 @@ export class Journal {
     this.journalDiff = this.journalDiff.slice(0, finalI! + 1)
 
     this.journalHeight--
-
-    await this.stateManager.revert()
   }
 
   public cleanJournal() {

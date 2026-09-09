@@ -21,6 +21,25 @@
         "epoc",
         "cmix"
       ]
+    },
+    {
+      "filename": "**/packages/tvm/**",
+      "ignoreWords": [
+        "ENGERYPERSIGN",
+        "testmulti"
+      ]
+    },
+    {
+      "filename": "**/packages/vm/test/api/tvm/**",
+      "ignoreWords": [
+        "Contrct",
+        "killme",
+        "Vtxdt",
+        "getprice",
+        "getbasefee",
+        "testmulti",
+        "AABI"
+      ]
     }
   ],
   "words": [
@@ -648,6 +667,25 @@
     "getpayload",
     "ckzg",
     "Damgård",
-    "viem"
+    "viem",
+    "CALLTOKEN",
+    "calltoken",
+    "TOKENBALANCE",
+    "tokenbalance",
+    "CALLTOKENVALUE",
+    "calltokenvalue",
+    "CALLTOKENID",
+    "calltokenid",
+    "ISCONTRACT",
+    "iscontract",
+    "TOKENID",
+    "BATCHVALIDATESIGN",
+    "batchvalidatesign",
+    "VALIDATEMULTISIGN",
+    "validatemultisign",
+    "MULTISIGN",
+    "multisign",
+    "tronweb",
+    "soljson"
   ]
 }

@@ -981,6 +981,15 @@ export const tipsDict: EIPsDict = {
     requiredEIPs: [],
   },
   /**
+   * Description : Count leading zeros (CLZ) opcode
+   * URL         : https://eips.ethereum.org/EIPS/eip-7939
+   * Status      : Draft
+   */
+  7939: {
+    minimumHardfork: Hardfork.Chainstart,
+    requiredEIPs: [],
+  },
+  /**
    * Description : Precompile for secp256r1 Curve Support
    * URL         : https://eips.ethereum.org/EIPS/eip-7951
    * Status      : Draft

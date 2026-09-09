@@ -1,4 +1,4 @@
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, Mainnet, TronNile } from '@tvmjs/common'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 import { TVMError, createTVM, getActivePrecompiles } from '../../src/index.ts'
@@ -132,6 +132,25 @@ describe('Precompiles: BATCH-VALIDATE-SIGN', () => {
 
     assert.deepEqual(result.executionGasUsed, 0xffffn, 'should exhaust gas limit')
     assert.deepEqual(result.exceptionError, new TVMError(TVMError.errorMessages.UNKNOWN))
+  })
+
+  it('Osaka rejects invalid ABI shape and consumes the forwarded gas', async () => {
+    const common = new Common({ chain: TronNile, activatedProposals: [96] })
+    const addressStr = '0000000000000000000000000000000000000009'
+    const FUNC = getActivePrecompiles(common).get(addressStr)!
+    const gasLimit = 12345n
+
+    // H=5 and I=6 for batchValidateSign. Six words leave one incomplete item.
+    const result = await FUNC({
+      data: new Uint8Array(6 * 32),
+      gasLimit,
+      common,
+      _TVM: await createTVM({ common }),
+    })
+
+    assert.strictEqual(result.executionGasUsed, gasLimit)
+    assert.deepEqual(result.returnValue, new Uint8Array())
+    assert.deepEqual(result.exceptionError, new TVMError(TVMError.errorMessages.OUT_OF_GAS))
   })
 })
 

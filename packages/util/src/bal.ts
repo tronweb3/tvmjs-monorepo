@@ -115,7 +115,12 @@ export type {
 export class BlockLevelAccessList {
   public accesses: Accesses
   public blockAccessIndex: number
-  private checkpoints: { accesses: Accesses; blockAccessIndex: number }[] = []
+  private checkpoints: {
+    accesses: Accesses
+    blockAccessIndex: number
+    originalBalances: Map<BALAddressHex, bigint>
+    originalCodesAtIndex: Map<string, Uint8Array>
+  }[] = []
   // Track original (pre-transaction) balances for net-zero detection
   private originalBalances: Map<BALAddressHex, bigint> = new Map()
   // Track original code at the start of each blockAccessIndex for each address
@@ -148,6 +153,10 @@ export class BlockLevelAccessList {
     this.checkpoints.push({
       accesses: this.cloneAccesses(this.accesses),
       blockAccessIndex: this.blockAccessIndex,
+      originalBalances: new Map(this.originalBalances),
+      originalCodesAtIndex: new Map(
+        Array.from(this.originalCodesAtIndex, ([key, code]) => [key, code.slice()]),
+      ),
     })
   }
 
@@ -157,7 +166,7 @@ export class BlockLevelAccessList {
     }
   }
 
-  public revert(): void {
+  public revert(preserveReads: boolean = true): void {
     const snapshot = this.checkpoints.pop()
     if (!snapshot) {
       return
@@ -165,6 +174,15 @@ export class BlockLevelAccessList {
     const current = this.accesses
     this.accesses = snapshot.accesses
     this.blockAccessIndex = snapshot.blockAccessIndex
+
+    // Host-level failures reject the entire execution attempt rather than reverting an EVM frame.
+    // In that case the exact snapshot must be restored without retaining accesses from the rejected
+    // attempt. Ordinary EVM frame reverts keep the EIP-7928 read-preservation behavior below.
+    if (!preserveReads) {
+      this.originalBalances = snapshot.originalBalances
+      this.originalCodesAtIndex = snapshot.originalCodesAtIndex
+      return
+    }
 
     // Preserve address touches and storage reads across reverts.
     // EIP-7928: When storage writes are reverted, the slot keys MUST still

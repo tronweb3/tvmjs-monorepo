@@ -2,7 +2,7 @@ import {
   createMPTFromProof,
   createMerkleProof,
   updateMPTFromMerkleProof,
-  verifyMerkleProof,
+  verifyMPTWithMerkleProof,
 } from '@tvmjs/mpt'
 import { RLP } from '@tvmjs/rlp'
 import {
@@ -188,16 +188,18 @@ export async function verifyMerkleStateProof(
   sm: MerkleStateManager,
   proof: Proof,
 ): Promise<boolean> {
-  const key = hexToBytes(proof.address)
+  const address = createAddressFromString(proof.address)
+  const key = address.bytes
   const accountProof = proof.accountProof.map((rlpString: PrefixedHexString) =>
     hexToBytes(rlpString),
   )
 
-  // This returns the account if the proof is valid.
-  // Verify that it matches the reported account.
-  const value = await verifyMerkleProof(key, accountProof, {
-    useKeyHashing: true,
-  })
+  const stateRoot = await sm.getStateRoot()
+  const value =
+    accountProof.length === 0 && equalsBytes(stateRoot, sm['_trie'].EMPTY_TRIE_ROOT)
+      ? null
+      : await verifyMPTWithMerkleProof(sm['_trie'], stateRoot, key, accountProof)
+  let authenticatedAccount: ReturnType<typeof createAccountFromRLP> | undefined
 
   if (value === null) {
     // Verify that the account is empty in the proof.
@@ -223,9 +225,14 @@ export async function verifyMerkleStateProof(
         `${notEmptyErrorMsg} (codeHash does not equal KECCAK256_NULL)`,
       )
     }
+    if (proof.storageProof.length > 0) {
+      throw EthereumJSErrorWithoutCode(
+        'Invalid proof provided: storage proof supplied for nonexistent account',
+      )
+    }
   } else {
-    const account = createAccountFromRLP(value)
-    const { nonce, balance, storageRoot, codeHash } = account
+    authenticatedAccount = createAccountFromRLP(value)
+    const { nonce, balance, storageRoot, codeHash } = authenticatedAccount
     const invalidErrorMsg = 'Invalid proof provided:'
     if (nonce !== BigInt(proof.nonce)) {
       throw EthereumJSErrorWithoutCode(`${invalidErrorMsg} nonce does not match`)
@@ -241,13 +248,20 @@ export async function verifyMerkleStateProof(
     }
   }
 
+  const storageTrie =
+    authenticatedAccount !== undefined
+      ? sm['_getStorageTrie'](address, authenticatedAccount)
+      : undefined
   for (const stProof of proof.storageProof) {
     const storageProof = stProof.proof.map((value: PrefixedHexString) => hexToBytes(value))
     const storageValue = setLengthLeft(hexToBytes(stProof.value), 32)
     const storageKey = hexToBytes(stProof.key)
-    const proofValue = await verifyMerkleProof(storageKey, storageProof, {
-      useKeyHashing: true,
-    })
+    const proofValue = await verifyMPTWithMerkleProof(
+      storageTrie!,
+      authenticatedAccount!.storageRoot,
+      storageKey,
+      storageProof,
+    )
     const reportedValue = setLengthLeft(
       RLP.decode(proofValue ?? new Uint8Array(0)) as Uint8Array,
       32,

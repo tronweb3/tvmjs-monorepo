@@ -2,6 +2,12 @@
 /**
  * GitHub Release script for EthereumJS monorepo packages
  *
+ * NOTE: Not applicable for TVMJS releases. REPO_OWNER/REPO_NAME still point to
+ * ethereumjs/ethereumjs-monorepo, package names are hardcoded with the
+ * @ethereumjs/ scope, and the package list includes 'genesis' which does not
+ * exist in this repo. Create TVMJS GitHub releases manually until this script
+ * is reworked.
+ *
  * Creates GitHub releases for all active packages after npm releases are done.
  * Extracts release notes from CHANGELOG.md files.
  *

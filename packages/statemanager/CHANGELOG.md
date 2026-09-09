@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 (modification: no type change headlines) and this project adheres to
 [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixes
+
+- Bind EIP-1186 account proofs to the StateManager state root and storage proofs to the authenticated account storage root; reject storage proofs for nonexistent accounts
+
+### Chores
+
+- Update internal `@tvmjs/*` dependencies for the coordinated TVMJS release
+
 ## 1.0.0
 
 ### Features
@@ -23,5 +33,4 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 - Rename package namespace from `@ethereumjs/statemanager` to `@tvmjs/statemanager`; update all internal imports to `@tvmjs/*`
 - Bump package version to `1.0.0`
 - Lock all dependency versions by removing `^` and `~` prefixes
-
 

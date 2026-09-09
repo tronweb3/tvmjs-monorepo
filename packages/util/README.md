@@ -1,4 +1,4 @@
-# @tvmjs/util `1.0.0`
+# @tvmjs/util `1.1.0`
 
 | A collection of utility functions for TRON/TVM. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -7,6 +7,7 @@
 
 - [Installation](#installation)
 - [Getting Started](#getting-started)
+  - [CREATE2 migration in 1.1.0](#create2-migration-in-110)
 - [Module: [account]](#module-account)
 - [Module: [address]](#module-address)
 - [Module: [authorization]](#module-authorization)
@@ -44,6 +45,18 @@ All helpers are re-exported from the root level and deep imports are not necessa
 
 ```ts
 import { hexToBytes, isValidChecksumAddress } from '@tvmjs/util'
+```
+
+### CREATE2 migration in 1.1.0
+
+`generateAddress2()` now implements Ethereum EIP-1014 with the `0xff` hash preimage. In 1.0.0
+this function used TRON's `0x41` preimage. Applications upgrading from 1.0.0 that call this helper
+directly for TRON addresses must switch to `generateTronAddress2()`:
+
+```ts
+import { generateTronAddress2 } from '@tvmjs/util'
+
+const address = generateTronAddress2(deployer, salt, initCode)
 ```
 
 ## Module: [account](src/account.ts)
@@ -176,7 +189,7 @@ These request types are mainly used within the [@tvmjs/block](https://github.com
 
 ## Module: [signature](src/signature.ts)
 
-Small helpers around signature validation, conversion, recovery as well as selected convenience wrappers for calls to the underlying crypo libraries, using the cryptographic primitive implementations from the [Noble](https://paulmillr.com/noble/) crypto library set. If possible for your use case it is recommended to use the underlying crypto libraries directly for robustness.
+Small helpers around signature validation, conversion, recovery as well as selected convenience wrappers for calls to the underlying crypto libraries, using the cryptographic primitive implementations from the [Noble](https://paulmillr.com/noble/) crypto library set. If possible for your use case it is recommended to use the underlying crypto libraries directly for robustness.
 
 ```ts
 // ./examples/signature.ts

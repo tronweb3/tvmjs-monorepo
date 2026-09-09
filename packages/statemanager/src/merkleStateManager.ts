@@ -774,7 +774,7 @@ export class MerkleStateManager implements StateManagerInterface {
   }
 
   /**
-   * Checks if tokenid is exists
+   * Checks whether the token ID exists
    * @param tokenId - tokenId to check
    */
   async tokenIdExists(tokenId: number): Promise<boolean> {

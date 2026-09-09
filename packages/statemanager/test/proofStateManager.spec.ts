@@ -12,7 +12,7 @@ import {
   hexToBytes,
   randomBytes,
 } from '@tvmjs/util'
-import { assert, describe, it } from 'vitest'
+import { assert, describe, expect, it } from 'vitest'
 
 import { MerkleStateManager } from '../src/index.ts'
 import { getMerkleStateProof, verifyMerkleStateProof } from '../src/proof/index.ts'
@@ -107,6 +107,56 @@ describe('ProofStateManager', () => {
       await verifyMerkleStateProof(stateManager, nonExistenceProof),
       true,
       'verified proof of non-existence of account',
+    )
+  })
+
+  it('should reject an account proof from a different state root', async () => {
+    const address = createZeroAddress()
+    const trustedStateManager = new MerkleStateManager()
+    const attackerStateManager = new MerkleStateManager()
+    await attackerStateManager.putAccount(address, new Account(7n, 999n))
+
+    const proof = await getMerkleStateProof(attackerStateManager, address)
+
+    await expect(verifyMerkleStateProof(trustedStateManager, proof)).rejects.toThrow(
+      /Invalid proof/,
+    )
+  })
+
+  it('should reject a storage proof that is not bound to the authenticated account', async () => {
+    const address = createZeroAddress()
+    const key = new Uint8Array(32)
+    const trustedStateManager = new MerkleStateManager()
+    const attackerStateManager = new MerkleStateManager()
+
+    await trustedStateManager.putAccount(address, new Account())
+    await trustedStateManager.putStorage(address, key, new Uint8Array([1]))
+    await attackerStateManager.putAccount(address, new Account())
+    await attackerStateManager.putStorage(address, key, new Uint8Array([2]))
+
+    const trustedProof = await getMerkleStateProof(trustedStateManager, address, [key])
+    const attackerProof = await getMerkleStateProof(attackerStateManager, address, [key])
+    const mixedProof = { ...trustedProof, storageProof: attackerProof.storageProof }
+
+    await expect(verifyMerkleStateProof(trustedStateManager, mixedProof)).rejects.toThrow(
+      /Invalid proof/,
+    )
+  })
+
+  it('should reject storage proofs for a nonexistent account', async () => {
+    const address = createZeroAddress()
+    const key = new Uint8Array(32)
+    const trustedStateManager = new MerkleStateManager()
+    const attackerStateManager = new MerkleStateManager()
+    await attackerStateManager.putAccount(address, new Account())
+    await attackerStateManager.putStorage(address, key, new Uint8Array([1]))
+
+    const nonExistenceProof = await getMerkleStateProof(trustedStateManager, address)
+    const attackerProof = await getMerkleStateProof(attackerStateManager, address, [key])
+    const mixedProof = { ...nonExistenceProof, storageProof: attackerProof.storageProof }
+
+    await expect(verifyMerkleStateProof(trustedStateManager, mixedProof)).rejects.toThrow(
+      /storage proof supplied for nonexistent account/,
     )
   })
 
