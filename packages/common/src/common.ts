@@ -1,27 +1,14 @@
-import {
-  BIGINT_0,
-  EthereumJSErrorWithoutCode,
-  TypeOutput,
-  bytesToHex,
-  concatBytes,
-  hexToBytes,
-  intToBytes,
-  toType,
-} from '@tvmjs/util'
+import { EthereumJSErrorWithoutCode, TypeOutput, toType } from '@tvmjs/util'
 import { EventEmitter } from 'eventemitter3'
 
-import { Mainnet, TronMainnet } from './chains.ts'
-import { crc32 } from './crc.ts'
-import { tipsDict } from './eips.ts'
 import { Hardfork } from './enums.ts'
-import { hardforksDict } from './hardforks.ts'
+import { tronExecutionProfile } from './profiles.ts'
 import { tronProposalsDict } from './proposals.ts'
 
 import type { BigIntLike, PrefixedHexString } from '@tvmjs/util'
 import type { ConsensusAlgorithm, ConsensusType } from './enums.ts'
 import type {
   BootstrapNodeConfig,
-  BpoSchedule,
   CasperConfig,
   ChainConfig,
   CliqueConfig,
@@ -37,6 +24,28 @@ import type {
   ParamsDict,
 } from './types.ts'
 
+function assertSupportedEIP(eip: number): void {
+  if (
+    !Number.isSafeInteger(eip) ||
+    (!tronExecutionProfile.eips.includes(eip) && !tronExecutionProfile.optionalEIPs.includes(eip))
+  ) {
+    throw EthereumJSErrorWithoutCode(`EIP ${eip} is not supported by the TRON execution profile`)
+  }
+}
+
+/** JSON with object keys sorted at every level, so equal metadata compares equal regardless of key order. */
+function stableStringify(value: unknown): string {
+  return JSON.stringify(value, (_key, item) =>
+    item !== null && typeof item === 'object' && !Array.isArray(item)
+      ? Object.fromEntries(
+          Object.keys(item)
+            .sort()
+            .map((key) => [key, (item as Record<string, unknown>)[key]]),
+        )
+      : item,
+  )
+}
+
 /**
  * Common class to access chain and hardfork parameters and to provide
  * a unified and shared view on the network and hardfork state.
@@ -45,8 +54,8 @@ import type {
  * custom chain {@link Common} objects (more complete custom chain setups
  * can be created via the main constructor).
  *
- * Use the {@link createCommonFromGethGenesis} constructor for creating
- * a Common object from a Geth genesis file.
+ * Only TRON execution profiles are accepted. Geth genesis parsing remains
+ * available as a data utility, but does not create a supported execution profile.
  */
 export class Common {
   readonly DEFAULT_HARDFORK: string | Hardfork
@@ -69,20 +78,34 @@ export class Common {
   constructor(opts: CommonOpts) {
     this.events = new EventEmitter<CommonEvent>()
 
-    // 1.0.x documented TRON usage as Mainnet + the `tron` hardfork. Keep that
-    // source-compatible in 1.1.x, but normalize it to the correct TRON Mainnet
-    // execution preset instead of preserving the old chainId=1 hybrid.
-    const chain =
-      opts.chain === Mainnet && opts.hardfork === Hardfork.Tron ? TronMainnet : opts.chain
+    const chain = opts.chain
+    if (chain?.execution !== 'tron') {
+      throw EthereumJSErrorWithoutCode(
+        'Only TRON execution configurations are supported. Use TronMainnet, TronNile or TronShasta; Mainnet + hardfork: tron is no longer mapped implicitly.',
+      )
+    }
+    if (
+      (chain.defaultHardfork !== undefined && chain.defaultHardfork !== Hardfork.Tron) ||
+      chain.hardforks.length !== 1 ||
+      chain.hardforks[0].name !== Hardfork.Tron ||
+      chain.hardforks[0].block !== 0 ||
+      chain.hardforks[0].timestamp !== undefined ||
+      (chain.hardforks[0].forkHash !== undefined && chain.hardforks[0].forkHash !== null) ||
+      Object.keys(chain.customHardforks ?? {}).length !== 0
+    ) {
+      throw EthereumJSErrorWithoutCode(
+        'Only the TRON execution profile is supported; Ethereum and custom hardfork schedules are not supported. Use params, eips and activatedProposals for execution settings.',
+      )
+    }
+    if (opts.customCrypto && 'kzg' in opts.customCrypto) {
+      throw EthereumJSErrorWithoutCode('customCrypto.kzg is no longer supported')
+    }
+    if (chain.genesis && ('excessBlobGas' in chain.genesis || 'blobGasUsed' in chain.genesis)) {
+      throw EthereumJSErrorWithoutCode('Blob gas fields are not supported in TRON genesis metadata')
+    }
     this._chainParams = JSON.parse(JSON.stringify(chain)) // copy
     this.DEFAULT_HARDFORK = this._chainParams.defaultHardfork ?? Hardfork.Tron
-    // Assign hardfork changes in the sequence of the applied hardforks
-    this.HARDFORK_CHANGES = this.hardforks().map((hf) => [
-      hf.name,
-      // Allow to even override an existing hardfork specification
-      (this._chainParams.customHardforks && this._chainParams.customHardforks[hf.name]) ??
-        hardforksDict[hf.name],
-    ])
+    this.HARDFORK_CHANGES = [[Hardfork.Tron, { eips: [...tronExecutionProfile.eips] }]]
     this._hardfork = this.DEFAULT_HARDFORK
     this._params = opts.params ? JSON.parse(JSON.stringify(opts.params)) : {} // copy
 
@@ -92,9 +115,15 @@ export class Common {
     if (opts.eips) {
       this.setEIPs(opts.eips)
     }
-    if (opts.activatedProposals !== undefined) {
+    if (opts.activatedProposals !== undefined && !Array.isArray(opts.activatedProposals)) {
+      throw EthereumJSErrorWithoutCode(
+        `activatedProposals must be an array of proposal IDs, received ${typeof opts.activatedProposals}`,
+      )
+    }
+    const activatedProposals = opts.activatedProposals ?? chain.defaultActivatedProposals ?? []
+    if (activatedProposals.length > 0) {
       const supported = Object.keys(tronProposalsDict).join(', ')
-      for (const proposalId of opts.activatedProposals) {
+      for (const proposalId of activatedProposals) {
         if (!Number.isSafeInteger(proposalId) || proposalId <= 0) {
           throw EthereumJSErrorWithoutCode(
             `Invalid proposal ID: ${proposalId} (must be a positive safe integer), supported proposals: ${supported}`,
@@ -106,9 +135,9 @@ export class Common {
           )
         }
       }
-      this._activatedProposals = [...new Set(opts.activatedProposals)].sort((a, b) => a - b)
+      this._activatedProposals = [...new Set(activatedProposals)].sort((a, b) => a - b)
     }
-    this.customCrypto = opts.customCrypto ?? {}
+    this.customCrypto = { ...opts.customCrypto }
 
     if (Object.keys(this._paramsCache).length === 0) {
       this._buildParamsCache()
@@ -132,13 +161,20 @@ export class Common {
    * ```
    *
    * @param params
+   * @param overwrite Set to false when loading defaults to preserve caller overrides.
    */
-  updateParams(params: ParamsDict) {
+  updateParams(params: ParamsDict, overwrite = true) {
     for (const [eip, paramsConfig] of Object.entries(params)) {
       if (!(eip in this._params)) {
         this._params[eip] = JSON.parse(JSON.stringify(paramsConfig)) // copy
       } else {
-        this._params[eip] = JSON.parse(JSON.stringify({ ...this._params[eip], ...params[eip] })) // copy
+        this._params[eip] = JSON.parse(
+          JSON.stringify(
+            overwrite
+              ? { ...this._params[eip], ...paramsConfig }
+              : { ...paramsConfig, ...this._params[eip] },
+          ),
+        ) // copy
       }
     }
 
@@ -167,7 +203,7 @@ export class Common {
 
   /**
    * Sets the hardfork to get params for
-   * @param hardfork String identifier (e.g. 'byzantium') or {@link Hardfork} enum
+   * @param hardfork The supported 'tron' identifier or {@link Hardfork.Tron}
    */
   setHardfork(hardfork: string | Hardfork): void {
     let existing = false
@@ -188,8 +224,8 @@ export class Common {
   }
 
   /**
-   * Returns the hardfork either based on block number (older HFs) or
-   * timestamp (Shanghai upwards).
+   * Returns the TRON profile for a block or timestamp context.
+   * The block-zero marker is not a historical network activation schedule.
    *
    * @param opts Block number or timestamp
    * @returns The name of the HF
@@ -271,8 +307,8 @@ export class Common {
   }
 
   /**
-   * Sets a new hardfork either based on block number (older HFs) or
-   * timestamp (Shanghai upwards).
+   * Selects the TRON profile for a block or timestamp context.
+   * Ethereum upgrades cannot be selected through this method.
    *
    * @param opts Block number or timestamp
    * @returns The name of the HF set
@@ -302,31 +338,13 @@ export class Common {
    */
   setEIPs(eips: number[] = []) {
     for (const eip of eips) {
-      if (!(eip in tipsDict)) {
-        throw EthereumJSErrorWithoutCode(`${eip} not supported`)
-      }
-      const minHF = this.gteHardfork(tipsDict[eip]['minimumHardfork'])
-      if (!minHF) {
-        throw EthereumJSErrorWithoutCode(
-          `${eip} cannot be activated on hardfork ${this.hardfork()}, minimumHardfork: ${minHF}`,
-        )
-      }
+      assertSupportedEIP(eip)
     }
-    this._eips = eips
+    // Validate before mutation and own the input array so rejected or later
+    // modified configuration cannot change the active execution capabilities.
+    this._eips = [...new Set(eips)].sort((a, b) => a - b)
     this._buildParamsCache()
     this._buildActivatedEIPsCache()
-
-    for (const eip of eips) {
-      if (tipsDict[eip].requiredEIPs !== undefined) {
-        for (const elem of tipsDict[eip].requiredEIPs!) {
-          if (!(eips.includes(elem) || this.isActivatedEIP(elem))) {
-            throw EthereumJSErrorWithoutCode(
-              `${eip} requires EIP ${elem}, but is not included in the EIP list`,
-            )
-          }
-        }
-      }
-    }
   }
 
   /**
@@ -347,7 +365,7 @@ export class Common {
     // Iterate through all hardforks up to hardfork set
     const hardfork = this.hardfork()
     for (const hfChanges of this.HARDFORK_CHANGES) {
-      // EIP-referencing HF config (e.g. for berlin)
+      // Shared implementation groups in the TRON profile's declared order.
       if ('eips' in hfChanges[1]) {
         const hfEIPs = hfChanges[1].eips ?? []
         for (const eip of hfEIPs) {
@@ -356,13 +374,13 @@ export class Common {
           }
         }
       }
-      // Hardfork-scoped params (e.g. for bpo1, bpo2)
+      // Hardfork-scoped params
       // override the baseline EIP values when present
       const hfScopedParams = this._params[hfChanges[0]]
       if (hfScopedParams !== undefined && hfScopedParams !== null) {
         this._mergeWithParamsCache(hfScopedParams)
       }
-      // Parameter-inlining HF config (e.g. for istanbul or custom blobSchedule)
+      // Parameters declared directly in the hardfork configuration
       if (hfChanges[1].params !== undefined && hfChanges[1].params !== null) {
         this._mergeWithParamsCache(hfChanges[1].params)
       }
@@ -371,6 +389,8 @@ export class Common {
 
     // Iterate through all additionally activated EIPs
     for (const eip of this._eips) {
+      // Selecting an already active implementation must not undo TRON pricing.
+      if (tronExecutionProfile.eips.includes(eip)) continue
       if (this._params[eip] !== undefined && this._params[eip] !== null) {
         this._mergeWithParamsCache(this._params[eip])
       }
@@ -394,16 +414,14 @@ export class Common {
   /**
    * Returns a parameter for the current chain setup
    *
-   * If the parameter is present in an EIP, the EIP always takes precedence.
-   * Otherwise the parameter is taken from the latest applied HF with
-   * a change on the respective parameter.
+   * Shared implementation groups are applied in profile order, followed by
+   * the `tron` parameter group and explicitly activated optional EIPs.
+   * Explicitly selecting a baseline EIP does not override TRON parameters.
    *
    * @param name Parameter name (e.g. 'minGasLimit')
    * @returns The value requested (throws if not found)
    */
   param(name: string): bigint {
-    // TODO: consider the case that different active EIPs
-    // can change the same parameter
     if (!(name in this._paramsCache)) {
       throw EthereumJSErrorWithoutCode(`Missing parameter value for ${name}`)
     }
@@ -412,33 +430,22 @@ export class Common {
   }
 
   /**
-   * Returns the parameter corresponding to a hardfork
+   * Returns a TRON profile parameter without explicitly selected optional EIP overrides.
    * @param name Parameter name (e.g. 'minGasLimit')
    * @param hardfork Hardfork name
    * @returns The value requested (throws if not found)
    */
   paramByHardfork(name: string, hardfork: string | Hardfork): bigint {
-    let value
-    for (const hfChanges of this.HARDFORK_CHANGES) {
-      // EIP-referencing HF config (e.g. for berlin)
-      if ('eips' in hfChanges[1]) {
-        const hfEIPs = hfChanges[1]['eips']
-        for (const eip of hfEIPs!) {
-          const eipParams = this._params[eip]
-          const eipValue = eipParams?.[name]
-          if (eipValue !== undefined) {
-            value = eipValue
-          }
-        }
-        // Parameter-inlining HF config (e.g. for istanbul)
-      } else {
-        const hfValue = hfChanges[1].params?.[name]
-        if (hfValue !== undefined) {
-          value = hfValue
-        }
-      }
-      if (hfChanges[0] === hardfork) break
+    if (hardfork !== Hardfork.Tron) {
+      throw EthereumJSErrorWithoutCode(`Hardfork with name ${hardfork} not supported`)
     }
+    let value: number | string | null | undefined
+    for (const eip of tronExecutionProfile.eips) {
+      const candidate = this._params[eip]?.[name]
+      if (candidate !== undefined) value = candidate
+    }
+    const profileValue = this._params[Hardfork.Tron]?.[name]
+    if (profileValue !== undefined) value = profileValue
     if (value === undefined) {
       throw EthereumJSErrorWithoutCode(`Missing parameter value for ${name}`)
     }
@@ -446,15 +453,14 @@ export class Common {
   }
 
   /**
-   * Returns a parameter corresponding to an EIP
+   * Returns a parameter for a supported EIP, including optional EIPs that have
+   * not been activated. Querying a parameter does not activate the EIP.
    * @param name Parameter name (e.g. 'minGasLimit' for 'gasConfig' topic)
    * @param eip Number of the EIP
    * @returns The value requested (throws if not found)
    */
   paramByEIP(name: string, eip: number): bigint | undefined {
-    if (!(eip in tipsDict)) {
-      throw EthereumJSErrorWithoutCode(`${eip} not supported`)
-    }
+    assertSupportedEIP(eip)
 
     const eipParams = this._params[eip]
     if (eipParams?.[name] === undefined) {
@@ -465,11 +471,12 @@ export class Common {
   }
 
   /**
-   * Returns a parameter for the hardfork active on block number or
-   * optional provided total difficulty (Merge HF)
+   * Returns a TRON profile parameter for a block or timestamp context.
+   * Like paramByHardfork(), this excludes optional EIP overrides.
    * @param name Parameter name
    * @param blockNumber Block number
-   * @returns The value requested or `BigInt(0)` if not found
+   * @param timestamp Optional block timestamp
+   * @returns The value requested (throws if not found)
    */
   paramByBlock(name: string, blockNumber: BigIntLike, timestamp?: BigIntLike): bigint {
     const hardfork = this.getHardforkBy({ blockNumber, timestamp })
@@ -477,31 +484,8 @@ export class Common {
   }
 
   /**
-   * Returns the blob gas schedule for the current hardfork
-   * @returns The blob gas schedule
-   */
-  getBlobGasSchedule(): BpoSchedule {
-    if (this.gteHardfork(Hardfork.Bpo1)) {
-      return {
-        targetBlobGasPerBlock: this.param('target') * this.param('blobGasPerBlob'),
-        maxBlobGasPerBlock: this.param('max') * this.param('blobGasPerBlob'),
-        blobGasPriceUpdateFraction: this.param('blobGasPriceUpdateFraction'),
-      }
-    }
-    return {
-      targetBlobGasPerBlock: this.param('targetBlobGasPerBlock'),
-      maxBlobGasPerBlock: this.param('maxBlobGasPerBlock'),
-      blobGasPriceUpdateFraction: this.param('blobGasPriceUpdateFraction'),
-    }
-  }
-
-  /**
-   * Checks if an EIP is activated by either being included in the EIPs
-   * manually passed in with the {@link CommonOpts.eips} or in a
-   * hardfork currently being active
-   *
-   * Note: this method only works for EIPs being supported
-   * by the {@link CommonOpts.eips} constructor option
+   * Checks baseline profile groups and explicitly selected optional EIPs.
+   * Governance proposals do not implicitly activate EIPs.
    * @param eip
    */
   isActivatedEIP(eip: number): boolean {
@@ -514,17 +498,16 @@ export class Common {
   /**
    * Returns whether this Common instance uses a TRON execution chain profile.
    *
-   * Unlike `gteHardfork(Hardfork.Tron)`, this identifies the chain independently of the currently
-   * selected hardfork. This is intended for chain-level execution differences which must still
-   * apply when a TRON preset explicitly selects an earlier hardfork such as Shanghai.
+   * TRON is the only supported execution family. Network identity is independent
+   * of its chainId and explicitly selected governance proposals.
    */
   isTron(): boolean {
-    return this._chainParams.hardforks.some(({ name }) => name === Hardfork.Tron)
+    return this._chainParams.execution === 'tron'
   }
 
   /**
-   * Checks if a TRON governance proposal is activated, i.e. was passed in
-   * with the {@link CommonOpts.activatedProposals} constructor option.
+   * Checks if a TRON governance proposal is activated by the chain preset or
+   * the {@link CommonOpts.activatedProposals} constructor option.
    *
    * Common exposes proposal state without mutating EIPs or params. Execution
    * consumers may use this state to gate protocol behavior. Unknown proposal
@@ -547,6 +530,44 @@ export class Common {
   }
 
   /**
+   * Compare execution settings supplied to different layers of a VM. Libraries
+   * add their own parameter dictionaries during initialization, so parameters
+   * only conflict when both instances already define a different active value.
+   */
+  isCompatibleWith(other: Common): boolean {
+    const sameIds = (a: number[], b: number[]) =>
+      [...new Set(a)].sort((x, y) => x - y).join(',') ===
+      [...new Set(b)].sort((x, y) => x - y).join(',')
+    if (
+      this.chainId() !== other.chainId() ||
+      this.hardfork() !== other.hardfork() ||
+      !sameIds(this._activatedEIPsCache, other._activatedEIPsCache) ||
+      !sameIds(this._activatedProposals, other._activatedProposals) ||
+      stableStringify(this._chainParams.consensus) !==
+        stableStringify(other._chainParams.consensus) ||
+      // Network genesis metadata must not be replaced by an execution-only instance.
+      stableStringify(this._chainParams.genesis) !== stableStringify(other._chainParams.genesis)
+    )
+      return false
+
+    for (const key of new Set([
+      ...Object.keys(this.customCrypto),
+      ...Object.keys(other.customCrypto),
+    ])) {
+      if (
+        this.customCrypto[key as keyof CustomCrypto] !==
+        other.customCrypto[key as keyof CustomCrypto]
+      )
+        return false
+    }
+    for (const [key, value] of Object.entries(this._paramsCache)) {
+      if (key in other._paramsCache && BigInt(value ?? 0) !== BigInt(other._paramsCache[key] ?? 0))
+        return false
+    }
+    return true
+  }
+
+  /**
    * Checks if set or provided hardfork is active on block number
    * @param hardfork Hardfork name or null (for HF set)
    * @param blockNumber
@@ -556,7 +577,7 @@ export class Common {
     blockNumber = toType(blockNumber, TypeOutput.BigInt)
     hardfork = hardfork ?? this._hardfork
     const hfBlock = this.hardforkBlock(hardfork)
-    if (typeof hfBlock === 'bigint' && hfBlock !== BIGINT_0 && blockNumber >= hfBlock) {
+    if (typeof hfBlock === 'bigint' && blockNumber >= hfBlock) {
       return true
     }
     return false
@@ -664,10 +685,9 @@ export class Common {
   }
 
   /**
-   * Returns the block number or timestamp at which the next hardfork will occur.
-   * For pre-merge hardforks, returns the block number.
-   * For post-merge hardforks, returns the timestamp.
-   * Returns null if there is no next hardfork.
+   * Returns the next scheduled hardfork block or timestamp, if any.
+   * The TRON execution profile has no subsequent scheduled transition,
+   * so this query returns null.
    * @param hardfork Hardfork name, optional if HF set
    * @returns Block number or timestamp, or null if not available
    */
@@ -720,65 +740,11 @@ export class Common {
     return BigInt(nextBlockOrTimestamp)
   }
 
-  /**
-   * Internal helper function to calculate a fork hash
-   * @param hardfork Hardfork name
-   * @param genesisHash Genesis block hash of the chain
-   * @returns Fork hash as hex string
-   */
-  protected _calcForkHash(hardfork: string | Hardfork, genesisHash: Uint8Array): PrefixedHexString {
-    let hfBytes = new Uint8Array(0)
-    let prevBlockOrTime = 0
-    for (const hf of this.hardforks()) {
-      const { block, timestamp, name } = hf
-      // Timestamp to be used for timestamp based hfs even if we may bundle
-      // block number with them retrospectively
-      let blockOrTime = timestamp ?? block
-      blockOrTime = blockOrTime !== null ? Number(blockOrTime) : null
-
-      // Skip for chainstart (0), not applied HFs (null) and
-      // when already applied on same blockOrTime HFs
-      // and on the merge since forkhash doesn't change on merge hf
-      if (
-        typeof blockOrTime === 'number' &&
-        blockOrTime !== 0 &&
-        blockOrTime !== prevBlockOrTime &&
-        name !== Hardfork.Paris
-      ) {
-        const hfBlockBytes = hexToBytes(`0x${blockOrTime.toString(16).padStart(16, '0')}`)
-        hfBytes = concatBytes(hfBytes, hfBlockBytes)
-        prevBlockOrTime = blockOrTime
-      }
-
-      if (hf.name === hardfork) break
-    }
-    const inputBytes = concatBytes(genesisHash, hfBytes)
-
-    // CRC32 delivers result as signed (negative) 32-bit integer,
-    // convert to hex string
-    const forkhash = bytesToHex(intToBytes(crc32(inputBytes) >>> 0))
-    return forkhash
-  }
-
-  /**
-   * Returns an eth/64 compliant fork hash (EIP-2124)
-   * @param hardfork Hardfork name, optional if HF set
-   * @param genesisHash Genesis block hash of the network, optional if already defined and not needed to be calculated
-   * @returns Fork hash as a hex string
-   */
-  forkHash(hardfork?: string | Hardfork, genesisHash?: Uint8Array): PrefixedHexString {
-    hardfork = hardfork ?? this._hardfork
-    const data = this._getHardfork(hardfork)
-    if (data === null || (data?.block === null && data?.timestamp === undefined)) {
-      const msg = 'No fork hash calculation possible for future hardfork'
-      throw EthereumJSErrorWithoutCode(msg)
-    }
-    if (data?.forkHash !== null && data?.forkHash !== undefined) {
-      return data.forkHash
-    }
-    if (!genesisHash)
-      throw EthereumJSErrorWithoutCode('genesisHash required for forkHash calculation')
-    return this._calcForkHash(hardfork, genesisHash)
+  /** Ethereum fork identifiers are not part of a TRON execution profile. */
+  forkHash(_hardfork?: string | Hardfork, _genesisHash?: Uint8Array): PrefixedHexString {
+    throw EthereumJSErrorWithoutCode(
+      'Ethereum fork hashes are not supported by TRON execution profiles',
+    )
   }
 
   /**
@@ -797,17 +763,10 @@ export class Common {
    * Sets any missing forkHashes on this {@link Common} instance.
    * @param genesisHash The genesis block hash
    */
-  setForkHashes(genesisHash: Uint8Array) {
-    for (const hf of this.hardforks()) {
-      const blockOrTime = hf.timestamp ?? hf.block
-      if (
-        (hf.forkHash === null || hf.forkHash === undefined) &&
-        blockOrTime !== null &&
-        blockOrTime !== undefined
-      ) {
-        hf.forkHash = this.forkHash(hf.name, genesisHash)
-      }
-    }
+  setForkHashes(_genesisHash: Uint8Array) {
+    throw EthereumJSErrorWithoutCode(
+      'Ethereum fork hashes are not supported by TRON execution profiles',
+    )
   }
 
   /**
@@ -815,7 +774,22 @@ export class Common {
    * @returns Genesis dictionary
    */
   genesis(): GenesisBlockConfig {
-    return this._chainParams.genesis
+    if (!this.hasGenesis()) {
+      throw EthereumJSErrorWithoutCode(
+        'Genesis metadata is not available for this execution-only configuration; provide an explicit network configuration or genesis block.',
+      )
+    }
+    return this._chainParams.genesis!
+  }
+
+  /** Whether genesis metadata was explicitly supplied. */
+  hasGenesis(): boolean {
+    return this._chainParams.genesis !== undefined
+  }
+
+  /** Whether consensus metadata was explicitly supplied. */
+  hasConsensus(): boolean {
+    return this._chainParams.consensus !== undefined
   }
 
   /**
@@ -823,19 +797,7 @@ export class Common {
    * @returns Array of hardfork transition configs
    */
   hardforks(): HardforkTransitionConfig[] {
-    const hfs = this._chainParams.hardforks
-    if (this._chainParams.customHardforks !== undefined) {
-      // Add transition configs for custom hardforks that aren't already in the hardforks array
-      const existingNames = new Set(hfs.map((hf) => hf.name))
-      const customHfEntries = Object.keys(this._chainParams.customHardforks)
-        .filter((name) => !existingNames.has(name))
-        .map((name) => ({
-          name,
-          block: null, // Custom hardforks without explicit transition config default to null (inactive by block)
-        }))
-      return [...hfs, ...customHfEntries]
-    }
-    return hfs
+    return this._chainParams.hardforks.map((hf) => ({ ...hf }))
   }
 
   /**
@@ -884,16 +846,21 @@ export class Common {
    * @returns List of EIPs
    */
   eips(): number[] {
-    return this._eips
+    return [...this._eips]
   }
 
   /**
    * Returns the consensus type of the network
    * Possible values: "pow"|"poa"|"pos"
    *
-   * Note: This value can update along a Hardfork.
+   * The TRON profile does not apply consensus transitions to supplied metadata.
    */
   consensusType(): string | ConsensusType {
+    if (this._chainParams.consensus === undefined) {
+      throw EthereumJSErrorWithoutCode(
+        'Consensus metadata is not available for this execution-only configuration',
+      )
+    }
     const hardfork = this.hardfork()
 
     let value
@@ -913,9 +880,14 @@ export class Common {
    * "clique" for "poa" consensus type or
    * "casper" for "pos" consensus type.
    *
-   * Note: This value can update along a Hardfork.
+   * The TRON profile does not apply consensus transitions to supplied metadata.
    */
   consensusAlgorithm(): string | ConsensusAlgorithm {
+    if (this._chainParams.consensus === undefined) {
+      throw EthereumJSErrorWithoutCode(
+        'Consensus metadata is not available for this execution-only configuration',
+      )
+    }
     const hardfork = this.hardfork()
 
     let value
@@ -939,9 +911,14 @@ export class Common {
    * clique: period, epoch
    * casper: empty object
    *
-   * Note: This value can update along a Hardfork.
+   * The TRON profile does not apply consensus transitions to supplied metadata.
    */
   consensusConfig(): { [key: string]: CliqueConfig | EthashConfig | CasperConfig } {
+    if (this._chainParams.consensus === undefined) {
+      throw EthereumJSErrorWithoutCode(
+        'Consensus metadata is not available for this execution-only configuration',
+      )
+    }
     const hardfork = this.hardfork()
 
     let value
@@ -963,9 +940,13 @@ export class Common {
    * Returns a deep copy of this {@link Common} instance.
    */
   copy(): Common {
-    const copy = Object.assign(Object.create(Object.getPrototypeOf(this)), this)
-    copy.events = new EventEmitter()
-    copy._activatedProposals = [...this._activatedProposals]
-    return copy
+    return new Common({
+      chain: this._chainParams,
+      hardfork: this._hardfork,
+      params: this._params,
+      eips: this._eips,
+      activatedProposals: this._activatedProposals,
+      customCrypto: this.customCrypto,
+    })
   }
 }

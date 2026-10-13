@@ -1,48 +1,21 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { TVMError } from '@tvmjs/tvm'
-import { Address, bytesToBigInt, hexToBytes } from '@tvmjs/util'
+import { Common, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
+import { Account, bytesToBigInt, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
-
 import { createVM } from '../../../src/index.ts'
-import { createAccountWithDefaults } from '../utils.ts'
 
-const testCases = [
-  { chain: Mainnet, hardfork: Hardfork.Istanbul, selfbalance: '0xf1' },
-  { chain: Mainnet, hardfork: Hardfork.Constantinople, err: TVMError.errorMessages.INVALID_OPCODE },
-]
-
-// SELFBALANCE PUSH8 0x00 MSTORE8 PUSH8 0x01 PUSH8 0x00 RETURN
-const code = ['47', '60', '00', '53', '60', '01', '60', '00', 'f3']
-describe('Istanbul: EIP-1884', () => {
-  it('SELFBALANCE', async () => {
-    const addr = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
-    const runCodeArgs = {
-      code: hexToBytes(`0x${code.join('')}`),
-      gasLimit: BigInt(0xffff),
-      to: addr,
-    }
-
-    for (const testCase of testCases) {
-      const { chain, hardfork } = testCase
-      const common = new Common({ chain, hardfork })
-      const vm = await createVM({ common })
-
-      const balance = testCase.selfbalance !== undefined ? BigInt(testCase.selfbalance) : undefined
-      const account = createAccountWithDefaults(BigInt(0), balance)
-
-      await vm.stateManager.putAccount(addr, account)
-
-      try {
-        const res = await vm.tvm.runCode!(runCodeArgs)
-        if (testCase.err !== undefined) {
-          assert.strictEqual(res.exceptionError?.error, testCase.err)
-        } else {
-          assert.isTrue(res.exceptionError === undefined)
-          assert.strictEqual(BigInt(testCase.selfbalance!), bytesToBigInt(res.returnValue))
-        }
-      } catch (e: any) {
-        assert.fail(e.message)
-      }
-    }
+describe.each([TronMainnet, TronNile, TronShasta])('SELFBALANCE on $name', (chain) => {
+  it.each([0n, 0x123456789abcdefn])('returns the full balance %s', async (balance) => {
+    const vm = await createVM({ common: new Common({ chain, activatedProposals: [] }) })
+    const to = createAddressFromString('0x' + '21'.repeat(20))
+    await vm.stateManager.putAccount(to, new Account(0n, balance))
+    const result = await vm.tvm.runCode({
+      to,
+      code: hexToBytes('0x4760005260206000f3'),
+      gasLimit: 100n,
+    })
+    assert.isUndefined(result.exceptionError)
+    assert.strictEqual(result.returnValue.length, 32)
+    assert.strictEqual(bytesToBigInt(result.returnValue), balance)
+    assert.strictEqual(result.executionGasUsed, 17n)
   })
 })

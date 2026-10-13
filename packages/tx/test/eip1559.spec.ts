@@ -1,4 +1,4 @@
-import { Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { TronMainnet, createCustomCommon } from '@tvmjs/common'
 import { RLP } from '@tvmjs/rlp'
 import { TWO_POW256, bytesToHex, equalsBytes, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
@@ -10,8 +10,8 @@ import { eip1559Data } from './testData/eip1559.ts' // Source: Besu
 import { secp256k1 } from '@noble/curves/secp256k1.js'
 import type { JSONTx } from '../src/index.ts'
 
-const common = createCustomCommon({ chainId: 4 }, Mainnet)
-common.setHardfork(Hardfork.London)
+// Besu's bundled signing vectors use chain ID 4; only the TRON identity is overridden.
+const common = createCustomCommon({ chainId: 4 }, TronMainnet)
 
 const validAddress = hexToBytes(`0x${'01'.repeat(20)}`)
 const validSlot = hexToBytes(`0x${'01'.repeat(32)}`)
@@ -239,8 +239,7 @@ describe('[FeeMarket1559Tx]', () => {
       freeze: false,
     })
 
-    const newCommon = createCustomCommon({ chainId: 4 }, Mainnet)
-    newCommon.setHardfork(Hardfork.Paris)
+    const newCommon = createCustomCommon({ chainId: 4 }, TronMainnet, { eips: [7939] })
 
     assert.notDeepEqual(newCommon, common, 'new common is different than original common')
     Object.defineProperty(txn, 'common', {
@@ -249,11 +248,9 @@ describe('[FeeMarket1559Tx]', () => {
       },
     })
     const signedTxn = txn.sign(pkey)
-    assert.strictEqual(
-      signedTxn.common.hardfork(),
-      Hardfork.Paris,
-      'signed tx common is taken from tx.common',
-    )
+    assert.isTrue(signedTxn.common.isActivatedEIP(7939), 'signed tx uses tx.common')
+    assert.isFalse(common.isActivatedEIP(7939), 'original options Common stays unchanged')
+    assert.strictEqual(signedTxn.chainId, 4n)
   })
 
   it('unsigned tx -> getMessageToSign()/getHashedMessageToSign()', () => {

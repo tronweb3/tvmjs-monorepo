@@ -1,3 +1,5 @@
+<!-- cspell:ignore SLOTNUM DUPN SWAPN -->
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -7,6 +9,39 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+### Features
+
+- Default `TronMainnet` to Proposal 65 so direct TVM use applies its current memory-opcode Energy. Add `createCurrentTronMainnetCommon()` with the complete v1.2.0 client settings (proposals 65/96 and CLZ), and retain explicit historical overrides including `activatedProposals: []`.
+
+### Breaking Changes
+
+- Require `ChainConfig.execution: 'tron'`; type historical Ethereum presets as non-executable `EthereumChainData`. Restrict `createCustomCommon()` to `CustomChainConfig` identity/discovery overrides and reject metadata, schedule or options-based chain replacement; supply explicit metadata through a complete configuration.
+- Remove `createCommonFromGethGenesis()`, `GethConfigOpts` and `CreateCommonFromGethGenesisOpts`. Keep Geth genesis and allocation parsers as data utilities; migrate configuration consumers and examples without re-enabling Ethereum execution.
+- Remove EIP-3860 from the TRON execution profile; explicit activation and parameter queries now throw. Keep group 607 for shared EXP, replay-protection and nonce behavior without EIP-170 code size limits; document the coordinated TVM/Tx/VM option and parameter removal.
+- Remove the EIP-7702 metadata entry. Authorization activation and parameter queries remain rejected; document the coordinated transaction, delegation and authorization API removal.
+- Remove the EIP-4788 metadata entry. Beacon root activation and parameter queries remain rejected on all TRON presets.
+- Remove Blob gas schedules, Blob EIP metadata, KZG configuration and Blob genesis types. Reject removed fields before configuration data is copied or parsed.
+- Change `StateManagerInterface.tokenIdExists()` to take an exact `bigint` TRC-10 token ID.
+- Disable EIP-2929 access pricing, EIP-3529 refunds and EIP-3651 warming in the TRON profile, including explicit reactivation attempts. Retain EIP-2930 for transaction encoding.
+- Restrict Common to the independent TRON execution profile and explicit capability matrix. Reject Ethereum presets, hardfork schedules, unsupported EIPs and the legacy implicit `Mainnet + tron` mapping.
+- Remove inherited Ethereum genesis, consensus and fork metadata from TRON presets. Add `TronExecutionChainConfig`, `NetworkChainConfig`, `hasGenesis()` and `hasConsensus()`; missing metadata queries and Ethereum fork-hash operations now throw.
+
+### Fixes
+
+- Default the `TronNile` and `TronShasta` presets to Proposal 65 so memory-opcode Energy matches their current testnet schedules. Historical execution can still pass `activatedProposals: []` explicitly. Shasta's [chain parameters](https://api.shasta.trongrid.io/wallet/getchainparameters) reported `getAllowHigherLimitForMaxCpuTimeOfOneTx = 1` when checked on 2026-10-10.
+- Reject inherited and non-enumerable Blob gas fields in `parseGethGenesis()` before copying input properties or invoking their getters.
+- Use the TRON profile for both EIP selection and parameter queries, while allowing queries for supported optional EIPs without activating them.
+- Reject Geth blob schedules explicitly, including empty schedules and entries named `tron`, instead of reporting a misleading unknown-hardfork error.
+- Isolate copied configuration and validate execution compatibility across VM layers, including capabilities, proposals, crypto implementations and active parameters.
+- Treat differing genesis metadata as a configuration conflict in `isCompatibleWith()`, so an execution-only `tvmOpts.common` cannot silently replace a supplied network configuration. Consensus and genesis metadata are compared independent of property order.
+- Preserve caller parameters when execution packages load defaults with `updateParams(defaults, false)`. Explicitly selecting an already active EIP no longer replaces TRON parameter overrides.
+- Document the v1.2.0 configuration and Energy migration.
+
+### Tests and Documentation
+
+- Cover metadata ordering and conflicts, active parameter compatibility on all three TRON networks, and exact allocation parsing in the shared Node/Browser suite. Keep the published `Common.isTron()` API and retained raw Ethereum data tests.
+- Align public query documentation and browser examples with the TRON profile; distinguish allocation parsing from state-root calculation. Remove the unused Ethereum bootnode updater that targeted obsolete JSON configuration files.
 
 ## 1.1.0
 

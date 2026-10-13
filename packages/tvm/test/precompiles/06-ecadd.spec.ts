@@ -1,11 +1,11 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
 import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 
 describe('Precompiles: BN254ADD', () => {
   it('BN254ADD', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })
+    const common = new Common({ chain: TronMainnet })
     const tvm = await createTVM({
       common,
     })
@@ -19,6 +19,6 @@ describe('Precompiles: BN254ADD', () => {
       _TVM: tvm,
     })
 
-    assert.deepEqual(result.executionGasUsed, BigInt(500), 'should use petersburg gas costs')
+    assert.deepEqual(result.executionGasUsed, 150n, 'uses the TRON BN254 addition Energy cost')
   })
 })

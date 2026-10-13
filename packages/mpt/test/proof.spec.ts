@@ -212,4 +212,20 @@ describe('simple merkle proofs generation and verification', () => {
       'successfully set the trie to the new root and got the correct value',
     )
   })
+
+  it('throws on empty proof when shouldVerifyRoot is true and trie root is non-empty', async () => {
+    const trie = new MerklePatriciaTrie()
+    await trie.put(utf8ToBytes('key'), utf8ToBytes('val'))
+    assert.isFalse(equalsBytes(trie.root(), trie.EMPTY_TRIE_ROOT))
+
+    try {
+      await updateMPTFromMerkleProof(trie, [], true)
+      assert.fail('should not accept empty proof for non-empty trie root')
+    } catch (e: any) {
+      assert.include(
+        e.message,
+        'The provided proof is empty and does not match the non-empty trie root',
+      )
+    }
+  })
 })

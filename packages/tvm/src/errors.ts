@@ -4,8 +4,6 @@ export const TVMErrorTypeString = 'TVMError'
 
 const TVMErrorMessage = {
   OUT_OF_GAS: 'out of gas',
-  CODESTORE_OUT_OF_GAS: 'code store out of gas',
-  CODESIZE_EXCEEDS_MAXIMUM: 'code size to deposit exceeds maximum code size',
   STACK_UNDERFLOW: 'stack underflow',
   STACK_OVERFLOW: 'stack overflow',
   INVALID_JUMP: 'invalid JUMP',
@@ -21,7 +19,6 @@ const TVMErrorMessage = {
   INSUFFICIENT_BALANCE: 'insufficient balance',
   INSUFFICIENT_TOKEN_BALANCE: 'insufficient token balance',
   INVALID_BYTECODE_RESULT: 'invalid bytecode deployed',
-  INITCODE_SIZE_VIOLATION: 'initcode exceeds max initcode size',
   INVALID_INPUT_LENGTH: 'invalid input length',
   INVALID_EOF_FORMAT: 'invalid EOF format',
   BLS_12_381_INVALID_INPUT_LENGTH: 'invalid input length',
@@ -29,9 +26,6 @@ const TVMErrorMessage = {
   BLS_12_381_INPUT_EMPTY: 'input is empty',
   BLS_12_381_FP_NOT_IN_FIELD: 'fp point not in field',
   BN254_FP_NOT_IN_FIELD: 'fp point not in field',
-  INVALID_COMMITMENT: 'kzg commitment does not match versioned hash',
-  INVALID_INPUTS: 'kzg inputs invalid',
-  INVALID_PROOF: 'kzg proof invalid',
   CAN_NOT_TRANSFER_TRX_YOURSELF: 'transfer trx failed: Cannot transfer TRX to yourself.',
   CAN_NOT_TRANSFER_ASSET_YOURSELF: 'transfer trc10 failed: Cannot transfer asset to yourself.',
   INVALID_TOKENID: 'invalid token id',

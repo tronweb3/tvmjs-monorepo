@@ -8,9 +8,6 @@ export const paramsBlock: ParamsDict = {
     // gasConfig
     minGasLimit: 5000, // Minimum the gas limit may ever be
     gasLimitBoundDivisor: 1024, // The bound divisor of the gas limit, used in update calculations
-    targetBlobGasPerBlock: 0, // Base value needed here since called pre-4844 in BlockHeader.calcNextExcessBlobGas()
-    blobGasPerBlob: 0,
-    maxBlobGasPerBlock: 0,
     // format
     maxExtraDataSize: 32, // Maximum size extra data may be after Genesis
     // pow
@@ -64,32 +61,10 @@ export const paramsBlock: ParamsDict = {
     difficultyBombDelay: 10700000, // the amount of blocks to delay the difficulty bomb with
   },
   /**
-   * Shard Blob Transactions
-   */
-  4844: {
-    // gasConfig
-    targetBlobGasPerBlock: 393216, // The target blob gas consumed per block
-    blobGasPerBlob: 131072, // The base fee for blob gas per blob
-    maxBlobGasPerBlock: 786432, // The max blob gas allowable per block
-    blobGasPriceUpdateFraction: 3338477, // The denominator used in the exponential when calculating a blob gas price
-    // gasPrices
-    minBlobGas: 1, // The minimum fee per blob gas
-    blobBaseCost: 8192, // EIP-7918: Blob base fee bounded by execution cost (2^13)
-  },
-  /**
    * Delaying Difficulty Bomb to mid-September 2022
    */
   5133: {
     // pow
     difficultyBombDelay: 11400000, // the amount of blocks to delay the difficulty bomb with
-  },
-  /**
-   * Blob throughput increase
-   */
-  7691: {
-    // gasConfig
-    targetBlobGasPerBlock: 786432, // The target blob gas consumed per block
-    maxBlobGasPerBlock: 1179648, // The max blob gas allowable per block
-    blobGasPriceUpdateFraction: 5007716, // The denominator used in the exponential when calculating a blob gas price
   },
 }

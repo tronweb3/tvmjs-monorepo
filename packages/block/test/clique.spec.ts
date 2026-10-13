@@ -1,4 +1,3 @@
-import { Common, Hardfork } from '@tvmjs/common'
 import { createZeroAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -13,10 +12,11 @@ import {
   createSealedCliqueBlockHeader,
 } from '../src/index.ts'
 
-import { SIGNER_A, goerliChainConfig } from '@tvmjs/testdata'
+import { SIGNER_A } from '@tvmjs/testdata'
+import { cliqueCommon } from './helpers.ts'
 
 describe('[Header]: Clique PoA Functionality', () => {
-  const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
+  const common = cliqueCommon()
 
   it('Header Data', () => {
     let header = createBlockHeader({ number: 1 })
@@ -26,7 +26,7 @@ describe('[Header]: Clique PoA Functionality', () => {
       },
       undefined,
       undefined,
-      'cliqueIsEpochTransition() -> should throw on PoW networks',
+      'cliqueIsEpochTransition() -> should throw without Clique metadata',
     )
 
     header = createBlockHeader({ extraData: new Uint8Array(97) }, { common })

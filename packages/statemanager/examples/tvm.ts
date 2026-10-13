@@ -1,15 +1,19 @@
+import { Common, TronMainnet } from '@tvmjs/common'
 import { RPCBlockChain, RPCStateManager } from '@tvmjs/statemanager'
 import { createTVM } from '@tvmjs/tvm'
 
 const main = async () => {
-  try {
-    const provider = 'https://path.to.my.provider.com'
-    const blockchain = new RPCBlockChain(provider)
-    const blockTag = 1n
-    const state = new RPCStateManager({ provider, blockTag })
-    const tvm = await createTVM({ blockchain, stateManager: state }) // note that tvm is ready to run BLOCKHASH opcodes (over RPC)
-  } catch (e) {
-    console.log(e.message) // fetch would fail because provider url is not real. please replace provider with a valid RPC url string.
-  }
+  const provider = process.env.PROVIDER ?? 'http://localhost:8545'
+  const common = new Common({ chain: TronMainnet })
+  const blockchain = new RPCBlockChain(provider)
+  const blockTag = 1n
+  const state = new RPCStateManager({ common, provider, blockTag })
+  const tvm = await createTVM({ common, blockchain, stateManager: state })
+  // Initialization is local. Execution needs the matching block context and a compatible provider.
+  console.log('Configured TVM chainId:', tvm.common.chainId())
 }
-void main()
+
+void main().catch((error) => {
+  console.error(error)
+  process.exitCode = 1
+})

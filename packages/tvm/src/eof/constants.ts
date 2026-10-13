@@ -7,7 +7,7 @@ export const VERSION = 0x01
 
 // The min/max sizes of valid headers
 export const MIN_HEADER_SIZE = 15 // Min size used to invalidate an invalid container quickly
-export const MAX_HEADER_SIZE = 49152 // Max initcode size, EIP 3860
+export const MAX_HEADER_SIZE = 49152 // Retained EOF parser bound, not a TRON deployment limit
 
 export const KIND_TYPE = 0x01 // Type byte of types section
 export const KIND_CODE = 0x02 // Type byte of code section

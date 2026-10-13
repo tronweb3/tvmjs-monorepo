@@ -23,6 +23,7 @@ TVMJS is a monorepo of modular packages that together implement the full TRON ex
 | [`@tvmjs/binarytree`](./packages/binarytree) | Binary tree data structure |
 | [`@tvmjs/rlp`](./packages/rlp) | RLP encoding/decoding |
 | [`@tvmjs/util`](./packages/util) | Shared utilities, account types, and address helpers |
+| [`@tvmjs/client`](./packages/client) | Local TRON development node with HTTP API and chain controls |
 
 ## TRON-Specific Features
 

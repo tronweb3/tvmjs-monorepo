@@ -2,7 +2,7 @@ import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { createBlock } from '@tvmjs/block'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { createLegacyTx } from '@tvmjs/tx'
 import { bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 import { createVM, runTx } from '@tvmjs/vm'
@@ -18,8 +18,8 @@ import type { VM } from '@tvmjs/vm'
 const INITIAL_GREETING = 'Hello, World!'
 const SECOND_GREETING = 'Hola, Mundo!' // cspell:disable-line
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-const block = createBlock({ header: { extraData: new Uint8Array(97) } }, { common })
+const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron })
+const block = createBlock({}, { common })
 
 const __filename = fileURLToPath(import.meta.url) // get the resolved path to the file
 const __dirname = path.dirname(__filename) // get the name of the directory
@@ -47,6 +47,7 @@ function getSolcInput() {
         enabled: true,
         runs: 200,
       },
+      // Compiler code generation target; execution uses the TRON profile above.
       evmVersion: 'petersburg',
       outputSelection: {
         '*': {
@@ -97,7 +98,7 @@ async function deployContract(
   deploymentBytecode: string,
   greeting: string,
 ): Promise<Address> {
-  // Contracts are deployed by sending their deployment bytecode to the address 0
+  // Contracts are deployed by omitting the recipient and sending their deployment bytecode.
   // The contract params should be abi-encoded and appended to the deployment bytecode.
 
   const data =

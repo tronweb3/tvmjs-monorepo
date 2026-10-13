@@ -1,6 +1,16 @@
 <!-- cspell:ignore peerdas -->
 
-# @tvmjs/vm `1.1.0`
+# @tvmjs/vm
+
+`ChainConfig` now requires `execution: 'tron'`. Use complete configurations for explicit genesis/consensus metadata; `createCustomCommon()` accepts identity/discovery overrides only, and `createCommonFromGethGenesis()` has been removed. VM/TVM compatibility checks continue to compare supplied metadata. See [Common configuration migration](../common/README.md#custom-networks-and-cryptography).
+
+Remove `allowUnlimitedContractSize` and `allowUnlimitedInitCodeSize` from `tvmOpts`; either key now throws before initialization, even with `false` or `undefined`. VM and direct TVM deployment retain the same TRON execution Energy and rollback behavior without EIP-170/EIP-3860 limits. Transaction envelope charges remain separate from execution Energy. See [contract size migration](../common/README.md#contract-size-configuration-in-v120).
+
+v1.2.0 removes Blob fees, receipts and block-builder accounting. Remove `allowNoBlobs` from `addTransaction()` calls and use the four-argument `generateTxReceipt()` signature. Ordinary transaction execution and receipts are preserved. See [Blob migration and affected packages](../common/README.md#blob-removal-in-v120).
+
+Beacon root initialization, system-account writes and the `historicalRootsLength` parameter are removed. `runTx()`, `runBlock()` and block builders reject retired Beacon root fields before events or state changes. Ordinary contract storage and rollback remain available. See [Beacon root migration](../common/README.md#beacon-root-removal-in-v120).
+
+EIP-7702 authorization processing, refunds and sender-code exceptions are removed. `runTx()`, `runBlock()` and block builders reject type `0x04` and authorization fields before events or state changes. Senders with deployed code remain invalid, including former delegation code. See [EIP-7702 migration](../common/README.md#eip-7702-removal-in-v120).
 
 | Execution context for the TVM (TRON Virtual Machine) implementation. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -9,14 +19,11 @@ TRON-compatible execution context for
 [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm)
 to build and run blocks and txs and update state.
 
-- 🦄 All hardforks up till **Osaka**
+- 🦄 TRON execution profile with Mainnet, Nile and Shasta presets
 - 🌴 Tree-shakeable API
 - 👷🏼 Controlled dependency set (7 external + `@Noble` crypto)
-- 🧩 Flexible EIP on/off engine
-- 📲 **EIP-7702** ready
+- 🧩 Explicit TRON capabilities and governance proposals
 - 📬 Flexible state retrieval (Merkle, RPC,...)
-- 🔎 Ethereum-compatible execution
-- 🛵 668KB bundle size (170KB gzipped)
 - 🏄🏾‍♂️ WASM-free default + Fully browser ready
 
 ## Table of Contents
@@ -24,7 +31,7 @@ to build and run blocks and txs and update state.
 - [Installation](#installation)
 - [Usage](#usage)
   - [Running a Transaction](#running-a-transaction)
-  - [Running an RPC Mainnet Block](#running-an-rpc-mainnet-block)
+  - [RPC Integration](#rpc-integration)
   - [Building a Block](#building-a-block)
   - [WASM Crypto Support](#wasm-crypto-support)
 - [Examples](#examples)
@@ -40,10 +47,6 @@ to build and run blocks and txs and update state.
   - [Hardforks](#hardforks)
   - [Custom Genesis State](#custom-genesis-state)
 - [Supported EIPs](#supported-eips)
-  - [EIP-4844 Shard Blob Transactions Support (Cancun)](#eip-4844-shard-blob-transactions-support-cancun)
-  - [EIP-7702 EAO Code Transactions Support (Prague)](#eip-7702-eao-code-transactions-support-prague)
-  - [EIP-7685 Requests Support (Prague)](#eip-7685-requests-support-prague)
-  - [EIP-2935 Serve Historical Block Hashes from State (Prague)](#eip-2935-serve-historical-block-hashes-from-state-prague)
 - [Events](#events)
   - [Tracing Events](#tracing-events)
   - [Asynchronous event handlers](#asynchronous-event-handlers)
@@ -62,47 +65,50 @@ To obtain the latest version, simply require the project using `npm`:
 npm install @tvmjs/vm
 ```
 
-**Note:** Starting with the Dencun hardfork `EIP-4844` related functionality has become an integrated part of the TVM functionality with the activation of the point evaluation precompile. For this precompile to work a separate installation of the KGZ library is necessary (we decided not to bundle due to large bundle sizes), see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
-
 ## Usage
 
 ### Running a Transaction
 
-`createVM()` defaults to the execution-only `TronMainnet` configuration. Chain-bound transactions
-must be created with the same `Common` instance as the VM, for example
-`createLegacyTx(data, { common: vm.common })`. Pass an explicit Ethereum `Mainnet` `Common` to
-use Ethereum rules, as shown below. This selects Ethereum Mainnet at its current Prague hardfork; it
-does not recreate the 1.0.0 default combination of chainId 1 with the TRON hardfork. Unprotected
-legacy transactions do not encode a chainId and remain accepted. The legacy explicit form
-`new Common({ chain: Mainnet, hardfork: 'tron' })` is normalized to `TronMainnet` with chainId
-728126428; new TRON code should use `TronMainnet` directly.
+`createVM()` defaults to the execution-only `TronMainnet` profile. Transaction, block and state-manager defaults use the same network. Use the VM's Common when constructing a transaction for an explicitly selected network.
+
+This v1.2.0 development branch rejects Ethereum configurations and the old implicit `Mainnet + tron` mapping. Conflicting `common`, `tvmOpts.common` and `tvm.common` settings throw; equivalent settings resolve to one shared Common. See [Common configuration](../common/README.md) for network and protocol options.
 
 ```ts
 // ./examples/runTx.ts
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { createLegacyTx } from '@tvmjs/tx'
-import { createZeroAddress } from '@tvmjs/util'
+import { Account, createAddressFromPrivateKey, createZeroAddress, hexToBytes } from '@tvmjs/util'
 import { createVM, runTx } from '@tvmjs/vm'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
+  const common = new Common({ chain: TronMainnet })
   const vm = await createVM({ common })
-
-  const tx = createLegacyTx({
-    gasLimit: BigInt(21000),
-    gasPrice: BigInt(1000000000),
-    value: BigInt(1),
-    to: createZeroAddress(),
-    v: BigInt(37),
-    r: BigInt('62886504200765677832366398998081608852310526822767264927793100349258111544447'),
-    s: BigInt('21948396863567062449199529794141973192314514851405455194940751428901681436138'),
-  })
-  const res = await runTx(vm, { tx, skipBalance: true })
-  console.log(res.totalGasSpent) // 21000n - gas cost for simple ETH transfer
+  // Public example key for a local simulation account.
+  const privateKey = hexToBytes(`0x${'01'.repeat(32)}`)
+  await vm.stateManager.putAccount(
+    createAddressFromPrivateKey(privateKey),
+    new Account(0n, 1000000n),
+  )
+  const tx = createLegacyTx(
+    {
+      gasLimit: 21000n,
+      gasPrice: 10n,
+      value: 1n,
+      to: createZeroAddress(),
+    },
+    { common },
+  ).sign(privateKey)
+  const result = await runTx(vm, { tx })
+  if (result.execResult.exceptionError) throw result.execResult.exceptionError
+  console.log(result.totalGasSpent) // 21000n for the local transaction envelope
 }
 
-void main()
+void main().catch((error) => {
+  console.error(error)
+  process.exitCode = 1
+})
+
 ```
 
 #### TRON Transaction IDs
@@ -151,103 +157,9 @@ Block builders accept the same `rootTransactionId` and `tronTransactionIdPolicy`
 
 Additionally to the `VM.runTx()` method there is an API method `VM.runBlock()` which allows to run the whole block and execute all included transactions along.
 
-### Running an RPC Mainnet Block
+### RPC Integration
 
-It is possible to fetch a real mainnet block via JSON-RPC and execute it locally using the VM together with the `RPCStateManager` from the `@tvmjs/statemanager` package, which fetches account and storage data on demand from a remote provider.
-
-> **Note:** Running recent mainnet blocks will generate **thousands of RPC requests** (one for each account/storage access during TVM execution). Make sure your RPC provider can handle the load and be mindful of rate limits and quotas.
-
-```ts
-// ./examples/runBlockWithRPC.ts
-
-import { createBlockFromJSONRPCProvider } from '@tvmjs/block'
-import { Common, Mainnet } from '@tvmjs/common'
-import { RPCStateManager } from '@tvmjs/statemanager'
-import { bytesToHex } from '@tvmjs/util'
-import { createVM, runBlock } from '@tvmjs/vm'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
-import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
-
-const main = async () => {
-  const providerUrl = process.argv[2]
-  const blockNumber = process.argv[3] !== undefined ? BigInt(process.argv[3]) : undefined
-
-  if (providerUrl === undefined || blockNumber === undefined) {
-    console.log('Example skipped (real-world RPC scenario)')
-    console.log('Usage: npx tsx runBlockWithRPC.ts <providerUrl> <blockNumber>')
-    return
-  }
-
-  const kzg = new microEthKZG(trustedSetup)
-  const common = new Common({ chain: Mainnet, customCrypto: { kzg } })
-
-  // 1. Fetch block from RPC
-  console.log(`Fetching block ${blockNumber} from ${providerUrl}...`)
-  const block = await createBlockFromJSONRPCProvider(providerUrl, blockNumber, {
-    common,
-    setHardfork: true,
-  })
-
-  console.log(`Block ${block.header.number} fetched successfully`)
-  console.log(`  Hash:         ${bytesToHex(block.hash())}`)
-  console.log(`  Parent hash:  ${bytesToHex(block.header.parentHash)}`)
-  console.log(`  State root:   ${bytesToHex(block.header.stateRoot)}`)
-  console.log(`  Transactions: ${block.transactions.length}`)
-  console.log(`  Gas used:     ${block.header.gasUsed}`)
-  console.log(`  Hardfork:     ${block.common.hardfork()}`)
-
-  // 2. Set up RPC state manager pointing to the parent block (pre-state)
-  const stateManager = new RPCStateManager({
-    provider: providerUrl,
-    blockTag: blockNumber - 1n,
-    common,
-  })
-
-  // 3. Create VM with the RPC state manager
-  const vm = await createVM({ common, stateManager, setHardfork: true })
-
-  // 4. Run the block
-  console.log(`\nRunning block ${blockNumber} (${block.transactions.length} txs)...`)
-  const startTime = performance.now()
-
-  const result = await runBlock(vm, {
-    block,
-    generate: true,
-    skipHeaderValidation: true,
-    skipBlockValidation: true,
-  })
-
-  const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
-
-  // 5. Display results
-  console.log(`\nBlock execution completed in ${elapsed}s`)
-  console.log(`  Tx results:     ${result.results.length}`)
-  console.log(`  Receipts root:  ${bytesToHex(result.receiptsRoot)}`)
-
-  console.log(`\n  Gas used:       ${result.gasUsed} (expected: ${block.header.gasUsed})`)
-  if (result.gasUsed === block.header.gasUsed) {
-    console.log(`  Gas used MATCHES expected block header value`)
-  } else {
-    console.log(`  Gas used MISMATCH`)
-  }
-
-  // Note: State root comparison is informational only.
-  // RPCStateManager cannot produce valid Merkle state roots since it
-  // doesn't maintain a local trie -- it fetches state on demand via RPC.
-  console.log(`\n  Computed state root: ${bytesToHex(result.stateRoot)}`)
-  console.log(`  Expected state root: ${bytesToHex(block.header.stateRoot)}`)
-  console.log(`  (State root comparison is not meaningful with RPCStateManager,`)
-  console.log(`   which does not maintain a local Merkle trie)`)
-}
-
-void main()
-```
-
-Run with:
-
-```sh
-npx tsx examples/runBlockWithRPC.ts <providerUrl> <blockNumber>
-```
+The previous Ethereum Mainnet and Goerli execution examples have been retired. These examples use local TRON execution and explicit state inputs.
 
 ### Building a Block
 
@@ -259,27 +171,23 @@ The following non-complete example gives some illustration on how to use the Blo
 // ./examples/buildBlock.ts
 
 import { createBlock } from '@tvmjs/block'
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { createLegacyTx } from '@tvmjs/tx'
 import { Account, bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 import { buildBlock, createVM } from '@tvmjs/vm'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet })
+  const common = new Common({ chain: TronMainnet })
   const vm = await createVM({ common })
 
-  const parentBlock = createBlock(
-    { header: { number: 1n } },
-    { skipConsensusFormatValidation: true },
-  )
+  const parentBlock = createBlock({ header: { number: 1n } }, { common })
   const headerData = {
     number: 2n,
   }
   const blockBuilder = await buildBlock(vm, {
-    parentBlock, // the parent @tvmjs/block Block
+    parentBlock, // the parent @ethereumjs/block Block
     headerData, // header values for the new block
     blockOpts: {
-      calcDifficultyFromHeader: parentBlock.header,
       freeze: false,
       skipConsensusFormatValidation: true,
       putBlockIntoBlockchain: false,
@@ -307,7 +215,19 @@ void main()
 
 This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification (for included txs). See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
 
+## TRON Energy and transaction overhead
+
+Block builders inherit the parent gas limit and calculate the next base fee from the parent unless explicitly overridden. London activation heights do not double gas limits or reset fees. `runBlock()` does not apply DAO balance transfers or create a DAO refund account.
+
+`runTx().execResult.executionGasUsed` uses the same [TRON Energy schedule](../tvm/README.md#tron-energy-accounting) as a direct TVM call with equivalent state, code and execution settings. `totalGasSpent` also includes the TVMJS transaction envelope's intrinsic gas: the base transaction cost, calldata cost and any top-level creation cost. This wrapper overhead is not java-tron execution Energy or its bandwidth/staking/feeLimit accounting.
+
+EIP-2930 and EIP-1559 transactions remain available as TVMJS transaction formats. Their access-list fields are validated and signed, but have no address/slot surcharge and do not warm state. `reportAccessList` reports diagnostic accesses without changing execution costs. The default TRON schedule generates no SSTORE or SELFDESTRUCT refunds; unused prepaid call and transaction gas is still returned.
+
 ## Examples
+
+For a read-only java-tron RPC state adapter, local TVM execution, and a
+`triggerconstantcontract` result comparison, see the experimental
+[TRON RPC Client PoC](./examples/TRON_RPC_POC.md).
 
 See the [examples](./examples/) folder for different meaningful examples on how to use the VM package and invoke certain aspects of it, e.g. running a complete block, a certain tx or using event listeners, among others. Some noteworthy examples to point out:
 
@@ -324,7 +244,7 @@ It is easily possible to run a browser build of one of the TVMJS libraries withi
 
 ### Docs
 
-For documentation on `VM` instantiation, exposed API and emitted `events` see generated [API docs](./docs/README.md).
+Generate the API reference for VM initialization, methods and events with `npm run docs:build --workspace @tvmjs/vm` from the repository root. The output is written to `packages/vm/docs`.
 
 ### Hybrid CJS/ESM Builds
 
@@ -370,25 +290,18 @@ The previously included `StateManager` has been extracted to its own package [@t
 ## Setup
 
 ### Chains
-Beside the default Proof-of-Stake setup coming with the `Common` library default, the VM also support the execution of  both `Ethash/PoW` and `Clique/PoA` blocks and transactions to allow to re-execute blocks from older hardforks or testnets.
+
+Choose `TronMainnet`, `TronNile` or `TronShasta`. Presets contain execution settings without network genesis or consensus data. A custom Blockchain requires an explicitly supplied genesis block or network genesis metadata.
 
 ### Hardforks
 
-For hardfork support see the [Hardfork Support](../tvm#hardfork-support) section from the underlying `@tvmjs/tvm` instance.
-
-An explicit HF in the `VM` - which is then passed on to the inner `TVM` - can be set with:
+Only `Hardfork.Tron` is selectable. Governance flags and supported capabilities are configured through Common, independently of Ethereum hardfork schedules.
 
 ```ts
-// ./examples/runTx.ts#L1-L8
+import { Common, TronNile } from '@tvmjs/common'
+import { createVM } from '@tvmjs/vm'
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createLegacyTx } from '@tvmjs/tx'
-import { createZeroAddress } from '@tvmjs/util'
-import { createVM, runTx } from '@tvmjs/vm'
-
-const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
-  const vm = await createVM({ common })
+const vm = await createVM({ common: new Common({ chain: TronNile }) })
 ```
 
 ### Custom Genesis State
@@ -429,47 +342,24 @@ Genesis state can be configured to contain both EOAs as well as (system) contrac
 
 ## Supported EIPs
 
-It is possible to individually activate EIP support in the VM by instantiate the `Common` instance passed
-with the respective EIPs, e.g.:
+Execution capabilities follow the independent TRON profile in `@tvmjs/common`. Explicit CLZ activation is supported through `eips: [7939]`. Blob transactions, beacon-root execution and withdrawn Ethereum profile capabilities cannot be reactivated.
 
 ```ts
 // ./examples/vmWithEIPs.ts
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { createVM } from '@tvmjs/vm'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7702] })
+  const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron, eips: [7939] })
   const vm = await createVM({ common })
-  console.log(
-    `EIP 7702 is active in isolation on top of the Cancun HF - ${vm.common.isActivatedEIP(7702)}`,
-  )
+  console.log(`CLZ is explicitly active on the TRON profile - ${vm.common.isActivatedEIP(7939)}`)
 }
 void main()
 
 ```
 
-For a list with supported EIPs see the [@tvmjs/tvm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tvm) documentation.
-
-### EIP-4844 Shard Blob Transactions Support (Cancun)
-
-This library supports the blob transaction type introduced with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844). EIP-4844 comes with a dedicated opcode `BLOBHASH` and has added a new point evaluation precompile at address `0x0a`.
-
-**Note:** Usage of the point evaluation precompile needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
-
-### EIP-7702 EAO Code Transactions Support (Prague)
-
-This library support the execution of [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) EOA code transactions (see tx library for full documentation) with `runTx()` or the wrapping `runBlock()` execution methods, see [this test setup](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/vm/test/api/EIPs/eip-7702.spec.ts) for a more complete example setup on how to run code from an EOA.
-
-### EIP-7685 Requests Support (Prague)
-
-This library supports blocks including [EIP-7685](https://eips.ethereum.org/EIPS/eip-7685) requests to the consensus layer.
-
-### EIP-2935 Serve Historical Block Hashes from State (Prague)
-
-The VM supports [EIP-2935](https://eips.ethereum.org/EIPS/eip-2935) which stores the latest 8192 block hashes in the storage of a system contract.
-
-Note that this EIP has no effect on the resolution of the `BLOCKHASH` opcode, which will be a separate activation taking place by the integration of [EIP-7709](https://eips.ethereum.org/EIPS/eip-7709) in a respective Verkle/Stateless hardfork.
+See [Common](../common/README.md) for capability and proposal configuration and [TRON Energy accounting](../tvm/README.md#tron-energy-accounting) for the implemented schedule and its validation limits. Retained Ethereum-only data tools do not enable their execution capabilities.
 
 ## Events
 
@@ -584,17 +474,16 @@ DEBUG=tvmjs,vm:tx,vm:tvm,vm:ops:sstore,vm:*:gas tsx test.ts
 The VM processes state changes at several levels:
 
 - **[`runBlock`](./src/runBlock.ts)**: Processes a single block.
-  - Performs initial setup: Validates hardfork compatibility, sets the state root (if provided), applies DAO fork logic if necessary.
+  - Performs initial setup: Validates hardfork compatibility, sets the state root (if provided), selects the TRON execution profile.
   - Manages state checkpoints before and after processing.
   - Iterates through transactions within the block:
     - For each transaction, calls `runTx`.
-  - Processes withdrawals (post-Shanghai/EIP-4895).
-  - Calculates and assigns block rewards to the miner (and uncles, pre-Merge).
   - Finalizes the block state (state root, receipts root, logs bloom).
   - Commits or reverts state changes based on success.
 - **[`runTx`](./src/runTx.ts)**: Processes a single transaction.
-  - Performs pre-execution checks: Sender balance sufficient for gas+value, sender nonce validity, transaction gas limit against block gas limit, EIP activations (e.g., 2930 Access Lists, 1559 Fee Market, 4844 Blobs).
-  - Warms up state access based on Access Lists (EIP-2929/2930).
+  - Performs pre-execution checks: Sender balance sufficient for gas+value, sender nonce validity, transaction gas limit against block gas limit and supported transaction types. Typed and EIP-155-protected transactions must match the VM chainId; unprotected legacy envelopes remain valid across networks.
+  - For nonzero TRC-10 transfers with normal balance validation, checks the local Token registry and sender balance. SimpleStateManager and MerkleStateManager populate their registries from supplied account assets; RPCStateManager does not implement Token existence lookup. See [StateManager capabilities](../statemanager/README.md#local-trc-10-registry).
+  - Collects requested access diagnostics without prewarming addresses or storage.
   - Pays intrinsic gas cost.
   - Executes the transaction code using `vm.tvm.runCall` (or specific logic for contract creation).
   - Calculates gas used and refunds remaining gas.

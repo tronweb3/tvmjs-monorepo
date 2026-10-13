@@ -1,14 +1,7 @@
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import { Block, createBlockHeader } from '@tvmjs/block'
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
 import { RLP } from '@tvmjs/rlp'
-import {
-  createAccessList2930Tx,
-  createBlob4844Tx,
-  createEOACode7702Tx,
-  createFeeMarket1559Tx,
-  createLegacyTx,
-} from '@tvmjs/tx'
+import { createAccessList2930Tx, createFeeMarket1559Tx, createLegacyTx } from '@tvmjs/tx'
 import {
   Account,
   Address,
@@ -24,19 +17,11 @@ import {
   setLengthLeft,
   toBytes,
   toType,
-  unpadBytes,
 } from '@tvmjs/util'
 
 import type { BlockOptions } from '@tvmjs/block'
 import type { StateManagerInterface } from '@tvmjs/common'
-import type {
-  AccessList2930Tx,
-  Blob4844Tx,
-  EOACode7702Tx,
-  FeeMarket1559Tx,
-  LegacyTx,
-  TxOptions,
-} from '@tvmjs/tx'
+import type { AccessList2930Tx, FeeMarket1559Tx, LegacyTx, TxOptions } from '@tvmjs/tx'
 import type { assert } from 'vitest'
 
 // Use Vitest assert type directly
@@ -206,36 +191,17 @@ export function dumpState(state: any, cb: Function) {
  * Make a tx using JSON from tests repo
  * @param {Object} txData The tx object from tests repo
  * @param {TxOptions} opts Tx opts that can include an @tvmjs/common object
- * @returns {Blob4844Tx | FeeMarket1559Tx | AccessList2930Transaction | LegacyTx} Transaction to be passed to runTx() function
+ * @returns {FeeMarket1559Tx | AccessList2930Transaction | LegacyTx} Transaction to be passed to runTx() function
  */
 export function makeTx(
   txData: any,
   opts?: TxOptions,
-): EOACode7702Tx | Blob4844Tx | FeeMarket1559Tx | AccessList2930Tx | LegacyTx {
+): FeeMarket1559Tx | AccessList2930Tx | LegacyTx {
+  if (Number(txData.type) === 3) {
+    throw new Error('Blob transactions are no longer supported')
+  }
   let tx
-  if (txData.authorizationList !== undefined) {
-    // Convert `v` keys to `yParity`
-    for (const signature of txData.authorizationList) {
-      if (signature.v !== undefined) {
-        signature.yParity = bytesToHex(unpadBytes(hexToBytes(signature.v)))
-      }
-      if (signature.r !== undefined) {
-        signature.r = bytesToHex(unpadBytes(hexToBytes(signature.r)))
-      }
-      if (signature.s !== undefined) {
-        signature.s = bytesToHex(unpadBytes(hexToBytes(signature.s)))
-      }
-      if (signature.chainId !== undefined) {
-        signature.chainId = bytesToHex(unpadBytes(hexToBytes(signature.chainId)))
-      }
-      if (signature.nonce !== undefined && signature.nonce === '0x00') {
-        signature.nonce = '0x'
-      }
-    }
-    tx = createEOACode7702Tx(txData, opts)
-  } else if (txData.blobVersionedHashes !== undefined) {
-    tx = createBlob4844Tx(txData, opts)
-  } else if (txData.maxFeePerGas !== undefined) {
+  if (txData.maxFeePerGas !== undefined) {
     tx = createFeeMarket1559Tx(txData, opts)
   } else if (txData.accessLists !== undefined) {
     tx = createAccessList2930Tx(txData, opts)
@@ -293,6 +259,19 @@ export async function verifyPostConditions(state: any, testData: any, t: typeof 
 }
 
 export function makeParentBlockHeader(data: any, opts: BlockOptions) {
+  for (const field of [
+    'parentBlobGasUsed',
+    'parentExcessBlobGas',
+    'currentExcessBlobGas',
+    'currentBlobGasUsed',
+  ]) {
+    if (field in data) throw new Error(`Blob environment field ${field} is no longer supported`)
+  }
+  for (const field of ['parentBeaconBlockRoot', 'parent_beacon_block_root']) {
+    if (field in data) {
+      throw new Error(`Beacon root environment field ${field} is no longer supported`)
+    }
+  }
   const {
     parentGasLimit,
     parentGasUsed,
@@ -300,9 +279,6 @@ export function makeParentBlockHeader(data: any, opts: BlockOptions) {
     parentDifficulty,
     parentTimestamp,
     parentUncleHash,
-    parentBlobGasUsed,
-    parentExcessBlobGas,
-    parentBeaconBlockRoot,
   } = data
   return createBlockHeader(
     {
@@ -312,9 +288,6 @@ export function makeParentBlockHeader(data: any, opts: BlockOptions) {
       difficulty: parentDifficulty,
       timestamp: parentTimestamp,
       uncleHash: parentUncleHash,
-      blobGasUsed: parentBlobGasUsed,
-      excessBlobGas: parentExcessBlobGas,
-      parentBeaconBlockRoot,
     },
     { common: opts.common },
   )
@@ -328,7 +301,6 @@ export function makeBlockHeader(data: any, opts?: BlockOptions) {
     parentHash,
     currentCoinbase,
     currentDifficulty,
-    currentExcessBlobGas,
     currentNumber,
     currentBaseFee,
     currentRandom,
@@ -355,12 +327,7 @@ export function makeBlockHeader(data: any, opts?: BlockOptions) {
     ) as Uint8Array
     headerData['difficulty'] = 0
   }
-  if (opts?.common && opts.common.gteHardfork('cancun')) {
-    headerData['excessBlobGas'] = currentExcessBlobGas
-    if (currentExcessBlobGas === undefined) {
-      headerData['excessBlobGas'] = parentBlockHeader.calcNextExcessBlobGas(opts.common)
-    }
-  }
+
   return createBlockHeader(headerData, opts)
 }
 
@@ -422,37 +389,4 @@ export async function setupPreConditions(state: StateManagerInterface, testData:
     await state.putAccount(address, account)
   }
   await state.commit()
-}
-
-/**
- * Returns a DAO common which has a different activation block than the default block
- */
-export function getDAOCommon(activationBlock: number) {
-  // here: get the default fork list of mainnet and only edit the DAO fork block (thus copy the rest of the "default" hardfork settings)
-  const defaultDAOCommon = new Common({ chain: Mainnet, hardfork: Hardfork.Dao })
-  // retrieve the hard forks list from defaultCommon...
-  const forks = defaultDAOCommon.hardforks()
-  const editedForks = []
-  // explicitly edit the "dao" block number:
-  for (const fork of forks) {
-    if (fork.name === Hardfork.Dao) {
-      editedForks.push({
-        name: Hardfork.Dao,
-        forkHash: fork.forkHash,
-        block: activationBlock,
-      })
-    } else {
-      editedForks.push(fork)
-    }
-  }
-  const DAOCommon = createCustomCommon(
-    {
-      hardforks: editedForks,
-    },
-    Mainnet,
-    {
-      hardfork: Hardfork.Dao,
-    },
-  )
-  return DAOCommon
 }

@@ -57,8 +57,6 @@ export const stackDelta: {
   0x46: { inputs: 0, outputs: 1, name: 'CHAINID', intermediates: 0 },
   0x47: { inputs: 0, outputs: 1, name: 'SELFBALANCE', intermediates: 0 },
   0x48: { inputs: 0, outputs: 1, name: 'BASEFEE', intermediates: 0 },
-  0x49: { inputs: 1, outputs: 1, name: 'BLOBAHASH', intermediates: 0 },
-  0x4a: { inputs: 0, outputs: 1, name: 'BLOBBASEFEE', intermediates: 0 },
   0x50: { inputs: 1, outputs: 0, name: 'POP', intermediates: 0 },
   0x51: { inputs: 1, outputs: 1, name: 'MLOAD', intermediates: 0 },
   0x52: { inputs: 2, outputs: 0, name: 'MSTORE', intermediates: 0 },

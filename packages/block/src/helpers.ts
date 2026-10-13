@@ -1,9 +1,6 @@
 import { MerklePatriciaTrie } from '@tvmjs/mpt'
 import { RLP } from '@tvmjs/rlp'
-import { Blob4844Tx } from '@tvmjs/tx'
 import {
-  BIGINT_0,
-  BIGINT_1,
   EthereumJSErrorWithoutCode,
   TypeOutput,
   concatBytes,
@@ -11,7 +8,6 @@ import {
   toType,
 } from '@tvmjs/util'
 
-import { type Common } from '@tvmjs/common'
 import type { TypedTransaction } from '@tvmjs/tx'
 import type { CLRequest, CLRequestType, PrefixedHexString, Withdrawal } from '@tvmjs/util'
 import type { BlockHeaderBytes, HeaderData } from './types.ts'
@@ -27,7 +23,7 @@ export const numberToHex = function (input?: string): PrefixedHexString | undefi
       const msg = `Cannot convert string to hex string. numberToHex only supports 0x-prefixed hex or integer strings but the given string was: ${input}`
       throw EthereumJSErrorWithoutCode(msg)
     }
-    return `0x${parseInt(input, 10).toString(16)}`
+    return `0x${BigInt(input).toString(16)}`
   }
   return input
 }
@@ -56,17 +52,11 @@ export function valuesArrayToHeaderData(values: BlockHeaderBytes): HeaderData {
     nonce,
     baseFeePerGas,
     withdrawalsRoot,
-    blobGasUsed,
-    excessBlobGas,
-    parentBeaconBlockRoot,
-    requestsHash,
-    blockAccessListHash,
-    slotNumber,
   ] = values
 
-  if (values.length > 23) {
+  if (values.length > 17) {
     throw EthereumJSErrorWithoutCode(
-      `invalid header. More values than expected were received. Max: 23, got: ${values.length}`,
+      `Unsupported header extension: Blob fields and subsequent Ethereum header fields are not supported (got ${values.length} fields)`,
     )
   }
   if (values.length < 15) {
@@ -93,12 +83,6 @@ export function valuesArrayToHeaderData(values: BlockHeaderBytes): HeaderData {
     nonce,
     baseFeePerGas,
     withdrawalsRoot,
-    blobGasUsed,
-    excessBlobGas,
-    parentBeaconBlockRoot,
-    requestsHash,
-    blockAccessListHash,
-    slotNumber,
   }
 }
 
@@ -113,50 +97,6 @@ export function getDifficulty(headerData: HeaderData): bigint | null {
     return toType(difficulty, TypeOutput.BigInt)
   }
   return null
-}
-
-/**
- * Counts the total number of blob commitments contained in the provided transactions.
- * @param transactions Transactions to inspect for blob data
- * @returns Number of blob versioned hashes referenced
- */
-export const getNumBlobs = (transactions: TypedTransaction[]) => {
-  let numBlobs = 0
-  for (const tx of transactions) {
-    if (tx instanceof Blob4844Tx) {
-      numBlobs += tx.blobVersionedHashes.length
-    }
-  }
-  return numBlobs
-}
-
-/**
- * Approximates `factor * e ** (numerator / denominator)` using Taylor expansion
- */
-export const fakeExponential = (factor: bigint, numerator: bigint, denominator: bigint) => {
-  let i = BIGINT_1
-  let output = BIGINT_0
-  let numerator_accumulator = factor * denominator
-  while (numerator_accumulator > BIGINT_0) {
-    output += numerator_accumulator
-    numerator_accumulator = (numerator_accumulator * numerator) / (denominator * i)
-    i++
-  }
-
-  return output / denominator
-}
-
-/**
- * Returns the blob gas price depending upon the `excessBlobGas` value
- * @param excessBlobGas
- * @param common
- */
-export const computeBlobGasPrice = (excessBlobGas: bigint, common: Common) => {
-  return fakeExponential(
-    common.param('minBlobGas'),
-    excessBlobGas,
-    common.param('blobGasPriceUpdateFraction'),
-  )
 }
 
 /**
@@ -220,4 +160,18 @@ export function genRequestsRoot(
   }
 
   return sha256Function(flatRequests)
+}
+
+/** Reject removed header fields before RPC or payload normalization can discard them. */
+export function rejectRemovedHeaderFields(data: object) {
+  for (const field of ['blobGasUsed', 'excessBlobGas', 'blob_gas_used', 'excess_blob_gas']) {
+    if (field in data) {
+      throw EthereumJSErrorWithoutCode(`Blob header field ${field} is no longer supported`)
+    }
+  }
+  for (const field of ['parentBeaconBlockRoot', 'parent_beacon_block_root']) {
+    if (field in data) {
+      throw EthereumJSErrorWithoutCode(`Beacon root header field ${field} is no longer supported`)
+    }
+  }
 }

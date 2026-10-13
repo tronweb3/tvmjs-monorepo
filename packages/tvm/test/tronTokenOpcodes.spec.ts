@@ -122,4 +122,15 @@ describe('TRON token opcodes', () => {
       assert.strictEqual(result.executionGasUsed, GAS_LIMIT)
     },
   )
+
+  it('rejects CALLTOKEN with tokenValue exceeding signed int64 as VALUE_OVERFLOW without unhandled rejection', async () => {
+    const tvm = await createTVM()
+    const result = await tvm.runCode({
+      code: callTokenCode(UNISSUED_TOKEN_IDS[0], MAX_TRON_TOKEN_ID + 1n),
+      gasLimit: GAS_LIMIT,
+    })
+
+    assert.strictEqual(result.exceptionError?.error, TVMError.errorMessages.VALUE_OVERFLOW)
+    assert.strictEqual(result.executionGasUsed, GAS_LIMIT)
+  })
 })

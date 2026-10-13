@@ -1,4 +1,4 @@
-import { Hardfork } from '@tvmjs/common'
+import { Hardfork, tronExecutionProfile } from '@tvmjs/common'
 import type { BlockLevelAccessList, PrefixedHexString } from '@tvmjs/util'
 import {
   Account,
@@ -8,19 +8,18 @@ import {
   EthereumJSErrorWithoutCode,
   KECCAK256_NULL,
   KECCAK256_RLP,
+  MAX_INT64,
   MAX_INTEGER,
-  bigIntToBytes,
   bytesToUnprefixedHex,
   createBlockLevelAccessList,
   createZeroAddress,
   equalsBytes,
-  generateAddress,
-  generateAddress2,
   generateTronAddress2,
   generateTronContractAddress,
   generateTronCreateAddress,
   isDebugEnabled,
   short,
+  tokenIdToKey,
 } from '@tvmjs/util'
 import debugDefault from 'debug'
 import { EventEmitter } from 'eventemitter3'
@@ -32,15 +31,15 @@ import { TVMError } from './errors.ts'
 import { Interpreter } from './interpreter.ts'
 import { Journal } from './journal.ts'
 import { TVMPerformanceLogger } from './logger.ts'
-import { Message, createTronTransactionContext } from './message.ts'
+import { Message, createTronTransactionContext, rejectRemovedExecutionOptions } from './message.ts'
 import { getOpcodesForHF } from './opcodes/index.ts'
+import { rejectRemovedSizeOptions } from './options.ts'
 import { paramsTVM } from './params.ts'
 import { NobleBLS, getActivePrecompiles, getPrecompileName } from './precompiles/index.ts'
 import { TransientStorage } from './transientStorage.ts'
 import {
   type Block,
   type CustomOpcode,
-  DELEGATION_7702_FLAG,
   type ExecResult,
   type Log,
   type TVMBLSInterface,
@@ -101,18 +100,6 @@ export function OOGResult(gasLimit: bigint): ExecResult {
   }
 }
 /**
- * Creates an ExecResult for code-deposit out-of-gas errors (EIP-3541).
- * @param gasUsedCreateCode - Gas consumed while attempting to store code
- */
-export function COOGResult(gasUsedCreateCode: bigint): ExecResult {
-  return {
-    returnValue: new Uint8Array(0),
-    executionGasUsed: gasUsedCreateCode,
-    exceptionError: new TVMError(TVMError.errorMessages.CODESTORE_OUT_OF_GAS),
-  }
-}
-
-/**
  * Returns an ExecResult signalling invalid bytecode input.
  * @param gasLimit - Gas consumed up to the point of failure
  */
@@ -133,18 +120,6 @@ export function INVALID_EOF_RESULT(gasLimit: bigint): ExecResult {
     returnValue: new Uint8Array(0),
     executionGasUsed: gasLimit,
     exceptionError: new TVMError(TVMError.errorMessages.INVALID_EOF_FORMAT),
-  }
-}
-
-/**
- * Returns an ExecResult for code size violations.
- * @param gasUsed - Gas consumed before the violation was detected
- */
-export function CodesizeExceedsMaximumError(gasUsed: bigint): ExecResult {
-  return {
-    returnValue: new Uint8Array(0),
-    executionGasUsed: gasUsed,
-    exceptionError: new TVMError(TVMError.errorMessages.CODESIZE_EXCEEDS_MAXIMUM),
   }
 }
 
@@ -175,7 +150,6 @@ export function defaultBlock(): Block {
       prevRandao: new Uint8Array(32),
       gasLimit: BIGINT_0,
       baseFeePerGas: undefined,
-      getBlobGasPrice: () => undefined,
     },
   }
 }
@@ -188,35 +162,7 @@ export function defaultBlock(): Block {
  * - {@link createTVM}
  */
 export class TVM implements TVMInterface {
-  protected static supportedHardforks = [
-    Hardfork.Chainstart,
-    Hardfork.Homestead,
-    Hardfork.Dao,
-    Hardfork.TangerineWhistle,
-    Hardfork.SpuriousDragon,
-    Hardfork.Byzantium,
-    Hardfork.Constantinople,
-    Hardfork.Petersburg,
-    Hardfork.Istanbul,
-    Hardfork.MuirGlacier,
-    Hardfork.Berlin,
-    Hardfork.London,
-    Hardfork.ArrowGlacier,
-    Hardfork.GrayGlacier,
-    Hardfork.MergeNetsplitBlock,
-    Hardfork.Paris,
-    Hardfork.Shanghai,
-    Hardfork.Cancun,
-    Hardfork.Prague,
-    Hardfork.Osaka,
-    Hardfork.Bpo1,
-    Hardfork.Bpo2,
-    Hardfork.Bpo3,
-    Hardfork.Bpo4,
-    Hardfork.Bpo5,
-    Hardfork.Amsterdam,
-    Hardfork.Tron,
-  ]
+  protected static supportedHardforks: Hardfork[] = [Hardfork.Tron]
   protected _tx?: {
     gasPrice: bigint
     origin: Address
@@ -237,9 +183,6 @@ export class TVM implements TVMInterface {
   public readonly transientStorage: TransientStorage
 
   protected _opcodes!: OpcodeList
-
-  public readonly allowUnlimitedContractSize: boolean
-  public readonly allowUnlimitedInitCodeSize: boolean
 
   public readonly blockLevelAccessList?: BlockLevelAccessList
 
@@ -294,6 +237,7 @@ export class TVM implements TVMInterface {
    * @param bn128 Initialized bn128 WASM object for precompile usage (internal)
    */
   constructor(opts: TVMOpts) {
+    rejectRemovedSizeOptions(opts)
     this.common = opts.common!
     this.blockchain = opts.blockchain!
     this.stateManager = opts.stateManager!
@@ -316,17 +260,15 @@ export class TVM implements TVMInterface {
     this.events = new EventEmitter<TVMEvent>()
     this._optsCached = opts
 
-    // Supported EIPs
-    const supportedEIPs = [
-      1153, 1559, 2537, 2565, 2718, 2929, 2930, 2935, 3198, 3529, 3540, 3541, 3607, 3651, 3670,
-      3855, 3860, 4200, 4399, 4750, 4788, 4844, 4895, 5133, 5450, 5656, 6110, 6206, 6780, 7002,
-      7069, 7251, /* 7480, */ 7516, 7594, 7620, 7685, 7691, 7692, 7698, 7702, 7709, 7823, 7825,
-      7934, 7939, 7951, 8024,
-    ]
-
+    // Common and TVM share one capability definition, including explicit base groups.
     for (const eip of this.common.eips()) {
-      if (!supportedEIPs.includes(eip)) {
-        throw EthereumJSErrorWithoutCode(`EIP-${eip} is not supported by the TVM`)
+      if (
+        !tronExecutionProfile.eips.includes(eip) &&
+        !tronExecutionProfile.optionalEIPs.includes(eip)
+      ) {
+        throw EthereumJSErrorWithoutCode(
+          `EIP-${eip} is not supported by the TRON execution profile`,
+        )
       }
     }
 
@@ -336,10 +278,8 @@ export class TVM implements TVMInterface {
       )
     }
 
-    this.common.updateParams(opts.params ?? paramsTVM)
+    this.common.updateParams(opts.params ?? paramsTVM, opts.params !== undefined)
 
-    this.allowUnlimitedContractSize = opts.allowUnlimitedContractSize ?? false
-    this.allowUnlimitedInitCodeSize = opts.allowUnlimitedInitCodeSize ?? false
     this._customOpcodes = opts.customOpcodes
     this._customPrecompiles = opts.customPrecompiles
 
@@ -405,6 +345,7 @@ export class TVM implements TVMInterface {
   protected async _executeCall(message: MessageWithTo): Promise<TVMResult> {
     let gasLimit = message.gasLimit
     const fromAddress = message.caller
+    this.journal.addAccessedAddress(message.codeAddress.bytes)
 
     if (this.common.isActivatedEIP(7864)) {
       if (message.accessWitness === undefined) {
@@ -461,6 +402,7 @@ export class TVM implements TVMInterface {
 
     // Load `to` account
     let toAccount = await this.stateManager.getAccount(message.to)
+    const recipientExists = toAccount !== undefined
     if (!toAccount) {
       if (this.common.isActivatedEIP(6800) || this.common.isActivatedEIP(7864)) {
         const absenceProofAccessGas = message.accessWitness!.readAccountHeader(message.to)
@@ -482,8 +424,15 @@ export class TVM implements TVMInterface {
       }
       toAccount = new Account()
     }
-    // Add tx value to the `to` account
-    if (!message.delegatecall) {
+    // Supplied bytecode needs an account for its execution context. Empty calls
+    // and precompiles without a transfer must not create a missing recipient.
+    if (
+      !message.delegatecall &&
+      (recipientExists ||
+        message.value !== BIGINT_0 ||
+        message.tokenValue !== BIGINT_0 ||
+        (message.code instanceof Uint8Array && message.code.length !== 0))
+    ) {
       try {
         await this._addToBalance(toAccount, message)
         await this._addToTokenBalance(toAccount, message)
@@ -630,26 +579,11 @@ export class TVM implements TVMInterface {
     await this._reduceSenderBalance(account, message)
     await this._reduceSenderTokenBalance(account, message)
 
-    if (this.common.isActivatedEIP(3860) && !this.common.isTron()) {
-      if (
-        message.data.length > Number(this.common.param('maxInitCodeSize')) &&
-        !this.allowUnlimitedInitCodeSize
-      ) {
-        return {
-          createdAddress: message.to,
-          execResult: {
-            returnValue: new Uint8Array(0),
-            exceptionError: new TVMError(TVMError.errorMessages.INITCODE_SIZE_VIOLATION),
-            executionGasUsed: message.gasLimit,
-          },
-        }
-      }
-    }
-
     // TODO at some point, figure out why we swapped out data to code in the first place
     message.code = message.data
     message.data = message.eofCallData ?? new Uint8Array()
     message.to = await this._generateAddress(message)
+    this.journal.addAccessedAddress(message.to.bytes)
 
     if (this.common.isActivatedEIP(6780)) {
       message.createdAddresses!.add(message.to.toString())
@@ -698,11 +632,7 @@ export class TVM implements TVMInterface {
         this.blockLevelAccessList!.addAddress(message.to.toString())
       }
       // TRON: advance internal nonce even on collision, so the next CREATE uses nonce+1
-      if (
-        message.depth > 0 &&
-        this.common.gteHardfork(Hardfork.Tron) &&
-        message.tronTransactionContext !== undefined
-      ) {
+      if (message.depth > 0 && message.tronTransactionContext !== undefined) {
         message.tronTransactionContext.nonce += BIGINT_1
       }
       return {
@@ -715,11 +645,7 @@ export class TVM implements TVMInterface {
       }
     }
 
-    if (
-      message.depth > 0 &&
-      this.common.gteHardfork(Hardfork.Tron) &&
-      message.tronTransactionContext !== undefined
-    ) {
+    if (message.depth > 0 && message.tronTransactionContext !== undefined) {
       message.tronTransactionContext.nonce += BIGINT_1
     }
 
@@ -738,7 +664,7 @@ export class TVM implements TVMInterface {
       toAccount = new Account()
     }
     // EIP-161 on account creation and CREATE execution
-    if (this.common.gteHardfork(Hardfork.SpuriousDragon)) {
+    if (this.common.isActivatedEIP(607)) {
       toAccount.nonce += BIGINT_1
     }
     if (this.common.isActivatedEIP(7928)) {
@@ -837,29 +763,16 @@ export class TVM implements TVMInterface {
 
     // fee for size of the return value
     let totalGas = result.executionGasUsed
-    let returnFee = BIGINT_0
     if (!result.exceptionError && !this.common.isActivatedEIP(6800)) {
-      returnFee = BigInt(result.returnValue.length) * BigInt(this.common.param('createDataGas'))
+      const returnFee = BigInt(result.returnValue.length) * this.common.param('createDataGas')
       totalGas = totalGas + returnFee
       if (this.DEBUG) {
         debugGas(`Add return value size fee (${returnFee} to gas used (-> ${totalGas}))`)
       }
     }
 
-    // Check for SpuriousDragon EIP-170 code size limit
-    let allowedCodeSize = true
-    if (
-      !result.exceptionError &&
-      !this.common.isTron() &&
-      this.common.gteHardfork(Hardfork.SpuriousDragon) &&
-      result.returnValue.length > Number(this.common.param('maxCodeSize'))
-    ) {
-      allowedCodeSize = false
-    }
-
-    // If enough gas and allowed code size
-    let CodestoreOOG = false
-    if (totalGas <= message.gasLimit && (this.allowUnlimitedContractSize || allowedCodeSize)) {
+    // TRON charges code deposit Energy without an EIP-170 runtime size limit.
+    if (totalGas <= message.gasLimit) {
       if (this.common.isActivatedEIP(3541) && result.returnValue[0] === FORMAT) {
         if (!this.common.isActivatedEIP(3540)) {
           result = { ...result, ...INVALID_BYTECODE_RESULT(message.gasLimit) }
@@ -881,37 +794,12 @@ export class TVM implements TVMInterface {
         result.executionGasUsed = totalGas
       }
     } else {
-      if (this.common.gteHardfork(Hardfork.Homestead)) {
-        if (!allowedCodeSize) {
-          if (this.DEBUG) {
-            debug(`Code size exceeds maximum code size (>= SpuriousDragon)`)
-          }
-          result = { ...result, ...CodesizeExceedsMaximumError(message.gasLimit) }
-        } else {
-          if (this.DEBUG) {
-            debug(`Contract creation: out of gas`)
-          }
-          message.accessWitness?.revert()
-          result = { ...result, ...OOGResult(message.gasLimit) }
-        }
-      } else {
-        // we are in Frontier
-        if (totalGas - returnFee <= message.gasLimit) {
-          // we cannot pay the code deposit fee (but the deposit code actually did run)
-          if (this.DEBUG) {
-            debug(`Not enough gas to pay the code deposit fee (Frontier)`)
-          }
-          message.accessWitness?.revert()
-          result = { ...result, ...COOGResult(totalGas - returnFee) }
-          CodestoreOOG = true
-        } else {
-          if (this.DEBUG) {
-            debug(`Contract creation: out of gas`)
-          }
-          message.accessWitness?.revert()
-          result = { ...result, ...OOGResult(message.gasLimit) }
-        }
+      // TRON reverts failed code deposits; Frontier's partial creation is unsupported.
+      if (this.DEBUG) {
+        debug(`Contract creation: out of gas`)
       }
+      message.accessWitness?.revert()
+      result = { ...result, ...OOGResult(message.gasLimit) }
     }
 
     // get the fresh gas limit for the rest of the ops
@@ -980,16 +868,6 @@ export class TVM implements TVMInterface {
       if (this.DEBUG) {
         debug(`Code saved on new contract creation`)
       }
-    } else if (CodestoreOOG) {
-      // This only happens at Frontier. But, let's do a sanity check;
-      if (!this.common.gteHardfork(Hardfork.Homestead)) {
-        // Pre-Homestead behavior; put an empty contract.
-        // This contract would be considered "DEAD" in later hard forks.
-        // It is thus an unnecessary default item, which we have to save to disk
-        // It does change the state root, but it only wastes storage.
-        const account = await this.stateManager.getAccount(message.to)
-        await this.journal.putAccount(message.to, account ?? new Account())
-      }
     }
 
     if (message.depth === 0) {
@@ -1036,7 +914,6 @@ export class TVM implements TVMInterface {
       codeAddress: message.codeAddress,
       gasRefund: message.gasRefund,
       chargeCodeAccesses: message.chargeCodeAccesses,
-      blobVersionedHashes: message.blobVersionedHashes ?? [],
       accessWitness: message.accessWitness,
       createdAddresses: message.createdAddresses,
       initialLogs: opts.initialLogs,
@@ -1117,8 +994,11 @@ export class TVM implements TVMInterface {
    * point; every overlapping public invocation is rejected regardless of its supplied depth.
    */
   async runCall(opts: TVMRunCallOpts): Promise<TVMResult> {
+    rejectRemovedExecutionOptions(opts)
+    if (opts.message) rejectRemovedExecutionOptions(opts.message)
     const messageDepth = opts.message?.depth ?? opts.depth ?? 0
     this._acquireExecutionLock()
+    this.journal.clearStorageWrites()
     try {
       return await this._runCall(opts, true, messageDepth)
     } catch (error) {
@@ -1127,6 +1007,7 @@ export class TVM implements TVMInterface {
       }
       throw error
     } finally {
+      this.journal.clearStorageWrites()
       this._activeExecutions--
     }
   }
@@ -1196,7 +1077,6 @@ export class TVM implements TVMInterface {
         selfdestruct: opts.selfdestruct ?? new Map(),
         createdAddresses: opts.createdAddresses ?? new Set(),
         delegatecall: opts.delegatecall,
-        blobVersionedHashes: opts.blobVersionedHashes,
         tronTransactionContext:
           opts.rootTransactionId === undefined
             ? undefined
@@ -1223,7 +1103,6 @@ export class TVM implements TVMInterface {
       message.depth === 0 &&
       message.to === undefined &&
       message.salt === undefined &&
-      this.common.gteHardfork(Hardfork.Tron) &&
       message.tronTransactionContext === undefined
     ) {
       throw EthereumJSErrorWithoutCode(
@@ -1394,11 +1273,6 @@ export class TVM implements TVMInterface {
 
       await this._emit('beforeMessage', message)
 
-      if (!message.to && this.common.isActivatedEIP(2929)) {
-        message.code = message.data
-        this.journal.addWarmedAddress((await this._generateAddress(message)).bytes)
-      }
-
       // A nested execution checkpoint preserves the existing semantics for VM-level failures: the
       // call/create changes are reverted while the top-level nonce remains in the outer checkpoint.
       await checkpoint(executionCheckpoint)
@@ -1434,23 +1308,11 @@ export class TVM implements TVMInterface {
         )
       }
       const err = result.execResult.exceptionError
-      // This clause captures any error which happened during execution
-      // If that is the case, then all refunds are forfeited
-      // There is one exception: if the CODESTORE_OUT_OF_GAS error is thrown
-      // (this only happens the Frontier/Chainstart fork)
-      // then the error is dismissed
-      if (err && err.error !== TVMError.errorMessages.CODESTORE_OUT_OF_GAS) {
+      // Every failed TRON frame forfeits refunds and reverts its execution changes.
+      if (err) {
         result.execResult.selfdestruct = new Map()
         result.execResult.createdAddresses = new Set()
         result.execResult.gasRefund = BIGINT_0
-      }
-      if (
-        err &&
-        !(
-          this.common.hardfork() === Hardfork.Chainstart &&
-          err.error === TVMError.errorMessages.CODESTORE_OUT_OF_GAS
-        )
-      ) {
         result.execResult.logs = []
         await revert(executionCheckpoint)
         if (this.DEBUG) {
@@ -1511,7 +1373,9 @@ export class TVM implements TVMInterface {
    * not subject to this public execution lock.
    */
   async runCode(opts: TVMRunCodeOpts): Promise<ExecResult> {
+    rejectRemovedExecutionOptions(opts)
     this._acquireExecutionLock()
+    this.journal.clearStorageWrites()
     try {
       this._block = opts.block ?? defaultBlock()
 
@@ -1533,7 +1397,6 @@ export class TVM implements TVMInterface {
         selfdestruct: opts.selfdestruct ?? new Map(),
         createdAddresses: opts.createdAddresses,
         isStatic: opts.isStatic,
-        blobVersionedHashes: opts.blobVersionedHashes,
         tronTransactionContext:
           opts.rootTransactionId === undefined
             ? undefined
@@ -1542,6 +1405,7 @@ export class TVM implements TVMInterface {
 
       return await this.runInterpreter(message, { pc: opts.pc })
     } finally {
+      this.journal.clearStorageWrites()
       this._activeExecutions--
     }
   }
@@ -1599,22 +1463,6 @@ export class TVM implements TVMInterface {
       } else {
         message.code = await this.stateManager.getCode(message.codeAddress)
 
-        // EIP-7702 delegation check
-        if (
-          this.common.isActivatedEIP(7702) &&
-          equalsBytes(message.code.slice(0, 3), DELEGATION_7702_FLAG)
-        ) {
-          const address = new Address(message.code.slice(3, 24))
-          message.code = await this.stateManager.getCode(address)
-          // EIP-7928: Track delegation target access in BAL
-          if (this.common.isActivatedEIP(7928)) {
-            this.blockLevelAccessList?.addAddress(address.toString())
-          }
-          if (message.depth === 0) {
-            this.journal.addAlwaysWarmAddress(address.toString())
-          }
-        }
-
         message.isCompiled = false
         message.chargeCodeAccesses = true
       }
@@ -1624,11 +1472,8 @@ export class TVM implements TVMInterface {
   protected async _generateAddress(message: Message): Promise<Address> {
     let addr
     if (message.salt) {
-      const generateCreate2Address = this.common.gteHardfork(Hardfork.Tron)
-        ? generateTronAddress2
-        : generateAddress2
-      addr = generateCreate2Address(message.caller.bytes, message.salt, message.code as Uint8Array)
-    } else if (this.common.gteHardfork(Hardfork.Tron)) {
+      addr = generateTronAddress2(message.caller.bytes, message.salt, message.code as Uint8Array)
+    } else {
       const context = message.tronTransactionContext
       if (context === undefined) {
         throw EthereumJSErrorWithoutCode(
@@ -1641,13 +1486,6 @@ export class TVM implements TVMInterface {
         message.depth === 0
           ? generateTronContractAddress(context.rootTransactionId, message.caller.bytes)
           : generateTronCreateAddress(context.rootTransactionId, context.nonce)
-    } else {
-      let acc = await this.stateManager.getAccount(message.caller)
-      if (!acc) {
-        acc = new Account()
-      }
-      const newNonce = acc.nonce - BIGINT_1
-      addr = generateAddress(message.caller.bytes, bigIntToBytes(newNonce))
     }
     return new Address(addr)
   }
@@ -1676,20 +1514,19 @@ export class TVM implements TVMInterface {
   }
 
   _getTokenBalance(account: Account, tokenId: bigint): bigint {
-    if (account.asset) {
-      return account.asset[Number(tokenId)] || BIGINT_0
-    }
-
-    return BIGINT_0
+    return account.getTokenBalance(tokenId)
   }
 
   protected async _reduceSenderTokenBalance(account: Account, message: Message): Promise<void> {
+    if (message.tokenValue === BIGINT_0) {
+      return
+    }
     const newBalance = this._getTokenBalance(account, message.tokenId) - message.tokenValue
     if (newBalance < BIGINT_0) {
       throw new TVMError(TVMError.errorMessages.INSUFFICIENT_TOKEN_BALANCE)
     }
     if (account.asset && message.tokenId !== BIGINT_0) {
-      account.asset[Number(message.tokenId)] = newBalance
+      account.asset[tokenIdToKey(message.tokenId)] = newBalance
     }
     const result = this.journal.putAccount(message.caller, account)
     debug(
@@ -1724,12 +1561,15 @@ export class TVM implements TVMInterface {
   }
 
   protected async _addToTokenBalance(toAccount: Account, message: MessageWithTo): Promise<void> {
+    if (message.tokenValue === BIGINT_0) {
+      return
+    }
     const newBalance = this._getTokenBalance(toAccount, message.tokenId) + message.tokenValue
-    if (newBalance > MAX_INTEGER) {
+    if (newBalance > MAX_INT64) {
       throw new TVMError(TVMError.errorMessages.VALUE_OVERFLOW)
     }
     if (toAccount.asset && message.tokenId !== BIGINT_0) {
-      toAccount.asset[Number(message.tokenId)] = newBalance
+      toAccount.asset[tokenIdToKey(message.tokenId)] = newBalance
     }
     // putAccount as the nonce may have changed for contract creation
     await this.journal.putAccount(message.to, toAccount)

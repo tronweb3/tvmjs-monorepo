@@ -1,10 +1,10 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { createLegacyTx } from '@tvmjs/tx'
-import { bytesToHex, createZeroAddress } from '@tvmjs/util'
+import { bytesToHex, createZeroAddress, hexToBytes } from '@tvmjs/util'
 import { createVM, runTx } from '@tvmjs/vm'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
+  const common = new Common({ chain: TronMainnet })
   const vm = await createVM({ common })
 
   // Setup an event listener on the `afterTx` event
@@ -18,17 +18,17 @@ const main = async () => {
     console.log('synchronous listener to afterTx', bytesToHex(event.transaction.hash()))
   })
 
-  const tx = createLegacyTx({
-    gasLimit: BigInt(21000),
-    gasPrice: BigInt(1000000000),
-    value: BigInt(1),
-    to: createZeroAddress(),
-    v: BigInt(37),
-    r: BigInt('62886504200765677832366398998081608852310526822767264927793100349258111544447'),
-    s: BigInt('21948396863567062449199529794141973192314514851405455194940751428901681436138'),
-  })
+  const tx = createLegacyTx(
+    {
+      gasLimit: BigInt(21000),
+      gasPrice: BigInt(1000000000),
+      value: BigInt(1),
+      to: createZeroAddress(),
+    },
+    { common },
+  ).sign(hexToBytes(`0x${'01'.repeat(32)}`))
   const res = await runTx(vm, { tx, skipBalance: true })
-  console.log(res.totalGasSpent) // 21000n - gas cost for simple ETH transfer
+  console.log(res.totalGasSpent) // 21000n - gas cost for local simulation transfer
 }
 
 void main()

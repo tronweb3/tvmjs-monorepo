@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { Address, createAddressFromBigInt, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -7,7 +7,8 @@ import { createTVM } from '../src/index.ts'
 describe('async events', () => {
   it('should work', async () => {
     const caller = new Address(hexToBytes('0x00000000000000000000000000000000000000ee'))
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Constantinople })
+
+    const common = new Common({ chain: TronMainnet })
     const tvm = await createTVM({
       common,
     })

@@ -1,6 +1,5 @@
+import { SimpleStateManager } from '@tvmjs/statemanager'
 import { Account, createAddressFromPrivateKey, randomBytes } from '@tvmjs/util'
-
-import { SimpleStateManager } from '../src/index.ts'
 
 const main = async () => {
   const sm = new SimpleStateManager()

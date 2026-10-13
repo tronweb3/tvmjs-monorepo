@@ -8,7 +8,7 @@ import { utils } from 'tronweb'
 import { assert, beforeAll, describe, it } from 'vitest'
 import { createVM } from '../../../src/constructors.ts'
 import type { VM } from '../../../src/vm.ts'
-import { compileSol, deployContract, triggerConstant } from './utils.ts'
+import { deployContract, getCompiledContract, triggerConstant } from './utils.ts'
 
 describe('EcrecoverCheck contract: check() returns recovered address when CALLER matches', () => {
   let contractAddress
@@ -16,7 +16,7 @@ describe('EcrecoverCheck contract: check() returns recovered address when CALLER
   let abi: any[]
   let vm: VM
   beforeAll(async () => {
-    const { bytecode, abi: abiInner } = await compileSol('ecrecover001.sol', 'EcrecoverCheck')
+    const { bytecode, abi: abiInner } = getCompiledContract('ecrecover001.sol', 'EcrecoverCheck')
     abi = abiInner
     owner = utils.accounts.generateAccount()
     vm = await createVM()

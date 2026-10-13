@@ -1,13 +1,13 @@
 import { createBlock } from '@tvmjs/block'
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, ConsensusAlgorithm, ConsensusType, TronMainnet } from '@tvmjs/common'
 
-const common = new Common({ chain: Mainnet })
-
-const block = createBlock(
-  {
-    // Provide your block data here or use default values
+// Explicit local metadata for retained PoS format checks, not a default TRON preset.
+const common = new Common({
+  chain: {
+    ...TronMainnet,
+    consensus: { type: ConsensusType.ProofOfStake, algorithm: ConsensusAlgorithm.Casper },
   },
-  { common },
-)
-
-console.log(`Proof-of-Stake (default) block created with hardfork=${block.common.hardfork()}`)
+})
+const block = createBlock({ header: { number: 1n } }, { common })
+console.log(block.header.difficulty) // 0n
+console.log(block.common.isActivatedEIP(4399)) // false: metadata does not enable Ethereum EIPs

@@ -1,20 +1,16 @@
-import { Mainnet, createCustomCommon } from '@tvmjs/common'
+import { TronMainnet, createCustomCommon } from '@tvmjs/common'
 import { createLegacyTx } from '@tvmjs/tx'
 import { createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 
-// In this example we create a transaction for a custom network.
+// Create a signed transaction for a local TRON execution simulation.
 
-// This custom network has the same params as mainnet,
-// except for name, chainId, so we use the `Common.custom` method.
+// Only the name and chainId change; the TRON execution profile is preserved.
 const customCommon = createCustomCommon(
   {
-    name: 'my-network',
+    name: 'private-tron',
     chainId: 2134,
   },
-  Mainnet,
-  {
-    hardfork: 'petersburg',
-  },
+  TronMainnet,
 )
 
 // We pass our custom Common object whenever we create a transaction

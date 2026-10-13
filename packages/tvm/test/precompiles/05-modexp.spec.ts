@@ -1,4 +1,4 @@
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, beforeAll, describe, it } from 'vitest'
 
@@ -17,7 +17,7 @@ describe('Precompiles: MODEXP', () => {
   let addressStr: string
   let MODEXP: PrecompileFunc
   beforeAll(async () => {
-    common = new Common({ chain: Mainnet })
+    common = new Common({ chain: TronMainnet })
     tvm = await createTVM({
       common,
     })

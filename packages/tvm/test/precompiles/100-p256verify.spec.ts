@@ -1,11 +1,12 @@
 import { p256 } from '@noble/curves/nist.js'
-import { Common, Mainnet } from '@tvmjs/common'
-import { Address, hexToBytes } from '@tvmjs/util'
+import { Common, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
 import { assert, beforeAll, describe, it } from 'vitest'
 
-import { createTVM } from '../../src/index.ts'
+import { createTVM, getActivePrecompiles } from '../../src/index.ts'
 import { precompile100 } from '../../src/precompiles/100-p256verify.ts'
 
+import { hexToBytes } from '@tvmjs/util'
+import type { TVM } from '../../src/index.ts'
 import type { PrecompileInput } from '../../src/precompiles/types.ts'
 
 const testCases = [
@@ -117,10 +118,11 @@ const testCases = [
 
 describe('P256VERIFY precompile', () => {
   let common: Common
-  let tvm: any
+  let tvm: TVM
 
   beforeAll(async () => {
-    common = new Common({ chain: Mainnet, eips: [7951] })
+    // Exercise the retained helper directly, without activating EIP-7951.
+    common = new Common({ chain: TronMainnet })
     tvm = await createTVM({ common })
   })
 
@@ -143,20 +145,17 @@ describe('P256VERIFY precompile', () => {
   })
 
   describe('integration with TVM', () => {
-    it('should be callable from TVM', async () => {
-      // Create a simple contract that calls the P256VERIFY precompile
-      const code = hexToBytes(
-        '0x6101006000526001601f600060003660006000610100611af4f13d6001556000553d600060003e3d600020600255',
-      )
-
-      const result = await tvm.runCall({
-        to: undefined, // Contract creation
-        caller: new Address(hexToBytes('0x0000000000000000000000000000000000000000')),
-        data: code,
-        gasLimit: BigInt(100000),
-      })
-
-      assert.equal(result.execResult.exceptionError, undefined)
-    })
+    it.each([TronMainnet, TronNile, TronShasta])(
+      '$name rejects activation and leaves P256 out of the active precompile table',
+      async (chain) => {
+        const common = new Common({ chain })
+        const tvm = await createTVM({ common })
+        const address = '0000000000000000000000000000000000000100'
+        assert.isFalse(common.isActivatedEIP(7951))
+        assert.throws(() => common.setEIPs([7951]), /not supported by the TRON execution profile/)
+        assert.isFalse(getActivePrecompiles(common).has(address))
+        assert.isFalse(tvm.precompiles.has(address))
+      },
+    )
   })
 })

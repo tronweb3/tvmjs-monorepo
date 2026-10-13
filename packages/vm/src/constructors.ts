@@ -9,6 +9,8 @@ import {
   unprefixedHexToBytes,
 } from '@tvmjs/util'
 
+import { rejectRemovedTVMOptions } from './options.ts'
+import { paramsVM } from './params.ts'
 import { VM } from './vm.ts'
 
 import type { VMOpts } from './types.ts'
@@ -19,6 +21,8 @@ import type { VMOpts } from './types.ts'
  * @param opts VM engine constructor options
  */
 export async function createVM(opts: VMOpts = {}): Promise<VM> {
+  rejectRemovedTVMOptions(opts)
+  opts = { ...opts }
   // Save if a `StateManager` was passed (for activatePrecompiles)
   const didPassStateManager =
     opts.tvm?.stateManager !== undefined ||
@@ -29,8 +33,21 @@ export async function createVM(opts: VMOpts = {}): Promise<VM> {
     throw EthereumJSErrorWithoutCode('the tvm and tvmOpts options cannot be used in conjunction')
   }
 
+  const commons = [opts.common, opts.tvmOpts?.common, opts.tvm?.common].filter(
+    (common): common is Common => common !== undefined,
+  )
+  for (let i = 0; i < commons.length; i++) {
+    for (let j = i + 1; j < commons.length; j++) {
+      if (!commons[i].isCompatibleWith(commons[j])) {
+        throw EthereumJSErrorWithoutCode(
+          'Conflicting Common execution settings in common, tvmOpts.common or tvm.common',
+        )
+      }
+    }
+  }
+
   // Add common, SM, blockchain, TVM here. A supplied TVM already owns all three execution
-  // resources. Otherwise the corresponding tvmOpts value takes precedence over the top-level
+  // resources. Otherwise a compatible tvmOpts value takes precedence over the top-level
   // option. Keep the exact same instances at the VM layer so transaction validation/state updates
   // and TVM execution cannot diverge.
   opts.common =
@@ -69,6 +86,21 @@ export async function createVM(opts: VMOpts = {}): Promise<VM> {
       },
       ...tvmOpts,
     })
+  }
+
+  // The TVM adds its parameter defaults during initialization. Compare again
+  // with the final parameter set so a supplied top-level override cannot be
+  // silently discarded by an initially empty tvmOpts.common instance.
+  const executionCommon = opts.common.copy()
+  executionCommon.updateParams(opts.params ?? paramsVM, opts.params !== undefined)
+  for (const common of commons.slice(0, -1)) {
+    const suppliedCommon = common.copy()
+    if (opts.params !== undefined) suppliedCommon.updateParams(opts.params)
+    if (!suppliedCommon.isCompatibleWith(executionCommon)) {
+      throw EthereumJSErrorWithoutCode(
+        'Conflicting Common execution settings after VM/TVM parameter initialization',
+      )
+    }
   }
 
   if (opts.activatePrecompiles === true && !didPassStateManager) {

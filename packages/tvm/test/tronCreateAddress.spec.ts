@@ -1,12 +1,8 @@
 // cspell:ignore selfdestructor
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import {
   Address,
-  bigIntToBytes,
   bytesToHex,
   concatBytes,
-  generateAddress,
-  generateAddress2,
   generateTronAddress2,
   generateTronContractAddress,
   generateTronCreateAddress,
@@ -274,35 +270,6 @@ describe('TRON CREATE address derivation', () => {
     await expect(
       tvm.runCall({ to: CREATOR, rootTransactionId: new Uint8Array(31) }),
     ).rejects.toThrow(/rootTransactionId to be of length 32/)
-  })
-
-  it('keeps Ethereum CREATE derivation unchanged', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Constantinople })
-    const tvm = await createTVM({ common })
-    await tvm.stateManager.putCode(CREATOR, hexToBytes('0x600060006000f060005260206000f3'))
-
-    const result = await tvm.runCall({ to: CREATOR })
-
-    assert.deepEqual(
-      result.execResult.returnValue,
-      setLengthLeft(generateAddress(CREATOR.bytes, bigIntToBytes(0n)), 32),
-    )
-  })
-
-  it('keeps the pre-TRON CREATE2 stack result unprefixed', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Constantinople })
-    const tvm = await createTVM({ common })
-    const salt = new Uint8Array(32)
-    salt[31] = 1
-    const emptyCode = new Uint8Array(0)
-
-    await tvm.stateManager.putCode(CREATOR, hexToBytes('0x6001600060006000f560005260206000f3'))
-    const result = await tvm.runCall({ to: CREATOR })
-
-    assert.deepEqual(
-      result.execResult.returnValue,
-      setLengthLeft(generateAddress2(CREATOR.bytes, salt, emptyCode), 32),
-    )
   })
 
   it('advances nonce even when CREATE collides, so the next CREATE uses nonce+1', async () => {

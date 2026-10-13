@@ -1,5 +1,5 @@
 import { createBlock } from '@tvmjs/block'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { FeeMarket1559Tx } from '@tvmjs/tx'
 import { Address, Units, hexToBytes, privateToAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
@@ -11,21 +11,8 @@ import type { TypedTransaction } from '@tvmjs/tx'
 
 const common = new Common({
   eips: [1559, 2718, 2930, 3198],
-  chain: Mainnet,
-  hardfork: Hardfork.London,
+  chain: TronMainnet,
 })
-
-// Small hack to hack in the activation block number
-// (Otherwise there would be need for a custom chain only for testing purposes)
-common.hardforkBlock = function (hardfork: Hardfork | undefined) {
-  if (hardfork === Hardfork.London) {
-    return BigInt(1)
-  } else if (hardfork === Hardfork.Dao) {
-    // Avoid DAO HF side-effects
-    return BigInt(99)
-  }
-  return BigInt(0)
-}
 
 const coinbase = new Address(hexToBytes(`0x${'11'.repeat(20)}`))
 const pkey = hexToBytes(`0x${'20'.repeat(32)}`)

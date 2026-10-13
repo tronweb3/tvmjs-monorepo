@@ -1,9 +1,11 @@
-import { MapDB, hexToBytes, utf8ToBytes } from '@tvmjs/util'
-import { assert, beforeEach, describe, it } from 'vitest'
+import { MapDB, ValueEncoding, hexToBytes, utf8ToBytes } from '@tvmjs/util'
+import { assert, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CheckpointDB } from '../../src/index.ts'
 
 import type { BatchDBOp } from '@tvmjs/util'
+
+afterEach(() => vi.restoreAllMocks())
 
 describe('DB tests', () => {
   let db: CheckpointDB
@@ -198,5 +200,94 @@ describe('DB checkpoint cache coherency', () => {
 
     await db.batch([{ type: 'del', key }])
     assert.isUndefined(await db.get(key))
+  })
+})
+
+describe.each([0, 100])('DB checkpoint commit failures (cacheSize: %s)', (cacheSize) => {
+  describe.each([ValueEncoding.String, ValueEncoding.Bytes])('encoding: %s', (valueEncoding) => {
+    const key = utf8ToBytes('existing')
+    const removed = utf8ToBytes('removed')
+    const added = utf8ToBytes('added')
+    const original = utf8ToBytes('original')
+    const updated = utf8ToBytes('updated')
+    const root = new Uint8Array(32).fill(1)
+
+    it.each(['commit', 'revert'] as const)(
+      'preserves pending puts and deletions for %s after a failed outer commit',
+      async (recovery) => {
+        const backing = new MapDB<string, string | Uint8Array>()
+        const db = new CheckpointDB({ db: backing, cacheSize, valueEncoding })
+        await db.put(key, original)
+        await db.put(removed, original)
+        const stored = new Map(backing._database)
+
+        db.checkpoint(root)
+        await db.put(key, updated)
+        db.checkpoint(new Uint8Array(32).fill(2))
+        await db.del(removed)
+        await db.put(added, updated)
+        await db.commit()
+
+        const failure = new Error('Injected batch failure before any writes')
+        vi.spyOn(backing, 'batch').mockRejectedValueOnce(failure).mockRejectedValueOnce(failure)
+        for (let attempt = 0; attempt < 2; attempt++) {
+          await expect(db.commit()).rejects.toBe(failure)
+          assert.strictEqual(db.checkpoints.length, 1)
+          assert.deepEqual(db.checkpoints[0].root, root)
+          assert.deepEqual(await db.get(key), updated)
+          assert.isUndefined(await db.get(removed))
+          assert.deepEqual(await db.get(added), updated)
+          assert.deepEqual(backing._database, stored)
+        }
+
+        if (recovery === 'commit') {
+          await db.commit()
+        } else {
+          assert.deepEqual(await db.revert(), root)
+        }
+        assert.isFalse(db.hasCheckpoints())
+
+        const reader = new CheckpointDB({ db: backing, valueEncoding })
+        for (const view of [db, reader]) {
+          assert.deepEqual(await view.get(key), recovery === 'commit' ? updated : original)
+          assert.deepEqual(await view.get(removed), recovery === 'commit' ? undefined : original)
+          assert.deepEqual(await view.get(added), recovery === 'commit' ? updated : undefined)
+        }
+      },
+    )
+
+    it('keeps pending values readable until the final batch succeeds', async () => {
+      const backing = new MapDB<string, string | Uint8Array>()
+      const db = new CheckpointDB({ db: backing, cacheSize, valueEncoding })
+      await db.put(key, original)
+      const stored = new Map(backing._database)
+      db.checkpoint(root)
+      await db.put(key, updated)
+
+      let release!: () => void
+      const gate = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      const batch = backing.batch.bind(backing)
+      vi.spyOn(backing, 'batch').mockImplementationOnce(async (ops) => {
+        await gate
+        await batch(ops)
+      })
+
+      const pending = db.commit()
+      try {
+        assert.isTrue(db.hasCheckpoints())
+        assert.deepEqual(await db.get(key), updated)
+        assert.deepEqual(backing._database, stored)
+      } finally {
+        release()
+        await pending
+      }
+
+      assert.isFalse(db.hasCheckpoints())
+      assert.deepEqual(await db.get(key), updated)
+      const reader = new CheckpointDB({ db: backing, valueEncoding })
+      assert.deepEqual(await reader.get(key), updated)
+    })
   })
 })

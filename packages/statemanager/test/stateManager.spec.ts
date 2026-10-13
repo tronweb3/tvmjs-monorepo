@@ -24,7 +24,6 @@ import {
 
 import type { PrefixedHexString } from '@tvmjs/util'
 
-export const isBrowser = new Function('try {return this===window;}catch(e){ return false;}')
 function verifyAccount(
   account: Account,
   state: {
@@ -308,51 +307,48 @@ describe('StateManager -> General', () => {
     zeroAccount = await newPartialStateManager2.getAccount(createZeroAddress())
     assert.strictEqual(zeroAccount?.nonce, zeroAddressNonce)
   })
-  it.skipIf(isBrowser() === true)(
-    'should create a statemanager fromProof with opts preserved',
-    async () => {
-      const trie = await createMPT({ useKeyHashing: false })
-      const sm = new MerkleStateManager({ trie })
-      const address = SIGNER_F.address
-      const address2 = SIGNER_G.address
-      const account = new Account()
-      const account2 = new Account(undefined, 100n)
-      await sm.putAccount(address, account)
-      await sm.putAccount(address2, account2)
-      await sm.putStorage(address, setLengthLeft(intToBytes(0), 32), intToBytes(32))
-      const storage = await sm.dumpStorage(address)
-      const keys = Object.keys(storage) as PrefixedHexString[]
-      const proof = await getMerkleStateProof(
-        sm,
-        address,
-        keys.map((key) => hexToBytes(key)),
-      )
-      const proof2 = await getMerkleStateProof(sm, address2)
-      const newTrie = await createMPTFromProof(
-        proof.accountProof.map((e) => hexToBytes(e)),
-        { useKeyHashing: false },
-      )
-      const partialSM = await fromMerkleStateProof([proof, proof2], true, {
-        trie: newTrie,
-      })
-      assert.strictEqual(
-        partialSM['_trie']['_opts'].useKeyHashing,
-        false,
-        'trie opts are preserved in new sm',
-      )
-      assert.deepEqual(intToBytes(32), await partialSM.getStorage(address, hexToBytes(keys[0])))
-      assert.strictEqual((await partialSM.getAccount(address2))?.balance, 100n)
-      const partialSM2 = await fromMerkleStateProof(proof, true, {
-        trie: newTrie,
-      })
-      await addMerkleStateProofData(partialSM2, proof2, true)
-      assert.strictEqual(
-        partialSM2['_trie']['_opts'].useKeyHashing,
-        false,
-        'trie opts are preserved in new sm',
-      )
-      assert.deepEqual(intToBytes(32), await partialSM2.getStorage(address, hexToBytes(keys[0])))
-      assert.strictEqual((await partialSM2.getAccount(address2))?.balance, 100n)
-    },
-  )
+  it('should create a statemanager fromProof with opts preserved', async () => {
+    const trie = await createMPT({ useKeyHashing: false })
+    const sm = new MerkleStateManager({ trie })
+    const address = SIGNER_F.address
+    const address2 = SIGNER_G.address
+    const account = new Account()
+    const account2 = new Account(undefined, 100n)
+    await sm.putAccount(address, account)
+    await sm.putAccount(address2, account2)
+    await sm.putStorage(address, setLengthLeft(intToBytes(0), 32), intToBytes(32))
+    const storage = await sm.dumpStorage(address)
+    const keys = Object.keys(storage) as PrefixedHexString[]
+    const proof = await getMerkleStateProof(
+      sm,
+      address,
+      keys.map((key) => hexToBytes(key)),
+    )
+    const proof2 = await getMerkleStateProof(sm, address2)
+    const newTrie = await createMPTFromProof(
+      proof.accountProof.map((e) => hexToBytes(e)),
+      { useKeyHashing: false },
+    )
+    const partialSM = await fromMerkleStateProof([proof, proof2], true, {
+      trie: newTrie,
+    })
+    assert.strictEqual(
+      partialSM['_trie']['_opts'].useKeyHashing,
+      false,
+      'trie opts are preserved in new sm',
+    )
+    assert.deepEqual(intToBytes(32), await partialSM.getStorage(address, hexToBytes(keys[0])))
+    assert.strictEqual((await partialSM.getAccount(address2))?.balance, 100n)
+    const partialSM2 = await fromMerkleStateProof(proof, true, {
+      trie: newTrie,
+    })
+    await addMerkleStateProofData(partialSM2, proof2, true)
+    assert.strictEqual(
+      partialSM2['_trie']['_opts'].useKeyHashing,
+      false,
+      'trie opts are preserved in new sm',
+    )
+    assert.deepEqual(intToBytes(32), await partialSM2.getStorage(address, hexToBytes(keys[0])))
+    assert.strictEqual((await partialSM2.getAccount(address2))?.balance, 100n)
+  })
 })

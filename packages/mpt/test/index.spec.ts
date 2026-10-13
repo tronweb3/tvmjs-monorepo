@@ -17,6 +17,32 @@ import { bytesToNibbles } from '../src/util/nibbles.ts'
 
 import type { HashKeysFunction } from '../src/index.ts'
 
+it('releases the write lock when a trie mutation fails', async () => {
+  const trie = new MerklePatriciaTrie({
+    root: hexToBytes(`0x${'11'.repeat(32)}`),
+  })
+  let failed = false
+  try {
+    await trie.put(utf8ToBytes('broken'), utf8ToBytes('value'))
+  } catch {
+    failed = true
+  }
+  assert.isTrue(failed)
+
+  // Reset the deliberately missing root. If put() leaked its permit, this
+  // second mutation would remain pending instead of completing.
+  trie.root(null)
+  await Promise.race([
+    trie.put(utf8ToBytes('recovered'), utf8ToBytes('value')),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('MPT write lock was not released')), 1000),
+    ),
+  ])
+  const recovered = await trie.get(utf8ToBytes('recovered'))
+  assert.isNotNull(recovered)
+  assert.strictEqual(bytesToUtf8(recovered), 'value')
+})
+
 for (const keyPrefix of [undefined, hexToBytes('0x1234')]) {
   for (const cacheSize of [0, 100]) {
     describe('simple save and retrieve', () => {

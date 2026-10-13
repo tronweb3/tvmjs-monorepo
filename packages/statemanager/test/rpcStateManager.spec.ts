@@ -1,9 +1,7 @@
-import { createBlockFromJSONRPCProvider, createBlockFromRPC } from '@tvmjs/block'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { createBlockFromJSONRPCProvider } from '@tvmjs/block'
 import { verifyMerkleProof } from '@tvmjs/mpt'
 import { createTVM } from '@tvmjs/tvm'
-import type { TVMMockBlockchainInterface, TVMRunCallOpts } from '@tvmjs/tvm'
-import { createFeeMarket1559Tx, createTxFromRPC } from '@tvmjs/tx'
+import type { TVMRunCallOpts } from '@tvmjs/tvm'
 import {
   Address,
   bigIntToBytes,
@@ -16,35 +14,29 @@ import {
   setLengthLeft,
   utf8ToBytes,
 } from '@tvmjs/util'
-import { createVM, runBlock, runTx } from '@tvmjs/vm'
-import { assert, describe, expect, it, vi } from 'vitest'
+import { assert, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { MerkleStateManager } from '../src/merkleStateManager.ts'
 import { getRPCStateProof } from '../src/proof/index.ts'
 import { RPCBlockChain, RPCStateManager } from '../src/rpcStateManager.ts'
 
-import { block as blockData } from './testdata/providerData/blocks/block0x7a120.ts'
+import { mockRPC, provider } from './rpcHelpers.ts'
 import { getValues } from './testdata/providerData/mockProvider.ts'
-import { tx as txData } from './testdata/providerData/transactions/0xed1960aa7d0d7b567c946d94331dddb37a1c67f51f30bf51f256ea40db88cfb0.ts'
-
-const provider = process.env.PROVIDER ?? 'http://cheese'
-// To run the tests with a live provider, set the PROVIDER environmental variable with a valid provider url
-// from Infura/Alchemy or your favorite web3 provider when running the test.  Below is an example command:
-// `PROVIDER=https://mainnet.infura.io/v3/[mySuperS3cretproviderKey] npx vitest run test/rpcStateManager.spec.ts
-
-describe('RPC State Manager initialization tests', async () => {
-  vi.mock('@tvmjs/util', async () => {
-    const util = await vi.importActual('@tvmjs/util')
-    return {
-      ...util,
-      fetchFromProvider: vi.fn().mockImplementation(async (url, { method, params }: any) => {
-        const res = await getValues(method, 1, params)
-        return res.result
-      }),
-    }
+import type { SupportedMethods } from './testdata/providerData/mockProvider.ts'
+// Fixed historical RPC fixtures exercise the data adapter, not Ethereum execution.
+beforeEach(() => {
+  mockRPC(async ({ method, params }) => {
+    const response = await getValues(method as SupportedMethods, 1, params)
+    return response.result
   })
-  await import('@tvmjs/util')
+})
 
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
+
+describe('RPC State Manager initialization tests', () => {
   it('should work', () => {
     let state = new RPCStateManager({ provider, blockTag: 1n })
     assert.instanceOf(state, RPCStateManager, 'was able to instantiate state manager')
@@ -70,7 +62,7 @@ describe('RPC State Manager initialization tests', async () => {
 
     const invalidProvider = 'google.com'
     assert.throws(
-      () => new RPCStateManager({ provider: invalidProvider as any, blockTag: 1n }),
+      () => new RPCStateManager({ provider: invalidProvider, blockTag: 1n }),
       undefined,
       undefined,
       'cannot instantiate state manager with invalid provider',
@@ -101,7 +93,7 @@ describe('RPC State Manager API tests', () => {
     })
     assert.isNull(doesThisAccountExist, 'getAccount returns undefined for non-existent account')
 
-    assert.isDefined(state.getAccount(vitalikDotEth), 'vitalik.eth does exist')
+    assert.isDefined(await state.getAccount(vitalikDotEth), 'vitalik.eth does exist')
 
     const UniswapERC20ContractAddress = createAddressFromString(
       '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
@@ -162,16 +154,10 @@ describe('RPC State Manager API tests', () => {
       'modified account fields successfully',
     )
 
-    assert.doesNotThrow(
-      async () => state.getAccount(vitalikDotEth),
-      'does not call getAccountFromProvider',
-    )
-
-    try {
-      await state.getAccount(createAddressFromString('0x9Cef824A8f4b3Dc6B7389933E52e47F010488Fc8'))
-    } catch {
-      assert.isTrue(true, 'calls getAccountFromProvider for non-cached account')
-    }
+    await expect(state.getAccount(vitalikDotEth)).resolves.toBeDefined()
+    await expect(
+      state.getAccount(createAddressFromString('0x9Cef824A8f4b3Dc6B7389933E52e47F010488Fc8')),
+    ).rejects.toThrow("shouldn't call me")
 
     const deletedSlot = await state.getStorage(
       UniswapERC20ContractAddress,
@@ -213,20 +199,14 @@ describe('RPC State Manager API tests', () => {
     const clearedStorage = await state.dumpStorage(UniswapERC20ContractAddress)
     assert.deepEqual({}, clearedStorage, 'storage cache should be empty after clear')
 
-    try {
-      await createBlockFromJSONRPCProvider(provider, 'fakeBlockTag', {} as any)
-      assert.fail('should have thrown')
-    } catch (err: any) {
-      assert.isTrue(
-        err.message.includes('expected blockTag to be block hash, bigint, hex prefixed string'),
-        'threw with correct error when invalid blockTag provided',
-      )
-    }
+    await expect(createBlockFromJSONRPCProvider(provider, 'fakeBlockTag', {})).rejects.toThrow(
+      'expected blockTag to be block hash, bigint, hex prefixed string',
+    )
 
     assert.strictEqual(
       state['_caches'].account?.get(UniswapERC20ContractAddress),
       undefined,
-      'should not have any code for contract after cache is reverted',
+      'should not retain an account cache entry loaded after the checkpoint',
     )
 
     assert.strictEqual(state['_blockTag'], '0x1', 'blockTag defaults to 1')
@@ -234,96 +214,12 @@ describe('RPC State Manager API tests', () => {
     assert.strictEqual(state['_blockTag'], '0x5', 'blockTag set to 0x5')
     state.setBlockTag('earliest')
     assert.strictEqual(state['_blockTag'], 'earliest', 'blockTag set to earliest')
-
-    await state.checkpoint()
-  })
-})
-
-describe('runTx custom transaction test', () => {
-  it('should work', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-
-    const state = new RPCStateManager({ provider, blockTag: 1n })
-    const vm = await createVM({ common, stateManager: state })
-
-    const vitalikDotEth = createAddressFromString('0xd8da6bf26964af9d7eed9e03e53415d37aa96045')
-    const privateKey = hexToBytes(
-      '0xe331b6d69882b4cb4ea581d88e0b604039a3de5967688d3dcffdd2270c0fd109',
-    )
-    const tx = createFeeMarket1559Tx(
-      { to: vitalikDotEth, value: '0x100', gasLimit: 500000n, maxFeePerGas: 7 },
-      { common },
-    ).sign(privateKey)
-
-    const result = await runTx(vm, {
-      skipBalance: true,
-      skipNonce: true,
-      tx,
-    })
-
-    assert.strictEqual(result.totalGasSpent, 21000n, 'sent some ETH to vitalik.eth')
-  })
-})
-
-describe('runTx test: replay mainnet transactions', () => {
-  it('should work', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-
-    const blockTag = 15496077n
-    common.setHardforkBy({ blockNumber: blockTag })
-    const tx = await createTxFromRPC(txData as any, { common })
-    const state = new RPCStateManager({
-      provider,
-      // Set the state manager to look at the state of the chain before the block has been executed
-      blockTag: blockTag - 1n,
-    })
-    const vm = await createVM({ common, stateManager: state })
-    const res = await runTx(vm, { tx })
-    assert.strictEqual(
-      res.totalGasSpent,
-      21000n,
-      'calculated correct total gas spent for simple transfer',
-    )
-  })
-})
-
-describe('runBlock test', () => {
-  it('should work', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
-
-    const blockTag = 500000n
-    const state = new RPCStateManager({
-      provider,
-      // Set the state manager to look at the state of the chain before the block has been executed
-      blockTag: blockTag - 1n,
-    })
-
-    // Set the common to HF, doesn't impact this specific blockTag, but will impact much recent
-    // blocks, also for post merge network, ttd should also be passed
-    common.setHardforkBy({ blockNumber: blockTag - 1n })
-
-    const vm = await createVM({ common, stateManager: state })
-    const block = createBlockFromRPC(blockData, [], { common })
-    try {
-      const res = await runBlock(vm, {
-        block,
-        generate: true,
-        skipHeaderValidation: true,
-      })
-      assert.strictEqual(
-        res.gasUsed,
-        block.header.gasUsed,
-        'should compute correct cumulative gas for block',
-      )
-    } catch (err: any) {
-      assert.fail(`should have successfully ran block; got error ${err.message}`)
-    }
   })
 })
 
 describe('blockchain', () =>
   it('uses blockhash', async () => {
-    const blockchain = new RPCBlockChain(provider) as unknown as TVMMockBlockchainInterface
+    const blockchain = new RPCBlockChain(provider)
     const blockTag = 1n
     const state = new RPCStateManager({ provider, blockTag })
     const tvm = await createTVM({ blockchain, stateManager: state })
@@ -349,6 +245,14 @@ describe('blockchain', () =>
       '0x794a1bef434928ce3aadd2f5eced2bf72ac714a30e9e4ab5965d7d9760300d84',
     )
   }))
+
+describe('RPC blockchain writes', () => {
+  it('rejects block writes without sending a provider request', async () => {
+    const blockchain = new RPCBlockChain(provider)
+    await expect(blockchain.putBlock({})).rejects.toThrow('RPCBlockChain is read-only')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+})
 
 describe('Should return same value as MerkleStateManager when account does not exist', () => {
   it('should work', async () => {

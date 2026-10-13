@@ -1,5 +1,5 @@
 import { keccak_256 } from '@noble/hashes/sha3.js'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { bytesToHex, bytesToUnprefixedHex, hexToBytes, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -16,7 +16,7 @@ describe('Precompiles: ECRECOVER', () => {
   it('ECRECOVER', async () => {
     // Test reference: https://github.com/ethereum/go-ethereum/issues/3731#issuecomment-293866868
 
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })
+    const common = new Common({ chain: TronMainnet })
     const tvm = await createTVM({
       common,
     })

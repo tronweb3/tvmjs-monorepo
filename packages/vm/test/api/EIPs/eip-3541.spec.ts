@@ -1,138 +1,55 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
+import { SIGNER_A } from '@tvmjs/testdata'
 import { createLegacyTx } from '@tvmjs/tx'
-import { hexToBytes } from '@tvmjs/util'
+import { Account, hexToBytes } from '@tvmjs/util'
+import type { Address } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
-
 import { createVM, runTx } from '../../../src/index.ts'
 
-import type { InterpreterStep } from '@tvmjs/tvm'
-import type { Address } from '@tvmjs/util'
-
-const pkey = hexToBytes(`0x${'20'.repeat(32)}`)
-
-describe('EIP 3541 tests', () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin, eips: [3541] })
-  const commonNoEIP3541 = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin, eips: [] })
-
-  it('deposit 0xEF code if 3541 is active', async () => {
-    // put 0xEF contract
-    const tx = createLegacyTx({
-      data: '0x7FEF0000000000000000000000000000000000000000000000000000000000000060005260206000F3',
-      gasLimit: 1000000,
-    }).sign(pkey)
-
-    let vm = await createVM({ common })
-
-    let result = await runTx(vm, { tx, skipHardForkValidation: true })
-    let created = result.createdAddress
-
-    let code = await vm.stateManager.getCode(created!)
-
-    assert.strictEqual(code.length, 0, 'did not deposit code')
-
-    // Test if we can put a valid contract
-
-    // put a valid contract starting with SELFDESTRUCT
-    const tx1 = createLegacyTx({
-      data: '0x7FFF0000000000000000000000000000000000000000000000000000000000000060005260206000F3',
-      gasLimit: 1000000,
-      nonce: 1,
-    }).sign(pkey)
-
-    result = await runTx(vm, { tx: tx1, skipHardForkValidation: true })
-    created = result.createdAddress
-
-    code = await vm.stateManager.getCode(created!)
-
-    assert.isNotEmpty(code, 'did deposit code')
-
-    // check if we can deposit a contract on non-EIP3541 chains
-
-    vm = await createVM({ common: commonNoEIP3541 })
-    const tx2 = createLegacyTx({
-      data: '0x7FEF0000000000000000000000000000000000000000000000000000000000000060005260206000F3',
-      gasLimit: 1000000,
-    }).sign(pkey)
-
-    result = await runTx(vm, { tx: tx2, skipHardForkValidation: true })
-    created = result.createdAddress
-
-    code = await vm.stateManager.getCode(created!)
-
-    assert.isNotEmpty(code, 'did deposit code')
-  })
-
-  it('deploy contracts starting with 0xEF using CREATE', async () => {
-    // put 0xEF contract
-    const tx = createLegacyTx({
-      data: '0x7F60EF60005360016000F300000000000000000000000000000000000000000000600052602060006000F000',
-      gasLimit: 1000000,
-    }).sign(pkey)
-
-    const vm = await createVM({ common })
-    let address: Address
-    const handler = (step: InterpreterStep) => {
-      if (step.depth === 1) {
-        address = step.address
-      }
+describe.each([TronMainnet, TronNile, TronShasta])(
+  'TRON code prefix validation on $name',
+  (chain) => {
+    for (const mode of ['deployment', 'CREATE', 'CREATE2'] as const) {
+      it.each(['ef', 'ff'])(`${mode} validates a runtime prefix of 0x%s`, async (prefix) => {
+        const common = new Common({ chain, eips: [] })
+        const vm = await createVM({ common })
+        assert.isTrue(common.isActivatedEIP(3541))
+        await vm.stateManager.putAccount(SIGNER_A.address, new Account(0n, 100000000n))
+        const initcode = `60${prefix}60005360016000f3`
+        const nested = `7f${initcode.padEnd(64, '0')}600052`
+        const data =
+          mode === 'deployment'
+            ? initcode
+            : mode === 'CREATE'
+              ? `${nested}602060006000f000`
+              : `${nested}6000602060006000f500`
+        const tx = createLegacyTx(
+          { data: hexToBytes(`0x${data}`), gasLimit: 1000000n, gasPrice: 10n },
+          { common },
+        ).sign(SIGNER_A.privateKey)
+        let child: Address | undefined
+        let parentStack: bigint[] | undefined
+        vm.tvm.events!.on('step', (step) => {
+          if (step.depth === 1) child = step.address
+          if (step.depth === 0 && step.opcode.name === 'STOP') parentStack = [...step.stack]
+        })
+        const result = await runTx(vm, { tx })
+        const address = mode === 'deployment' ? result.createdAddress : child
+        assert.isDefined(address, 'the deployment path actually executed')
+        const code = await vm.stateManager.getCode(address!)
+        if (prefix === 'ef') {
+          assert.strictEqual(code.length, 0)
+          if (mode === 'deployment') assert.isDefined(result.execResult.exceptionError)
+          else {
+            assert.isUndefined(result.execResult.exceptionError)
+            assert.deepEqual(parentStack, [0n])
+          }
+        } else {
+          assert.isUndefined(result.execResult.exceptionError)
+          assert.deepEqual(code, hexToBytes('0xff'))
+          if (mode !== 'deployment') assert.isTrue(parentStack![0] > 0n)
+        }
+      })
     }
-    vm.tvm.events!.on('step', handler)
-
-    await runTx(vm, { tx, skipHardForkValidation: true })
-
-    let code = await vm.stateManager.getCode(address!)
-
-    assert.strictEqual(code.length, 0, 'did not deposit code')
-
-    // put 0xFF contract
-    const tx1 = createLegacyTx({
-      data: '0x7F60FF60005360016000F300000000000000000000000000000000000000000000600052602060006000F000',
-      gasLimit: 1000000,
-      nonce: 1,
-    }).sign(pkey)
-
-    await runTx(vm, { tx: tx1, skipHardForkValidation: true })
-
-    code = await vm.stateManager.getCode(address!)
-
-    assert.isNotEmpty(code, 'did deposit code')
-    vm.tvm.events!.removeListener('step', handler)
-  })
-
-  it('deploy contracts starting with 0xEF using CREATE2', async () => {
-    // put 0xEF contract
-    const tx = createLegacyTx({
-      data: '0x7F60EF60005360016000F3000000000000000000000000000000000000000000006000526000602060006000F500',
-      gasLimit: 1000000,
-    }).sign(pkey)
-
-    const vm = await createVM({ common })
-    let address: Address
-    const handler = (step: InterpreterStep) => {
-      if (step.depth === 1) {
-        address = step.address
-      }
-    }
-    vm.tvm.events!.on('step', handler)
-
-    await runTx(vm, { tx, skipHardForkValidation: true })
-
-    let code = await vm.stateManager.getCode(address!)
-
-    assert.strictEqual(code.length, 0, 'did not deposit code')
-
-    // put 0xFF contract
-    const tx1 = createLegacyTx({
-      data: '0x7F60FF60005360016000F3000000000000000000000000000000000000000000006000526000602060006000F500',
-      gasLimit: 1000000,
-      nonce: 1,
-    }).sign(pkey)
-
-    await runTx(vm, { tx: tx1, skipHardForkValidation: true })
-
-    code = await vm.stateManager.getCode(address!)
-
-    assert.isNotEmpty(code, 'did deposit code')
-    vm.tvm.events!.removeListener('step', handler)
-  })
-})
+  },
+)

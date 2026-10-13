@@ -1,17 +1,14 @@
 import { createBlock } from '@tvmjs/block'
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { createLegacyTx } from '@tvmjs/tx'
 import { Account, bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util'
 import { buildBlock, createVM } from '@tvmjs/vm'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet })
+  const common = new Common({ chain: TronMainnet })
   const vm = await createVM({ common })
 
-  const parentBlock = createBlock(
-    { header: { number: 1n } },
-    { skipConsensusFormatValidation: true },
-  )
+  const parentBlock = createBlock({ header: { number: 1n } }, { common })
   const headerData = {
     number: 2n,
   }
@@ -19,7 +16,6 @@ const main = async () => {
     parentBlock, // the parent @ethereumjs/block Block
     headerData, // header values for the new block
     blockOpts: {
-      calcDifficultyFromHeader: parentBlock.header,
       freeze: false,
       skipConsensusFormatValidation: true,
       putBlockIntoBlockchain: false,

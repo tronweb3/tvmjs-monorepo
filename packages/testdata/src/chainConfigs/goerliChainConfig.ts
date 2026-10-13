@@ -1,6 +1,6 @@
-import type { ChainConfig } from '@tvmjs/common'
+import type { EthereumChainData } from '@tvmjs/common'
 
-export const goerliChainConfig: ChainConfig = {
+export const goerliChainConfig: EthereumChainData = {
   name: 'goerli',
   chainId: 5,
   defaultHardfork: 'cancun',

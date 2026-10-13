@@ -191,6 +191,24 @@ export default [
     },
   },
   {
+    files: ['packages/client/**'],
+    rules: {
+      'no-invalid-this': 'off',
+      'no-restricted-syntax': 'off',
+    },
+  },
+  {
+    files: [
+      'packages/client/bin/**/*',
+      'packages/client/src/cli.ts',
+      'packages/client/test/integration/cli.spec.ts',
+      'packages/client/test/e2e/**/*',
+    ],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     files: ['packages/devp2p/**'],
     rules: {
       'no-console': 'off',
@@ -223,11 +241,7 @@ export default [
     },
   },
   {
-    files: [
-      'packages/vm/test/util.ts',
-      'packages/vm/test/tester/**/*.ts',
-      'packages/vm/examples/**/*.ts',
-    ],
+    files: ['packages/vm/test/util.ts', 'packages/vm/examples/**/*.ts'],
     rules: {
       'no-console': 'off',
     },

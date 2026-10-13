@@ -11,7 +11,7 @@ import type {
   WithdrawalData,
 } from '@tvmjs/util'
 import type { Bloom } from './bloom/index.ts'
-export type TxReceipt = PreByzantiumTxReceipt | PostByzantiumTxReceipt | EIP4844BlobTxReceipt
+export type TxReceipt = PreByzantiumTxReceipt | PostByzantiumTxReceipt
 
 /**
  * Controls how TRON execution obtains the transaction ID used for contract address derivation.
@@ -60,23 +60,6 @@ export interface PostByzantiumTxReceipt extends BaseTxReceipt {
    * Status of transaction, `1` if successful, `0` if an exception occurred
    */
   status: 0 | 1
-}
-
-export interface EIP4844BlobTxReceipt extends PostByzantiumTxReceipt {
-  /**
-   * blob gas consumed by a transaction
-   *
-   * Note: This value is not included in the receiptRLP used for encoding the receiptsRoot in a block
-   * and is only provided as part of receipt metadata.
-   */
-  blobGasUsed: bigint
-  /**
-   * blob gas price for block transaction was included in
-   *
-   * Note: This values is not included in the `receiptRLP` used for encoding the `receiptsRoot` in a block
-   * and is only provided as part of receipt metadata.
-   */
-  blobGasPrice: bigint
 }
 
 export type TVMProfilerOpts = {
@@ -451,14 +434,11 @@ export interface RunTxOpts {
   skipHardForkValidation?: boolean
 
   /**
-   * If true, adds a generated EIP-2930 access list
+   * If true, adds diagnostic accesses in EIP-2930 access-list format
    * to the `RunTxResult` returned.
    *
-   * Option works with all tx types. EIP-2929 needs to
-   * be activated (included in `berlin` HF).
-   *
-   * Note: if this option is used with a custom {@link StateManager} implementation
-   * {@link StateManager.generateAccessList} must be implemented.
+   * Works with all supported transaction types. The TVM journal collects the
+   * accesses without activating EIP-2929, warming state or changing Energy costs.
    */
   reportAccessList?: boolean
 
@@ -525,11 +505,6 @@ export interface RunTxResult extends TVMResult {
    * The value that accrues to the miner by this transaction
    */
   minerValue: bigint
-
-  /**
-   * This is the blob gas units times the fee per blob gas for 4844 transactions
-   */
-  blobGasUsed?: bigint
 }
 
 export interface AfterTxEvent extends RunTxResult {

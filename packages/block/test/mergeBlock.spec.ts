@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, ConsensusAlgorithm, ConsensusType, TronMainnet } from '@tvmjs/common'
 import {
   KECCAK256_RLP,
   KECCAK256_RLP_ARRAY,
@@ -12,9 +12,12 @@ import { Block, createBlock, createBlockHeader } from '../src/index.ts'
 
 import type { BlockHeader } from '../src/index.ts'
 
+// Explicit metadata exercises the retained PoS format tool, not TRON consensus.
 const common = new Common({
-  chain: Mainnet,
-  hardfork: Hardfork.Paris,
+  chain: {
+    ...TronMainnet,
+    consensus: { type: ConsensusType.ProofOfStake, algorithm: ConsensusAlgorithm.Casper },
+  },
 })
 
 function validateMergeHeader(header: BlockHeader) {
@@ -35,8 +38,8 @@ function validateMergeHeader(header: BlockHeader) {
   assert.isTrue(equalsBytes(header.nonce, new Uint8Array(8)), 'nonce')
 }
 
-describe('[Header]: Casper PoS / The Merge Functionality', () => {
-  it('should construct default blocks with post-merge PoS constants fields', () => {
+describe('[Header]: Explicit PoS metadata tools', () => {
+  it('should construct default blocks with explicit PoS constant fields', () => {
     const header = createBlockHeader({}, { common })
     validateMergeHeader(header)
 
@@ -79,22 +82,14 @@ describe('[Header]: Casper PoS / The Merge Functionality', () => {
     }, 'Block initialization with uncleHeaders on a PoS network is not allowed')
   })
 
-  it('EIP-4399: prevRandao should return mixHash value', () => {
+  it('EIP-4399: explicit PoS metadata does not activate prevRandao', () => {
     const mixHash = new Uint8Array(32).fill(3)
-    let block = createBlock({ header: { mixHash } }, { common })
-    assert.isTrue(
-      equalsBytes(block.header.prevRandao, mixHash),
-      'prevRandao should return mixHash value',
-    )
-
-    const commonLondon = common.copy()
-    commonLondon.setHardfork(Hardfork.London)
-    block = createBlock({ header: { mixHash } }, { common: commonLondon })
-    assert.throw(
-      () => block.header.prevRandao,
-      'The prevRandao parameter can only be accessed when EIP-4399 is activated',
-      undefined,
-      'prevRandao should throw if EIP-4399 is not activated',
-    )
+    for (const config of [common, new Common({ chain: TronMainnet })]) {
+      const block = createBlock({ header: { mixHash } }, { common: config })
+      assert.deepEqual(block.header.mixHash, mixHash)
+      assert.isFalse(block.common.isActivatedEIP(4399))
+      assert.throws(() => block.header.prevRandao, 'only be accessed when EIP-4399 is activated')
+      assert.throws(() => config.setEIPs([4399]))
+    }
   })
 })

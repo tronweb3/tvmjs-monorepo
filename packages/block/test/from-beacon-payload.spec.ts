@@ -1,69 +1,75 @@
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
-import { Hardfork, createCommonFromGethGenesis } from '@tvmjs/common'
-import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
-import { assert, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-import { createBlockFromBeaconPayloadJSON, createBlockHeader } from '../src/index.ts'
+import type { BeaconPayloadJSON } from '../src/index.ts'
+import {
+  createBlock,
+  createBlockFromBeaconPayloadJSON,
+  executionPayloadFromBeaconPayload,
+} from '../src/index.ts'
 
-import { eip4844GethGenesis } from '@tvmjs/testdata'
-import { payloadSlot87335Data } from './testdata/payload-slot-87335.ts'
-import { payloadSlot87475Data } from './testdata/payload-slot-87475.ts'
+const block = createBlock({
+  header: { number: 9007199254740993n, timestamp: 2n, gasLimit: 1000000n },
+})
+const execution = block.toExecutionPayload()
+const payload: BeaconPayloadJSON = {
+  parent_hash: execution.parentHash,
+  fee_recipient: execution.feeRecipient,
+  state_root: execution.stateRoot,
+  receipts_root: execution.receiptsRoot,
+  logs_bloom: execution.logsBloom,
+  prev_randao: execution.prevRandao,
+  block_number: '9007199254740993',
+  gas_limit: '1000000',
+  gas_used: '0',
+  timestamp: '2',
+  extra_data: execution.extraData,
+  base_fee_per_gas: '7',
+  block_hash: execution.blockHash,
+  transactions: [],
+}
 
-const kzg = new microEthKZG(trustedSetup)
-describe('[fromExecutionPayloadJSON]: 4844 devnet 5', () => {
-  const commonConfig = { ...eip4844GethGenesis }
-  commonConfig.config = { ...commonConfig.config, chainId: 4844001005 }
-  const network = 'sharding'
-  const common = createCommonFromGethGenesis(commonConfig, {
-    chain: network,
-    customCrypto: { kzg },
+describe('Beacon execution payload data conversion', () => {
+  it('preserves ordinary fields, exact integers and the resulting block hash', async () => {
+    const converted = executionPayloadFromBeaconPayload(payload)
+    expect(converted.blockNumber).toBe('0x20000000000001')
+    expect(converted).not.toHaveProperty('blobGasUsed')
+    expect(converted).not.toHaveProperty('excessBlobGas')
+    expect(converted).not.toHaveProperty('parentBeaconBlockRoot')
+    expect(converted).not.toHaveProperty('parent_beacon_block_root')
+    expect((await createBlockFromBeaconPayloadJSON(payload)).hash()).toEqual(block.hash())
   })
-  // safely change chainId without modifying underlying json
 
-  common.setHardfork(Hardfork.Cancun)
-
-  it('reconstruct cancun block with blob txs', async () => {
-    for (const payload of [payloadSlot87335Data, payloadSlot87475Data]) {
-      try {
-        const block = await createBlockFromBeaconPayloadJSON(payload, {
-          common,
-        })
-        const parentHeader = createBlockHeader(
-          { excessBlobGas: BigInt(0), blobGasUsed: block.header.excessBlobGas! + BigInt(393216) },
-          { common },
-        )
-        block.validateBlobTransactions(parentHeader)
-        assert.isTrue(true, `successfully constructed block=${block.header.number}`)
-      } catch (e) {
-        assert.fail(`failed to construct block, error: ${e}`)
-      }
-    }
-  })
-
-  it('should validate block hash', async () => {
+  it('still validates the payload block hash', async () => {
     await expect(
-      createBlockFromBeaconPayloadJSON(
-        {
-          ...payloadSlot87335Data,
-          block_hash: payloadSlot87475Data.block_hash,
-        },
-        { common },
-      ),
-      'should have failed constructing the block',
+      createBlockFromBeaconPayloadJSON({ ...payload, block_hash: `0x${'00'.repeat(32)}` }),
     ).rejects.toThrow('Invalid blockHash')
   })
 
-  it('should validate excess blob gas', async () => {
-    await expect(async () => {
-      const block = await createBlockFromBeaconPayloadJSON(
-        {
-          ...payloadSlot87475Data,
-          block_hash: '0x573714bdd0ca5e47bc32008751c4fc74237f8cb354fbc1475c1d0ece38236ea4',
-        },
-        { common },
-      )
-      const parentHeader = createBlockHeader({ excessBlobGas: BigInt(0) }, { common })
-      block.validateBlobTransactions(parentHeader)
-    }, 'should fail constructing the block').rejects.toThrow('block excessBlobGas mismatch')
-  })
+  it.each(['blob_gas_used', 'excess_blob_gas', 'blobGasUsed', 'excessBlobGas'])(
+    'rejects %s before mapping can discard it',
+    async (field) => {
+      for (const value of [undefined, null, '0', 0, []]) {
+        const input = { ...payload, [field]: value }
+        expect(() => executionPayloadFromBeaconPayload(input)).toThrow(`Blob header field ${field}`)
+        await expect(createBlockFromBeaconPayloadJSON(input)).rejects.toThrow(
+          `Blob header field ${field}`,
+        )
+      }
+    },
+  )
+
+  it.each(['parentBeaconBlockRoot', 'parent_beacon_block_root'])(
+    'rejects %s before Beacon payload conversion can discard it',
+    async (field) => {
+      for (const value of [undefined, null, '0', 0, '', `0x${'00'.repeat(32)}`]) {
+        const input = { ...payload, [field]: value }
+        expect(() => executionPayloadFromBeaconPayload(input)).toThrow(
+          `Beacon root header field ${field}`,
+        )
+        await expect(createBlockFromBeaconPayloadJSON(input)).rejects.toThrow(
+          `Beacon root header field ${field}`,
+        )
+      }
+    },
+  )
 })

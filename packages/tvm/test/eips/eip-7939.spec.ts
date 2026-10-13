@@ -1,11 +1,11 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { assert, describe, it } from 'vitest'
 
 import { createTVM } from '../../src/index.ts'
 
 describe('EIP-7939: CLZ (Count Leading Zeros) opcode', () => {
-  it('should not be available in default Cancun', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })
+  it('should not be available in the default TRON profile', async () => {
+    const common = new Common({ chain: TronMainnet })
     const tvm = await createTVM({ common })
 
     // 0x1e is CLZ opcode, but not activated by default
@@ -24,7 +24,7 @@ describe('EIP-7939: CLZ (Count Leading Zeros) opcode', () => {
   })
 
   it('should be available when EIP-7939 is explicitly enabled', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7939] })
+    const common = new Common({ chain: TronMainnet, eips: [7939] })
     const tvm = await createTVM({ common })
 
     // PUSH1 0x08, CLZ -> should return 252 (0x08 has bit 3 set, so 256-4=252 leading zeros)
@@ -43,7 +43,7 @@ describe('EIP-7939: CLZ (Count Leading Zeros) opcode', () => {
   })
 
   it('should return 256 for zero input', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7939] })
+    const common = new Common({ chain: TronMainnet, eips: [7939] })
     const tvm = await createTVM({ common })
 
     const code = new Uint8Array([
@@ -59,7 +59,7 @@ describe('EIP-7939: CLZ (Count Leading Zeros) opcode', () => {
   })
 
   it('should return 0 for input with MSB set', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7939] })
+    const common = new Common({ chain: TronMainnet, eips: [7939] })
     const tvm = await createTVM({ common })
 
     // 0x8000...0000 (MSB set, 255 trailing zeros)
@@ -107,7 +107,7 @@ describe('EIP-7939: CLZ (Count Leading Zeros) opcode', () => {
   })
 
   it('should return 255 for input 0x01', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7939] })
+    const common = new Common({ chain: TronMainnet, eips: [7939] })
     const tvm = await createTVM({ common })
 
     const code = new Uint8Array([
@@ -123,7 +123,7 @@ describe('EIP-7939: CLZ (Count Leading Zeros) opcode', () => {
   })
 
   it('should consume correct gas (PUSH1 3 + CLZ 5 = 8)', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7939] })
+    const common = new Common({ chain: TronMainnet, eips: [7939] })
     const tvm = await createTVM({ common })
 
     const code = new Uint8Array([
@@ -138,7 +138,7 @@ describe('EIP-7939: CLZ (Count Leading Zeros) opcode', () => {
   })
 
   it('should work with PUSH32 input', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7939] })
+    const common = new Common({ chain: TronMainnet, eips: [7939] })
     const tvm = await createTVM({ common })
 
     // 0x0000000100000000...00 (3 zero bytes + 0x01 byte = 24 + 7 = 31 leading zero bits)

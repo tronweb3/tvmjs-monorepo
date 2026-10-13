@@ -142,7 +142,8 @@ export interface StateManagerInterface {
   clearStorage(address: Address): Promise<void>
 
   // Token methods
-  tokenIdExists(tokenId: number): Promise<boolean>
+  /** Whether a TRC-10 token ID is known to the state. IDs are exact `bigint` values. */
+  tokenIdExists(tokenId: bigint): Promise<boolean>
 
   /*
    * Checkpointing Functionality

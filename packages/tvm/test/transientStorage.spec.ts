@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import {
   createAddressFromString,
   createZeroAddress,
@@ -13,7 +13,7 @@ import { createTVM } from '../src/index.ts'
 import { TransientStorage } from '../src/transientStorage.ts'
 
 describe('Transient Storage', () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })
+  const common = new Common({ chain: TronMainnet })
 
   it('should set and get storage', () => {
     const transientStorage = new TransientStorage()
@@ -195,8 +195,11 @@ describe('Transient Storage', () => {
     const keyBuf = setLengthLeft(new Uint8Array([1]), 32)
     const result = await tvm.runCall({
       data: code,
+      rootTransactionId: new Uint8Array(32),
       gasLimit: BigInt(100_000),
     })
+    assert.isUndefined(result.execResult.exceptionError)
+    assert.strictEqual(result.execResult.executionGasUsed, 106n)
     const created = result.createdAddress!
     const stored = tvm.transientStorage.get(created, keyBuf)
     assert.isTrue(
@@ -212,10 +215,12 @@ describe('Transient Storage', () => {
     const code = hexToBytes('0x600160015D')
     await tvm.stateManager.putCode(contractAddress, code)
     const keyBuf = setLengthLeft(new Uint8Array([1]), 32)
-    await tvm.runCall({
+    const result = await tvm.runCall({
       to: contractAddress,
       gasLimit: BigInt(100_000),
     })
+    assert.isUndefined(result.execResult.exceptionError)
+    assert.strictEqual(result.execResult.executionGasUsed, 106n)
     const stored = tvm.transientStorage.get(contractAddress, keyBuf)
     assert.isTrue(
       equalsBytes(unpadBytes(stored), new Uint8Array()),

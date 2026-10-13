@@ -1,5 +1,11 @@
 import { blake3 } from '@noble/hashes/blake3.js'
-import { KeyEncoding, MapDB, ValueEncoding, bytesToHex, unprefixedHexToBytes } from '@tvmjs/util'
+import {
+  KeyEncoding,
+  MapDB,
+  ValueEncoding,
+  bytesToUnprefixedHex,
+  unprefixedHexToBytes,
+} from '@tvmjs/util'
 
 import { BinaryTree } from './binaryTree.ts'
 import { ROOT_DB_KEY } from './types.ts'
@@ -7,7 +13,8 @@ import { ROOT_DB_KEY } from './types.ts'
 import type { BinaryTreeOpts } from './types.ts'
 
 export async function createBinaryTree(opts?: Partial<BinaryTreeOpts>) {
-  const key = bytesToHex(ROOT_DB_KEY)
+  // Match the unprefixed hex keys written by CheckpointDB in persistRoot().
+  const key = bytesToUnprefixedHex(ROOT_DB_KEY)
 
   // Provide sensible default options
   const parsedOptions = {

@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { TronMainnet, createCustomCommon } from '@tvmjs/common'
 import { bytesToHex, randomBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -22,9 +22,11 @@ const txTypes = [
   TransactionType.FeeMarketEIP1559,
 ]
 
+// The bundled RPC envelope uses chain ID 1; its execution profile remains TRON.
+const common = createCustomCommon({ chainId: 1 }, TronMainnet)
+
 describe('[fromJSONRPCProvider]', () => {
   it('should work', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
     const provider = 'https://my.json.rpc.provider.com:8545'
 
     const realFetch = fetch
@@ -32,8 +34,9 @@ describe('[fromJSONRPCProvider]', () => {
 
     fetch = async (_url: string, req: any) => {
       const json = JSON.parse(req.body)
+      assert.strictEqual(_url, provider)
+      assert.strictEqual(json.method, 'eth_getTransactionByHash')
       if (json.params[0] === '0xed1960aa7d0d7b567c946d94331dddb37a1c67f51f30bf51f256ea40db88cfb0') {
-        const { rpcTxData } = await import(`./testData/rpcTx.js`)
         return {
           ok: true,
           status: 200,
@@ -56,31 +59,31 @@ describe('[fromJSONRPCProvider]', () => {
       }
     }
 
-    const txHash = '0xed1960aa7d0d7b567c946d94331dddb37a1c67f51f30bf51f256ea40db88cfb0'
-    const tx = await createTxFromJSONRPCProvider(provider, txHash, { common })
-    assert.strictEqual(
-      bytesToHex(tx.hash()),
-      txHash,
-      'generated correct tx from transaction RPC data',
-    )
     try {
-      await createTxFromJSONRPCProvider(provider, bytesToHex(randomBytes(32)), {})
-      assert.fail('should throw')
-    } catch (err: any) {
-      assert.isTrue(
-        err.message.includes('No data returned from provider'),
-        'throws correct error when no tx returned',
+      const txHash = '0xed1960aa7d0d7b567c946d94331dddb37a1c67f51f30bf51f256ea40db88cfb0'
+      const tx = await createTxFromJSONRPCProvider(provider, txHash, { common })
+      assert.strictEqual(
+        bytesToHex(tx.hash()),
+        txHash,
+        'generated correct tx from transaction RPC data',
       )
+      try {
+        await createTxFromJSONRPCProvider(provider, bytesToHex(randomBytes(32)), { common })
+        assert.fail('should throw')
+      } catch (err: any) {
+        assert.include(err.message, 'No data returned from provider')
+      }
+    } finally {
+      //@ts-expect-error -- Assigning to a global function
+      fetch = realFetch
     }
-    //@ts-expect-error -- Assigning to a global function
-    fetch = realFetch
   })
 })
 
 describe('[normalizeTxParams]', () => {
   it('should work', () => {
     const normedTx = normalizeTxParams(rpcTxData)
-    const tx = createTx(normedTx)
+    const tx = createTx(normedTx, { common })
     assert.strictEqual(normedTx.gasLimit, 21000n, 'correctly converted "gas" to "gasLimit"')
     assert.strictEqual(
       bytesToHex(tx.hash()),
@@ -111,9 +114,10 @@ describe('fromRPC: ensure `v="0x0"` is correctly decoded for signed txs', () => 
         // legacy tx cannot have v=0
         continue
       }
-      const common = createCustomCommon({ chainId: 0x10f2c }, Mainnet)
+      const common = createCustomCommon({ chainId: 0x10f2c }, TronMainnet)
       const tx = await createTxFromRPC({ ...v0txData, type: txType } as TypedTxData, { common })
       assert.isTrue(tx.isSigned())
+      assert.strictEqual(tx.v, 0n)
     }
   })
 })

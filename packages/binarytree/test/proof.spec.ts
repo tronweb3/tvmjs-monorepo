@@ -2,7 +2,7 @@ import { blake3 } from '@noble/hashes/blake3.js'
 import { assert, describe, it } from 'vitest'
 
 import { createBinaryTree } from '../src/constructors.ts'
-import { decodeBinaryNode } from '../src/index.ts'
+import { decodeBinaryNode, isInternalBinaryNode } from '../src/index.ts'
 import { binaryTreeFromProof, verifyBinaryProof } from '../src/proof.ts'
 
 import type { StemBinaryNode } from '../src/node/stemNode.ts'
@@ -76,5 +76,49 @@ describe('binary tree proof', async () => {
     const proof = await tree1.createBinaryProof(fakeKey)
     const proofValue = await verifyBinaryProof(tree1.root(), fakeKey, proof)
     assert.deepEqual(proofValue, undefined, 'verify proof of non-existence should return undefined')
+  })
+
+  it('should verify non-existence proofs ending at an internal node', async () => {
+    const tree = await createBinaryTree()
+    const value = new Uint8Array(32).fill(1)
+    const [keyA, keyB, keyC] = [0x00, 0x80, 0xa0].map((byte) => new Uint8Array(32).fill(byte))
+    for (const key of [keyA, keyB, keyC]) await tree.put(key.slice(0, 31), [key[31]], [value])
+    // 0x80 and 0xa0 share the prefix 0b10, so the path for 0b11… ends at their internal parent.
+    const missingKey = new Uint8Array(32).fill(0xc0)
+    const proof = await tree.createBinaryProof(missingKey)
+    assert.isTrue(isInternalBinaryNode(decodeBinaryNode(proof[proof.length - 1])))
+    assert.notExists(await verifyBinaryProof(tree.root(), missingKey, proof))
+  })
+
+  it('should verify proofs after deleting a stem', async () => {
+    const tree = await createBinaryTree()
+    const keyA = new Uint8Array(32).fill(0x01)
+    const keyB = new Uint8Array(32).fill(0x02)
+    const value = new Uint8Array(32).fill(1)
+    await tree.put(keyA.slice(0, 31), [keyA[31]], [value])
+    await tree.put(keyB.slice(0, 31), [keyB[31]], [value])
+    await tree.del(keyB.slice(0, 31), [keyB[31]])
+
+    assert.notExists(await verifyBinaryProof(tree.root(), keyB, await tree.createBinaryProof(keyB)))
+    assert.deepEqual(
+      await verifyBinaryProof(tree.root(), keyA, await tree.createBinaryProof(keyA)),
+      value,
+    )
+  })
+
+  it('should verify non-existence proofs against an empty tree', async () => {
+    const tree = await createBinaryTree()
+    const key = new Uint8Array(32)
+    await tree.put(key.slice(0, 31), [key[31]], [new Uint8Array(32).fill(1)])
+    await tree.del(key.slice(0, 31), [key[31]])
+    const proof = await tree.createBinaryProof(key)
+    assert.deepEqual(proof, [])
+    assert.isNull(await verifyBinaryProof(tree.root(), key, proof))
+    try {
+      await verifyBinaryProof(new Uint8Array(32).fill(1), key, proof)
+      assert.fail('should reject an empty proof for a non-empty root')
+    } catch (e) {
+      assert.include((e as Error).message, 'rootHash does not match proof root')
+    }
   })
 })

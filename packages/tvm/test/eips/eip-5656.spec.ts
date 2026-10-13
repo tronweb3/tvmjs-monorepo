@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -12,6 +12,7 @@ type Situation = {
   dst: number
   src: number
   length: number
+  energy: bigint
 }
 
 // Taken from EIP
@@ -23,6 +24,7 @@ const situations: Situation[] = [
     dst: 0,
     src: 32,
     length: 32,
+    energy: 405n,
   },
   {
     pre: '0101010101010101010101010101010101010101010101010101010101010101',
@@ -30,6 +32,7 @@ const situations: Situation[] = [
     dst: 0,
     src: 0,
     length: 32,
+    energy: 210n,
   },
   // For the situation below, pre/post have 1 byte less than in the current state of the EIP
   {
@@ -38,6 +41,7 @@ const situations: Situation[] = [
     dst: 0,
     src: 1,
     length: 8,
+    energy: 210n,
   },
   // For the situation below, pre/post have 1 byte less than in the current state of the EIP
   {
@@ -46,6 +50,7 @@ const situations: Situation[] = [
     dst: 1,
     src: 0,
     length: 8,
+    energy: 210n,
   },
 ]
 
@@ -58,9 +63,9 @@ const MSTORE8 = '53'
 const MCOPY = '5E'
 const STOP = '00'
 
-describe('should test mcopy', () => {
+describe('TRON MCOPY', () => {
   for (const situation of situations) {
-    it('should produce correct output', async () => {
+    it(`copies ${situation.length} bytes from ${situation.src} to ${situation.dst}`, async () => {
       // create bytecode
       let bytecode = '0x'
       // prepare the memory
@@ -80,28 +85,29 @@ describe('should test mcopy', () => {
       bytecode += MCOPY + STOP
 
       const common = new Common({
-        chain: Mainnet,
-        hardfork: Hardfork.Shanghai,
-        eips: [5656],
+        chain: TronMainnet,
+        activatedProposals: [],
       })
 
       const tvm = await createTVM({
         common,
       })
 
-      let currentMem = ''
-
-      tvm.events.on('step', (e) => {
-        if (e.opcode.name === 'STOP') {
-          currentMem = bytesToHex(e.memory)
-          assert.strictEqual(currentMem, '0x' + situation.post, 'post-memory correct')
-        }
-      })
-
-      await tvm.runCall({
-        data: hexToBytes(bytecode as PrefixedHexString),
+      const result = await tvm.runCode({
+        code: hexToBytes(bytecode as PrefixedHexString),
         gasLimit: BigInt(0xffffff),
       })
+      assert.isUndefined(result.exceptionError)
+      assert.strictEqual(result.runState!.stack.length, 0)
+      const expected = hexToBytes(`0x${situation.post}`)
+      assert.strictEqual(result.runState!.memoryWordCount, BigInt(expected.length / 32))
+      assert.strictEqual(
+        bytesToHex(result.runState!.memory.read(0, expected.length)),
+        bytesToHex(expected),
+      )
+      // Two PUSH1 per initialized byte (MSTORE8 costs zero), memory expansion, three MCOPY arguments,
+      // then MCOPY's 3 Energy base fee and 3 Energy per copied word.
+      assert.strictEqual(result.executionGasUsed, situation.energy)
     })
   }
 })

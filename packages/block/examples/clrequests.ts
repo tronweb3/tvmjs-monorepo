@@ -1,11 +1,9 @@
 import { sha256 } from '@noble/hashes/sha2.js'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
 import { CLRequestType, bytesToHex, createCLRequest, hexToBytes } from '@tvmjs/util'
 
-import { createBlock, genRequestsRoot } from '../src'
+import { genRequestsRoot } from '@tvmjs/block'
 
-// Enable EIP-7685 to support CLRequests
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7685] })
+// A retained data helper; requests cannot be included in TRON execution blocks.
 
 // Create examples of the three CLRequest types
 const createExampleRequests = () => {
@@ -29,8 +27,8 @@ const createExampleRequests = () => {
   return [depositRequest, withdrawalRequest, consolidationRequest]
 }
 
-// Generate a block with CLRequests
-function createBlockWithCLRequests() {
+// Generate the standalone request hash
+function createRequestHash() {
   const requests = createExampleRequests()
   console.log(`Created ${requests.length} CLRequests:`)
 
@@ -44,14 +42,10 @@ function createBlockWithCLRequests() {
 
   // Generate the requestsHash by hashing all the CLRequests
   const requestsHash = genRequestsRoot(requests, sha256)
-  console.log(`Generated requestsHash: 0x${bytesToHex(requestsHash)}`)
+  console.log(`Generated requestsHash: ${bytesToHex(requestsHash)}`)
 
-  // Create a block with the CLRequests hash
-  const block = createBlock({ header: { requestsHash } }, { common })
-  console.log(`Created block hash: 0x${bytesToHex(block.hash())}`)
-
-  return block
+  return requestsHash
 }
 
 // Execute
-createBlockWithCLRequests()
+createRequestHash()

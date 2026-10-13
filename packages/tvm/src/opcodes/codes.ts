@@ -1,4 +1,3 @@
-import { Hardfork } from '@tvmjs/common'
 import { EthereumJSErrorWithoutCode } from '@tvmjs/util'
 
 import { handlers } from './functions.ts'
@@ -231,20 +230,16 @@ const opcodes: OpcodeEntry = {
   0xd4: asyncAndDynamicGasOp('ISCONTRACT'),
 }
 
-// Array of hard forks in order. These changes are repeatedly applied to `opcodes` until the hard fork is in the future based upon the common
-// TODO: All gas price changes should be moved to common
-// If the base gas cost of any of the operations change, then these should also be added to this list.
-// If there are context variables changed (such as "warm slot reads") which are not the base gas fees,
-// Then this does not have to be added.
-const hardforkOpcodes: { hardfork: Hardfork; opcodes: OpcodeEntry }[] = [
+// Shared opcode implementations selected by the TRON capability matrix.
+const baseCapabilityOpcodes: { eip: number; opcodes: OpcodeEntry }[] = [
   {
-    hardfork: Hardfork.Homestead,
+    eip: 606,
     opcodes: {
       0xf4: asyncAndDynamicGasOp('DELEGATECALL'), // EIP-7
     },
   },
   {
-    hardfork: Hardfork.TangerineWhistle,
+    eip: 608,
     opcodes: {
       0x54: asyncAndDynamicGasOp('SLOAD'),
       0xf1: asyncAndDynamicGasOp('CALL'),
@@ -257,7 +252,7 @@ const hardforkOpcodes: { hardfork: Hardfork; opcodes: OpcodeEntry }[] = [
     },
   },
   {
-    hardfork: Hardfork.Byzantium,
+    eip: 609,
     opcodes: {
       0xfd: dynamicGasOp('REVERT'), // EIP-140
       0xfa: asyncAndDynamicGasOp('STATICCALL'), // EIP-214
@@ -266,7 +261,7 @@ const hardforkOpcodes: { hardfork: Hardfork; opcodes: OpcodeEntry }[] = [
     },
   },
   {
-    hardfork: Hardfork.Constantinople,
+    eip: 1013,
     opcodes: {
       0x1b: defaultOp('SHL'), // EIP-145
       0x1c: defaultOp('SHR'), // EIP-145
@@ -276,14 +271,14 @@ const hardforkOpcodes: { hardfork: Hardfork; opcodes: OpcodeEntry }[] = [
     },
   },
   {
-    hardfork: Hardfork.Istanbul,
+    eip: 1679,
     opcodes: {
       0x46: defaultOp('CHAINID'), // EIP-1344
       0x47: defaultOp('SELFBALANCE'), // EIP-1884
     },
   },
   {
-    hardfork: Hardfork.Paris,
+    eip: 4399,
     opcodes: {
       0x44: asyncOp('PREVRANDAO'), // EIP-4399
     },
@@ -334,12 +329,6 @@ const eipOpcodes: { eip: number; opcodes: OpcodeEntry }[] = [
     },
   },
   {
-    eip: 4844,
-    opcodes: {
-      0x49: defaultOp('BLOBHASH'),
-    },
-  },
-  {
     eip: 5656,
     opcodes: {
       0x5e: dynamicGasOp('MCOPY'),
@@ -358,21 +347,6 @@ const eipOpcodes: { eip: number; opcodes: OpcodeEntry }[] = [
       0xf8: asyncAndDynamicGasOp('EXTCALL'),
       0xf9: asyncAndDynamicGasOp('EXTDELEGATECALL'),
       0xfb: asyncAndDynamicGasOp('EXTSTATICCALL'),
-    },
-  },
-  {
-    eip: 7480,
-    opcodes: {
-      0xd0: defaultOp('DATALOAD'),
-      0xd1: defaultOp('DATALOADN'),
-      0xd2: defaultOp('DATASIZE'),
-      0xd3: dynamicGasOp('DATACOPY'),
-    },
-  },
-  {
-    eip: 7516,
-    opcodes: {
-      0x4a: defaultOp('BLOBBASEFEE'),
     },
   },
   {
@@ -446,9 +420,9 @@ export function getOpcodesForHF(common: Common, customOpcodes?: CustomOpcode[]):
   const handlersCopy = new Map(handlers)
   const dynamicGasHandlersCopy = new Map(dynamicGasHandlers)
 
-  for (let fork = 0; fork < hardforkOpcodes.length; fork++) {
-    if (common.gteHardfork(hardforkOpcodes[fork].hardfork)) {
-      opcodeBuilder = { ...opcodeBuilder, ...hardforkOpcodes[fork].opcodes }
+  for (const capability of baseCapabilityOpcodes) {
+    if (common.isActivatedEIP(capability.eip)) {
+      opcodeBuilder = { ...opcodeBuilder, ...capability.opcodes }
     }
   }
   for (const eipOps of eipOpcodes) {
@@ -458,7 +432,12 @@ export function getOpcodesForHF(common: Common, customOpcodes?: CustomOpcode[]):
   }
 
   for (const key in opcodeBuilder) {
-    const baseFee = Number(common.param(`${opcodeBuilder[key].name.toLowerCase()}Gas`))
+    const opcode = Number(key)
+    const higherMemoryCost =
+      common.isActivatedProposal(65) && (opcode === 0x51 || opcode === 0x52 || opcode === 0x53)
+    const baseFee =
+      Number(common.param(`${opcodeBuilder[key].name.toLowerCase()}Gas`)) +
+      (higherMemoryCost ? 1 : 0)
     // explicitly verify that we have defined a base fee
     if (baseFee === undefined) {
       throw EthereumJSErrorWithoutCode(`base fee not defined for: ${opcodeBuilder[key].name}`)

@@ -3,15 +3,16 @@ import { keccak_256 } from '@noble/hashes/sha3.js'
 import { ConsensusType } from '@tvmjs/common'
 import { MerklePatriciaTrie } from '@tvmjs/mpt'
 import { RLP } from '@tvmjs/rlp'
-import { Blob4844Tx, Capability } from '@tvmjs/tx'
+import { Capability } from '@tvmjs/tx'
 import {
-  BIGINT_0,
   EthereumJSErrorWithoutCode,
   KECCAK256_RLP,
   KECCAK256_RLP_ARRAY,
   bytesToHex,
   equalsBytes,
 } from '@tvmjs/util'
+
+import { rejectRemovedHeaderFields } from '../helpers.ts'
 
 import type { Common } from '@tvmjs/common'
 import type { FeeMarket1559Tx, LegacyTx, TypedTransaction } from '@tvmjs/tx'
@@ -62,11 +63,6 @@ export class Block {
   protected keccakFunction: (msg: Uint8Array) => Uint8Array
   protected sha256Function: (msg: Uint8Array) => Uint8Array
 
-  protected cache: {
-    txTrieRoot?: Uint8Array
-    withdrawalsTrieRoot?: Uint8Array
-  } = {}
-
   /**
    * This constructor takes the values, validates them, assigns them and freezes the object.
    *
@@ -80,6 +76,22 @@ export class Block {
     withdrawals?: Withdrawal[],
     opts: BlockOptions = {},
   ) {
+    if (header) rejectRemovedHeaderFields(header)
+    if (transactions.some((tx) => Number(tx.type) === 3)) {
+      throw EthereumJSErrorWithoutCode('Blob transaction type 0x03 is no longer supported')
+    }
+    if (transactions.some((tx) => Number(tx.type) === 4)) {
+      throw EthereumJSErrorWithoutCode('EIP-7702 transaction type 0x04 is no longer supported')
+    }
+    for (const tx of transactions) {
+      for (const field of ['authorizationList', 'authorization_list']) {
+        if (field in tx) {
+          throw EthereumJSErrorWithoutCode(
+            `EIP-7702 transaction field ${field} is no longer supported`,
+          )
+        }
+      }
+    }
     this.header = header ?? new BlockHeader({}, opts)
     this.common = this.header.common
     this.keccakFunction = this.common.customCrypto.keccak256 ?? keccak_256
@@ -90,6 +102,11 @@ export class Block {
 
     this.uncleHeaders = uncleHeaders
     if (uncleHeaders.length > 0) {
+      if (!this.common.hasConsensus()) {
+        throw EthereumJSErrorWithoutCode(
+          'Uncle headers are not supported by TRON execution presets',
+        )
+      }
       this.validateUncles()
       if (this.common.consensusType() === ConsensusType.ProofOfAuthority) {
         const msg = this._errorMsg(
@@ -171,17 +188,14 @@ export class Block {
    * @returns True if the transaction trie is valid, false otherwise
    */
   async transactionsTrieIsValid(): Promise<boolean> {
-    let result
     if (this.transactions.length === 0) {
-      result = equalsBytes(this.header.transactionsTrie, KECCAK256_RLP)
-      return result
+      return equalsBytes(this.header.transactionsTrie, KECCAK256_RLP)
     }
 
-    if (this.cache.txTrieRoot === undefined) {
-      this.cache.txTrieRoot = await this.genTxTrie()
-    }
-    result = equalsBytes(this.cache.txTrieRoot, this.header.transactionsTrie)
-    return result
+    // Freezing the Block does not freeze its transaction array or transaction byte fields.
+    // Always compute the root from the current body when validating it.
+    const txTrieRoot = await this.genTxTrie()
+    return equalsBytes(txTrieRoot, this.header.transactionsTrie)
   }
 
   /**
@@ -190,7 +204,6 @@ export class Block {
    */
   getTransactionsValidationErrors(): string[] {
     const errors: string[] = []
-    let blobGasUsed = BIGINT_0
 
     // eslint-disable-next-line prefer-const
     for (let [i, tx] of this.transactions.entries()) {
@@ -208,26 +221,8 @@ export class Block {
           }
         }
       }
-      if (this.common.isActivatedEIP(4844)) {
-        const blobGasLimit = this.common.getBlobGasSchedule().maxBlobGasPerBlock
-        const blobGasPerBlob = this.common.param('blobGasPerBlob')
-        if (tx instanceof Blob4844Tx) {
-          blobGasUsed += BigInt(tx.numBlobs()) * blobGasPerBlob
-          if (blobGasUsed > blobGasLimit) {
-            errs.push(
-              `tx causes total blob gas of ${blobGasUsed} to exceed maximum blob gas per block of ${blobGasLimit}`,
-            )
-          }
-        }
-      }
       if (errs.length > 0) {
         errors.push(`errors at tx ${i}: ${errs.join(', ')}`)
-      }
-    }
-
-    if (this.common.isActivatedEIP(4844)) {
-      if (blobGasUsed !== this.header.blobGasUsed) {
-        errors.push(`invalid blobGasUsed expected=${this.header.blobGasUsed} actual=${blobGasUsed}`)
       }
     }
 
@@ -313,56 +308,6 @@ export class Block {
   }
 
   /**
-   * Validates that blob gas fee for each transaction is greater than or equal to the
-   * blobGasPrice for the block and that total blob gas in block is less than maximum
-   * blob gas per block
-   * @param parentHeader header of parent block
-   */
-  validateBlobTransactions(parentHeader: BlockHeader) {
-    if (this.common.isActivatedEIP(4844)) {
-      const blobGasLimit = this.common.getBlobGasSchedule().maxBlobGasPerBlock
-      const blobGasPerBlob = this.common.param('blobGasPerBlob')
-      let blobGasUsed = BIGINT_0
-
-      const expectedExcessBlobGas = parentHeader.calcNextExcessBlobGas(this.common)
-      if (this.header.excessBlobGas !== expectedExcessBlobGas) {
-        throw EthereumJSErrorWithoutCode(
-          `block excessBlobGas mismatch: have ${this.header.excessBlobGas}, want ${expectedExcessBlobGas}`,
-        )
-      }
-
-      let blobGasPrice
-
-      for (const tx of this.transactions) {
-        if (tx instanceof Blob4844Tx) {
-          blobGasPrice = blobGasPrice ?? this.header.getBlobGasPrice()
-          if (tx.maxFeePerBlobGas < blobGasPrice) {
-            throw EthereumJSErrorWithoutCode(
-              `blob transaction maxFeePerBlobGas ${
-                tx.maxFeePerBlobGas
-              } < than block blob gas price ${blobGasPrice} - ${this.errorStr()}`,
-            )
-          }
-
-          blobGasUsed += BigInt(tx.blobVersionedHashes.length) * blobGasPerBlob
-
-          if (blobGasUsed > blobGasLimit) {
-            throw EthereumJSErrorWithoutCode(
-              `tx causes total blob gas of ${blobGasUsed} to exceed maximum blob gas per block of ${blobGasLimit}`,
-            )
-          }
-        }
-      }
-
-      if (this.header.blobGasUsed !== blobGasUsed) {
-        throw EthereumJSErrorWithoutCode(
-          `block blobGasUsed mismatch: have ${this.header.blobGasUsed}, want ${blobGasUsed}`,
-        )
-      }
-    }
-  }
-
-  /**
    * Validates the uncle's hash.
    * @returns true if the uncle's hash is valid, false otherwise.
    */
@@ -384,20 +329,16 @@ export class Block {
       throw EthereumJSErrorWithoutCode('EIP 4895 is not activated')
     }
 
-    let result
     if (this.withdrawals!.length === 0) {
-      result = equalsBytes(this.header.withdrawalsRoot!, KECCAK256_RLP)
-      return result
+      return equalsBytes(this.header.withdrawalsRoot!, KECCAK256_RLP)
     }
 
-    if (this.cache.withdrawalsTrieRoot === undefined) {
-      this.cache.withdrawalsTrieRoot = await genWithdrawalsTrieRoot(
-        this.withdrawals!,
-        new MerklePatriciaTrie({ common: this.common }),
-      )
-    }
-    result = equalsBytes(this.cache.withdrawalsTrieRoot, this.header.withdrawalsRoot!)
-    return result
+    // The withdrawal array and its contents remain mutable even when the Block is frozen.
+    const withdrawalsTrieRoot = await genWithdrawalsTrieRoot(
+      this.withdrawals!,
+      new MerklePatriciaTrie({ common: this.common }),
+    )
+    return equalsBytes(withdrawalsTrieRoot, this.header.withdrawalsRoot!)
   }
 
   /**
@@ -479,13 +420,10 @@ export class Block {
       timestamp: header.timestamp!,
       extraData: header.extraData!,
       baseFeePerGas: header.baseFeePerGas!,
-      blobGasUsed: header.blobGasUsed,
-      excessBlobGas: header.excessBlobGas,
       blockHash: bytesToHex(this.hash()),
       prevRandao: header.mixHash!,
       transactions,
       ...withdrawalsArr,
-      parentBeaconBlockRoot: header.parentBeaconBlockRoot,
       requestsHash: header.requestsHash,
     }
 

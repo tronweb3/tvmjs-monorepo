@@ -23,7 +23,7 @@ const main = async () => {
   const data = `0x${baseLen}${expLen}${modLen}${base}${exponent}${modulus}`
 
   await runPrecompile('MODEXP', '0x05', data)
-  await runPrecompile('MODEXP', '0x05', data, Hardfork.Cancun)
+  await runPrecompile('MODEXP', '0x05', data, Hardfork.Tron)
 }
 
 void main()

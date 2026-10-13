@@ -1,5 +1,7 @@
 import { TypeOutput, setLengthLeft, toBytes, toType } from '@tvmjs/util'
 
+import { rejectRemovedTransactionData } from './internal.ts'
+
 import type { TypedTxData } from '../types.ts'
 
 /**
@@ -9,6 +11,7 @@ import type { TypedTxData } from '../types.ts'
  * @returns a normalized {@link TypedTxData} object with valid values
  */
 export const normalizeTxParams = (txParamsFromRPC: any): TypedTxData => {
+  rejectRemovedTransactionData(txParamsFromRPC)
   const txParams = Object.assign({}, txParamsFromRPC)
 
   txParams.gasLimit = toType(txParams.gasLimit ?? txParams.gas, TypeOutput.BigInt)

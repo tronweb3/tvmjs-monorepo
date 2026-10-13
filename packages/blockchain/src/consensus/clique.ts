@@ -315,6 +315,7 @@ export class CliqueConsensus implements Consensus {
             BigInt((this.blockchain!.common.consensusConfig() as CliqueConfig).epoch))
         const limit = this.cliqueSignerLimit(header.number)
         let activeSigners = [...this.cliqueActiveSigners(header.number)]
+        const beneficiaryIsSigner = activeSigners.some((address) => address.equals(beneficiary))
         let consensus = false
 
         // AUTH vote analysis
@@ -339,8 +340,8 @@ export class CliqueConsensus implements Consensus {
         if (round === 2 && equalsBytes(nonce, CLIQUE_NONCE_AUTH)) {
           numBeneficiaryVotesAUTH += 1
         }
-        // Majority consensus
-        if (numBeneficiaryVotesAUTH >= limit) {
+        // Meaningless votes are allowed, but cannot authorize an existing signer.
+        if (!beneficiaryIsSigner && numBeneficiaryVotesAUTH >= limit) {
           consensus = true
           // Authorize new signer
           activeSigners.push(beneficiary)
@@ -384,8 +385,8 @@ export class CliqueConsensus implements Consensus {
         if (round === 2 && equalsBytes(nonce, CLIQUE_NONCE_DROP)) {
           numBeneficiaryVotesDROP += 1
         }
-        // Majority consensus
-        if (numBeneficiaryVotesDROP >= limit) {
+        // Likewise, only existing signers can be removed by a voting majority.
+        if (beneficiaryIsSigner && numBeneficiaryVotesDROP >= limit) {
           consensus = true
           // Drop signer
           activeSigners = activeSigners.filter((signer) => !signer.equals(beneficiary))

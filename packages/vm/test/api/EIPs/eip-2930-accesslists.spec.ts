@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
 import { createAccessList2930Tx } from '@tvmjs/tx'
 import {
   Address,
@@ -14,76 +14,80 @@ import { createVM, runTx } from '../../../src/index.ts'
 
 import type { InterpreterStep } from '@tvmjs/tvm'
 
-const common = new Common({
-  eips: [2718, 2929, 2930],
-  chain: Mainnet,
-  hardfork: Hardfork.Berlin,
-})
-
 const validAddress = hexToBytes('0x00000000000000000000000000000000000000ff')
 const validSlot = hexToBytes(`0x${'00'.repeat(32)}`)
 
 // setup the accounts for this test
 const contractAddress = new Address(validAddress)
 
-describe('EIP-2930 Optional Access Lists tests', () => {
-  it('VM should charge the right gas when using access list transactions', async () => {
-    const access = [
-      {
-        address: bytesToHex(validAddress),
-        storageKeys: [bytesToHex(validSlot)],
-      },
-    ]
-    const txnWithAccessList = createAccessList2930Tx(
-      {
-        accessList: access,
-        chainId: BigInt(1),
-        gasLimit: BigInt(100000),
-        to: contractAddress,
-      },
-      { common },
-    ).sign(SIGNER_A.privateKey)
-    const txnWithoutAccessList = createAccessList2930Tx(
-      {
-        accessList: [],
-        chainId: BigInt(1),
-        gasLimit: BigInt(100000),
-        to: contractAddress,
-      },
-      { common },
-    ).sign(SIGNER_A.privateKey)
+describe.each([TronMainnet, TronNile, TronShasta])(
+  'TRON access-list envelopes on $name',
+  (chain) => {
+    const common = new Common({ chain })
+    it('VM should charge the right gas when using access list transactions', async () => {
+      const access = [
+        {
+          address: bytesToHex(validAddress),
+          storageKeys: [bytesToHex(validSlot)],
+        },
+      ]
+      const txnWithAccessList = createAccessList2930Tx(
+        {
+          accessList: access,
+          chainId: common.chainId(),
+          gasPrice: 10n,
+          gasLimit: BigInt(100000),
+          to: contractAddress,
+        },
+        { common },
+      ).sign(SIGNER_A.privateKey)
+      const txnWithoutAccessList = createAccessList2930Tx(
+        {
+          accessList: [],
+          chainId: common.chainId(),
+          gasPrice: 10n,
+          gasLimit: BigInt(100000),
+          to: contractAddress,
+        },
+        { common },
+      ).sign(SIGNER_A.privateKey)
 
-    const vm = await createVM({ common })
+      const vm = await createVM({ common })
 
-    // contract code PUSH1 0x00 SLOAD STOP
-    await vm.stateManager.putCode(contractAddress, hexToBytes('0x60005400'))
+      // contract code PUSH1 0x00 SLOAD STOP
+      await vm.stateManager.putCode(contractAddress, hexToBytes('0x60005400'))
 
-    const address = createAddressFromPrivateKey(SIGNER_A.privateKey)
-    const initialBalance = BigInt(10) ** BigInt(18)
+      const address = createAddressFromPrivateKey(SIGNER_A.privateKey)
+      const initialBalance = BigInt(10) ** BigInt(18)
 
-    const account = await vm.stateManager.getAccount(address)
-    await vm.stateManager.putAccount(
-      address,
-      createAccount({ ...account, balance: initialBalance }),
-    )
+      const account = await vm.stateManager.getAccount(address)
+      await vm.stateManager.putAccount(
+        address,
+        createAccount({ ...account, balance: initialBalance }),
+      )
 
-    let trace: Array<[string, bigint]> = []
+      let trace: Array<[string, bigint]> = []
 
-    const handler = (o: InterpreterStep) => {
-      trace.push([o.opcode.name, o.gasLeft])
-    }
-    vm.tvm.events!.on('step', handler)
+      const handler = (o: InterpreterStep) => {
+        trace.push([o.opcode.name, o.gasLeft])
+      }
+      vm.tvm.events!.on('step', handler)
 
-    await runTx(vm, { tx: txnWithAccessList })
-    assert.strictEqual(trace[1][0], 'SLOAD')
-    let gasUsed = trace[1][1] - trace[2][1]
-    assert.strictEqual(Number(gasUsed), 100, 'charge warm sload gas')
+      const withList = await runTx(vm, { tx: txnWithAccessList })
+      assert.strictEqual(trace[1][0], 'SLOAD')
+      let gasUsed = trace[1][1] - trace[2][1]
+      assert.strictEqual(Number(gasUsed), 50, 'TRON SLOAD Energy with an access list')
 
-    trace = []
-    await runTx(vm, { tx: txnWithoutAccessList, skipNonce: true })
-    assert.strictEqual(trace[1][0], 'SLOAD')
-    gasUsed = trace[1][1] - trace[2][1]
-    assert.strictEqual(Number(gasUsed), 2100, 'charge cold sload gas')
-    vm.tvm.events!.removeListener('step', handler)
-  })
-})
+      trace = []
+      const withoutList = await runTx(vm, { tx: txnWithoutAccessList, skipNonce: true })
+      assert.strictEqual(trace[1][0], 'SLOAD')
+      gasUsed = trace[1][1] - trace[2][1]
+      assert.strictEqual(Number(gasUsed), 50, 'TRON SLOAD Energy without an access list')
+      assert.strictEqual(withList.totalGasSpent, 21053n)
+      assert.strictEqual(withoutList.totalGasSpent, withList.totalGasSpent)
+      assert.isUndefined(withList.execResult.exceptionError)
+      assert.isUndefined(withoutList.execResult.exceptionError)
+      vm.tvm.events!.removeListener('step', handler)
+    })
+  },
+)

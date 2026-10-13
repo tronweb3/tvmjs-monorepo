@@ -1,6 +1,6 @@
-import type { ChainConfig } from '@tvmjs/common'
+import type { EthereumChainData } from '@tvmjs/common'
 
-export const customChainConfig: ChainConfig = {
+export const customChainConfig: EthereumChainData = {
   name: 'testnet',
   chainId: 12345,
   defaultHardfork: 'byzantium',

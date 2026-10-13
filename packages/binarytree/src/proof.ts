@@ -1,11 +1,10 @@
 import { EthereumJSErrorWithoutCode, equalsBytes } from '@tvmjs/util'
 
 import { createBinaryTree } from './constructors.ts'
-import { decodeBinaryNode } from './node/index.ts'
+import { decodeBinaryNode, isStemBinaryNode } from './node/index.ts'
 
 import type { BinaryTree } from './binaryTree.ts'
 import type { BinaryNode } from './node/index.ts'
-import type { StemBinaryNode } from './node/stemNode.ts'
 
 /**
  * Saves the nodes from a proof into the tree.
@@ -36,13 +35,23 @@ export async function verifyBinaryProof(
   key: Uint8Array,
   proof: Uint8Array[],
 ): Promise<Uint8Array | null> {
+  // An empty proof can only prove non-existence in an empty tree.
+  if (proof.length === 0) {
+    if (!equalsBytes(rootHash, new Uint8Array(32))) {
+      throw EthereumJSErrorWithoutCode('rootHash does not match proof root')
+    }
+    return null
+  }
   const proofTrie = await binaryTreeFromProof(proof)
   if (!equalsBytes(proofTrie.root(), rootHash)) {
     throw EthereumJSErrorWithoutCode('rootHash does not match proof root')
   }
-  const [value] = await proofTrie.get(key.slice(0, 31), [key[31]])
-  const valueNode = decodeBinaryNode(proof[proof.length - 1]) as StemBinaryNode
-  const expectedValue = valueNode.values[key[31]]
+  const stem = key.slice(0, 31)
+  const [value] = await proofTrie.get(stem, [key[31]])
+  // Non-existence proofs may end at an internal node or at a stem node with a different stem.
+  const lastNode = decodeBinaryNode(proof[proof.length - 1])
+  const expectedValue =
+    isStemBinaryNode(lastNode) && equalsBytes(lastNode.stem, stem) ? lastNode.values[key[31]] : null
   if (!expectedValue) {
     if (value) {
       throw EthereumJSErrorWithoutCode('Proof is invalid')

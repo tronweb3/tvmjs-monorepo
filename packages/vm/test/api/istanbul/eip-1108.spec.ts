@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { getActivePrecompiles } from '@tvmjs/tvm'
 import { hexToBytes } from '@tvmjs/util'
 import { assert, beforeAll, describe, it } from 'vitest'
@@ -7,9 +7,9 @@ import { createVM } from '../../../src/index.ts'
 
 import type { VM } from '../../../src/index.ts'
 
-describe('Istanbul: EIP-1108 tests', () => {
+describe('TRON BN254 precompile costs', () => {
   let vm: VM
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
+  const common = new Common({ chain: TronMainnet })
   beforeAll(async () => {
     vm = await createVM({ common })
   })
@@ -24,7 +24,7 @@ describe('Istanbul: EIP-1108 tests', () => {
       _TVM: vm.tvm,
     })
 
-    assert.deepEqual(result.executionGasUsed, BigInt(150), 'should use istanbul gas costs')
+    assert.deepEqual(result.executionGasUsed, BigInt(150), 'should use TRON Energy costs')
   })
 
   it('BN254MUL', async () => {
@@ -38,7 +38,7 @@ describe('Istanbul: EIP-1108 tests', () => {
       _TVM: vm.tvm,
     })
 
-    assert.deepEqual(result.executionGasUsed, BigInt(6000), 'should use istanbul gas costs')
+    assert.deepEqual(result.executionGasUsed, BigInt(6000), 'should use TRON Energy costs')
   })
 
   it('BN254PAIRING', async () => {
@@ -57,7 +57,7 @@ describe('Istanbul: EIP-1108 tests', () => {
     assert.deepEqual(
       result.executionGasUsed,
       BigInt(113000),
-      'should use petersburg gas costs (k ^= 2 pairings)',
+      'should charge the base cost plus two pairings',
     )
   })
 })

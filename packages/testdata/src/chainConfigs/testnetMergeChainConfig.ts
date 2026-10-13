@@ -1,6 +1,6 @@
-import type { ChainConfig } from '@tvmjs/common'
+import type { EthereumChainData } from '@tvmjs/common'
 
-export const testnetMergeChainConfig: ChainConfig = {
+export const testnetMergeChainConfig: EthereumChainData = {
   name: 'testnetMerge',
   chainId: 55555,
   defaultHardfork: 'istanbul',

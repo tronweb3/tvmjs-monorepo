@@ -15,13 +15,13 @@ import debug from 'debug'
 
 import { CheckpointDB } from './db/index.ts'
 import { InternalBinaryNode } from './node/internalNode.ts'
-import { StemBinaryNode } from './node/stemNode.ts'
+import { StemBinaryNode, assertValidSuffixIndex } from './node/stemNode.ts'
 import { decodeBinaryNode, isInternalBinaryNode, isStemBinaryNode } from './node/util.ts'
 import { type BinaryTreeOpts, ROOT_DB_KEY } from './types.ts'
 
 import type { PutBatch } from '@tvmjs/util'
 import type { Debugger } from 'debug'
-import type { BinaryNode } from './node/types.ts'
+import type { BinaryNode, ChildBinaryNode } from './node/types.ts'
 
 interface Path {
   node: BinaryNode | null
@@ -137,6 +137,7 @@ export class BinaryTree {
   async get(stem: Uint8Array, suffixes: number[]): Promise<(Uint8Array | null)[]> {
     if (stem.length !== 31)
       throw EthereumJSErrorWithoutCode(`expected stem with length 31; got ${stem.length}`)
+    suffixes.forEach(assertValidSuffixIndex)
     this.DEBUG && this.debug(`Stem: ${bytesToHex(stem)}; Suffix: ${suffixes}`, ['get'])
     const stemPath = await this.findPath(stem)
     if (stemPath.node instanceof StemBinaryNode) {
@@ -159,6 +160,7 @@ export class BinaryTree {
 
   /**
    * Stores a given `value` at the given `key` or performs a deletion if `value` is null.
+   * Concurrent put() and del() calls on this instance are serialized.
    * @param stem - the stem (must be 31 bytes) to store the value at.
    * @param suffixes - array of suffixes at which to store individual values.
    * @param values - the value(s) to store (or null for deletion).
@@ -171,7 +173,22 @@ export class BinaryTree {
       throw EthereumJSErrorWithoutCode(
         `expected number of values (${values.length}) to equal number of suffixes (${suffixes.length})`,
       )
+    suffixes.forEach(assertValidSuffixIndex)
 
+    await this._lock.acquire()
+    try {
+      await this._put(stem, suffixes, values)
+    } finally {
+      this._lock.release()
+    }
+  }
+
+  /** Updates the tree while the caller holds the write lock, including node and root persistence. */
+  private async _put(
+    stem: Uint8Array,
+    suffixes: number[],
+    values: (Uint8Array | null)[],
+  ): Promise<void> {
     this.DEBUG && this.debug(`Stem: ${bytesToHex(stem)}`, ['put'])
     const putStack: [Uint8Array, BinaryNode | null][] = [] // A stack of updated nodes starting with the stem node being updated/created to be saved to the DB
 
@@ -217,21 +234,18 @@ export class BinaryTree {
 
     // If all values are null then we treat this as a deletion.
     if (stemNode.values.every((val) => val === null)) {
-      if (foundPath.node !== null) {
-        this.DEBUG && this.debug(`Deleting stem node for stem: ${bytesToHex(stem)}`, ['put'])
-        putStack.push([this.merkelize(stemNode), null])
-      } else {
-        return // nothing to delete
-      }
-    } else {
-      // Otherwise, we add the new or updated stemNode to the putStack
-      putStack.push([this.merkelize(stemNode), stemNode])
+      if (foundPath.node === null) return // nothing to delete
+      this.DEBUG && this.debug(`Deleting stem node for stem: ${bytesToHex(stem)}`, ['put'])
+      await this._deleteStem(stem, foundPath.stack)
+      return
     }
+    // Otherwise, we add the new or updated stemNode to the putStack
+    putStack.push([this.merkelize(stemNode), stemNode])
 
     // Get the bit representation of the stem.
     const stemBits = bytesToBits(stemNode.stem)
     // We keep a reference to the current "parent" node path as we update up the tree.
-    let lastUpdatedParentPath: number[] = []
+    let lastUpdatedParentPath = stemBits
 
     // Step 2: Add any needed new internal nodes if inserting a new stem.
     //         If updating an existing stem, just update the parent internal node reference
@@ -257,7 +271,7 @@ export class BinaryTree {
       const [node, path] = foundPath.stack.pop()!
       if (isInternalBinaryNode(node)) {
         // Set child pointer to the last internal node in the putStack (last updated internal node)
-        node.setChild(lastUpdatedParentPath[lastUpdatedParentPath.length - 1], {
+        node.setChild(stemBits[path.length], {
           hash: putStack[putStack.length - 1][0], // Reuse hash already computed above
           path: lastUpdatedParentPath,
         })
@@ -319,23 +333,81 @@ export class BinaryTree {
       }
     } else {
       // For an internal root node, we assign the last update child reference to the root.
-      if (childReference !== null) {
-        rootNode.setChild(
-          stemBits[0],
-          childReference !== null
-            ? {
-                hash: this.merkelize(childReference),
-                path: isStemBinaryNode(childReference) ? stemBits : lastUpdatedParentPath,
-              }
-            : null,
-        )
-      }
+      rootNode.setChild(
+        stemBits[0],
+        childReference !== null
+          ? {
+              hash: this.merkelize(childReference),
+              path: isStemBinaryNode(childReference) ? stemBits : lastUpdatedParentPath,
+            }
+          : null,
+      )
     }
 
     this.root(this.merkelize(rootNode))
     putStack.push([this._root, rootNode])
     this.DEBUG && this.debug(`Updated root hash to ${bytesToHex(this._root)}`, ['put'])
     await this.saveStack(putStack)
+    await this.persistRoot()
+  }
+
+  /**
+   * Removes an emptied stem and collapses branches left with a single stem, so the
+   * resulting root equals the root of a tree built from the remaining stems only.
+   * @param stem - the stem being removed
+   * @param stack - the path from the root to the stem's parent as returned by `findPath`
+   */
+  private async _deleteStem(stem: Uint8Array, stack: Array<[BinaryNode, number[]]>) {
+    const stemBits = bytesToBits(stem)
+    // A stem root is the stem being deleted itself.
+    if (stack.length === 1 && isStemBinaryNode(stack[0][0])) stack = []
+
+    const putStack: [Uint8Array, BinaryNode | null][] = []
+    // Reference that replaces the subtree below the current node (null if it is empty).
+    let replacement: ChildBinaryNode | null = null
+    // Whether `replacement` may still be lifted further up (empty or single stem subtree).
+    let collapsing = true
+
+    while (stack.length > 0) {
+      const [node, path] = stack.pop()!
+      if (!isInternalBinaryNode(node)) {
+        throw EthereumJSErrorWithoutCode(
+          `Expected internal node at path ${path.join(',')}, got ${node}`,
+        )
+      }
+      node.setChild(stemBits[path.length], replacement)
+
+      if (collapsing) {
+        const remaining = node.children.filter((child) => child !== null)
+        if (remaining.length === 0) {
+          replacement = null
+          continue
+        }
+        if (remaining.length === 1) {
+          const sibling = await this._loadNode(remaining[0].hash)
+          if (isStemBinaryNode(sibling)) {
+            replacement = { hash: remaining[0].hash, path: bytesToBits(sibling.stem) }
+            continue
+          }
+        }
+        collapsing = false
+      }
+
+      const hash = this.merkelize(node)
+      putStack.push([hash, node])
+      replacement = { hash, path }
+    }
+
+    this.root(replacement === null ? this.EMPTY_TREE_ROOT : replacement.hash)
+    this.DEBUG && this.debug(`Updated root hash to ${bytesToHex(this._root)}`, ['put'])
+    await this.saveStack(putStack)
+    await this.persistRoot()
+  }
+
+  private async _loadNode(hash: Uint8Array): Promise<BinaryNode> {
+    const rawNode = await this._db.get(hash)
+    if (rawNode === undefined) throw EthereumJSErrorWithoutCode(`missing node ${bytesToHex(hash)}`)
+    return decodeBinaryNode(rawNode)
   }
 
   /**
@@ -659,14 +731,16 @@ export class BinaryTree {
    * @throws If not during a checkpoint phase
    */
   async commit(): Promise<void> {
-    if (!this.hasCheckpoints()) {
-      throw EthereumJSErrorWithoutCode('trying to commit when not checkpointed')
-    }
-
     await this._lock.acquire()
-    await this._db.commit()
-    await this.persistRoot()
-    this._lock.release()
+    try {
+      if (!this.hasCheckpoints()) {
+        throw EthereumJSErrorWithoutCode('trying to commit when not checkpointed')
+      }
+      await this._db.commit()
+      await this.persistRoot()
+    } finally {
+      this._lock.release()
+    }
   }
 
   /**
@@ -675,14 +749,16 @@ export class BinaryTree {
    * parent checkpoint as current.
    */
   async revert(): Promise<void> {
-    if (!this.hasCheckpoints()) {
-      throw EthereumJSErrorWithoutCode('trying to revert when not checkpointed')
-    }
-
     await this._lock.acquire()
-    this.root(await this._db.revert())
-    await this.persistRoot()
-    this._lock.release()
+    try {
+      if (!this.hasCheckpoints()) {
+        throw EthereumJSErrorWithoutCode('trying to revert when not checkpointed')
+      }
+      this.root(await this._db.revert())
+      await this.persistRoot()
+    } finally {
+      this._lock.release()
+    }
   }
 
   /**

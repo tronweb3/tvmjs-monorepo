@@ -1,4 +1,4 @@
-import { ConsensusAlgorithm, Hardfork } from '@tvmjs/common'
+import { ConsensusAlgorithm } from '@tvmjs/common'
 import {
   Account,
   BIGINT_0,
@@ -93,7 +93,6 @@ export interface Env {
   codeAddress: Address /* Different than address for DELEGATECALL and CALLCODE */
   gasRefund: bigint /* Current value (at begin of the frame) of the gas refund */
   eof?: EOFEnv /* Optional EOF environment in case of EOF execution */
-  blobVersionedHashes: PrefixedHexString[] /** Versioned hashes for blob transactions */
   createdAddresses?: Set<PrefixedHexString>
   accessWitness?: BinaryTreeAccessWitnessInterface
   chargeCodeAccesses?: boolean
@@ -176,6 +175,7 @@ export class Interpreter {
   private profilerOpts?: TVMProfilerOpts
   private performanceLogger: TVMPerformanceLogger
   private readonly _runCall: (message: Message) => Promise<TVMResult>
+  private _cachedOpcodes?: OpcodeMapEntry[]
 
   // TODO remove gasLeft as constructor argument
   constructor(
@@ -195,6 +195,7 @@ export class Interpreter {
     this.common = this._tvm.common
 
     if (
+      this.common.hasConsensus() &&
       this.common.consensusType() === 'poa' &&
       this._tvm['_optsCached'].cliqueSigner === undefined
     )
@@ -230,6 +231,11 @@ export class Interpreter {
     }
     this.profilerOpts = profilerOpts
     this.performanceLogger = performanceLogs
+  }
+
+  private _resetJumpAnalysis(): void {
+    this._cachedOpcodes = undefined
+    this._runState.shouldDoJumpAnalysis = true
   }
 
   async run(code: Uint8Array, opts: InterpreterOpts = {}): Promise<InterpreterResult> {
@@ -291,8 +297,7 @@ export class Interpreter {
     }
 
     let err
-    let cachedOpcodes: OpcodeMapEntry[]
-    let doJumpAnalysis = true
+    this._resetJumpAnalysis()
 
     let timer: Timer | undefined
     let overheadTimer: Timer | undefined
@@ -306,21 +311,10 @@ export class Interpreter {
       const programCounter = this._runState.programCounter
       let opCode: number
       let opCodeObj: OpcodeMapEntry | undefined
-      if (doJumpAnalysis) {
+      if (this._cachedOpcodes === undefined) {
         opCode = this._runState.code[programCounter]
-        // Only run the jump destination analysis if `code` actually contains a JUMP/JUMPI/JUMPSUB opcode
-        if (opCode === 0x56 || opCode === 0x57 || opCode === 0x5e) {
-          const { jumps, pushes, opcodesCached } = this._getValidJumpDestinations(
-            this._runState.code,
-          )
-          this._runState.validJumps = jumps
-          this._runState.cachedPushes = pushes
-          this._runState.shouldDoJumpAnalysis = false
-          cachedOpcodes = opcodesCached
-          doJumpAnalysis = false
-        }
       } else {
-        opCodeObj = cachedOpcodes![programCounter]
+        opCodeObj = this._cachedOpcodes[programCounter]
         opCode = opCodeObj.opcodeInfo.code
       }
 
@@ -431,8 +425,17 @@ export class Interpreter {
         throw new TVMError(TVMError.errorMessages.INVALID_OPCODE)
       }
 
-      // Reduce opcode's base fee
+      // Charge the opcode's full gas cost before jump analysis or execution.
       this.useGas(gas, opInfo)
+
+      // Analyze only when executing the first JUMP or JUMPI that can pay its gas cost.
+      if (this._runState.shouldDoJumpAnalysis && (opInfo.code === 0x56 || opInfo.code === 0x57)) {
+        const { jumps, pushes, opcodesCached } = this._getValidJumpDestinations(this._runState.code)
+        this._runState.validJumps = jumps
+        this._runState.cachedPushes = pushes
+        this._cachedOpcodes = opcodesCached
+        this._runState.shouldDoJumpAnalysis = false
+      }
 
       // Advance program counter
       this._runState.programCounter++
@@ -741,6 +744,7 @@ export class Interpreter {
     }
 
     await this._stateManager.putStorage(this._env.address, key, value)
+    this.journal.recordStorageWrite(this._env.address, key)
 
     if (this._tvm.common.isActivatedEIP(7928)) {
       this._tvm.blockLevelAccessList?.addStorageWrite(
@@ -946,7 +950,10 @@ export class Interpreter {
    */
   getBlockCoinbase(): bigint {
     let coinbase: Address
-    if (this.common.consensusAlgorithm() === ConsensusAlgorithm.Clique) {
+    if (
+      this.common.hasConsensus() &&
+      this.common.consensusAlgorithm() === ConsensusAlgorithm.Clique
+    ) {
       coinbase = this._tvm['_optsCached'].cliqueSigner!(this._env.block.header)
     } else {
       coinbase = this._env.block.header.coinbase
@@ -1007,18 +1014,6 @@ export class Interpreter {
   }
 
   /**
-   * Returns the Blob Base Fee of the block as proposed in [EIP-7516](https://eips.ethereum.org/EIPS/eip-7516)
-   */
-  getBlobBaseFee(): bigint {
-    const blobBaseFee = this._env.block.header.getBlobGasPrice()
-    if (blobBaseFee === undefined) {
-      // Sanity check
-      throw EthereumJSErrorWithoutCode('Block has no Blob Base Fee')
-    }
-    return blobBaseFee
-  }
-
-  /**
    * Returns the chain ID for current chain. Introduced for the
    * CHAINID opcode proposed in [EIP-1344](https://eips.ethereum.org/EIPS/eip-1344).
    */
@@ -1038,7 +1033,6 @@ export class Interpreter {
       data,
       isStatic: this._env.isStatic,
       depth: this._env.depth + 1,
-      blobVersionedHashes: this._env.blobVersionedHashes,
       accessWitness: this._env.accessWitness,
     })
 
@@ -1062,8 +1056,8 @@ export class Interpreter {
       value,
       data,
       isStatic: this._env.isStatic,
+      callcode: true,
       depth: this._env.depth + 1,
-      blobVersionedHashes: this._env.blobVersionedHashes,
       accessWitness: this._env.accessWitness,
     })
 
@@ -1089,7 +1083,6 @@ export class Interpreter {
       data,
       isStatic: true,
       depth: this._env.depth + 1,
-      blobVersionedHashes: this._env.blobVersionedHashes,
       accessWitness: this._env.accessWitness,
     })
 
@@ -1116,7 +1109,6 @@ export class Interpreter {
       isStatic: this._env.isStatic,
       delegatecall: true,
       depth: this._env.depth + 1,
-      blobVersionedHashes: this._env.blobVersionedHashes,
       accessWitness: this._env.accessWitness,
     })
 
@@ -1129,7 +1121,7 @@ export class Interpreter {
     msg.gasRefund = this._runState.gasRefund
     msg.tronTransactionContext = this._env.tronTransactionContext
 
-    if (this._env.address.equals(msg.codeAddress)) {
+    if (!msg.delegatecall && !msg.callcode && msg.to !== undefined && msg.caller.equals(msg.to)) {
       if (msg.value > BIGINT_0) {
         trap(TVMError.errorMessages.CAN_NOT_TRANSFER_TRX_YOURSELF)
       }
@@ -1159,7 +1151,7 @@ export class Interpreter {
       return BIGINT_0
     }
 
-    if (this.common.gteHardfork(Hardfork.Tron) && this._env.tronTransactionContext !== undefined) {
+    if (this._env.tronTransactionContext !== undefined) {
       this._env.tronTransactionContext.nonce += BIGINT_1
     }
 
@@ -1246,15 +1238,6 @@ export class Interpreter {
       )
     }
 
-    if (this.common.isActivatedEIP(3860) && !this.common.isTron()) {
-      if (
-        codeToRun.length > Number(this.common.param('maxInitCodeSize')) &&
-        this._tvm.allowUnlimitedInitCodeSize === false
-      ) {
-        return BIGINT_0
-      }
-    }
-
     const message = new Message({
       caller,
       gasLimit,
@@ -1265,7 +1248,6 @@ export class Interpreter {
       depth,
       selfdestruct,
       gasRefund: this._runState.gasRefund,
-      blobVersionedHashes: this._env.blobVersionedHashes,
       accessWitness: this._env.accessWitness,
       tronTransactionContext: this._env.tronTransactionContext,
     })
@@ -1293,10 +1275,7 @@ export class Interpreter {
       this._runState.returnBytes = results.execResult.returnValue
     }
 
-    if (
-      !results.execResult.exceptionError ||
-      results.execResult.exceptionError.error === TVMError.errorMessages.CODESTORE_OUT_OF_GAS
-    ) {
+    if (!results.execResult.exceptionError) {
       for (const [addressToSelfdestructHex, beneficiaryHex] of selfdestruct) {
         this._result.selfdestruct.set(addressToSelfdestructHex, beneficiaryHex)
       }
@@ -1316,9 +1295,7 @@ export class Interpreter {
       if (results.createdAddress) {
         const createdAddress = bytesToBigInt(results.createdAddress.bytes)
         // java-tron right-aligns its 21-byte TRON address in the 32-byte stack word.
-        return this.common.gteHardfork(Hardfork.Tron)
-          ? TRON_ADDRESS_PREFIX_WORD | createdAddress
-          : createdAddress
+        return TRON_ADDRESS_PREFIX_WORD | createdAddress
       }
     }
 
@@ -1363,15 +1340,11 @@ export class Interpreter {
   }
 
   async _selfDestruct(toAddress: Address): Promise<void> {
-    // only add to refund if this is the first selfdestruct for the address
     const selfdestructAddressHex = bytesToHex(this._env.address.bytes)
-    if (!this._result.selfdestruct.has(selfdestructAddressHex)) {
-      this.refundGas(this.common.param('selfdestructRefundGas'))
-    }
 
     // TRON: advance internal nonce for SELFDESTRUCT (java-tron increaseNonce behavior)
     // This happens on EVERY suicide() call, not just the first one
-    if (this.common.gteHardfork(Hardfork.Tron) && this._env.tronTransactionContext !== undefined) {
+    if (this._env.tronTransactionContext !== undefined) {
       this._env.tronTransactionContext.nonce += BIGINT_1
     }
 
@@ -1403,15 +1376,11 @@ export class Interpreter {
       const originalBalance = toAccount.balance
       toAccount.balance += contractBalance
       const fromAccount = (await this._stateManager.getAccount(this._env.address)) ?? new Account()
-      Object.keys(fromAccount.asset!).forEach((tokenId: string) => {
-        const tokenIdNumber = Number(tokenId)
-        const tokenBalance = fromAccount.asset![tokenIdNumber]
-        if (tokenBalance <= BIGINT_0) {
-          return
-        }
-        toAccount.asset![tokenIdNumber] =
-          (toAccount.asset![tokenIdNumber] ?? BIGINT_0) + tokenBalance
-      })
+      // Asset keys are canonical token ID strings; copy each balance by its exact ID.
+      for (const [tokenId, tokenBalance] of Object.entries(fromAccount.asset)) {
+        if (tokenBalance <= BIGINT_0) continue
+        toAccount.asset[tokenId] = (toAccount.asset[tokenId] ?? BIGINT_0) + tokenBalance
+      }
       await this.journal.putAccount(toAddress, toAccount)
       if (this.common.isActivatedEIP(7928)) {
         this._tvm.blockLevelAccessList!.addBalanceChange(

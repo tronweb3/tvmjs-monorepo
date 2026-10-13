@@ -1,7 +1,7 @@
 import { createBlock } from '@tvmjs/block'
 import { createBlockchain } from '@tvmjs/blockchain'
-import { Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
-import { SIGNER_A, SIGNER_G, customChainConfig, testnetMergeChainConfig } from '@tvmjs/testdata'
+import { Common, Hardfork, TronMainnet, createCustomCommon } from '@tvmjs/common'
+import { SIGNER_A, SIGNER_G } from '@tvmjs/testdata'
 import { createTx } from '@tvmjs/tx'
 import {
   bytesToHex,
@@ -47,8 +47,14 @@ const genesisState: GenesisState = {
   [contractAddress]: accountState,
 }
 
-const common = createCustomCommon(customChainConfig, Mainnet, {
-  hardfork: Hardfork.Chainstart,
+const common = new Common({
+  chain: {
+    ...TronMainnet,
+    name: 'custom-state-fixture',
+    chainId: 12345,
+    // Explicit local metadata, independent of the imported account state.
+    genesis: { gasLimit: 1000000, difficulty: 0, nonce: '0x0000000000000000', extraData: '0x' },
+  },
 })
 const block = createBlock(
   {
@@ -62,7 +68,7 @@ const block = createBlock(
 )
 
 describe('VM initialized with custom state', () => {
-  it('should transfer eth from already existent account', async () => {
+  it('should transfer TRX from a preallocated account', async () => {
     const blockchain = await createBlockchain({ common, genesisState })
     const vm = await createVM({ blockchain, common })
     await vm.stateManager.generateCanonicalGenesis!(genesisState)
@@ -74,6 +80,7 @@ describe('VM initialized with custom state', () => {
         to,
         value: '0x1',
         gasLimit: 21_000,
+        gasPrice: 10,
       },
       {
         common,
@@ -92,7 +99,6 @@ describe('VM initialized with custom state', () => {
 
   it('should retrieve value from storage', async () => {
     const blockchain = await createBlockchain({ common, genesisState })
-    common.setHardfork(Hardfork.London)
     const vm = await createVM({ blockchain, common })
     await vm.stateManager.generateCanonicalGenesis!(genesisState)
     const calldata = encodeFunctionData({
@@ -114,15 +120,18 @@ describe('VM initialized with custom state', () => {
     assert.strictEqual(bytesToHex(callResult.execResult.returnValue), storage?.[0][1])
   })
 
-  it('setHardfork', async () => {
-    const common = createCustomCommon(testnetMergeChainConfig, Mainnet, {
-      hardfork: Hardfork.Istanbul,
-    })
+  it('preserves the TRON profile with the setHardfork execution option', async () => {
+    const common = createCustomCommon({ name: 'custom-tron', chainId: 12345 }, TronMainnet)
 
     let vm = await createVM({ common, setHardfork: true })
     assert.strictEqual(vm['_setHardfork'], true, 'should set setHardfork option')
 
     vm = await createVM({ common, setHardfork: 5001 })
     assert.strictEqual(vm['_setHardfork'], 5001, 'should set setHardfork option')
+    assert.strictEqual(vm.common.hardfork(), Hardfork.Tron)
+    assert.throws(
+      () => createCustomCommon({}, TronMainnet, { hardfork: Hardfork.Istanbul }),
+      /not supported/,
+    )
   })
 })

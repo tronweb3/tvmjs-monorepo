@@ -1,6 +1,6 @@
-import type { JSONRPCBlock } from '../../src/index.ts'
+// Legacy RPC response retained for rejection tests; this is not a supported JSONRPCBlock.
 
-export const infuraGoerliBlock10536893Data: JSONRPCBlock = {
+export const infuraGoerliBlock10536893Data = {
   baseFeePerGas: '0x8',
   blobGasUsed: '0xc0000',
   difficulty: '0x0',

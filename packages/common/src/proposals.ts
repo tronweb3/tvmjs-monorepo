@@ -12,6 +12,11 @@ import type { TronProposalsDict } from './types.ts'
  */
 export const tronProposalsDict: TronProposalsDict = Object.freeze({
   /**
+   * Proposal 65: ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX
+   * Scope: adds 1 Energy to MLOAD, MSTORE and MSTORE8.
+   */
+  65: Object.freeze({ name: 'ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX' }),
+  /**
    * Proposal 95: ALLOW_TVM_PRAGUE
    * Scope: EIP-2935 (execution gate not wired in TVMJS yet)
    */

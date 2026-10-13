@@ -1,4 +1,4 @@
-import { Common, Mainnet, TronNile } from '@tvmjs/common'
+import { Common, TronNile } from '@tvmjs/common'
 import { Address, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -34,19 +34,6 @@ describe('TRON Osaka compatibility gates', () => {
     'keeps pre-Osaka TRON behavior for malformed %s calldata',
     async (_address, code) => {
       const common = new Common({ chain: TronNile })
-      const tvm = await createTVM({ common })
-      await tvm.stateManager.putCode(CONTRACT, code)
-
-      const result = await tvm.runCall({ caller: CALLER, to: CONTRACT, gasLimit: 100000n })
-
-      assert.isUndefined(result.execResult.exceptionError)
-    },
-  )
-
-  it.each(INVALID_PRECOMPILE_CALLS)(
-    'does not apply the TRON Osaka %s gate to Ethereum',
-    async (_address, code) => {
-      const common = new Common({ chain: Mainnet })
       const tvm = await createTVM({ common })
       await tvm.stateManager.putCode(CONTRACT, code)
 

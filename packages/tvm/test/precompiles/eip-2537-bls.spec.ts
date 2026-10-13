@@ -1,97 +1,195 @@
-import { readFileSync, readdirSync } from 'fs'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
+import { SimpleStateManager } from '@tvmjs/statemanager'
 import { Address, bytesToHex, createZeroAddress, hexToBytes } from '@tvmjs/util'
 import * as mcl from 'mcl-wasm'
 import { assert, describe, it } from 'vitest'
 
-import { MCLBLS, createTVM, getActivePrecompiles } from '../../src/index.ts'
+import {
+  MCLBLS,
+  NobleBLS,
+  NobleBN254,
+  TVM,
+  TVMError,
+  TVMMockBlockchain,
+  createTVM,
+  getActivePrecompiles,
+  paramsTVM,
+} from '../../src/index.ts'
+import { precompiles } from '../../src/precompiles/index.ts'
 
-import type { PrefixedHexString } from '@tvmjs/util'
+import type { TVMBLSInterface } from '../../src/index.ts'
 
-// BLS tests, run this from `./packages/tvm` using `npx vitest run ./test/precompiles/eip-2537-bls.spec.ts`
+import fixture0 from './bls/add_G1_bls.json' with { type: 'json' }
+import fixture1 from './bls/add_G2_bls.json' with { type: 'json' }
+import fixture2 from './bls/fail-add_G1_bls.json' with { type: 'json' }
+import fixture3 from './bls/fail-add_G2_bls.json' with { type: 'json' }
+import fixture4 from './bls/fail-map_fp2_to_G2_bls.json' with { type: 'json' }
+import fixture5 from './bls/fail-map_fp_to_G1_bls.json' with { type: 'json' }
+import fixture6 from './bls/fail-mul_G1_bls.json' with { type: 'json' }
+import fixture7 from './bls/fail-mul_G2_bls.json' with { type: 'json' }
+import fixture8 from './bls/fail-multiexp_G1_bls.json' with { type: 'json' }
+import fixture9 from './bls/fail-multiexp_G2_bls.json' with { type: 'json' }
+import fixture10 from './bls/fail-pairing_check_bls.json' with { type: 'json' }
+import fixture11 from './bls/map_fp2_to_G2_bls.json' with { type: 'json' }
+import fixture12 from './bls/map_fp_to_G1_bls.json' with { type: 'json' }
+import fixture13 from './bls/mul_G1_bls.json' with { type: 'json' }
+import fixture14 from './bls/mul_G2_bls.json' with { type: 'json' }
+import fixture15 from './bls/multiexp_G1_bls.json' with { type: 'json' }
+import fixture16 from './bls/multiexp_G2_bls.json' with { type: 'json' }
+import fixture17 from './bls/pairing_check_bls.json' with { type: 'json' }
 
-const dir = './test/precompiles/bls'
-const files = readdirSync(dir)
-
-const precompileMap: { [key: string]: string } = {
-  'add_G1_bls.json': '000000000000000000000000000000000000000b',
-  'add_G2_bls.json': '000000000000000000000000000000000000000d',
-  'fail-add_G1_bls.json': '000000000000000000000000000000000000000b',
-  'fail-add_G2_bls.json': '000000000000000000000000000000000000000d',
-  'fail-map_fp2_to_G2_bls.json': '0000000000000000000000000000000000000011',
-  'fail-map_fp_to_G1_bls.json': '0000000000000000000000000000000000000010',
-  'fail-mul_G1_bls.json': '000000000000000000000000000000000000000c',
-  'fail-mul_G2_bls.json': '000000000000000000000000000000000000000e',
-  'fail-multiexp_G1_bls.json': '000000000000000000000000000000000000000c',
-  'fail-multiexp_G2_bls.json': '000000000000000000000000000000000000000e',
-  'fail-pairing_check_bls.json': '000000000000000000000000000000000000000f',
-  'map_fp2_to_G2_bls.json': '0000000000000000000000000000000000000011',
-  'map_fp_to_G1_bls.json': '0000000000000000000000000000000000000010',
-  'mul_G1_bls.json': '000000000000000000000000000000000000000c',
-  'mul_G2_bls.json': '000000000000000000000000000000000000000e',
-  'multiexp_G1_bls.json': '000000000000000000000000000000000000000c',
-  'multiexp_G2_bls.json': '000000000000000000000000000000000000000e',
-  'pairing_check_bls.json': '000000000000000000000000000000000000000f',
+interface BLSVector {
+  Name: string
+  Input: string
+  Expected?: string
+  ExpectedError?: string
+  Gas?: number
 }
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin, eips: [2537] })
+// BLS remains a low-level tool, not an activatable TRON execution capability.
+// This harness supplies the backend and the fixture fee schedule only for direct
+// wrapper calls. It never registers BLS addresses in the active precompile table.
+class BLSPrecompileHarness extends TVM {
+  protected readonly _bls: TVMBLSInterface
 
-// MCL Instantiation
+  constructor(bls: TVMBLSInterface) {
+    super({
+      common: new Common({ chain: TronMainnet }),
+      stateManager: new SimpleStateManager(),
+      blockchain: new TVMMockBlockchain(),
+      bn254: new NobleBN254(),
+      params: { ...paramsTVM, tron: { ...paramsTVM.tron, ...paramsTVM[2537] } },
+    })
+    this._bls = bls
+    bls.init?.()
+  }
+}
+
+const vectorFiles: { name: string; address: string; data: BLSVector[] }[] = [
+  { name: 'add_G1_bls.json', address: '000000000000000000000000000000000000000b', data: fixture0 },
+  { name: 'add_G2_bls.json', address: '000000000000000000000000000000000000000d', data: fixture1 },
+  {
+    name: 'fail-add_G1_bls.json',
+    address: '000000000000000000000000000000000000000b',
+    data: fixture2,
+  },
+  {
+    name: 'fail-add_G2_bls.json',
+    address: '000000000000000000000000000000000000000d',
+    data: fixture3,
+  },
+  {
+    name: 'fail-map_fp2_to_G2_bls.json',
+    address: '0000000000000000000000000000000000000011',
+    data: fixture4,
+  },
+  {
+    name: 'fail-map_fp_to_G1_bls.json',
+    address: '0000000000000000000000000000000000000010',
+    data: fixture5,
+  },
+  {
+    name: 'fail-mul_G1_bls.json',
+    address: '000000000000000000000000000000000000000c',
+    data: fixture6,
+  },
+  {
+    name: 'fail-mul_G2_bls.json',
+    address: '000000000000000000000000000000000000000e',
+    data: fixture7,
+  },
+  {
+    name: 'fail-multiexp_G1_bls.json',
+    address: '000000000000000000000000000000000000000c',
+    data: fixture8,
+  },
+  {
+    name: 'fail-multiexp_G2_bls.json',
+    address: '000000000000000000000000000000000000000e',
+    data: fixture9,
+  },
+  {
+    name: 'fail-pairing_check_bls.json',
+    address: '000000000000000000000000000000000000000f',
+    data: fixture10,
+  },
+  {
+    name: 'map_fp2_to_G2_bls.json',
+    address: '0000000000000000000000000000000000000011',
+    data: fixture11,
+  },
+  {
+    name: 'map_fp_to_G1_bls.json',
+    address: '0000000000000000000000000000000000000010',
+    data: fixture12,
+  },
+  { name: 'mul_G1_bls.json', address: '000000000000000000000000000000000000000c', data: fixture13 },
+  { name: 'mul_G2_bls.json', address: '000000000000000000000000000000000000000e', data: fixture14 },
+  {
+    name: 'multiexp_G1_bls.json',
+    address: '000000000000000000000000000000000000000c',
+    data: fixture15,
+  },
+  {
+    name: 'multiexp_G2_bls.json',
+    address: '000000000000000000000000000000000000000e',
+    data: fixture16,
+  },
+  {
+    name: 'pairing_check_bls.json',
+    address: '000000000000000000000000000000000000000f',
+    data: fixture17,
+  },
+]
+
 await mcl.init(mcl.BLS12_381)
-const mclbls = new MCLBLS(mcl)
-
-// Running tests with default BLS implementation (undefined, Noble) as well
-// as MCL (optional).
-// Remove from array to run only with one specific interface implementation.
-for (const bls of [undefined, mclbls]) {
-  const BLSType = bls === undefined ? 'Noble' : 'MCL'
-  for (const fname of files) {
-    // Uncomment for running single test cases (example)
-    // if (fname !== 'pairing_check_bls.json') continue
-    const fullName = `${dir}/${fname}`
-    const parsedJSON = JSON.parse(readFileSync(fullName, 'utf-8'))
-    describe(`Precompiles: ${fname} [${BLSType}]`, () => {
-      for (const data of parsedJSON) {
-        it(`${data.Name}`, async () => {
-          const tvm = await createTVM({
-            common,
-            bls,
+for (const [name, bls] of [
+  ['Noble', new NobleBLS()],
+  ['MCL', new MCLBLS(mcl)],
+] as const) {
+  const harness = new BLSPrecompileHarness(bls)
+  for (const file of vectorFiles) {
+    describe(`Retained BLS helpers: ${file.name} [${name}]`, () => {
+      for (const vector of file.data) {
+        it(vector.Name, async () => {
+          assert.isFalse(harness.common.isActivatedEIP(2537))
+          assert.isFalse(harness.precompiles.has(file.address))
+          const gasLimit = 5000000n
+          const result = await precompiles[file.address]({
+            data: hexToBytes(`0x${vector.Input}`),
+            gasLimit,
+            common: harness.common,
+            _TVM: harness,
           })
-          const precompileAddr = precompileMap[fname]
-          const precompile = getActivePrecompiles(common).get(precompileAddr)!
 
-          const callData = {
-            data: hexToBytes(`0x${data.Input}`),
-            gasLimit: BigInt(5000000),
-            common,
-            _TVM: tvm,
-          }
-
-          if (data.ExpectedError !== undefined) {
-            try {
-              await precompile(callData)
-              assert.fail('The precompile should have thrown')
-            } catch {
-              // If the precompile throws, catch it here, but this is fine, since it is expected to fail
-            }
-          } else {
-            try {
-              const result = await precompile(callData)
-              // First, check if an exception is thrown (this should not happen here)
-              if (result.exceptionError !== undefined) {
-                assert.fail(
-                  `Test raised an exception where this is not expected: ${result.exceptionError.toString()}`,
-                )
-              }
-              assert.deepEqual(
-                '0x' + data.Expected,
-                bytesToHex(result.returnValue),
-                'return value should match testVectorResult',
+          if (vector.ExpectedError !== undefined) {
+            const error = result.exceptionError
+            if (error instanceof Error) {
+              // Field decoding can return a backend Error instead of a TVMError.
+              // Check the exact domain error so unrelated TypeErrors cannot pass.
+              assert.strictEqual(vector.ExpectedError, 'invalid fp.Element encoding')
+              assert.strictEqual(
+                error.message,
+                name === 'Noble' ? 'invalid affine point' : 'err _wrapInput',
               )
-              assert.strictEqual(result.executionGasUsed, BigInt(data.Gas))
-            } catch (e: any) {
-              assert.fail(e.message)
+            } else {
+              assert.instanceOf(error, TVMError, vector.ExpectedError)
+              assert.include(
+                [
+                  TVMError.errorMessages.BLS_12_381_INVALID_INPUT_LENGTH,
+                  TVMError.errorMessages.BLS_12_381_POINT_NOT_ON_CURVE,
+                  TVMError.errorMessages.BLS_12_381_INPUT_EMPTY,
+                  TVMError.errorMessages.BLS_12_381_FP_NOT_IN_FIELD,
+                ],
+                error!.error,
+              )
             }
+            assert.strictEqual(result.returnValue.length, 0)
+            assert.strictEqual(result.executionGasUsed, gasLimit)
+          } else {
+            assert.isUndefined(result.exceptionError)
+            assert.strictEqual(bytesToHex(result.returnValue), `0x${vector.Expected}`)
+            assert.strictEqual(result.executionGasUsed, BigInt(vector.Gas!))
           }
         })
       }
@@ -99,41 +197,27 @@ for (const bls of [undefined, mclbls]) {
   }
 }
 
-const precompileAddressStart = 0x0b
-const precompileAddressEnd = 0x11
-
-const precompiles: PrefixedHexString[] = []
-
-for (let address = precompileAddressStart; address <= precompileAddressEnd; address++) {
-  precompiles.push(`0x${address.toString(16).padStart(40, '0')}`)
-}
-
-describe('EIP-2537 BLS precompile availability tests', () => {
-  it('BLS precompiles should not be available if EIP not activated', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const tvm = await createTVM({
-      common,
-    })
-
-    for (const address of precompiles) {
-      const to = new Address(hexToBytes(address))
+describe.each([TronMainnet, TronNile, TronShasta])('BLS isolation on $name', (chain) => {
+  it('rejects EIP-2537 and leaves BLS addresses unregistered even with a custom backend', async () => {
+    const common = new Common({ chain })
+    const tvm = await createTVM({ common, bls: new NobleBLS() })
+    assert.isFalse(common.isActivatedEIP(2537))
+    assert.throws(() => common.setEIPs([2537]), /not supported by the TRON execution profile/)
+    for (let index = 0x0b; index <= 0x11; index++) {
+      const address = index.toString(16).padStart(40, '0')
+      assert.isFalse(getActivePrecompiles(common).has(address))
+      assert.isFalse(tvm.precompiles.has(address))
+      const to = new Address(hexToBytes(`0x${address}`))
       const result = await tvm.runCall({
         caller: createZeroAddress(),
-        gasLimit: BigInt(0xffffffffff),
         to,
-        value: BigInt(0),
-        data: new Uint8Array(0),
+        data: new Uint8Array(),
+        gasLimit: 100000n,
       })
-
-      if (result.execResult.executionGasUsed !== BigInt(0)) {
-        assert.fail('BLS precompiles should not use any gas if EIP not activated')
-      }
-
-      if (result.execResult.exceptionError) {
-        assert.fail('BLS precompiles should not throw if EIP not activated')
-      }
+      assert.isUndefined(result.execResult.exceptionError)
+      assert.strictEqual(result.execResult.executionGasUsed, 0n)
+      assert.strictEqual(result.execResult.returnValue.length, 0)
+      assert.isUndefined(await tvm.stateManager.getAccount(to))
     }
-
-    assert.isTrue(true, 'BLS precompiles unreachable if EIP not activated')
   })
 })

@@ -15,7 +15,7 @@ import { utils } from 'tronweb'
 import { assert, beforeAll, describe, it } from 'vitest'
 import { createVM } from '../../../src/constructors.ts'
 import type { VM } from '../../../src/vm.ts'
-import { PK, compileSol, deployContract, trigger } from './utils.ts'
+import { PK, deployContract, getCompiledContract, trigger } from './utils.ts'
 
 const OWNER_ADDRESS = createAddressFromPrivateKey(hexToBytes(PK))
 
@@ -26,7 +26,7 @@ async function validateMultiSign(
   hash: Uint8Array,
   signatures: Uint8Array[],
 ) {
-  const { bytecode, abi } = await compileSol('validatemultisign001.sol', 'validatemultisignTest')
+  const { bytecode, abi } = getCompiledContract('validatemultisign001.sol', 'validatemultisignTest')
   const contractAddress = (await deployContract(vm, {
     caller: OWNER_ADDRESS,
     bytecode: hexToBytes(`0x${bytecode}`),
@@ -34,6 +34,7 @@ async function validateMultiSign(
   })) as Address
 
   const abiItem = abi.find((item: any) => item.name === 'testmulti')
+  if (!abiItem) throw new Error('Missing testmulti ABI in the compiled TRON fixture')
 
   const result = await trigger(vm, {
     caller: OWNER_ADDRESS,

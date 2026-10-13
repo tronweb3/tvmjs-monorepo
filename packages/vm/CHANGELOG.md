@@ -8,6 +8,40 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+- Add an experimental java-tron RPC Client PoC that loads blocks, transactions, accounts,
+  balances, code and storage for local read-only TVM execution, compares the result with
+  `triggerconstantcontract`, and reports snapshot consistency and Energy differences.
+
+- Verify 71 measured java-tron execution cases through signed local transactions with both StateManagers. Compare execution Energy and state separately from transaction-envelope overhead, and correct storage-transition expectations for zero slots already written in the transaction.
+
+### Breaking Changes
+
+- Reject the removed `tvmOpts.allowUnlimitedContractSize` and `tvmOpts.allowUnlimitedInitCodeSize` options before initialization. Remove EIP-3860 deployment test assumptions and cover VM/TVM consistency for large deployments, exact code deposit Energy, failure receipts and state rollback across all three TRON networks and retained transaction types.
+- Remove EIP-7702 authorization processing, authority nonce/code updates, authorization refunds and the delegated-sender exception. Reject retired transaction contexts before events/checkpoints in transaction, block and builder entry points; retain ordinary execution, sender-code validation and rollback.
+- Remove EIP-4788 Beacon root initialization, ring-buffer writes and `historicalRootsLength`. Reject retired header fields in `runTx()`, `runBlock()` and block builders before events, checkpoints or state-root changes.
+- Remove Blob fees, receipt metadata and block-builder options. Reject type `0x03` and `allowNoBlobs` before state checkpoints; `generateTxReceipt()` now takes four arguments.
+- Remove transaction prewarming and use the TVM's TRON Energy schedule. Access lists remain diagnostic metadata; transaction envelope overhead remains separate from execution Energy.
+- Use TRON-only configuration throughout VM execution and block construction. Execution presets no longer imply Ethereum consensus or block rewards.
+- Reject conflicting Common settings across VM and TVM initialization, including parameter overrides that would otherwise be discarded.
+
+### Fixes
+
+- Cover signed TRC-10 transfers with SimpleStateManager and copied MerkleStateManager instances on all three TRON presets, including exact high IDs, unknown-ID rejection, failed execution rollback and subsequent transactions.
+
+- Migrate the remaining VM API suites to TRON, including transaction fees and receipts, block rollback, code prefix validation, transient storage, account creation and full-width CHAINID results. Replace retired Ethereum activation tests with explicit rejection and no-side-effect regressions.
+- Run the VM API suite from the package's default `test` command. Share the complete API suite with Chromium and use pinned TRON Solidity fixtures instead of downloading and compiling contracts during tests.
+- Retire Ethereum state/blockchain FORKS runners, execution-spec fixture runners and their submodule, t8n/retesteth filling tools, and the Ethereum block benchmark. Remove their commands and unused development dependencies; Ethereum official execution vectors are not part of the TRON regression results. Keep local fixed vectors and their source attribution where still used.
+- Preserve execution trace regressions outside the retired filling tools and report memory size in bytes (32 per word).
+- Remove DAO balance migration and London activation-block builder defaults. Builders derive fees from the parent, retain explicit overrides and inherit the parent gas limit; historical Ethereum heights do not change TRON account balances.
+- Replace EIP-1283/2200/2929/3529/3651 pricing tests with TRON storage-transition, zero-refund, repeated-access, coinbase, nested-revert and Energy-boundary regressions. Preserve 17 storage transition sequences and ordinary signed transaction fee validation.
+- Migrate custom-state and Clique sealing regressions to explicit TRON configuration; preserve genesis/consensus compatibility checks after removal of Common's metadata overrides and Geth constructor.
+- Validate transaction TRC-10 token existence and the sender balance by exact token ID instead of a `Number` conversion.
+- Verify equal execution Energy and state changes through VM and direct TVM calls, including CALLTOKEN rollback and empty-recipient handling across transactions.
+- Match the pinned java-tron ChargeTest deployment cost without an extra memory/copy base fee.
+- Remove the redundant TRON hardfork guard from transaction ID fallback selection. Move transaction ID policy regressions into a standalone TRON suite covering hash fallback, explicit IDs and strict mode.
+- Keep equivalent VM/TVM configurations on one shared Common without mutating caller options.
+- Migrate local transaction, block and contract examples; retire Ethereum Mainnet, Goerli and Blob execution examples.
+
 ## 1.1.0
 
 ### Bug Fixes

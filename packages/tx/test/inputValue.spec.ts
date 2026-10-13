@@ -1,11 +1,13 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { Address, hexToBytes, toBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import {
   TransactionType,
   create1559FeeMarketTxFromBytesArray,
+  createAccessList2930Tx,
   createAccessList2930TxFromBytesArray,
+  createFeeMarket1559Tx,
   createLegacyTx,
   createLegacyTxFromBytesArray,
   createTx,
@@ -73,7 +75,7 @@ function getRandomSubarray<TArrayItem>(array: TArrayItem[], size: number) {
   const shuffled = array.slice(0)
   let seed = 1559
   let index: number
-  let length = array.length
+  let length = array.length - 1
   let temp: TArrayItem
   while (length > 0) {
     index = Math.floor((length + 1) * mulberry32(seed))
@@ -101,7 +103,7 @@ const legacyTxValues = {
 }
 
 const accessListEip2930TxValues = {
-  chainId: generateBigIntLikeValues(4),
+  chainId: generateBigIntLikeValues(Number(TronMainnet.chainId)),
 }
 
 const eip1559TxValues = {
@@ -111,25 +113,26 @@ const eip1559TxValues = {
 
 describe('[Transaction Input Values]', () => {
   it('Legacy Transaction Values', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Homestead })
-    const options = { ...baseTxValues, ...legacyTxValues, type: '0' }
+    const common = new Common({ chain: TronMainnet })
+    const options = { ...baseTxValues, ...legacyTxValues }
     const legacyTxData = generateCombinations({
       options,
     })
     const randomSample = getRandomSubarray(legacyTxData, 100)
     for (const txData of randomSample) {
       const tx = createLegacyTx(txData, { common })
+      assert.strictEqual(tx.type, TransactionType.Legacy)
+      assert.strictEqual(tx.gasPrice, 100n)
       assert.throws(() => tx.hash(), undefined, undefined, 'tx.hash() throws if tx is unsigned')
     }
   })
 
   it('EIP-1559 Transaction Values', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+    const common = new Common({ chain: TronMainnet })
     const options = {
       ...baseTxValues,
       ...accessListEip2930TxValues,
       ...eip1559TxValues,
-      type: '2',
     }
     const eip1559TxData = generateCombinations({
       options,
@@ -137,8 +140,26 @@ describe('[Transaction Input Values]', () => {
     const randomSample = getRandomSubarray(eip1559TxData, 100)
 
     for (const txData of randomSample) {
-      const tx = createLegacyTx(txData, { common })
+      const tx = createFeeMarket1559Tx(txData, { common })
+      assert.strictEqual(tx.type, TransactionType.FeeMarketEIP1559)
+      assert.strictEqual(tx.chainId, common.chainId())
+      assert.strictEqual(tx.maxFeePerGas, 100n)
+      assert.strictEqual(tx.maxPriorityFeePerGas, 50n)
       assert.throws(() => tx.hash(), undefined, undefined, 'tx.hash() should throw if unsigned')
+    }
+  })
+
+  it('EIP-2930 Transaction Values', () => {
+    const common = new Common({ chain: TronMainnet })
+    const combinations = generateCombinations({
+      options: { ...baseTxValues, ...legacyTxValues, ...accessListEip2930TxValues },
+    })
+    for (const txData of getRandomSubarray(combinations, 100)) {
+      const tx = createAccessList2930Tx(txData, { common })
+      assert.strictEqual(tx.type, TransactionType.AccessListEIP2930)
+      assert.strictEqual(tx.chainId, common.chainId())
+      assert.strictEqual(tx.gasPrice, 100n)
+      assert.throws(() => tx.hash(), /not signed/)
     }
   })
 })
@@ -156,8 +177,8 @@ describe('[Invalid Array Input values]', () => {
         if (signed) {
           tx = tx.sign(hexToBytes(`0x${'42'.repeat(32)}`))
         }
-        const rawValues = tx.raw()
-        for (let x = 0; x < rawValues.length; x++) {
+        for (let x = 0; x < tx.raw().length; x++) {
+          const rawValues = tx.raw()
           // @ts-expect-error -- Testing wrong input
           rawValues[x] = [1, 2, 3]
           switch (txType) {
@@ -217,23 +238,16 @@ describe('[Invalid Access Lists]', () => {
     for (const signed of [false, true]) {
       for (const txType of txTypes) {
         for (const invalidAccessListItem of invalidAccessLists) {
-          let tx
-          try {
-            tx = createTx({
+          assert.throws(() =>
+            createTx({
               type: txType,
               // @ts-expect-error -- Testing wrong input
               accessList: invalidAccessListItem,
-            })
-            if (signed) {
-              tx = tx.sign(hexToBytes(`0x${'42'.repeat(32)}`))
-            }
-            assert.fail('did not fail on `fromTxData`')
-          } catch {
-            assert.isTrue(true, 'failed ok on decoding in `fromTxData`')
-            tx = createTx({ type: txType })
-            if (signed) {
-              tx = tx.sign(hexToBytes(`0x${'42'.repeat(32)}`))
-            }
+            }),
+          )
+          let tx = createTx({ type: txType })
+          if (signed) {
+            tx = tx.sign(hexToBytes(`0x${'42'.repeat(32)}`))
           }
           const rawValues = tx!.raw()
 

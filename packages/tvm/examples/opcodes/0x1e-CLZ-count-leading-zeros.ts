@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { type TVM, createTVM } from '@tvmjs/tvm'
 import { type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 
@@ -13,8 +13,8 @@ import { type PrefixedHexString, hexToBytes } from '@tvmjs/util'
 // with a single instruction, it reduces gas cost, bytecode size, and zk-proof complexity.
 
 const common = new Common({
-  chain: Mainnet,
-  hardfork: Hardfork.Cancun,
+  chain: TronMainnet,
+  hardfork: Hardfork.Tron,
   eips: [7939],
 })
 

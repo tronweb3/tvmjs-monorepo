@@ -1,6 +1,6 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet, TronNile, createCustomCommon } from '@tvmjs/common'
 import {
-  SECP256K1_ORDER,
+  SECP256K1_ORDER_DIV_2,
   bytesToBigInt,
   equalsBytes,
   hexToBytes,
@@ -24,6 +24,7 @@ import {
   createLegacyTx,
   createLegacyTxFromBytesArray,
   createLegacyTxFromRLP,
+  createTx,
   paramsTx,
 } from '../src/index.ts'
 
@@ -34,8 +35,8 @@ import { txsData } from './testData/txs.ts'
 import type { AccessList2930TxData, FeeMarketEIP1559TxData, LegacyTxData } from '../src/index.ts'
 
 describe('[BaseTransaction]', () => {
-  // EIP-2930 is not enabled in Common by default (2021-03-06)
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+  // Keep the bundled signature vectors' chain ID while using the TRON execution profile.
+  const common = createCustomCommon({ chainId: 1 }, TronMainnet)
 
   const legacyTxs: LegacyTx[] = []
   for (const tx of txsData.slice(0, 4)) {
@@ -125,33 +126,41 @@ describe('[BaseTransaction]', () => {
     assert.strictEqual(legacyTx.tokenValue, 1n)
   })
 
+  it('rejects TRON token fields above signed int64', () => {
+    const maxInt64 = (1n << 63n) - 1n
+    assert.throws(
+      () => createLegacyTx({ tokenId: maxInt64 + 1n }, { common }),
+      /tokenId must fit in a signed 64-bit integer/,
+    )
+    assert.throws(
+      () => createLegacyTx({ tokenValue: maxInt64 + 1n }, { common }),
+      /tokenValue must fit in a signed 64-bit integer/,
+    )
+  })
+
   it('Initialization', () => {
     for (const txType of txTypes) {
       let tx = txType.create.txData({}, { common })
       assert.strictEqual(
         tx.common.hardfork(),
-        'london',
+        Hardfork.Tron,
         `${txType.name}: should initialize with correct HF provided`,
       )
       assert.isFrozen(tx, `${txType.name}: tx should be frozen by default`)
 
-      const initCommon = new Common({
-        chain: Mainnet,
-        hardfork: Hardfork.London,
-      })
+      const initCommon = new Common({ chain: TronNile })
       tx = txType.create.txData({}, { common: initCommon })
       assert.strictEqual(
         tx.common.hardfork(),
-        'london',
+        Hardfork.Tron,
         `${txType.name}: should initialize with correct HF provided`,
       )
 
-      initCommon.setHardfork(Hardfork.Byzantium)
-      assert.strictEqual(
-        tx.common.hardfork(),
-        'london',
-        `${txType.name}: should stay on correct HF if outer common HF changes`,
-      )
+      assert.strictEqual(tx.common.chainId(), BigInt(TronNile.chainId))
+      assert.notStrictEqual(tx.common, initCommon)
+      initCommon.setEIPs([7939])
+      assert.isTrue(initCommon.isActivatedEIP(7939))
+      assert.isFalse(tx.common.isActivatedEIP(7939), `${txType.name}: should copy Common`)
 
       tx = txType.create.txData({}, { common, freeze: false })
       assert.isNotFrozen(
@@ -265,7 +274,7 @@ describe('[BaseTransaction]', () => {
     for (const txType of txTypes) {
       for (const tx of txType.txs) {
         for (const activeCapability of txType.activeCapabilities) {
-          assert.isDefined(
+          assert.isTrue(
             tx.supports(activeCapability),
             `${txType.name}: should recognize all supported capabilities`,
           )
@@ -303,8 +312,7 @@ describe('[BaseTransaction]', () => {
     for (const txType of txTypes) {
       for (const txFixture of txType.fixtures.slice(0, 4)) {
         // set `s` to a single zero
-        txFixture.data.s = '0x' + '0'
-        const tx = txType.create.txData((txFixture as any).data, { common })
+        const tx = txType.create.txData({ ...txFixture.data, s: '0x0' } as any, { common })
         assert.strictEqual(
           tx.verifySignature(),
           false,
@@ -344,13 +352,16 @@ describe('[BaseTransaction]', () => {
         ...txType.txs,
         // add unsigned variants
         ...txType.txs.map((tx) =>
-          //@ts-expect-error Not sure why this is now throwing
-          txType.create.txData({
-            ...tx,
-            v: undefined,
-            r: undefined,
-            s: undefined,
-          }),
+          txType.create.txData(
+            // @ts-expect-error -- The constructor union cannot narrow the matching transaction type.
+            {
+              ...tx,
+              v: undefined,
+              r: undefined,
+              s: undefined,
+            },
+            { common },
+          ),
         ),
       ]
       for (const tx of txs) {
@@ -403,16 +414,16 @@ describe('[BaseTransaction]', () => {
       for (const [i, tx] of txType.txs.entries()) {
         const { privateKey } = txType.fixtures[i]
         if (privateKey !== undefined) {
-          let signedTx = tx.sign(hexToBytes(`0x${privateKey}`))
-          signedTx = JSON.parse(JSON.stringify(signedTx)) // deep clone
+          const signedTx = createTx(tx.toJSON(), { common, freeze: false }).sign(
+            hexToBytes(`0x${privateKey}`),
+          )
           // @ts-expect-error -- Assign to read-only property
-          signedTx.s = SECP256K1_ORDER + BigInt(1)
+          signedTx.s = SECP256K1_ORDER_DIV_2 + 1n
           assert.throws(
             () => {
               signedTx.getSenderPublicKey()
             },
-            undefined,
-            undefined,
+            /s-values greater than secp256k1n\/2/,
             'should throw when s-value is greater than secp256k1n/2',
           )
         }
@@ -454,5 +465,7 @@ describe('[BaseTransaction]', () => {
     assert.strictEqual(tx.gasPrice, bytesToBigInt(bufferZero))
     assert.strictEqual(tx.gasLimit, bytesToBigInt(bufferZero))
     assert.strictEqual(tx.nonce, bytesToBigInt(bufferZero))
+    assert.strictEqual(tx.common.chainId(), BigInt(TronMainnet.chainId))
+    assert.strictEqual(tx.common.hardfork(), Hardfork.Tron)
   })
 })

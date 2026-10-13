@@ -1,142 +1,111 @@
 import { assert, describe, it } from 'vitest'
 
-import { Common, Hardfork, Mainnet } from '../src/index.ts'
-
+import { Common, Hardfork, TronMainnet } from '../src/index.ts'
 import { paramsTest } from './data/paramsTest.ts'
 
-describe('[Common]: Parameter instantiation / params option / Updates', () => {
-  it('Param option', () => {
-    const c = new Common({ chain: Mainnet, params: paramsTest })
-    let msg = 'Should also work with parameters passed with params option'
-    assert.strictEqual(c.param('bn254AddGas'), BigInt(150), msg)
+describe('[Common]: TRON parameters', () => {
+  it('merges and resets shared parameter dictionaries without modifying input', () => {
+    const common = new Common({ chain: TronMainnet, params: paramsTest })
+    assert.strictEqual(common.param('bn254AddGas'), 150n)
+    assert.strictEqual(common.paramByEIP('bn254AddGas', 1679), 150n)
+    common.updateParams({ 1679: { bn254AddGas: 250 } })
+    assert.strictEqual(common.param('bn254AddGas'), 250n)
+    assert.strictEqual(paramsTest[1679].bn254AddGas, 150)
+    common.resetParams({ 1679: { bn254AddGas: 350 } })
+    assert.strictEqual(common.param('bn254AddGas'), 350n)
+    assert.throws(() => common.param('netSstoreNoopGas'), /Missing parameter/)
+  })
 
-    const params = {
-      1679: {
-        bn254AddGas: 250,
-      },
+  it('uses profile overrides consistently across direct, profile and block queries', () => {
+    const common = new Common({
+      chain: TronMainnet,
+      params: { ...paramsTest, tron: { bn254AddGas: 200 } },
+    })
+    assert.strictEqual(common.param('bn254AddGas'), 200n)
+    assert.strictEqual(common.paramByHardfork('bn254AddGas', Hardfork.Tron), 200n)
+    assert.strictEqual(common.paramByBlock('bn254AddGas', 0), 200n)
+    assert.strictEqual(common.paramByBlock('bn254AddGas', 4370000, 1710338135), 200n)
+    assert.throws(() => common.paramByHardfork('bn254AddGas', Hardfork.Byzantium), /not supported/)
+    assert.strictEqual(common.param('netSstoreNoopGas'), 0n)
+  })
+
+  it('applies explicitly selected capability parameters after profile defaults', () => {
+    const params = { 1: { testValue: 1 }, tron: { testValue: 2 }, 7939: { testValue: 3 } }
+    const common = new Common({ chain: TronMainnet, params, eips: [7939] })
+    assert.strictEqual(common.param('testValue'), 3n)
+    assert.strictEqual(common.paramByHardfork('testValue', Hardfork.Tron), 2n)
+    assert.strictEqual(common.paramByEIP('testValue', 7939), 3n)
+    const copy = common.copy()
+    copy.setEIPs([])
+    copy.updateParams({ tron: { testValue: 4 } })
+    assert.strictEqual(copy.param('testValue'), 4n)
+    assert.strictEqual(common.param('testValue'), 3n)
+    assert.strictEqual(params.tron.testValue, 2)
+  })
+
+  it('reports missing parameters and unknown EIPs', () => {
+    const common = new Common({ chain: TronMainnet, params: paramsTest })
+    assert.throws(() => common.param('unknown'), /Missing parameter/)
+    assert.throws(() => common.paramByHardfork('unknown', Hardfork.Tron), /Missing parameter/)
+    assert.throws(() => common.paramByEIP('unknown', 7939), /Missing parameter/)
+    assert.throws(() => common.paramByEIP('unknown', 999999), /not supported/)
+  })
+
+  it('keeps TRON pricing when an already active capability is explicitly selected', () => {
+    const common = new Common({
+      chain: TronMainnet,
+      params: { 2930: { accessListAddressGas: 2400 }, tron: { accessListAddressGas: 0 } },
+      eips: [2930],
+    })
+    assert.strictEqual(common.param('accessListAddressGas'), 0n)
+    assert.strictEqual(common.copy().param('accessListAddressGas'), 0n)
+    assert.strictEqual(common.paramByHardfork('accessListAddressGas', Hardfork.Tron), 0n)
+  })
+
+  it('loads defaults without replacing caller overrides when requested', () => {
+    const common = new Common({ chain: TronMainnet, params: { tron: { balanceGas: 21 } } })
+    const defaults = { tron: { balanceGas: 20, sloadGas: 50 } }
+    common.updateParams(defaults, false)
+    assert.strictEqual(common.param('balanceGas'), 21n)
+    assert.strictEqual(common.param('sloadGas'), 50n)
+    common.updateParams({ tron: { balanceGas: 22 } })
+    assert.strictEqual(common.param('balanceGas'), 22n)
+    assert.deepEqual(defaults, { tron: { balanceGas: 20, sloadGas: 50 } })
+  })
+
+  it('queries supported optional parameters without activating the capability', () => {
+    const common = new Common({ chain: TronMainnet, params: { 7939: { clzGas: 5 } } })
+    assert.isFalse(common.isActivatedEIP(7939))
+    assert.strictEqual(common.paramByEIP('clzGas', 7939), 5n)
+    assert.isFalse(common.isActivatedEIP(7939))
+    assert.deepEqual(common.eips(), [])
+    assert.throws(() => common.param('clzGas'), /Missing parameter/)
+
+    common.setEIPs([7939])
+    assert.strictEqual(common.param('clzGas'), 5n)
+  })
+
+  it.each([2929, 3529, 3651, 4788, 4844, 4895, 7516, 7702])(
+    'rejects parameter queries and activation for retired EIP %s even when parameters exist',
+    (eip) => {
+      const common = new Common({
+        chain: TronMainnet,
+        params: { [eip]: { testValue: 7 } },
+        eips: [7939],
+      })
+      const message = `EIP ${eip} is not supported by the TRON execution profile`
+      assert.throws(() => common.paramByEIP('testValue', eip), message)
+      assert.throws(() => common.setEIPs([eip]), message)
+      assert.deepEqual(common.eips(), [7939])
+      assert.isFalse(common.isActivatedEIP(eip))
+    },
+  )
+
+  it('rejects invalid EIP identifiers in parameter queries', () => {
+    const common = new Common({ chain: TronMainnet, params: { 7939: { clzGas: 5 } } })
+    for (const eip of [0, -1, NaN, Infinity, 7939.5, Number.MAX_SAFE_INTEGER + 1]) {
+      assert.throws(() => common.paramByEIP('clzGas', eip), /not supported/)
     }
-    c.updateParams(params)
-    msg = 'Should update parameter on updateParams() and properly rebuild cache'
-    assert.strictEqual(c.param('bn254AddGas'), BigInt(250), msg)
-
-    c.resetParams(params)
-    msg = 'Should reset all parameters on resetParams() and properly rebuild cache'
-    assert.strictEqual(c.param('bn254AddGas'), BigInt(250), msg)
-    assert.throws(() => {
-      c.param('bn254MulGas'), BigInt(250)
-    })
-
-    msg = 'Should not side-manipulate the original params file during updating internally'
-    assert.strictEqual(paramsTest['1679']['bn254AddGas'], 150)
-  })
-})
-
-describe('[Common]: Parameter access for param(), paramByHardfork()', () => {
-  it('Basic usage', () => {
-    const c = new Common({ chain: Mainnet, params: paramsTest, eips: [2537] })
-    let msg = 'Should return correct value when HF directly provided'
-    assert.strictEqual(c.paramByHardfork('bn254AddGas', 'byzantium'), BigInt(500), msg)
-
-    msg = 'Should return correct value for HF set in class'
-    c.setHardfork(Hardfork.Byzantium)
-    assert.strictEqual(c.param('bn254AddGas'), BigInt(500), msg)
-    c.setHardfork(Hardfork.Istanbul)
-    assert.strictEqual(c.param('bn254AddGas'), BigInt(150), msg)
-    // c.setHardfork(Hardfork.MuirGlacier)
-    // assert.strictEqual(c.param('bn254AddGas'), BigInt(150), msg)
-
-    assert.throws(() => {
-      c.paramByHardfork('notExistingValue', 'byzantium')
-    })
-
-    /*
-    // Manual test since no test triggering EIP config available
-    // TODO: recheck on addition of new EIP configs
-    // To run please manually add an "ecAdd" entry with value 12345 to EIP2537 config
-    // and uncomment the test
-    msg = 'EIP config should take precedence over HF config'
-    assert.strictEqual(c.param('bn254AddGas'), 12345, msg)
-    */
-  })
-
-  it('Error cases for param(), paramByHardfork()', () => {
-    const c = new Common({ chain: Mainnet, params: paramsTest })
-
-    c.setHardfork(Hardfork.Byzantium)
-    assert.strictEqual(
-      c.param('bn254AddGas'),
-      BigInt(500),
-      'Should return correct value for HF set in class',
-    )
-  })
-
-  it('Parameter updates', () => {
-    const c = new Common({ chain: Mainnet, params: paramsTest })
-
-    let msg = 'Should return correct value for chain start'
-    assert.strictEqual(
-      c.paramByHardfork('minerReward', 'chainstart'),
-      BigInt(5000000000000000000),
-      msg,
-    )
-
-    msg = 'Should reflect HF update changes'
-    assert.strictEqual(
-      c.paramByHardfork('minerReward', 'byzantium'),
-      BigInt(3000000000000000000),
-      msg,
-    )
-
-    msg = 'Should return updated sstore gas prices for constantinople'
-    assert.strictEqual(c.paramByHardfork('netSstoreNoopGas', 'constantinople'), BigInt(200), msg)
-
-    msg = 'Should nullify SSTORE related values for petersburg'
-    assert.strictEqual(c.paramByHardfork('netSstoreNoopGas', 'petersburg'), BigInt(0), msg)
-  })
-
-  it('Access by block number, paramByBlock()', () => {
-    const c = new Common({ chain: Mainnet, hardfork: Hardfork.Byzantium, params: paramsTest })
-    let msg = 'Should correctly translate block numbers into HF states (updated value)'
-    assert.strictEqual(c.paramByBlock('minerReward', 4370000), BigInt(3000000000000000000), msg)
-
-    msg = 'Should correctly translate block numbers into HF states (original value)'
-    assert.strictEqual(c.paramByBlock('minerReward', 4369999), BigInt(5000000000000000000), msg)
-  })
-
-  it('Access on copied Common instances', () => {
-    const c = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai, params: paramsTest })
-    let msg = 'Should correctly access param with param() on original Common'
-    assert.strictEqual(c.param('minerReward'), BigInt(2000000000000000000), msg)
-
-    const cCopy = c.copy()
-    cCopy.setHardfork(Hardfork.Chainstart)
-
-    msg = 'Should correctly access param with param() on copied Common with hardfork changed'
-    assert.strictEqual(cCopy.param('minerReward'), BigInt(5000000000000000000), msg)
-
-    msg =
-      'Should correctly access param with param() on original Common after copy and HF change on copied Common'
-    assert.strictEqual(c.param('minerReward'), BigInt(2000000000000000000), msg)
-  })
-
-  it('EIP param access, paramByEIP()', () => {
-    const c = new Common({ chain: Mainnet, params: paramsTest })
-
-    assert.throws(() => {
-      c.paramByEIP('notExistingValue', 1559)
-    })
-    assert.throws(() => {
-      c.paramByEIP('notExistingValue', 2537)
-    })
-
-    const UNSUPPORTED_EIP = 1000000
-    const f = function () {
-      c.paramByEIP('bls12381G1AddGas', UNSUPPORTED_EIP)
-    }
-    let msg = 'Should throw for using paramByEIP() with an unsupported EIP'
-    assert.throws(f, /not supported$/, undefined, msg)
-
-    msg = 'Should return bls12381G1AddGas gas price for EIP2537'
-    assert.strictEqual(c.paramByEIP('bls12381G1AddGas', 2537), BigInt(500), msg)
+    assert.throws(() => common.paramByEIP('clzGas', '7939' as any), /not supported/)
   })
 })

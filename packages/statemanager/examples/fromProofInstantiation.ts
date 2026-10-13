@@ -41,8 +41,8 @@ const main = async () => {
   const accountFromOldSM = await stateManager.getAccount(contractAddress)
   console.log(accountFromNewSM, accountFromOldSM) // should match
 
-  const slot1FromNewSM = await stateManager.getStorage(contractAddress, storageKey1)
-  const slot2FromNewSM = await stateManager.getStorage(contractAddress, storageKey2)
+  const slot1FromNewSM = await partialStateManager.getStorage(contractAddress, storageKey1)
+  const slot2FromNewSM = await partialStateManager.getStorage(contractAddress, storageKey2)
   console.log(slot1FromNewSM, storageValue1) // should match
   console.log(slot2FromNewSM, storageValue2) // should match
 }

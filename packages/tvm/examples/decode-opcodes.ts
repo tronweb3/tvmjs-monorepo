@@ -2,11 +2,11 @@
 //
 // 1. Takes binary TVM code and decodes it into opcodes
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { getOpcodesForHF, paramsTVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul, params: paramsTVM })
+const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron, params: paramsTVM })
 const opcodes = getOpcodesForHF(common).opcodes
 
 const data = '0x6107608061000e6000396000f30060003560e060020a90048063141961bc1461006e57806319ac74bd'

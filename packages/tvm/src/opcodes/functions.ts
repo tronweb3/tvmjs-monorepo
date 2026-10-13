@@ -16,6 +16,7 @@ import {
   BIGINT_224,
   BIGINT_255,
   BIGINT_256,
+  MAX_INT64,
   MAX_INTEGER_BIGINT,
   MIN_TOKEN_ID,
   TWO_POW256,
@@ -65,7 +66,7 @@ export type OpHandler = SyncOpHandler | AsyncOpHandler
 
 // java-tron converts TRC-10 token IDs with BigInteger.longValueExact(), so values above the
 // positive signed 64-bit range are invalid even though the TVM stack itself stores uint256 values.
-const MAX_TRON_TOKEN_ID = (BIGINT_1 << 63n) - BIGINT_1
+const MAX_TRON_TOKEN_ID = MAX_INT64
 
 function isValidTronTokenId(tokenId: bigint): boolean {
   return tokenId > MIN_TOKEN_ID && tokenId <= MAX_TRON_TOKEN_ID
@@ -769,25 +770,6 @@ export const handlers: Map<number, OpHandler> = new Map([
       runState.stack.push(runState.interpreter.getBlockBaseFee())
     },
   ],
-  // 0x49: BLOBHASH
-  [
-    0x49,
-    function (runState) {
-      const index = runState.stack.pop()
-      if (runState.env.blobVersionedHashes.length > Number(index)) {
-        runState.stack.push(BigInt(runState.env.blobVersionedHashes[Number(index)]))
-      } else {
-        runState.stack.push(BIGINT_0)
-      }
-    },
-  ],
-  // 0x4a: BLOBBASEFEE
-  [
-    0x4a,
-    function (runState) {
-      runState.stack.push(runState.interpreter.getBlobBaseFee())
-    },
-  ],
   // 0x50 range - 'storage' and execution
   // 0x50: POP
   [
@@ -1038,77 +1020,6 @@ export const handlers: Map<number, OpHandler> = new Map([
       }
 
       runState.interpreter.log(mem, topicsCount, topicsBuf)
-    },
-  ],
-  // 0xd0: DATALOAD
-  [
-    0xd0,
-    function (runState) {
-      if (runState.env.eof === undefined) {
-        // Opcode not available in legacy contracts
-        trap(TVMError.errorMessages.INVALID_OPCODE)
-      }
-      const pos = runState.stack.pop()
-      if (pos > runState.env.eof!.container.body.dataSection.length) {
-        runState.stack.push(BIGINT_0)
-        return
-      }
-
-      const i = Number(pos)
-      let loaded = runState.env.eof!.container.body.dataSection.subarray(i, i + 32)
-      loaded = loaded.length ? loaded : Uint8Array.from([0])
-      let r = bytesToBigInt(loaded)
-      // Pad the loaded length with 0 bytes in case it is smaller than 32
-      if (loaded.length < 32) {
-        r = r << (BIGINT_8 * BigInt(32 - loaded.length))
-      }
-      runState.stack.push(r)
-    },
-  ],
-  // 0xd1: DATALOADN
-  [
-    0xd1,
-    function (runState) {
-      if (runState.env.eof === undefined) {
-        // Opcode not available in legacy contracts
-        trap(TVMError.errorMessages.INVALID_OPCODE)
-      }
-      const toLoad = Number(
-        bytesToBigInt(runState.code.subarray(runState.programCounter, runState.programCounter + 2)),
-      )
-      const data = bytesToBigInt(
-        runState.env.eof!.container.body.dataSection.subarray(toLoad, toLoad + 32),
-      )
-      runState.stack.push(data)
-      runState.programCounter += 2
-    },
-  ],
-  // 0xd2: DATASIZE
-  [
-    0xd2,
-    function (runState) {
-      if (runState.env.eof === undefined) {
-        // Opcode not available in legacy contracts
-        trap(TVMError.errorMessages.INVALID_OPCODE)
-      }
-      runState.stack.push(BigInt(runState.env.eof!.container.body.dataSection.length))
-    },
-  ],
-  // 0xd3: DATACOPY
-  [
-    0xd3,
-    function (runState) {
-      if (runState.env.eof === undefined) {
-        // Opcode not available in legacy contracts
-        trap(TVMError.errorMessages.INVALID_OPCODE)
-      }
-      const [memOffset, offset, size] = runState.stack.popN(3)
-      if (size !== BIGINT_0) {
-        const data = getDataSlice(runState.env.eof!.container.body.dataSection, offset, size)
-        const memOffsetNum = Number(memOffset)
-        const dataLengthNum = Number(size)
-        runState.memory.write(memOffsetNum, dataLengthNum, data)
-      }
     },
   ],
   // 0xe0: RJUMP
@@ -1370,17 +1281,8 @@ export const handlers: Map<number, OpHandler> = new Map([
   // 0xf0: CREATE
   [
     0xf0,
-    async function (runState, common) {
+    async function (runState) {
       const [value, offset, length] = runState.stack.popN(3)
-
-      if (
-        common.isActivatedEIP(3860) &&
-        !common.isTron() &&
-        length > Number(common.param('maxInitCodeSize')) &&
-        !runState.interpreter._tvm.allowUnlimitedInitCodeSize
-      ) {
-        trap(TVMError.errorMessages.INITCODE_SIZE_VIOLATION)
-      }
 
       const gasLimit = runState.messageGasLimit!
       runState.messageGasLimit = undefined
@@ -1403,21 +1305,12 @@ export const handlers: Map<number, OpHandler> = new Map([
   // 0xf5: CREATE2
   [
     0xf5,
-    async function (runState, common) {
+    async function (runState) {
       if (runState.interpreter.isStatic()) {
         trap(TVMError.errorMessages.STATIC_STATE_CHANGE)
       }
 
       const [value, offset, length, salt] = runState.stack.popN(4)
-
-      if (
-        common.isActivatedEIP(3860) &&
-        !common.isTron() &&
-        length > Number(common.param('maxInitCodeSize')) &&
-        !runState.interpreter._tvm.allowUnlimitedInitCodeSize
-      ) {
-        trap(TVMError.errorMessages.INITCODE_SIZE_VIOLATION)
-      }
 
       const gasLimit = runState.messageGasLimit!
       runState.messageGasLimit = undefined
@@ -1711,7 +1604,7 @@ export const handlers: Map<number, OpHandler> = new Map([
       return runState.interpreter.selfDestruct(selfdestructToAddress)
     },
   ],
-  // TRON - opcode
+  // TRON owns 0xd0-0xd3; EOF data instructions are not registered in this execution table.
   // 0xd0: CALLTOKEN
   [
     0xd0,
@@ -1722,6 +1615,10 @@ export const handlers: Map<number, OpHandler> = new Map([
 
       if (runState.interpreter.isStatic() && value !== BIGINT_0) {
         trap(TVMError.errorMessages.STATIC_STATE_CHANGE)
+      }
+
+      if (value < BIGINT_0 || value > MAX_INT64) {
+        trap(TVMError.errorMessages.VALUE_OVERFLOW)
       }
 
       if (tokenId !== BIGINT_0 && !isValidTronTokenId(tokenId)) {
@@ -1778,14 +1675,22 @@ export const handlers: Map<number, OpHandler> = new Map([
   [
     0xd2,
     function (runState: RunState) {
-      runState.stack.push(runState.interpreter.getCallTokenValue())
+      const tokenValue = runState.interpreter.getCallTokenValue()
+      if (tokenValue < BIGINT_0 || tokenValue > MAX_INT64) {
+        trap(TVMError.errorMessages.VALUE_OVERFLOW)
+      }
+      runState.stack.push(tokenValue)
     },
   ],
   // 0xd3: CALLTOKENID
   [
     0xd3,
     function (runState: RunState) {
-      runState.stack.push(runState.interpreter.getCallTokenId())
+      const tokenId = runState.interpreter.getCallTokenId()
+      if (tokenId < BIGINT_0 || tokenId > MAX_INT64) {
+        trap(TVMError.errorMessages.INVALID_TOKENID)
+      }
+      runState.stack.push(tokenId)
     },
   ],
   // 0xd4: ISCONTRACT

@@ -1,6 +1,8 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { bytesToHex, equalsBytes, hexToBytes, randomBytes } from '@tvmjs/util'
-import { assert, describe, it } from 'vitest'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Common, TronMainnet, TronNile, TronShasta, createCustomCommon } from '@tvmjs/common'
+import { RLP } from '@tvmjs/rlp'
+import { bytesToHex, createAddressFromPrivateKey } from '@tvmjs/util'
+import { assert, afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   createBlockFromJSONRPCProvider,
@@ -8,9 +10,8 @@ import {
   createBlockHeaderFromRPC,
 } from '../src/index.ts'
 
-import { goerliChainConfig } from '@tvmjs/testdata'
+import { cliqueCommon, powCommon, signedBlock, signingKey } from './helpers.ts'
 import { alchemy14151203Data } from './testdata/alchemy14151203.ts'
-import { infuraGoerliBlock10536893Data } from './testdata/infura-goerli-block-10536893.ts'
 import { infura2000004withTransactionsData } from './testdata/infura2000004withTransactions.ts'
 import { infura2000004withoutTransactionsData } from './testdata/infura2000004withoutTransactions.ts'
 import { infura15571241Data } from './testdata/infura15571241.ts'
@@ -26,26 +27,30 @@ import type { JSONRPCTx, LegacyTx } from '@tvmjs/tx'
 import type { JSONRPCBlock } from '../src/index.ts'
 
 describe('[fromRPC]: block #2924874', () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
+  const common = createCustomCommon({ chainId: 1 }, TronMainnet)
 
-  it('should create a block with transactions with valid signatures', () => {
+  it('should decode the retained historical transaction data', () => {
     const block = createBlockFromRPC(testdataFromRPCData, [], { common })
-    const allValid = block.transactions.every((tx) => tx.verifySignature())
-    assert.strictEqual(allValid, true, 'all transaction signatures are valid')
+    expect(block.transactions).toHaveLength(testdataFromRPCData.transactions.length)
+    expect(block.transactions.length).toBeGreaterThan(0)
+    expect(block.transactions.every((tx) => tx.isSigned())).toBe(true)
   })
 
-  it('should create a block header with the correct hash', () => {
+  it('preserves historical header fields and adds the TRON fee', () => {
     const block = createBlockHeaderFromRPC(testdataFromRPCData, { common })
-    const hash = hexToBytes(testdataFromRPCData.hash)
-    assert.isTrue(equalsBytes(block.hash(), hash))
+    expect(bytesToHex(keccak_256(RLP.encode(block.raw().slice(0, 15))))).toBe(
+      testdataFromRPCData.hash,
+    )
+    expect(block.baseFeePerGas).toBe(7n)
+    expect(bytesToHex(block.hash())).not.toBe(testdataFromRPCData.hash)
   })
 })
 
 describe('[fromRPC]:', () => {
   it('Should create a block with JSON data that includes a transaction with value parameter as integer string', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+    const common = createCustomCommon({ chainId: 1 }, TronMainnet)
     const valueAsIntegerString = '1'
-    const blockDataTransactionValueAsInteger = testdataFromRPCData
+    const blockDataTransactionValueAsInteger = structuredClone(testdataFromRPCData)
     ;(blockDataTransactionValueAsInteger.transactions[0] as JSONRPCTx).value = valueAsIntegerString
     const createBlockFromTransactionValueAsInteger = createBlockFromRPC(
       blockDataTransactionValueAsInteger as JSONRPCBlock,
@@ -59,9 +64,9 @@ describe('[fromRPC]:', () => {
   })
 
   it('Should create a block with JSON data that includes a transaction with defaults with gasPrice parameter as integer string', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+    const common = createCustomCommon({ chainId: 1 }, TronMainnet)
     const gasPriceAsIntegerString = '1'
-    const blockDataTransactionGasPriceAsInteger = testdataFromRPCData
+    const blockDataTransactionGasPriceAsInteger = structuredClone(testdataFromRPCData)
     ;(blockDataTransactionGasPriceAsInteger.transactions[0] as JSONRPCTx).gasPrice =
       gasPriceAsIntegerString
     const createBlockFromTransactionGasPriceAsInteger = createBlockFromRPC(
@@ -76,7 +81,7 @@ describe('[fromRPC]:', () => {
   })
 
   it('should create a block given JSON data that includes a difficulty parameter of type integer string', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+    const common = createCustomCommon({ chainId: 1 }, TronMainnet)
     const blockDifficultyAsInteger = createBlockFromRPC(
       testdataFromRPCDifficultyAsIntegerData as JSONRPCBlock,
       undefined,
@@ -90,8 +95,8 @@ describe('[fromRPC]:', () => {
     )
   })
 
-  it('should create a block from london hardfork', () => {
-    const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.London })
+  it('should preserve a recorded base-fee header', () => {
+    const common = cliqueCommon(5)
     const block = createBlockFromRPC(testdataFromRPCGoerliLondonData, [], { common })
     assert.strictEqual(
       `0x${block.header.baseFeePerGas?.toString(16)}`,
@@ -100,62 +105,77 @@ describe('[fromRPC]:', () => {
     assert.strictEqual(bytesToHex(block.hash()), testdataFromRPCGoerliLondonData.hash)
   })
 
-  it('should create a block with uncles', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const block = createBlockFromRPC(
-      testdataFromRPCWithUnclesData,
-      [testdataFromRPCWithUnclesUncleBlockData],
-      {
-        common,
-      },
+  it('rejects uncles without explicit consensus metadata', () => {
+    const common = new Common({ chain: TronMainnet })
+    expect(() =>
+      createBlockFromRPC(
+        { ...testdataFromRPCWithUnclesData, transactions: [] },
+        [testdataFromRPCWithUnclesUncleBlockData],
+        { common },
+      ),
+    ).toThrow('Uncle headers are not supported')
+    const pow = powCommon(1)
+    const uncle = createBlockHeaderFromRPC(
+      { ...testdataFromRPCWithUnclesUncleBlockData, transactions: [] } as JSONRPCBlock,
+      { common: pow },
     )
-    assert.isTrue(block.uncleHashIsValid())
+    // The added base fee changes the uncle hash; keep the old fixture untouched.
+    const data = {
+      ...testdataFromRPCWithUnclesData,
+      transactions: [],
+      sha3Uncles: bytesToHex(keccak_256(RLP.encode([uncle.raw()]))),
+    }
+    const block = createBlockFromRPC(data, [testdataFromRPCWithUnclesUncleBlockData], {
+      common: pow,
+    })
+    expect(block.uncleHashIsValid()).toBe(true)
   })
 
-  it('should create a block with EIP-4896 withdrawals', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
-    const block = createBlockFromRPC(testdataFromRPCWithWithdrawalsData, [], { common })
-    assert.isTrue(await block.withdrawalsTrieIsValid())
+  it('rejects recorded EIP-4895 withdrawals in block RPC input', () => {
+    expect(() => createBlockFromRPC(testdataFromRPCWithWithdrawalsData)).toThrow('EIP4895')
   })
 
-  it('should create a block header with the correct hash when EIP-4896 withdrawals are present', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
-    const block = createBlockHeaderFromRPC(testdataFromRPCWithWithdrawalsData, { common })
-    const hash = testdataFromRPCWithWithdrawalsData.hash
-    assert.strictEqual(bytesToHex(block.hash()), hash)
+  it('rejects recorded EIP-4895 withdrawals in header RPC input', () => {
+    expect(() => createBlockHeaderFromRPC(testdataFromRPCWithWithdrawalsData)).toThrow('EIP4895')
   })
 })
 
 describe('[fromRPC] - Alchemy/Infura API block responses', () => {
   it('should create pre merge block from Alchemy API response to eth_getBlockByHash', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+    const common = createCustomCommon({ chainId: 1 }, TronMainnet)
     const block = createBlockFromRPC(alchemy14151203Data, [], { common })
     assert.strictEqual(bytesToHex(block.hash()), alchemy14151203Data.hash)
   })
 
   it('should create pre and post merge blocks from Infura API responses to eth_getBlockByHash and eth_getBlockByNumber', () => {
-    const common = new Common({ chain: Mainnet })
-    let block = createBlockFromRPC(infura2000004withoutTransactionsData, [], {
+    const common = createCustomCommon({ chainId: 1 }, TronMainnet)
+    const oldHeader = createBlockHeaderFromRPC(infura2000004withoutTransactionsData, {
       common,
       setHardfork: true,
     })
     assert.strictEqual(
-      bytesToHex(block.hash()),
+      bytesToHex(keccak_256(RLP.encode(oldHeader.raw().slice(0, 15)))),
       infura2000004withoutTransactionsData.hash,
       'created premerge block w/o txns',
     )
-    block = createBlockFromRPC(infura2000004withTransactionsData, [], { common, setHardfork: true })
-    assert.strictEqual(
-      bytesToHex(block.hash()),
-      infura2000004withTransactionsData.hash,
-      'created premerge block with txns',
+    expect(() => createBlockFromRPC(infura2000004withoutTransactionsData, [], { common })).toThrow(
+      'Full transaction objects are required',
     )
-    block = createBlockFromRPC(infura15571241Data, [], {
+    let block = createBlockFromRPC(infura2000004withTransactionsData, [], {
       common,
       setHardfork: true,
     })
     assert.strictEqual(
-      bytesToHex(block.hash()),
+      bytesToHex(keccak_256(RLP.encode(block.header.raw().slice(0, 15)))),
+      infura2000004withTransactionsData.hash,
+      'created premerge block with txns',
+    )
+    const newHeader = createBlockHeaderFromRPC(infura15571241Data, {
+      common,
+      setHardfork: true,
+    })
+    assert.strictEqual(
+      bytesToHex(newHeader.hash()),
       infura15571241Data.hash,
       'created post merge block without txns',
     )
@@ -170,67 +190,83 @@ describe('[fromRPC] - Alchemy/Infura API block responses', () => {
       'created post merge block with txns',
     )
   })
-
-  it('should correctly parse a cancun block over rpc', () => {
-    const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Cancun })
-    const block = createBlockHeaderFromRPC(infuraGoerliBlock10536893Data, { common }) // cspell:disable-line
-    const hash = hexToBytes(infuraGoerliBlock10536893Data.hash)
-    assert.isTrue(equalsBytes(block.hash(), hash))
-  })
 })
+
+afterEach(() => vi.unstubAllGlobals())
 
 describe('[fromJSONRPCProvider]', () => {
   it('should work', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-    const provider = 'https://my.json.rpc.provider.com:8545'
-
-    const realFetch = fetch
-    //@ts-expect-error -- Typescript doesn't like us to replace global values
-    fetch = async (_url: string, req: any) => {
-      const json = JSON.parse(req.body)
-      if (json.params[0] === '0x1850b014065b23d804ecf71a8a4691d076ca87c2e6fb8fe81ee20a4d8e884c24') {
-        const { infura15571241withTransactionsData: txData } = await import(
-          `./testdata/infura15571241withTransactions.js` // cspell:disable-line
-        )
-        return {
-          ok: true,
-          status: 200,
-          json: () => {
-            return {
-              result: txData,
-            }
-          },
-        }
-      } else {
-        return {
-          ok: true,
-          status: 200,
-          json: () => {
-            return {
-              result: null, // This is the value Infura returns if no transaction is found matching the provided hash
-            }
-          },
-        }
+    const common = createCustomCommon({ chainId: 1 }, TronMainnet)
+    const provider = 'https://rpc.invalid'
+    const blockHash = infura15571241withTransactionsData.hash
+    const mock = vi.fn(async (_url: unknown, req: RequestInit) => {
+      const { method, params } = JSON.parse(req.body as string)
+      expect(method).toBe('eth_getBlockByHash')
+      expect(params[1]).toBe(true)
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          result: params[0] === blockHash ? infura15571241withTransactionsData : null,
+        }),
       }
-    }
-
-    const blockHash = '0x1850b014065b23d804ecf71a8a4691d076ca87c2e6fb8fe81ee20a4d8e884c24'
+    })
+    vi.stubGlobal('fetch', mock)
     const block = await createBlockFromJSONRPCProvider(provider, blockHash, { common })
-    assert.strictEqual(
-      bytesToHex(block.hash()),
-      blockHash,
-      'assembled a block from blockdata from a provider',
+    expect(bytesToHex(block.hash())).toBe(blockHash)
+    await expect(
+      createBlockFromJSONRPCProvider(provider, `0x${'ff'.repeat(32)}`, { common }),
+    ).rejects.toThrow('No block data returned from provider')
+    expect(mock).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe.each([TronMainnet, TronNile, TronShasta])('TRON RPC containers on $name', (chain) => {
+  it('preserves the actual signer and large Token ID through RPC', async () => {
+    const common = new Common({ chain })
+    const original = await signedBlock(common)
+    const h = original.header.toJSON()
+    const rpc = {
+      ...testdataFromRPCData,
+      ...h,
+      sha3Uncles: h.uncleHash,
+      miner: h.coinbase,
+      transactionsRoot: h.transactionsTrie,
+      receiptsRoot: h.receiptTrie,
+      hash: bytesToHex(original.hash()),
+      uncles: [],
+      transactions: original.transactions.map((tx, index) => ({
+        ...tx.toJSON(),
+        gas: tx.toJSON().gasLimit!,
+        input: tx.toJSON().data!,
+        blockHash: bytesToHex(original.hash()),
+        blockNumber: h.number!,
+        from: tx.getSenderAddress().toString(),
+        hash: bytesToHex(tx.hash()),
+        transactionIndex: `0x${index.toString(16)}`,
+      })),
+    } as JSONRPCBlock
+    const restored = createBlockFromRPC(rpc, [], { common })
+    expect(restored.serialize()).toEqual(original.serialize())
+    expect(restored.transactions[0].getSenderAddress()).toEqual(
+      createAddressFromPrivateKey(signingKey),
     )
-    try {
-      await createBlockFromJSONRPCProvider(provider, bytesToHex(randomBytes(32)), {})
-      assert.fail('should throw')
-    } catch (err: any) {
-      assert.isTrue(
-        err.message.includes('No block data returned from provider'),
-        'returned correct error message',
-      )
+    expect(restored.transactions[0].toJSON()).toMatchObject({
+      tokenId: '0x20000000000001',
+      tokenValue: '0x7',
+    })
+    await expect(restored.validateData()).resolves.toBeUndefined()
+  })
+
+  it('preserves decimal difficulty above the JavaScript safe integer range', () => {
+    const common = new Common({ chain })
+    for (const difficulty of [
+      '9007199254740992',
+      '9007199254740993',
+      '9223372036854775807',
+    ] as const) {
+      const header = createBlockHeaderFromRPC({ ...testdataFromRPCData, difficulty }, { common })
+      expect(header.difficulty).toBe(BigInt(difficulty))
     }
-    //@ts-expect-error -- Typescript doesn't like us to replace global values
-    fetch = realFetch
   })
 })

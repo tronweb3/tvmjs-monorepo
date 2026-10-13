@@ -87,7 +87,7 @@ export class FeeMarket1559Tx
    * varying data types.
    */
   public constructor(txData: TxData, opts: TxOptions = {}) {
-    sharedConstructor(this, { ...txData, type: TransactionType.FeeMarketEIP1559 }, opts)
+    sharedConstructor(this, txData, opts)
     const { chainId, accessList: rawAccessList, maxFeePerGas, maxPriorityFeePerGas } = txData
     const accessList = rawAccessList ?? []
 
@@ -188,7 +188,7 @@ export class FeeMarket1559Tx
    * The minimum gas limit which the tx to have to be valid.
    * This covers costs as the standard fee (21000 gas), the data fee (paid for each calldata byte),
    * the optional creation fee (if the transaction creates a contract), and if relevant the gas
-   * to be paid for access lists (EIP-2930) and authority lists (EIP-7702).
+   * to be paid for access lists (EIP-2930).
    */
   getIntrinsicGas(): bigint {
     return Legacy.getIntrinsicGas(this)

@@ -1,652 +1,303 @@
-import { Common, Hardfork, Mainnet, createCustomCommon } from '@tvmjs/common'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { Common, Hardfork, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
 import { RLP } from '@tvmjs/rlp'
-import {
-  goerliChainConfig,
-  preLondonTestDataBlocks1RLP,
-  preLondonTestDataBlocks2RLP,
-  testnetMergeChainConfig,
-} from '@tvmjs/testdata'
-import { createLegacyTx, paramsTx } from '@tvmjs/tx'
-import {
-  KECCAK256_RLP_ARRAY,
-  MAX_RLP_BLOCK_SIZE,
-  bytesToHex,
-  equalsBytes,
-  hexToBytes,
-} from '@tvmjs/util'
+import { preLondonTestDataBlocks1RLP, preLondonTestDataBlocks2RLP } from '@tvmjs/testdata'
+import { createLegacyTx } from '@tvmjs/tx'
+import { MAX_RLP_BLOCK_SIZE, bytesToHex, hexToBytes } from '@tvmjs/util'
 import { assert, describe, expect, it } from 'vitest'
 
-import { genTransactionsTrieRoot } from '../src/helpers.ts'
 import {
-  type Block,
-  type BlockBytes,
   createBlock,
   createBlockFromBytesArray,
   createBlockFromRLP,
-  createBlockFromRPC,
+  createBlockHeader,
   createEmptyBlock,
+  genTransactionsTrieRoot,
   paramsBlock,
 } from '../src/index.ts'
 
+import { cliqueCommon, powCommon, signedBlock, signingKey } from './helpers.ts'
 import { genesisHashesTestData } from './testdata/genesisHashesTest.ts'
-import { testdataFromRPCGoerliData } from './testdata/testdata-from-rpc-goerli.ts'
 
-import type { NestedUint8Array } from '@tvmjs/util'
+import type { BlockBytes } from '../src/index.ts'
 
 describe('[Block]: block functions', () => {
   it('should test block initialization', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
-    const genesis = createBlock({}, { common })
-    assert.isDefined(bytesToHex(genesis.hash()), 'block should initialize')
-
-    const params = JSON.parse(JSON.stringify(paramsBlock))
-    params['1']['minGasLimit'] = 3000 // 5000
-    let block = createBlock({}, { params })
-    assert.strictEqual(
-      block.common.param('minGasLimit'),
-      BigInt(3000),
-      'should use custom parameters provided',
-    )
-
-    const emptyBlock = createEmptyBlock({}, { common })
-    assert.isDefined(bytesToHex(emptyBlock.hash()), 'block should initialize')
-
-    // test default freeze values
-    // also test if the options are carried over to the constructor
-    block = createBlock({})
-    assert.isFrozen(block, 'block should be frozen by default')
-
-    block = createBlock({}, { freeze: false })
-    assert.isNotFrozen(block, 'block should not be frozen when freeze deactivated in options')
-
-    const rlpBlock = block.serialize()
-    block = createBlockFromRLP(rlpBlock)
-    assert.isFrozen(block, 'block should be frozen by default')
-
-    block = createBlockFromRLP(rlpBlock, { freeze: false })
-    assert.isNotFrozen(block, 'block should not be frozen when freeze deactivated in options')
-
-    const zero = new Uint8Array(0)
-    const headerArray: Uint8Array[] = []
-    for (let item = 0; item < 15; item++) {
-      headerArray.push(zero)
-    }
-
-    // mock header data (if set to new Uint8Array() header throws)
-    headerArray[0] = new Uint8Array(32) // parentHash
-    headerArray[2] = new Uint8Array(20) // coinbase
-    headerArray[3] = new Uint8Array(32) // stateRoot
-    headerArray[4] = new Uint8Array(32) // transactionsTrie
-    headerArray[5] = new Uint8Array(32) // receiptTrie
-    headerArray[13] = new Uint8Array(32) // mixHash
-    headerArray[14] = new Uint8Array(8) // nonce
-
-    const valuesArray = [headerArray, [], []] as BlockBytes
-
-    block = createBlockFromBytesArray(valuesArray, { common })
-    assert.isFrozen(block, 'block should be frozen by default')
-
-    block = createBlockFromBytesArray(valuesArray, { common, freeze: false })
-    assert.isNotFrozen(block, 'block should not be frozen when freeze deactivated in options')
+    const common = new Common({ chain: TronMainnet })
+    expect(createBlock({}, { common }).hash()).toHaveLength(32)
+    expect(createEmptyBlock({}, { common }).hash()).toHaveLength(32)
+    const params = structuredClone(paramsBlock)
+    params[1].minGasLimit = 3000
+    expect(createBlock({}, { params }).common.param('minGasLimit')).toBe(3000n)
+    expect(paramsBlock[1].minGasLimit).toBe(5000)
+    const block = createBlock({})
+    assert.isFrozen(block)
+    assert.isNotFrozen(createBlock({}, { freeze: false }))
+    assert.isFrozen(createBlockFromRLP(block.serialize()))
+    assert.isNotFrozen(createBlockFromRLP(block.serialize(), { freeze: false }))
+    assert.isFrozen(createBlockFromBytesArray(block.raw()))
+    assert.isNotFrozen(createBlockFromBytesArray(block.raw(), { freeze: false }))
   })
 
-  it('initialization -> setHardfork option', () => {
-    const common = createCustomCommon(testnetMergeChainConfig, Mainnet)
-
-    let block = createBlock(
-      {
-        header: {
-          number: 12, // Berlin block
-          extraData: new Uint8Array(97),
-        },
-      },
-      { common, setHardfork: true },
-    )
-    assert.strictEqual(block.common.hardfork(), Hardfork.Berlin, 'should use setHardfork option')
-
-    block = createBlock(
-      {
-        header: {
-          number: 20, // Future block
-        },
-      },
-      { common, setHardfork: true },
-    )
-    assert.strictEqual(
-      block.common.hardfork(),
-      Hardfork.Paris,
-      'should use setHardfork option post merge',
-    )
+  it('initialization -> setHardfork preserves the TRON profile', () => {
+    const common = new Common({ chain: TronMainnet, eips: [7939] })
+    for (const number of [0n, 12n, 20n, 1920000n, 9007199254740993n]) {
+      const block = createBlock(
+        { header: { number, timestamp: 1800000000n } },
+        { common, setHardfork: true },
+      )
+      expect(block.common.hardfork()).toBe(Hardfork.Tron)
+      expect(block.common.isActivatedEIP(7939)).toBe(true)
+      expect(block.header.baseFeePerGas).toBe(7n)
+    }
+    expect(() => common.setHardfork(Hardfork.London)).toThrow()
+    expect(common.hardfork()).toBe(Hardfork.Tron)
   })
 
   it('should initialize with undefined parameters without throwing', () => {
-    assert.doesNotThrow(function () {
-      createBlock()
-    })
+    expect(() => createBlock()).not.toThrow()
   })
 
-  it('should initialize with null parameters without throwing', () => {
-    const common = new Common({ chain: Mainnet })
-    const opts = { common }
-    assert.doesNotThrow(function () {
-      createBlock({}, opts)
-    })
+  it('should initialize with empty parameters without throwing', () => {
+    expect(() => createBlock({}, { common: new Common({ chain: TronMainnet }) })).not.toThrow()
   })
 
   it('should throw when trying to initialize with uncle headers on a PoA network', () => {
-    const common = new Common({ chain: Mainnet })
-    const uncleBlock = createBlock({ header: { extraData: new Uint8Array(117) } }, { common })
-    assert.throws(function () {
-      createBlock({ uncleHeaders: [uncleBlock.header] }, { common })
-    })
+    const common = cliqueCommon()
+    const uncle = createBlockHeader({ extraData: new Uint8Array(97) }, { common })
+    expect(() =>
+      createBlock({ header: { extraData: new Uint8Array(97) }, uncleHeaders: [uncle] }, { common }),
+    ).toThrow('uncleHeaders on a PoA network is not allowed')
   })
 
-  it('should test block validation on pow chain', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const blockRlp = hexToBytes(preLondonTestDataBlocks1RLP.blockRLP)
-    try {
-      createBlockFromRLP(blockRlp, { common })
-      assert.isTrue(true, 'should pass')
-    } catch {
-      assert.fail('should not throw')
+  it('should test block validation with explicit pow metadata', async () => {
+    const block = await signedBlock(powCommon())
+    const restored = createBlockFromRLP(block.serialize(), { common: block.common })
+    await expect(restored.validateData()).resolves.toBeUndefined()
+    expect(restored.hash()).toEqual(block.hash())
+    expect(restored.transactions[0].getSenderAddress()).toEqual(
+      block.transactions[0].getSenderAddress(),
+    )
+  })
+
+  it('should reject historical block RLP without an explicit base fee', () => {
+    for (const data of [
+      preLondonTestDataBlocks1RLP.blockRLP,
+      preLondonTestDataBlocks2RLP.block2RLP,
+    ]) {
+      expect(() => createBlockFromRLP(hexToBytes(data))).toThrow('baseFeePerGas should be provided')
     }
-  })
-
-  it('should test block validation on poa chain', async () => {
-    const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
-
-    try {
-      createBlockFromRPC(testdataFromRPCGoerliData, [], { common })
-      assert.isTrue(true, 'does not throw')
-    } catch {
-      assert.fail('error thrown')
-    }
-  })
-
-  async function testTransactionValidation(block: Block) {
-    assert.isTrue(block.transactionsAreValid())
-    assert.isEmpty(block.getTransactionsValidationErrors())
-  }
-
-  // Osaka not supported
-  it.skip('should test transaction validation - transaction not signed', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Osaka })
-    const maxTransactionGasLimit = paramsTx['7825'].maxTransactionGasLimit as number
-    // Create tx with gas limit over max (but not yet on Osaka)
-    const tx = createLegacyTx({
-      gasLimit: maxTransactionGasLimit + 1,
-      gasPrice: 7,
-    })
-
-    assert.throws(() => {
-      createBlock({ transactions: [tx] }, { common })
-    }, 'exceeds the maximum allowed by EIP-7825')
   })
 
   it('should test transaction validation - invalid tx trie', async () => {
-    const blockRlp = hexToBytes(preLondonTestDataBlocks1RLP.blockRLP)
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-    const block = createBlockFromRLP(blockRlp, { common, freeze: false })
-    await testTransactionValidation(block)
-    // @ts-expect-error -- Assigning a read-only property
-    block.header.transactionsTrie = new Uint8Array(32)
-    try {
-      await block.validateData()
-      assert.fail('should throw')
-    } catch (error: any) {
-      assert.isTrue((error.message as string).includes('invalid transaction trie'))
-    }
+    const valid = await signedBlock()
+    expect(valid.transactionsAreValid()).toBe(true)
+    expect(valid.getTransactionsValidationErrors()).toEqual([])
+    const block = createBlock({
+      header: { transactionsTrie: new Uint8Array(32) },
+      transactions: valid.transactions,
+    })
+    await expect(block.validateData()).rejects.toThrow('invalid transaction trie')
   })
 
   it('should test transaction validation - transaction not signed', async () => {
-    const tx = createLegacyTx({
-      gasLimit: 53000,
-      gasPrice: 7,
-    })
-    const blockTest = createBlock({ transactions: [tx] })
-    const txTrie = await blockTest.genTxTrie()
+    const tx = createLegacyTx({ gasLimit: 53000, gasPrice: 7 })
     const block = createBlock({
-      header: {
-        transactionsTrie: txTrie,
-      },
+      header: { transactionsTrie: await genTransactionsTrieRoot([tx]) },
       transactions: [tx],
     })
-    try {
-      await block.validateData()
-      assert.fail('should throw')
-    } catch (error: any) {
-      assert.isTrue((error.message as string).includes('unsigned'))
-    }
+    await expect(block.validateData()).rejects.toThrow('unsigned')
   })
 
   it('should test transaction validation with empty transaction list', async () => {
     const block = createBlock({})
-    await testTransactionValidation(block)
+    expect(block.transactionsAreValid()).toBe(true)
+    expect(block.getTransactionsValidationErrors()).toEqual([])
+    await expect(block.validateData()).resolves.toBeUndefined()
   })
 
-  it('should test transaction validation with legacy tx in london', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-    const blockRlp = hexToBytes(preLondonTestDataBlocks1RLP.blockRLP)
-    const block = createBlockFromRLP(blockRlp, { common, freeze: false })
-    await testTransactionValidation(block)
-    // @ts-expect-error -- Assigning to read-only property
-    block.transactions[0].gasPrice = BigInt(0)
-    const result = block.getTransactionsValidationErrors()
-    assert.isTrue(
-      result[0].includes('tx unable to pay base fee (non EIP-1559 tx)'),
-      'should throw when legacy tx is unable to pay base fee',
+  it('should validate legacy transactions against the retained base fee', async () => {
+    const block = await signedBlock()
+    expect(block.transactionsAreValid()).toBe(true)
+    const underpriced = createLegacyTx({
+      to: `0x${'11'.repeat(20)}`,
+      gasLimit: 21000n,
+      gasPrice: 6n,
+    }).sign(signingKey)
+    const invalid = createBlock({ transactions: [underpriced] })
+    expect(invalid.getTransactionsValidationErrors()[0]).toContain(
+      'tx unable to pay base fee (non EIP-1559 tx)',
     )
   })
 
   it('should test uncles hash validation', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const blockRlp = hexToBytes(preLondonTestDataBlocks2RLP.block2RLP)
-    const block = createBlockFromRLP(blockRlp, { common, freeze: false })
-    // Sync transactionsTrie: Tron tx format adds tokenId/tokenValue, so the
-    // trie root computed from the re-serialized txs differs from the embedded
-    // (Ethereum-format) trie in the legacy block RLP.
-    // @ts-expect-error -- Assigning to read-only property
-    block.header.transactionsTrie = await genTransactionsTrieRoot(block.transactions)
-    assert.strictEqual(block.uncleHashIsValid(), true)
-    // @ts-expect-error -- Assigning to read-only property
-    block.header.uncleHash = new Uint8Array(32)
-    try {
-      await block.validateData()
-      assert.fail('should throw')
-    } catch (error: any) {
-      assert.isTrue((error.message as string).includes('invalid uncle hash'))
-    }
+    const common = powCommon()
+    const uncle = createBlockHeader({ number: 1 }, { common })
+    const uncleHash = keccak_256(RLP.encode([uncle.raw()]))
+    const block = createBlock({ header: { uncleHash }, uncleHeaders: [uncle] }, { common })
+    expect(block.uncleHashIsValid()).toBe(true)
+    await expect(block.validateData()).resolves.toBeUndefined()
+    const invalid = createBlock(
+      { header: { uncleHash: new Uint8Array(32) }, uncleHeaders: [uncle] },
+      { common },
+    )
+    await expect(invalid.validateData()).rejects.toThrow('invalid uncle hash')
+    expect(() => createBlock({ uncleHeaders: [uncle] })).toThrow(
+      'Uncle headers are not supported by TRON execution presets',
+    )
+    expect(() =>
+      createBlock({ header: { number: 2n }, uncleHeaders: [uncle, uncle] }, { common }),
+    ).toThrow('duplicate uncles')
   })
 
   it('should test data integrity', async () => {
-    const unsignedTx = createLegacyTx({})
-    const txRoot = await genTransactionsTrieRoot([unsignedTx])
-
-    let block = createBlock({
-      transactions: [unsignedTx],
-      header: {
-        transactionsTrie: txRoot,
-      },
+    const unsigned = createLegacyTx({})
+    const txRoot = await genTransactionsTrieRoot([unsigned])
+    const block = createBlock({ header: { transactionsTrie: txRoot }, transactions: [unsigned] })
+    await expect(block.validateData(false, false)).resolves.toBeUndefined()
+    const badTrie = createBlock({
+      header: { transactionsTrie: new Uint8Array(32) },
+      transactions: [unsigned],
     })
-
-    // Verifies that the "signed tx check" is skipped
-    await block.validateData(false, false)
-
-    async function checkThrowsAsync(fn: Promise<void>, errorMsg: string) {
-      try {
-        await fn
-        assert.fail('should throw')
-      } catch (e: any) {
-        assert.isTrue((e.message as string).includes(errorMsg))
-      }
-    }
-
-    const zeroRoot = new Uint8Array(32)
-
-    // Tx root
-    block = createBlock({
-      transactions: [unsignedTx],
-      header: {
-        transactionsTrie: zeroRoot,
-      },
-    })
-    await checkThrowsAsync(block.validateData(false, false), 'invalid transaction trie')
-
-    // Withdrawals root
-    block = createBlock(
-      {
-        header: {
-          withdrawalsRoot: zeroRoot,
-          uncleHash: KECCAK256_RLP_ARRAY,
-        },
-      },
-      { common: new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai }) },
+    await expect(badTrie.validateData(false, false)).rejects.toThrow('invalid transaction trie')
+    const badUncles = createBlock({ header: { uncleHash: new Uint8Array(32) } })
+    await expect(badUncles.validateData(false, false)).rejects.toThrow('invalid uncle hash')
+    expect(() => createBlock({ header: { withdrawalsRoot: new Uint8Array(32) } })).toThrow(
+      'EIP4895',
     )
-    await checkThrowsAsync(block.validateData(false, false), 'invalid withdrawals trie')
+  })
 
-    // Uncle root
-    block = createBlock(
-      {
-        header: {
-          uncleHash: zeroRoot,
-        },
-      },
-      { common: new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart }) },
+  it('should test isGenesis (TRON mainnet default)', () => {
+    expect(createBlock({ header: { number: 1 } }).isGenesis()).toBe(false)
+    expect(createBlock({ header: { number: 0 } }).isGenesis()).toBe(true)
+  })
+
+  it('should preserve a fixed genesis vector with an explicit TRON fee extension', () => {
+    const raw = RLP.decode(
+      hexToBytes(`0x${genesisHashesTestData.test.genesis_rlp_hex}`),
+    ) as BlockBytes
+    expect(bytesToHex(keccak_256(RLP.encode(raw[0])))).toBe(
+      `0x${genesisHashesTestData.test.genesis_hash}`,
     )
-    await checkThrowsAsync(block.validateData(false, false), 'invalid uncle hash')
+    raw[0].push(Uint8Array.of(7))
+    const block = createBlockFromBytesArray(raw)
+    expect(block.hash()).toEqual(keccak_256(RLP.encode(raw[0])))
+    expect(bytesToHex(block.hash())).not.toBe(`0x${genesisHashesTestData.test.genesis_hash}`)
+    expect(block.serialize()).toEqual(RLP.encode(raw))
+    expect(block.isGenesis()).toBe(true)
   })
 
-  it('should test isGenesis (mainnet default)', () => {
-    const block = createBlock({ header: { number: 1 } })
-    assert.notEqual(block.isGenesis(), true)
-    const genesisBlock = createBlock({ header: { number: 0 } })
-    assert.strictEqual(genesisBlock.isGenesis(), true)
-  })
-
-  it('should test genesis hashes (mainnet default)', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
-    const rlp = hexToBytes(`0x${genesisHashesTestData.test.genesis_rlp_hex}`)
-    const hash = hexToBytes(`0x${genesisHashesTestData.test.genesis_hash}`)
-    const block = createBlockFromRLP(rlp, { common })
-    assert.isTrue(equalsBytes(block.hash(), hash), 'genesis hash match')
-  })
-
-  it('should test hash() method (mainnet default)', () => {
-    let common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
-    const rlp = hexToBytes(`0x${genesisHashesTestData.test.genesis_rlp_hex}`)
-    const hash = hexToBytes(`0x${genesisHashesTestData.test.genesis_hash}`)
-    let block = createBlockFromRLP(rlp, { common })
-    assert.isTrue(equalsBytes(block.hash(), hash), 'genesis hash match')
-
-    common = new Common({
-      chain: Mainnet,
-      hardfork: Hardfork.Chainstart,
-      customCrypto: {
-        keccak256: () => {
-          return new Uint8Array([1])
-        },
-      },
+  it('should apply custom crypto to block hashes', () => {
+    const common = new Common({
+      chain: TronMainnet,
+      customCrypto: { keccak256: () => Uint8Array.of(1) },
     })
-    block = createBlockFromRLP(rlp, { common })
-    assert.deepEqual(block.hash(), new Uint8Array([1]), 'custom crypto applied on hash() method')
+    expect(createBlock({}, { common }).hash()).toEqual(Uint8Array.of(1))
   })
 
   it('should error on invalid params', () => {
-    assert.throws(
-      () => {
-        createBlockFromRLP('1' as any)
-      },
-      undefined,
-      undefined,
-      'input must be array',
+    expect(() => createBlockFromRLP(RLP.encode('a'))).toThrow('Must be array')
+    expect(() => createBlockFromBytesArray([[], [], []])).toThrow('Less values than expected')
+    expect(() =>
+      createBlockFromBytesArray([
+        createBlockHeader().raw(),
+        [],
+        [],
+        [],
+        [],
+        [],
+      ] as unknown as BlockBytes),
+    ).toThrow('More values')
+  })
+
+  it('should return the same block data from raw()', async () => {
+    const block = await signedBlock()
+    const restored = createBlockFromBytesArray(block.raw())
+    expect(restored.hash()).toEqual(block.hash())
+    expect(restored.raw()).toEqual(block.raw())
+    expect(restored.transactions[0].getSenderAddress()).toEqual(
+      block.transactions[0].getSenderAddress(),
     )
-    assert.throws(
-      () => {
-        createBlockFromBytesArray([1, 2, 3, 4] as any)
-      },
-      undefined,
-      undefined,
-      'input length must be 3 or less',
+  })
+
+  it('should test toJSON', async () => {
+    const block = await signedBlock()
+    const json = block.toJSON()
+    expect(json.transactions![0]).toMatchObject({ tokenId: '0x20000000000001', tokenValue: '0x7' })
+    const restored = createBlock(json)
+    expect(restored.serialize()).toEqual(block.serialize())
+    expect(restored.transactions[0].getSenderAddress()).toEqual(
+      block.transactions[0].getSenderAddress(),
     )
+    await expect(restored.validateData()).resolves.toBeUndefined()
   })
 
-  it('should return the same block data from raw()', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const block = createBlockFromRLP(hexToBytes(preLondonTestDataBlocks2RLP.block2RLP), {
-      common,
-    })
-    const createBlockFromRaw = createBlockFromBytesArray(block.raw(), { common })
-    assert.isTrue(equalsBytes(block.hash(), createBlockFromRaw.hash()))
-  })
-
-  it('should test toJSON', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const block = createBlockFromRLP(hexToBytes(preLondonTestDataBlocks2RLP.block2RLP), {
-      common,
-    })
-    assert.strictEqual(typeof block.toJSON(), 'object')
-  })
-
-  it('DAO hardfork', () => {
-    const blockData = RLP.decode(preLondonTestDataBlocks2RLP.block0RLP) as NestedUint8Array
-    // Set block number from test block to mainnet DAO fork block 1920000
-    blockData[0][8] = hexToBytes('0x1D4C00')
-
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Dao })
-    assert.throws(
-      function () {
-        createBlockFromBytesArray(blockData as BlockBytes, { common })
-      },
-      /extraData should be 'dao-hard-fork/,
-      undefined,
-      'should throw on DAO HF block with wrong extra data',
-    )
-
-    // Set extraData to dao-hard-fork
-    blockData[0][12] = hexToBytes('0x64616f2d686172642d666f726b')
-
-    assert.doesNotThrow(function () {
-      createBlockFromBytesArray(blockData as BlockBytes, { common })
-    }, 'should not throw on DAO HF block with correct extra data')
-  })
-
-  it('should set canonical difficulty if I provide a calcDifficultyFromHeader header', () => {
-    let common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
-    const genesis = createBlock({}, { common })
-
-    const nextBlockHeaderData = {
-      number: genesis.header.number + BigInt(1),
-      timestamp: genesis.header.timestamp + BigInt(10),
+  it('does not impose DAO extra data on the TRON profile', () => {
+    for (const extraData of ['0x', '0x64616f2d686172642d666f726b'] as const) {
+      const block = createBlock({ header: { number: 1920000n, extraData } }, { setHardfork: true })
+      expect(block.common.hardfork()).toBe(Hardfork.Tron)
+      expect(bytesToHex(block.header.extraData)).toBe(extraData)
     }
-
-    common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-    const blockWithoutDifficultyCalculation = createBlock(
-      {
-        header: nextBlockHeaderData,
-      },
-      { common },
-    )
-
-    // test if difficulty defaults to 0
-    assert.strictEqual(
-      blockWithoutDifficultyCalculation.header.difficulty,
-      BigInt(0),
-      'header difficulty should default to 0',
-    )
-
-    // test if we set difficulty if we have a "difficulty header" in options; also verify this is equal to reported canonical difficulty.
-    const blockWithDifficultyCalculation = createBlock(
-      {
-        header: nextBlockHeaderData,
-      },
-      {
-        common,
-        calcDifficultyFromHeader: genesis.header,
-      },
-    )
-
-    assert.notEqual(
-      blockWithDifficultyCalculation.header.difficulty,
-      BigInt(0),
-      'header difficulty should be set if difficulty header is given',
-    )
-    assert.strictEqual(
-      blockWithDifficultyCalculation.header.ethashCanonicalDifficulty(genesis.header),
-      blockWithDifficultyCalculation.header.difficulty,
-      'header difficulty is canonical difficulty if difficulty header is given',
-    )
-
-    // test if we can provide a block which is too far ahead to still calculate difficulty
-    const noParentHeaderData = {
-      number: genesis.header.number + BigInt(1337),
-      timestamp: genesis.header.timestamp + BigInt(10),
-    }
-
-    const block_farAhead = createBlock(
-      {
-        header: noParentHeaderData,
-      },
-      {
-        common,
-        calcDifficultyFromHeader: genesis.header,
-      },
-    )
-
-    assert.isTrue(
-      block_farAhead.header.difficulty > BigInt(0),
-      'should allow me to provide a bogus next block to calculate difficulty on when providing a difficulty header',
-    )
   })
 
-  it('should be able to initialize shanghai blocks with correct hardfork defaults', () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
-    const block = createBlock({}, { common })
-    assert.strictEqual(
-      block.common.hardfork(),
-      Hardfork.Shanghai,
-      'hardfork should be set to shanghai',
+  it('should set canonical difficulty with explicit pow metadata', () => {
+    const common = powCommon()
+    const parent = createBlock({ header: { difficulty: 131072n, timestamp: 0n } }, { common })
+    expect(
+      createBlock({ header: { number: 1n, timestamp: 10n } }, { common }).header.difficulty,
+    ).toBe(0n)
+    const calculated = createBlock(
+      { header: { number: 1n, timestamp: 10n } },
+      { common, calcDifficultyFromHeader: parent.header },
     )
-    assert.deepEqual(block.withdrawals, [], 'withdrawals should be set to default empty array')
+    expect(calculated.header.difficulty).toBe(131136n)
+    expect(calculated.header.ethashCanonicalDifficulty(parent.header)).toBe(131136n)
+    const farAhead = createBlock(
+      { header: { number: 1337n, timestamp: 10n } },
+      { common, calcDifficultyFromHeader: parent.header },
+    )
+    expect(farAhead.header.difficulty).toBe(131136n)
   })
 })
 
-describe('[Block]: EIP-7934 RLP Execution Block Size Limit', () => {
-  // Helper function to create a large block
-  function createLargeBlock(common: Common) {
-    const largeExtraData = new Uint8Array(MAX_RLP_BLOCK_SIZE + 1000) // Exceed the limit
-    largeExtraData.fill(0x01)
+describe.each([TronMainnet, TronNile, TronShasta])('TRON block capabilities on $name', (chain) => {
+  it('keeps unsupported capabilities unavailable', () => {
+    const common = new Common({ chain })
+    for (const eip of [3675, 4399, 4895, 7685, 7825, 7843, 7928, 7934]) {
+      expect(common.isActivatedEIP(eip)).toBe(false)
+      expect(() => common.setEIPs([eip])).toThrow()
+    }
+    const block = createBlock({}, { common, setHardfork: true })
+    expect(block.common.hardfork()).toBe(Hardfork.Tron)
+    expect(block.withdrawals).toBeUndefined()
+    expect(block.header.withdrawalsRoot).toBeUndefined()
+  })
 
-    return createBlock(
-      {
-        header: {
-          extraData: largeExtraData,
-        },
-      },
-      { common, skipConsensusFormatValidation: true },
+  it('does not impose the EIP-7825 transaction gas cap', () => {
+    const common = new Common({ chain })
+    const tx = createLegacyTx({ gasLimit: 2n ** 24n + 1n, gasPrice: 7n }, { common }).sign(
+      signingKey,
     )
-  }
-
-  it('should not throw when size exceeds but EIP-7934 is not activated', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
-    const block = createLargeBlock(common)
-
-    // This should not throw since EIP-7934 is not activated
-    await block.validateData(false, false, true)
+    const block = createBlock({ transactions: [tx] }, { common })
+    expect(block.transactionsAreValid()).toBe(true)
+    expect(block.transactions[0].gasLimit).toBe(16777217n)
   })
+})
 
-  it('should not throw when size exceeds, EIP-7934 is activated, but validateBlockSize is default (false)', async () => {
-    const params = {
-      7934: {
-        maxRlpBlockSize: 8_388_608, // 8 MiB (MAX_BLOCK_SIZE - SAFETY_MARGIN)
-      },
+describe('[Block]: unavailable EIP-7934 size limit', () => {
+  it('round trips a block above the Ethereum limit without enabling that capability', async () => {
+    const block = createBlock({ header: { extraData: new Uint8Array(MAX_RLP_BLOCK_SIZE + 1) } })
+    for (const validateSize of [undefined, true]) {
+      await expect(block.validateData(false, false, validateSize)).resolves.toBeUndefined()
     }
-    const common = new Common({
-      chain: Mainnet,
-      hardfork: Hardfork.Chainstart,
-      eips: [7934],
-      params,
-    })
-    const block = createLargeBlock(common)
-
-    // This should not throw since validateBlockSize defaults to false
-    await block.validateData(false, false)
-  })
-
-  it('should throw when EIP-7934 is activated and validateBlockSize is explicitly set to true', async () => {
-    const params = {
-      7934: {
-        maxRlpBlockSize: 8_388_608, // 8 MiB (MAX_BLOCK_SIZE - SAFETY_MARGIN)
-      },
-    }
-    const common = new Common({
-      chain: Mainnet,
-      hardfork: Hardfork.Chainstart,
-      eips: [7934],
-      params,
-    })
-    const block = createLargeBlock(common)
-
-    // This should throw due to size limit
-    await expect(block.validateData(false, false, true)).rejects.toThrow(
-      /Block size exceeds maximum RLP block size limit/,
-    )
-  })
-
-  it('should not throw when EIP-7934 is activated, validateBlockSize is true, but size does not exceed', async () => {
-    const params = {
-      7934: {
-        maxRlpBlockSize: 8_388_608, // 8 MiB (MAX_BLOCK_SIZE - SAFETY_MARGIN)
-      },
-    }
-    const common = new Common({
-      chain: Mainnet,
-      hardfork: Hardfork.Chainstart,
-      eips: [7934],
-      params,
-    })
-
-    // Create a block that should be valid (small size)
-    const block = createBlock({}, { common })
-
-    // This should not throw for a small block
-    await block.validateData(false, false, true)
-  })
-
-  it('should use correct size limit from common parameters', async () => {
-    const params = {
-      7934: {
-        maxRlpBlockSize: 8_388_608, // 8 MiB (MAX_BLOCK_SIZE - SAFETY_MARGIN)
-      },
-    }
-    const common = new Common({
-      chain: Mainnet,
-      hardfork: Hardfork.Chainstart,
-      eips: [7934],
-      params,
-    })
-
-    // Check that the parameter is correctly set
-    const maxRlpBlockSize = common.param('maxRlpBlockSize')
-    assert.strictEqual(
-      Number(maxRlpBlockSize),
-      MAX_RLP_BLOCK_SIZE,
-      'maxRlpBlockSize should match constant',
-    )
-  })
-
-  it('should validate block size with createBlockFromRLP', async () => {
-    const params = {
-      7934: {
-        maxRlpBlockSize: 8_388_608, // 8 MiB (MAX_BLOCK_SIZE - SAFETY_MARGIN)
-      },
-    }
-    const common = new Common({
-      chain: Mainnet,
-      hardfork: Hardfork.Chainstart,
-      eips: [7934],
-      params,
-    })
-
-    // Create a valid block
-    const originalBlock = createBlock({}, { common })
-    const rlp = originalBlock.serialize()
-
-    // Create a block from RLP
-    const blockFromRLP = createBlockFromRLP(rlp, { common })
-
-    // This should not throw for a valid block
-    await blockFromRLP.validateData(false, false, true)
-    assert.isTrue(
-      equalsBytes(blockFromRLP.hash(), originalBlock.hash()),
-      'hash should match after recreating from RLP',
-    )
-  })
-
-  it('should throw when creating block from RLP when size exceeds limit', async () => {
-    const params = {
-      7934: {
-        maxRlpBlockSize: 8_388_608, // 8 MiB (MAX_BLOCK_SIZE - SAFETY_MARGIN)
-      },
-    }
-    const common = new Common({
-      chain: Mainnet,
-      hardfork: Hardfork.Chainstart,
-      eips: [7934],
-      params,
-    })
-
-    // Create a block without EIP-7934 active first to avoid size check during creation
-    const commonWithout7934 = new Common({
-      chain: Mainnet,
-      hardfork: Hardfork.Chainstart,
-    })
-
-    const block = createLargeBlock(commonWithout7934)
     const rlp = block.serialize()
-
-    // createBlockFromRLP should throw when EIP-7934 is active
-    assert.throws(() => {
-      createBlockFromRLP(rlp, { common, skipConsensusFormatValidation: true })
-    }, /Block size exceeds limit/)
+    expect(rlp.length).toBeGreaterThan(MAX_RLP_BLOCK_SIZE)
+    const restored = createBlockFromRLP(rlp)
+    expect(restored.hash()).toEqual(block.hash())
+    expect(restored.header.extraData.length).toBe(block.header.extraData.length)
+    expect(
+      () =>
+        new Common({ chain: TronMainnet, eips: [7934], params: { 7934: { maxRlpBlockSize: 1 } } }),
+    ).toThrow()
   })
 })

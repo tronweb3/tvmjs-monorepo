@@ -1,8 +1,6 @@
-import { Hardfork } from '@tvmjs/common'
 import { type Address, type PrefixedHexString, bytesToUnprefixedHex } from '@tvmjs/util'
 
 import { precompile0a } from './0a-validate-multi-sign.ts'
-// import { precompile0a } from './0a-kzg-point-evaluation.ts'
 import { precompile0b } from './0b-bls12-g1add.ts'
 import { precompile0c } from './0c-bls12-g1msm.ts'
 import { precompile0d } from './0d-bls12-g2add.ts'
@@ -20,20 +18,17 @@ import { precompile09 } from './09-batch-validate-sign.ts'
 import { precompile10 } from './10-bls12-map-fp-to-g1.ts'
 import { precompile11 } from './11-bls12-map-fp2-to-g2.ts'
 import { precompile100 } from './100-p256verify.ts'
-// import { precompile20003 } from './20003-ripemd160.ts'
-// import { precompile20009 } from './20009-blake2f.ts'
 import { MCLBLS, NobleBLS } from './bls12_381/index.ts'
 import { NobleBN254, RustBN254 } from './bn254/index.ts'
 
 // @TODO TRON  support more precompiles
-// 0a-kzg-point-evaluation is not supported yet
 
 import type { Common } from '@tvmjs/common'
 import type { PrecompileFunc, PrecompileInput } from './types.ts'
 
 interface PrecompileEntry {
   address: string
-  check: PrecompileAvailabilityCheckType
+  check: PrecompileAvailabilityCheckTypeEIP
   precompile: PrecompileFunc
   name: string
 }
@@ -42,22 +37,12 @@ interface Precompiles {
   [key: string]: PrecompileFunc
 }
 
-type PrecompileAvailabilityCheckType =
-  | PrecompileAvailabilityCheckTypeHardfork
-  | PrecompileAvailabilityCheckTypeEIP
-
 export type PrecompileAvailabilityCheck =
   (typeof PrecompileAvailabilityCheck)[keyof typeof PrecompileAvailabilityCheck]
 
 export const PrecompileAvailabilityCheck = {
   EIP: 'eip',
-  Hardfork: 'hardfork',
 } as const
-
-interface PrecompileAvailabilityCheckTypeHardfork {
-  type: typeof PrecompileAvailabilityCheck.Hardfork
-  param: string
-}
 
 interface PrecompileAvailabilityCheckTypeEIP {
   type: typeof PrecompileAvailabilityCheck.EIP
@@ -70,8 +55,8 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '01',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Chainstart,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 1,
     },
     precompile: precompile01,
     name: 'ECRECOVER (0x01)',
@@ -79,8 +64,8 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '02',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Chainstart,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 1,
     },
     precompile: precompile02,
     name: 'SHA256 (0x02)',
@@ -88,8 +73,8 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '03',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Chainstart,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 1,
     },
     precompile: precompile03,
     name: 'RIPEMD160 (0x03)',
@@ -97,8 +82,8 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '04',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Chainstart,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 1,
     },
     precompile: precompile04,
     name: 'IDENTITY (0x04)',
@@ -106,8 +91,8 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '05',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Byzantium,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 609,
     },
     precompile: precompile05,
     name: 'MODEXP (0x05)',
@@ -115,8 +100,8 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '06',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Byzantium,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 609,
     },
     precompile: precompile06,
     name: 'BN254_ADD (0x06)',
@@ -124,8 +109,8 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '07',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Byzantium,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 609,
     },
     precompile: precompile07,
     name: 'BN254_MUL (0x07)',
@@ -133,21 +118,12 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '08',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Byzantium,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 609,
     },
     precompile: precompile08,
     name: 'BN254_PAIRING (0x08)',
   },
-  // {
-  //   address: BYTES_19 + '0a',
-  //   check: {
-  //     type: PrecompileAvailabilityCheck.EIP,
-  //     param: 4844,
-  //   },
-  //   precompile: precompile0a,
-  //   name: 'KZG_POINT_EVALUATION (0x0a)',
-  // },
   {
     address: BYTES_19 + '0b',
     check: {
@@ -214,8 +190,8 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '09',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Chainstart,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 1,
     },
     precompile: precompile09,
     name: 'BATCH_VALIDATE_SIGNATURES (0x09)',
@@ -223,8 +199,8 @@ const precompileEntries: PrecompileEntry[] = [
   {
     address: BYTES_19 + '0a',
     check: {
-      type: PrecompileAvailabilityCheck.Hardfork,
-      param: Hardfork.Chainstart,
+      type: PrecompileAvailabilityCheck.EIP,
+      param: 1,
     },
     precompile: precompile0a,
     name: 'VALIDATE_MULTISIGN (0x0a)',
@@ -238,24 +214,6 @@ const precompileEntries: PrecompileEntry[] = [
     precompile: precompile100,
     name: 'P256VERIFY (0x100)',
   },
-  // {
-  //   address: '0000000000000000000000000000000000020003',
-  //   check: {
-  //     type: PrecompileAvailabilityCheck.Hardfork,
-  //     param: Hardfork.Chainstart,
-  //   },
-  //   precompile: precompile20003,
-  //   name: 'RIPEMD160 (0x20003)',
-  // },
-  // {
-  //   address: '0000000000000000000000000000000000020009',
-  //   check: {
-  //     type: PrecompileAvailabilityCheck.Hardfork,
-  //     param: Hardfork.Istanbul,
-  //   },
-  //   precompile: precompile20009,
-  //   name: 'BLAKE2f (0x20009)',
-  // },
 ]
 
 const precompiles: Precompiles = {
@@ -277,8 +235,6 @@ const precompiles: Precompiles = {
   [BYTES_19 + '10']: precompile10,
   [BYTES_19 + '11']: precompile11,
   '0000000000000000000000000000000000000100': precompile100,
-  // '0000000000000000000000000000000000020003': precompile20003,
-  // '0000000000000000000000000000000000020009': precompile20009,
 }
 
 /**
@@ -339,13 +295,7 @@ function getActivePrecompiles(
     if (precompileMap.has(entry.address)) {
       continue
     }
-    const type = entry.check.type
-
-    if (
-      (type === PrecompileAvailabilityCheck.Hardfork && common.gteHardfork(entry.check.param)) ||
-      (entry.check.type === PrecompileAvailabilityCheck.EIP &&
-        common.isActivatedEIP(entry.check.param))
-    ) {
+    if (common.isActivatedEIP(entry.check.param)) {
       precompileMap.set(entry.address, entry.precompile)
     }
   }
@@ -365,15 +315,15 @@ function getPrecompileName(addressUnprefixedStr: string) {
 }
 
 export {
-  getActivePrecompiles,
-  getPrecompileName,
   MCLBLS,
   NobleBLS,
   NobleBN254,
+  RustBN254,
+  getActivePrecompiles,
+  getPrecompileName,
   precompileEntries,
   precompiles,
   ripemdPrecompileAddress,
-  RustBN254,
 }
 
 export type { AddPrecompile, CustomPrecompile, DeletePrecompile, PrecompileFunc, PrecompileInput }

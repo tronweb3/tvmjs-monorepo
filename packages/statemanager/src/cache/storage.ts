@@ -84,6 +84,7 @@ export class StorageCache extends Cache {
     const addressHex = bytesToUnprefixedHex(address.bytes)
     const keyHex = bytesToUnprefixedHex(key)
     this._saveCachePreState(addressHex, keyHex)
+    this._setDirty(`${addressHex}:${keyHex}`, true)
 
     if (this.DEBUG) {
       this._debug(
@@ -147,6 +148,7 @@ export class StorageCache extends Cache {
     const addressHex = bytesToUnprefixedHex(address.bytes)
     const keyHex = bytesToUnprefixedHex(key)
     this._saveCachePreState(addressHex, keyHex)
+    this._setDirty(`${addressHex}:${keyHex}`, true)
     if (this.DEBUG) {
       this._debug(`Delete storage for ${addressHex}: ${keyHex}`)
     }
@@ -175,6 +177,15 @@ export class StorageCache extends Cache {
    */
   clearStorage(address: Address): void {
     const addressHex = bytesToUnprefixedHex(address.bytes)
+    const storageMap = this._lruCache
+      ? this._lruCache.get(addressHex)
+      : this._orderedMapCache!.getElementByKey(addressHex)
+    if (storageMap !== undefined) {
+      for (const keyHex of storageMap.keys()) {
+        this._saveCachePreState(addressHex, keyHex)
+        this._setDirty(`${addressHex}:${keyHex}`, false)
+      }
+    }
     if (this._lruCache) {
       this._lruCache!.set(addressHex, new Map())
     } else {
@@ -184,20 +195,17 @@ export class StorageCache extends Cache {
 
   /**
    * Flushes cache by returning storage slots that have been modified
-   * or deleted and resetting the diff cache (at checkpoint height).
+   * or deleted, without discarding checkpoint rollback history.
    */
   flush(): [string, string, Uint8Array | undefined][] {
     if (this.DEBUG) {
       this._debug(`Flushing cache on checkpoint ${this._checkpoints}`)
     }
 
-    const diffMap = this._diffCache[this._checkpoints]!
-
     const items: [string, string, Uint8Array | undefined][] = []
 
-    for (const entry of diffMap.entries()) {
-      const addressHex = entry[0]
-      const diffStorageMap = entry[1]
+    for (const cacheKey of this._dirtyKeys) {
+      const [addressHex, keyHex] = cacheKey.split(':')
       let storageMap: StorageCacheMap | undefined
       if (this._lruCache) {
         storageMap = this._lruCache!.get(addressHex)
@@ -206,18 +214,19 @@ export class StorageCache extends Cache {
       }
 
       if (storageMap !== undefined) {
-        for (const entry of diffStorageMap.entries()) {
-          const keyHex = entry[0]
-          const value = storageMap.get(keyHex)
-          items.push([addressHex, keyHex, value])
-        }
+        // A pending outer value must survive eviction before this checkpoint reverts.
+        if (this._checkpoints > 0) this._saveCachePreState(addressHex, keyHex)
+        items.push([addressHex, keyHex, storageMap.get(keyHex)])
       } else {
         throw EthereumJSErrorWithoutCode(
           'internal error: storage cache map for account should be defined',
         )
       }
     }
-    this._diffCache[this._checkpoints] = new Map()
+    this._clearDirty()
+    if (this._checkpoints === 0) {
+      this._diffCache[0].clear()
+    }
     return items
   }
 
@@ -225,7 +234,7 @@ export class StorageCache extends Cache {
    * Revert changes to cache last checkpoint (no effect on trie).
    */
   revert(): void {
-    this._checkpoints -= 1
+    super.revert()
     if (this.DEBUG) {
       this._debug(`Revert to checkpoint ${this._checkpoints}`)
     }
@@ -267,7 +276,7 @@ export class StorageCache extends Cache {
    * Commits to current state of cache (no effect on trie).
    */
   commit(): void {
-    this._checkpoints -= 1
+    super.commit()
     if (this.DEBUG) {
       this._debug(`Commit to checkpoint ${this._checkpoints}`)
     }
@@ -300,7 +309,7 @@ export class StorageCache extends Cache {
    * later on be reverted or committed.
    */
   checkpoint(): void {
-    this._checkpoints += 1
+    super.checkpoint()
     if (this.DEBUG) {
       this._debug(`New checkpoint ${this._checkpoints}`)
     }
@@ -342,6 +351,7 @@ export class StorageCache extends Cache {
    * Clears cache.
    */
   clear(): void {
+    this._clearDirty()
     if (this.DEBUG) {
       this._debug(`Clear cache`)
     }

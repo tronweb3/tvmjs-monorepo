@@ -1,8 +1,8 @@
-import { Common, Hardfork, Mainnet, TronMainnet } from '@tvmjs/common'
-import { BIGINT_0, bytesToBigInt, createAddressFromString, hexToBytes } from '@tvmjs/util'
+import { Common, Hardfork, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
+import { Account, BIGINT_0, bytesToBigInt, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
-import { TVMError, createTVM, paramsTVM } from '../src/index.ts'
+import { TVMError, type TVMResult, createTVM, paramsTVM } from '../src/index.ts'
 
 const MAX_CODE_SIZE = 24576
 const MAX_INITCODE_SIZE = 49152
@@ -37,7 +37,7 @@ async function runFactory(common: Common, code: Uint8Array, params = paramsTVM) 
 describe('TRON contract creation size semantics', () => {
   it.each([
     ['default hardfork', undefined],
-    ['explicit Shanghai hardfork', Hardfork.Shanghai],
+    ['explicit TRON profile', Hardfork.Tron],
   ] as const)(
     'deploys runtime code one byte above the EIP-170 limit with the %s',
     async (_name, hardfork) => {
@@ -58,23 +58,9 @@ describe('TRON contract creation size semantics', () => {
     },
   )
 
-  it('keeps the EIP-170 runtime limit for Ethereum', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
-    const tvm = await createTVM({ common })
-    const result = await tvm.runCall({
-      data: OVERSIZED_RUNTIME_INITCODE,
-      gasLimit: 6000000n,
-    })
-
-    assert.strictEqual(
-      result.execResult.exceptionError?.error,
-      TVMError.errorMessages.CODESIZE_EXCEEDS_MAXIMUM,
-    )
-  })
-
   it.each([
     ['default hardfork', undefined],
-    ['explicit Shanghai hardfork', Hardfork.Shanghai],
+    ['explicit TRON profile', Hardfork.Tron],
   ] as const)(
     'accepts top-level initcode one byte above the EIP-3860 limit with the %s',
     async (_name, hardfork) => {
@@ -90,20 +76,6 @@ describe('TRON contract creation size semantics', () => {
       assert.isDefined(result.createdAddress)
     },
   )
-
-  it('keeps the EIP-3860 initcode limit for Ethereum', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
-    const tvm = await createTVM({ common })
-    const result = await tvm.runCall({
-      data: new Uint8Array(MAX_INITCODE_SIZE + 1),
-      gasLimit: 100000n,
-    })
-
-    assert.strictEqual(
-      result.execResult.exceptionError?.error,
-      TVMError.errorMessages.INITCODE_SIZE_VIOLATION,
-    )
-  })
 
   it.each(['f0', 'f5'] as const)(
     'allows oversized initcode through internal CREATE opcode 0x%s',
@@ -124,7 +96,9 @@ describe('TRON contract creation size semantics', () => {
       const code = internalCreateCode(opcode, 32)
       const baseline = await runFactory(new Common({ chain: TronMainnet }), code)
       const expensiveParams = JSON.parse(JSON.stringify(paramsTVM))
-      expensiveParams[3860].initCodeWordGas = 1000000
+      // Even custom data in an active parameter group cannot restore retired metering.
+      expensiveParams[1].initCodeWordGas = 1000000
+      expensiveParams[1].maxInitCodeSize = 1
       const withExpensiveWordGas = await runFactory(
         new Common({ chain: TronMainnet }),
         code,
@@ -153,4 +127,101 @@ describe('TRON contract creation size semantics', () => {
       TVMError.errorMessages.INVALID_BYTECODE_RESULT,
     )
   })
+})
+
+describe.each([TronMainnet, TronNile, TronShasta])('TRON code deposit on $name', (chain) => {
+  const caller = createAddressFromString(`0x${'11'.repeat(20)}`)
+  const expectedAddress = '0x83406c6537ca51e460302d2b2ef235ea1cad2f46'
+
+  it.each([
+    [24575, 4918462n],
+    [24576, 4918662n],
+    [24577, 4918868n],
+  ] as const)('deploys %s runtime bytes with exactly %s Energy', async (size, energy) => {
+    const params = structuredClone(paramsTVM)
+    params[1].maxCodeSize = 1
+    const tvm = await createTVM({ common: new Common({ chain }), params })
+    await tvm.stateManager.putAccount(caller, new Account(0n, 100n))
+    const result = await tvm.runCall({
+      caller,
+      data: hexToBytes(`0x61${size.toString(16).padStart(4, '0')}6000f3`),
+      value: 7n,
+      gasLimit: energy,
+      rootTransactionId: ROOT_TRANSACTION_ID,
+    })
+    assert.isUndefined(result.execResult.exceptionError)
+    assert.strictEqual(result.execResult.executionGasUsed, energy)
+    assert.strictEqual(result.createdAddress?.toString(), expectedAddress)
+    assert.deepEqual(await tvm.stateManager.getCode(result.createdAddress!), new Uint8Array(size))
+    const account = await tvm.stateManager.getAccount(result.createdAddress!)
+    assert.strictEqual(account?.nonce, 1n)
+    assert.strictEqual(account?.balance, 7n)
+    assert.strictEqual((await tvm.stateManager.getAccount(caller))?.balance, 93n)
+  })
+
+  it.each([
+    [
+      'code deposit Energy shortage',
+      OVERSIZED_RUNTIME_INITCODE,
+      4918867n,
+      'out of gas',
+      4918867n,
+      0,
+    ],
+    [
+      'EF-prefixed runtime',
+      INVALID_EF_RUNTIME_INITCODE,
+      100000n,
+      'invalid bytecode deployed',
+      100000n,
+      0,
+    ],
+    ['large REVERT data', hexToBytes('0x6160016000fd'), 100000n, 'revert', 3468n, 24577],
+  ] as const)('rolls back %s', async (_name, data, gasLimit, error, energy, returnSize) => {
+    const tvm = await createTVM({ common: new Common({ chain }) })
+    await tvm.stateManager.putAccount(caller, new Account(0n, 100n))
+    const result = await tvm.runCall({
+      caller,
+      data,
+      gasLimit,
+      value: 7n,
+      rootTransactionId: ROOT_TRANSACTION_ID,
+    })
+    assert.strictEqual(result.execResult.exceptionError?.error, error)
+    assert.strictEqual(result.execResult.executionGasUsed, energy)
+    assert.strictEqual(result.execResult.returnValue.length, returnSize)
+    assert.strictEqual(result.createdAddress?.toString(), expectedAddress)
+    assert.isUndefined(await tvm.stateManager.getAccount(result.createdAddress!))
+    assert.strictEqual((await tvm.stateManager.getAccount(caller))?.balance, 100n)
+    assert.strictEqual((await tvm.stateManager.getAccount(caller))?.nonce, 1n)
+  })
+
+  it.each(['f0', 'f5'] as const)(
+    'reverts a successful large deployment from opcode 0x%s with its parent',
+    async (opcode) => {
+      const tvm = await createTVM({ common: new Common({ chain }) })
+      await tvm.stateManager.putAccount(FACTORY, new Account(0n, 100n))
+      const code = hexToBytes(
+        `0x${opcode === 'f5' ? '6000' : ''}61c00160006007${opcode}60005260006000fd`,
+      )
+      await tvm.stateManager.putCode(FACTORY, code)
+      let child: TVMResult | undefined
+      tvm.events.on('afterMessage', (result) => {
+        if (result.createdAddress !== undefined) child = result
+      })
+      const result = await tvm.runCall({
+        to: FACTORY,
+        gasLimit: 100000n,
+        rootTransactionId: ROOT_TRANSACTION_ID,
+      })
+      assert.strictEqual(result.execResult.exceptionError?.error, 'revert')
+      assert.isDefined(child?.createdAddress)
+      assert.isUndefined(child!.execResult.exceptionError)
+      assert.isUndefined(await tvm.stateManager.getAccount(child!.createdAddress!))
+      const account = await tvm.stateManager.getAccount(FACTORY)
+      assert.strictEqual(account?.nonce, 0n)
+      assert.strictEqual(account?.balance, 100n)
+      assert.deepEqual(await tvm.stateManager.getCode(FACTORY), code)
+    },
+  )
 })
