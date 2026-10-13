@@ -1,6 +1,5 @@
 import { createBlock } from '@tvmjs/block'
-import { Common, Hardfork } from '@tvmjs/common'
-import { customChainConfig } from '@tvmjs/testdata'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { bytesToHex } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -42,30 +41,42 @@ class fibonacciConsensus implements Consensus {
   }
 }
 
-customChainConfig.consensus.algorithm = 'fibonacci'
 const consensusDict: ConsensusDict = {}
 consensusDict['fibonacci'] = new fibonacciConsensus()
 
+async function createTestBlockchain() {
+  const common = new Common({
+    chain: {
+      ...TronMainnet,
+      name: 'custom-consensus-test',
+      chainId: 12345,
+      consensus: { type: 'custom', algorithm: 'fibonacci' },
+    },
+  })
+  const genesisBlock = createBlock({ header: { gasLimit: 1000000n } }, { common })
+  const blockchain = await createBlockchain({
+    common,
+    genesisBlock,
+    validateConsensus: true,
+    consensusDict,
+  })
+  return { common, blockchain }
+}
+
 describe('Optional consensus parameter in blockchain constructor', () => {
   it('blockchain constructor should work with custom consensus', async () => {
-    const common = new Common({ chain: customChainConfig, hardfork: Hardfork.Chainstart })
-    try {
-      const blockchain = await createBlockchain({ common, validateConsensus: true, consensusDict })
-      assert.strictEqual(
-        (blockchain.consensus as fibonacciConsensus).algorithm,
-        'fibonacciConsensus',
-        'consensus algorithm matches',
-      )
-    } catch {
-      assert.fail('blockchain should instantiate successfully')
-    }
+    const { blockchain } = await createTestBlockchain()
+    assert.strictEqual(
+      (blockchain.consensus as fibonacciConsensus).algorithm,
+      'fibonacciConsensus',
+      'consensus algorithm matches',
+    )
   })
 })
 
 describe('Custom consensus validation rules', () => {
   it('should validate custom consensus rules', async () => {
-    const common = new Common({ chain: customChainConfig, hardfork: Hardfork.Chainstart })
-    const blockchain = await createBlockchain({ common, validateConsensus: true, consensusDict })
+    const { common, blockchain } = await createTestBlockchain()
     const block = createBlock(
       {
         header: {
@@ -141,8 +152,7 @@ describe('Custom consensus validation rules', () => {
 
 describe('consensus transition checks', () => {
   it('should transition correctly', async () => {
-    const common = new Common({ chain: customChainConfig, hardfork: Hardfork.Chainstart })
-    const blockchain = await createBlockchain({ common, validateConsensus: true, consensusDict })
+    const { blockchain } = await createTestBlockchain()
 
     try {
       await blockchain.checkAndTransitionHardForkByNumber(5n)

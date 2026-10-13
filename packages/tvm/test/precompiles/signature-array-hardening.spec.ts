@@ -48,6 +48,18 @@ function validateMultiSignBomb(): Uint8Array {
   ])
 }
 
+function batchValidateSignAliasedCount(): Uint8Array {
+  // Both dynamic offsets point at word zero. The first word therefore serves
+  // as both the hash and a ten-element array length in an 11-word payload.
+  return encodeWords([10n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n])
+}
+
+function validateMultiSignAliasedCount(): Uint8Array {
+  // The signatures offset points at word zero, whose value is the five-element
+  // array length. This is the smallest TIP-854-shaped payload for the alias.
+  return encodeWords([5n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n])
+}
+
 describe('TRON signature array extraction hardening', () => {
   it('extracts a fixed 65-byte signature without allocating the ABI-declared length', () => {
     const data = batchValidateSignBomb()
@@ -109,6 +121,31 @@ describe('TRON signature array extraction hardening', () => {
 
     assert.isUndefined(result.exceptionError)
     assert.deepEqual(result.returnValue, new Uint8Array(DataWord.WORD_SIZE))
+  })
+
+  it('charges 0x09 based on calldata shape matching java-tron consensus', async () => {
+    const common = new Common({ chain: TronMainnet })
+    const tvm = await createTVM({ common })
+    const result = precompile09({
+      data: batchValidateSignAliasedCount(),
+      gasLimit: 100000n,
+      common,
+      _TVM: tvm,
+    })
+
+    assert.strictEqual(result.executionGasUsed, common.param('batchvalidatesignGas') * 1n)
+  })
+
+  it('charges 0x0a based on calldata shape matching java-tron consensus', async () => {
+    const common = new Common({ chain: TronMainnet })
+    const result = await precompile0a({
+      data: validateMultiSignAliasedCount(),
+      gasLimit: 100000n,
+      common,
+      _TVM: await createTVM({ common }),
+    })
+
+    assert.strictEqual(result.executionGasUsed, common.param('validatemultisignGas') * 1n)
   })
 
   it('rejects a truncated 0x09 address array with the existing UNKNOWN semantics', async () => {

@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 const config = defineConfig({
   test: {
-    exclude: ['**/test/_*.spec.ts'],
+    exclude: ['**/test/**/_*.spec.ts'],
     silent: true,
     testTimeout: 180000,
     coverage: {
@@ -11,10 +11,11 @@ const config = defineConfig({
       all: true,
       include: ['src/**'],
       reportsDirectory: './coverage/v8',
+      thresholds: {
+        statements: 90,
+        lines: 90,
+      },
     },
-  },
-  optimizeDeps: {
-    exclude: ['kzg-wasm'],
   },
 })
 

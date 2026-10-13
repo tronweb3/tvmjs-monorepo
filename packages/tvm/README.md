@@ -1,18 +1,27 @@
-<!-- cspell:ignore blockhashes Fusaka prehash subarray -->
+<!-- cspell:ignore blockhashes Fusaka prehash subarray CALLDATACOPY CODECOPY dataloadn datasize datacopy -->
 
-# @tvmjs/tvm `1.1.0`
+# @tvmjs/tvm
+
+EIP-170 runtime limits and EIP-3860 initcode limits/metering are removed. Omit `allowUnlimitedContractSize` and `allowUnlimitedInitCodeSize`; either key now throws, even with `false` or `undefined`. The corresponding instance properties, size parameters and error identifiers are removed. Code deposit, memory and CREATE2 hashing still consume Energy. See [contract size migration](../common/README.md#contract-size-configuration-in-v120).
+
+v1.2.0 removes Blob execution context and BLOBHASH/BLOBBASEFEE implementations. Passing `blobVersionedHashes` to a Message, `runCall()` or `runCode()` now throws. TRON Token opcodes and the multi-sign precompile at `0x0a` are preserved. See [Blob migration and affected packages](../common/README.md#blob-removal-in-v120).
+
+Caller-supplied block contexts with `parentBeaconBlockRoot` or `parent_beacon_block_root` are rejected before execution. EIP-4788 cannot be activated. See [Beacon root migration](../common/README.md#beacon-root-removal-in-v120).
+
+EIP-7702 code delegation and `DELEGATION_7702_FLAG` are removed. Code beginning with `0xef0100` fails as invalid bytecode without loading a delegation target. Ordinary CALL/DELEGATECALL behavior is preserved. See [EIP-7702 migration](../common/README.md#eip-7702-removal-in-v120).
+
+The shared execution table reserves `0xd0`–`0xd3` for TRON `CALLTOKEN`, `TOKENBALANCE`, `CALLTOKENVALUE` and `CALLTOKENID`. Conflicting EOF data-instruction handlers and the `7480` group in the exported `paramsTVM` dictionary are removed, including `dataloadGas`, `dataloadnGas`, `datasizeGas` and `datacopyGas`. EOF cannot be activated through the TRON profile; independent EOF container parsing and the remaining inactive EOF implementation are retained.
 
 | TypeScript implementation of the TRON Virtual Machine (TVM). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
 
-- 🦄 All hardforks up to **Osaka**
+- 🦄 TRON execution profile with Mainnet, Nile and Shasta presets
 - 🌴 Tree-shakeable API
 - 👷🏼 Controlled dependency set (7 external + `@Noble` crypto)
-- 🧩 Flexible EIP on/off engine
+- 🧩 Explicit TRON capabilities and governance proposals
 - 🛠️ Custom precompiles
 - 🚀 Built-in profiler
 - 🪢 User-friendly colored debugging
-- 🛵 422KB bundle size (110KB gzipped)
 - 🏄🏾‍♂️ WASM-free default + Fully browser ready
 
 ## Table of Contents
@@ -33,7 +42,6 @@
 - [Upstream](#upstream)
 - [License](#license)
 
-
 ## Installation
 
 To obtain the latest version, simply require the project using `npm`:
@@ -50,12 +58,9 @@ This package provides the core TRON Virtual Machine (TVM) implementation which i
 
 The following is the simplest example for an TVM instantiation with reasonable defaults for state and blockchain information (like blockhashes):
 
-`createTVM()` defaults to the execution-only `TronMainnet` configuration. To run Ethereum rules,
-pass an explicit `Common`, for example `new Common({ chain: Mainnet })`. This selects Ethereum
-Mainnet at its current Prague hardfork; it does not recreate the 1.0.0 default combination of
-chainId 1 with the TRON hardfork. The legacy explicit form
-`new Common({ chain: Mainnet, hardfork: 'tron' })` remains accepted and is normalized to
-`TronMainnet` with chainId 728126428; new TRON code should use `TronMainnet` directly.
+`createTVM()` defaults to the execution-only `TronMainnet` profile. Select `TronNile` or `TronShasta` through an explicit Common. This v1.2.0 development branch accepts only the `tron` profile; Ethereum presets and the old implicit `Mainnet + tron` mapping are rejected. Execution does not require network genesis or consensus metadata.
+
+See [Common configuration](../common/README.md) for network and protocol options.
 
 ```ts
 // ./examples/simple.ts
@@ -79,18 +84,21 @@ If you want the TVM to run against a specific state, you need an `@tvmjs/statema
 ```ts
 // ./examples/withBlockchain.ts
 
+import { createBlock } from '@tvmjs/block'
 import { createBlockchain } from '@tvmjs/blockchain'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createTVM } from '@tvmjs/tvm'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { MerkleStateManager } from '@tvmjs/statemanager'
+import { createTVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 import type { PrefixedHexString } from '@tvmjs/util'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Shanghai })
-  const stateManager = new MerkleStateManager()
-  const blockchain = await createBlockchain()
+  const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron })
+  const stateManager = new MerkleStateManager({ common })
+  // A synthetic genesis block for this local execution example.
+  const genesisBlock = createBlock({}, { common })
+  const blockchain = await createBlockchain({ common, genesisBlock })
 
   const tvm = await createTVM({
     common,
@@ -120,6 +128,7 @@ const main = async () => {
 }
 
 void main()
+
 ```
 
 Additionally, this example shows how to use events to listen to the inner workings and procedural updates
@@ -128,6 +137,51 @@ Additionally, this example shows how to use events to listen to the inner workin
 ### WASM Crypto Support
 
 This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing or signature verification (for included txs). See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace them with, e.g., a more performant WASM implementation by using a shared `common` instance.
+
+## TRON Energy accounting
+
+The default schedule follows java-tron [GreatVoyage-v4.8.2 EnergyCost](https://github.com/tronprotocol/java-tron/blob/f8ff7c76f45ab41d9bb76922329657506819701b/actuator/src/main/java/org/tron/core/vm/EnergyCost.java). It uses version-0 call forwarding, no dynamic Energy penalty, the original memory instruction schedule, and the SELFDESTRUCT restriction already selected by this profile. These are execution settings, not a claim about the current governance state of a network.
+
+| Operation | Energy |
+| --- | --- |
+| BALANCE, EXTCODESIZE, TOKENBALANCE, ISCONTRACT | 20 |
+| EXTCODEHASH | 400 |
+| SLOAD | 50 |
+| SSTORE, first nonzero write to an absent slot | 20,000 |
+| Other SSTORE writes, including unchanged values | 5,000 |
+| CALL, CALLCODE, DELEGATECALL, STATICCALL, CALLTOKEN | 40 base |
+| Nonzero CALL/CALLTOKEN transfer | 9,000, plus 25,000 if the recipient is missing |
+| SELFDESTRUCT | 5,000, plus 25,000 if the beneficiary is missing |
+
+Memory expansion, data copying and callee execution are charged separately. A CALL transfers at most the remaining Energy after caller costs, without reserving Ethereum's 1/64. The 2,300 value-transfer stipend and unused callee Energy follow the reference call rules. Existing empty accounts do not pay creation Energy, and zero-value calls do not create missing recipients.
+
+An explicit `runCall({ code })` override initializes a missing execution account so storage writes continue to work, without saving the supplied code.
+
+There are no cold/warm access surcharges or SSTORE/SELFDESTRUCT refunds. Access-list reporting is diagnostic and does not warm state. Journal checkpoints and revert behavior remain active.
+
+A slot written to zero remains present for the rest of that transaction, matching java-tron's storage row cache. Subsequent writes to that slot cost 5,000 Energy, even when its current value is zero. For example, `0 → 1 → 0 → 1` costs 30,000 Energy for the three SSTORE instructions, plus instruction setup costs. Successful child calls preserve this presence; reverted child calls discard their changes. A later public execution starts with fresh storage-presence tracking.
+
+MLOAD, MSTORE and MSTORE8 charge memory expansion without an additional base fee in the original schedule. To reproduce java-tron's `allowHigherLimitForMaxCpuTimeOfOneTx` memory adjustment, set `params: { tron: { mloadGas: 1, mstoreGas: 1, mstore8Gas: 1 } }` on Common. CALLDATACOPY, CODECOPY and RETURNDATACOPY charge expansion and copying without an extra base fee in either schedule.
+
+The original [Energy vectors](./test/testdata/tronEnergy.json) record source-derived costs and pre-migration results. The separate [execution fixture](./test/testdata/javaTronExecution.json) contains 71 reference results measured externally with the pinned java-tron VM engine, using real repository caches and mocked empty backing stores. The [fixed inputs](./test/testdata/javaTronExecutionInputs.json) and results record the upstream commit, execution configuration and provenance hashes. TVM tests compare Energy, errors, return values, stack, logs and account state across three TRON presets and two StateManagers; VM tests replay the same inputs through signed local transaction envelopes. These regression tests run TVMJS against the recorded results and require no Java, Gradle or external checkout.
+
+This validates the recorded execution settings. It does not run a live node or cover dynamic Energy penalties, version-1 contracts or the full bandwidth/staking/feeLimit resource model. `executionGasUsed` measures execution Energy; the VM wrapper's transaction overhead is reported separately in `totalGasSpent`.
+
+### Storage parameter migration in v1.2.0
+
+<!-- cspell:ignore coldsload -->
+
+Remove these retired keys from consumers of the public `paramsTVM` dictionary:
+
+| Former groups | Removed keys |
+| --- | --- |
+| 1013, 1716 | `netSstoreNoopGas`, `netSstoreInitGas`, `netSstoreCleanGas`, `netSstoreDirtyGas`, `netSstoreClearRefundGas`, `netSstoreResetRefundGas`, `netSstoreResetClearRefundGas` |
+| 1679, 2929, 3529 | `sstoreSentryEIP2200Gas`, `sstoreNoopEIP2200Gas`, `sstoreDirtyEIP2200Gas`, `sstoreInitEIP2200Gas`, `sstoreInitRefundEIP2200Gas`, `sstoreCleanEIP2200Gas`, `sstoreCleanRefundEIP2200Gas`, `sstoreClearRefundEIP2200Gas` |
+| 2929 | `coldsloadGas` |
+
+The empty `1716` parameter group is also removed. Use `sloadGas`, `sstoreSetGas` and `sstoreResetGas` for the current TRON schedule. Supplying retired keys as custom parameters does not enable net metering, storage refunds or EIP-2929. Other entries in shared parameter groups remain available, including address costs used by the retained, inactive EOF implementation.
+
+`TVMError.errorMessages.CODESTORE_OUT_OF_GAS` is removed. Handle `OUT_OF_GAS` for insufficient code-deposit Energy; the failed creation is reverted, including storage, logs and value transfers. Internal CREATE/CREATE2 returns zero when the child fails.
 
 ## Examples
 
@@ -143,7 +197,7 @@ It is easily possible to run a browser build of one of the TVMJS libraries withi
 
 ### Docs
 
-For documentation on `TVM` instantiation, exposed API and emitted `events` see generated [API docs](./docs/README.md).
+Generate the API reference for TVM initialization, methods and events with `npm run docs:build --workspace @tvmjs/tvm` from the repository root. The output is written to `packages/tvm/docs`.
 
 ### Hybrid CJS/ESM Builds
 
@@ -183,206 +237,39 @@ This allows for both a standalone TVM instantiation with reasonable defaults as 
 
 ## Supported Hardforks
 
-The TVMJS TVM implements all hardforks from `Frontier` (`chainstart`) up to the latest active mainnet hardfork.
+The only supported execution profile is `Hardfork.Tron`. Capabilities are selected from `tronExecutionProfile` in `@tvmjs/common`; Ethereum block numbers, timestamps and hardfork names do not control TRON execution.
 
-Currently the following hardfork rules are supported:
-
-- `chainstart` (a.k.a. Frontier)
-- `homestead`
-- `tangerineWhistle`
-- `spuriousDragon`
-- `byzantium`
-- `constantinople`
-- `petersburg`
-- `istanbul`
-- `muirGlacier` (only `mainnet`)
-- `berlin`
-- `london`
-- `arrowGlacier` (only `mainnet`)
-- `merge`
-- `shanghai`
-- `cancun`
-- `prague`
-- `tron`
-
-Default: `tron` (taken from `Common.DEFAULT_HARDFORK`)
-
-A specific hardfork TVM ruleset can be activated by passing in the hardfork
-along the `Common` instance to the outer `@tvmjs/vm` instance.
+Proposal 95/96 are supplied through `activatedProposals`. They retain their existing execution gates and do not imply complete java-tron Prague/Osaka support.
 
 ## Supported EIPs
 
-If you want to activate an EIP not currently active on the hardfork your `common` instance is set to, it is possible to individually activate EIP support in the TVM by specifying the desired EIPs using the `eips` property in your `CommonOpts` setup, e.g.:
+Common and TVM validate explicit EIPs against the same `tronExecutionProfile`. Its base implementation groups can be supplied explicitly without changing TRON Energy costs. Explicit CLZ activation uses `eips: [7939]`. Unsupported EIPs, including 4844, 4788 and 7516, are rejected.
 
 ```ts
 // ./examples/eips.ts
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { createTVM } from '@tvmjs/tvm'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7702] })
+  const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron, eips: [7939] })
   const tvm = await createTVM({ common })
-  console.log(
-    `EIP 7702 is active in isolation on top of the Cancun HF - ${tvm.common.isActivatedEIP(7702)}`,
-  )
+  console.log(`CLZ is explicitly active on the TRON profile - ${tvm.common.isActivatedEIP(7939)}`)
 }
 
 void main()
 
 ```
 
-Currently supported EIPs:
-
-- [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153) - Transient storage opcodes (Cancun)
-- [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) - Fee market change for ETH 1.0 chain
-- [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537) - Precompile for BLS12-381 curve operations (Prague)
-- [EIP-2565](https://eips.ethereum.org/EIPS/eip-2565) - ModExp gas cost
-- [EIP-2718](https://eips.ethereum.org/EIPS/eip-2718) - Transaction Types
-- [EIP-2935](https://eips.ethereum.org/EIPS/eip-2935) - Serve historical block hashes in state (Prague)
-- [EIP-2929](https://eips.ethereum.org/EIPS/eip-2929) - gas cost increases for state access opcodes
-- [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) - Optional access list tx type
-- [EIP-3074](https://eips.ethereum.org/EIPS/eip-3074) - AUTH and AUTHCALL opcodes
-- [EIP-3198](https://eips.ethereum.org/EIPS/eip-3198) - Base fee Opcode
-- [EIP-3529](https://eips.ethereum.org/EIPS/eip-3529) - Reduction in refunds
-- [EIP-3541](https://eips.ethereum.org/EIPS/eip-3541) - Reject new contracts starting with the 0xEF byte
-- [EIP-3554](https://eips.ethereum.org/EIPS/eip-3554) - Difficulty Bomb Delay to December 2021 (only PoW networks)
-- [EIP-3607](https://eips.ethereum.org/EIPS/eip-3607) - Reject transactions from senders with deployed code
-- [EIP-3651](https://eips.ethereum.org/EIPS/eip-3651) - Warm COINBASE (Shanghai)
-- [EIP-3675](https://eips.ethereum.org/EIPS/eip-3675) - Upgrade consensus to Proof-of-Stake
-- [EIP-3855](https://eips.ethereum.org/EIPS/eip-3855) - Push0 opcode (Shanghai)
-- [EIP-3860](https://eips.ethereum.org/EIPS/eip-3860) - Limit and meter initcode (Shanghai)
-- [EIP-4345](https://eips.ethereum.org/EIPS/eip-4345) - Difficulty Bomb Delay to June 2022
-- [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) - Supplant DIFFICULTY opcode with PREVRANDAO (Merge)
-- [EIP-4788](https://eips.ethereum.org/EIPS/eip-4788) - Beacon block root in the TVM (Cancun)
-- [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) - Shard Blob Transactions (Cancun)
-- [EIP-4895](https://eips.ethereum.org/EIPS/eip-4895) - Beacon chain push withdrawals as operations (Shanghai)
-- [EIP-5133](https://eips.ethereum.org/EIPS/eip-5133) - Delaying Difficulty Bomb to mid-September 2022 (Gray Glacier)
-- [EIP-5656](https://eips.ethereum.org/EIPS/eip-5656) - MCOPY - Memory copying instruction (Cancun)
-- [EIP-6110](https://eips.ethereum.org/EIPS/eip-6110) - Supply validator deposits on chain (Prague)
-- [EIP-6780](https://eips.ethereum.org/EIPS/eip-6780) - SELFDESTRUCT only in same transaction (Cancun)
-- [EIP-7002](https://eips.ethereum.org/EIPS/eip-7002) - Execution layer triggerable exits (Prague)
-- [EIP-7251](https://eips.ethereum.org/EIPS/eip-7251) - Increase the MAX_EFFECTIVE_BALANCE (Prague)
-- [EIP-7516](https://eips.ethereum.org/EIPS/eip-7516) - BLOBBASEFEE opcode (Cancun)
-- [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623) - Increase calldata cost (Prague)
-- [EIP-7685](https://eips.ethereum.org/EIPS/eip-7685) - General purpose execution layer requests (Prague)
-- [EIP-7691](https://eips.ethereum.org/EIPS/eip-7691) - Blob throughput increase (Prague)
-- [EIP-7692](https://eips.ethereum.org/EIPS/eip-7692) - TVM Object Format (EOF) v1 (`experimental`)
-- [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) - Set EOA account code (Prague)
-- [EIP-7709](https://eips.ethereum.org/EIPS/eip-7709) - Read BLOCKHASH from storage and update cost (Verkle)
+The [TRON Energy schedule](#tron-energy-accounting) applies independently of Ethereum hardfork ordering. See [Common configuration](../common/README.md) for profile and proposal settings.
 
 ## Precompiles
 
-This library supports all TVM precompiles up to the `tron` hardfork.
+The TRON profile selects precompiles through explicit capabilities. The existing 0x01 through 0x08 implementations remain available, followed by TRON batch signature validation at 0x09 and multi-signature validation at 0x0a. Proposal 96 retains strict input checks for the TRON signature precompiles.
 
-In our `examples` folder we provide a helper function for simple direct precompile runs in the `precompiles` folder.
+Multi-signature validation at `0x0a` accepts at most 5 signatures and counts each recovered signer only once within that invocation. Batch validation at `0x09` accepts at most 16 signatures and returns individual verification results. These precompiles do not track messages across calls or transactions; contracts must enforce any required replay protection, such as a nonce or consumed-message record, in the signed payload and contract state.
 
-This is an example of a simple precompile run (BLS12_G1ADD precompile):
-
-```ts
-// ./examples/precompiles/0b-bls12-g1add.ts
-
-import { runPrecompile } from './util.ts'
-
-const main = async () => {
-  // BLS12_G1ADD precompile (address 0xb)
-  // Data taken from test/eips/precompiles/bls/add_G1_bls.json
-  // Input: G1 and G2 points (each 128 bytes = 256 hex characters)
-  const g1Point =
-    '0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1'
-  const g2Point =
-    '00000000000000000000000000000000112b98340eee2777cc3c14163dea3ec97977ac3dc5c70da32e6e87578f44912e902ccef9efe28d4a78b8999dfbca942600000000000000000000000000000000186b28d92356c4dfec4b5201ad099dbdede3781f8998ddf929b4cd7756192185ca7b8f4ef7088f813270ac3d48868a21'
-  const data = `0x${g1Point}${g2Point}`
-
-  await runPrecompile('BLS12_G1ADD', '0xb', data)
-}
-
-void main()
-
-```
-
-
-### EIP-2537 BLS Precompiles (Prague)
-
-Starting with `v10` the TVM supports the BLS precompiles introduced with [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537) in its final version introduced with the `Prague` hardfork. These precompiles run natively using the [@noble/curves](https://github.com/paulmillr/noble-curves) library (❤️ to `@paulmillr`!).
-
-An alternative WASM implementation (using [bls-wasm](https://github.com/herumi/bls-wasm)) can be optionally used like this if needed for performance reasons:
-
-```ts
-import { TVM, MCLBLS } from '@tvmjs/tvm'
-
-const common = new Common({ chain: Chain.Mainnet, hardfork: Hardfork.Prague })
-await mcl.init(mcl.BLS12_381)
-const mclbls = new MCLBLS(mcl)
-const tvm = await createTVM({ common, bls })
-```
-
-### EIP-7823/EIP-7883 MODEXP Precompile (Osaka)
-
-The Osaka hardfork introduces some behavioral changes with [EIP-7823](https://eips.ethereum.org/EIPS/eip-7823) as well as a gas cost increase for the MODEXP precompile with [EIP-7883](https://eips.ethereum.org/EIPS/eip-7883).
-
-You can use the following example as a starting point to compare on the changes between hardforks:
-
-```ts
-// ./examples/precompiles/05-modexp.ts
-
-import { Hardfork } from '@tvmjs/common'
-import { runPrecompile } from './util.ts'
-
-const main = async () => {
-  // MODEXP precompile (address 0x05)
-  // Calculate: 2^3 mod 5 = 8 mod 5 = 3
-  //
-  // Input format:
-  // - First 32 bytes: base length (0x01 = 1 byte)
-  // - Next 32 bytes: exponent length (0x01 = 1 byte)
-  // - Next 32 bytes: modulus length (0x01 = 1 byte)
-  // - Next 1 byte: base value (0x02 = 2)
-  // - Next 1 byte: exponent value (0x03 = 3)
-  // - Next 1 byte: modulus value (0x05 = 5)
-
-  const baseLen = '0000000000000000000000000000000000000000000000000000000000000001' // 1 byte
-  const expLen = '0000000000000000000000000000000000000000000000000000000000000001' // 1 byte
-  const modLen = '0000000000000000000000000000000000000000000000000000000000000001' // 1 byte
-  const base = '02' // 2
-  const exponent = '03' // 3
-  const modulus = '05' // 5
-
-  const data = `0x${baseLen}${expLen}${modLen}${base}${exponent}${modulus}`
-
-  await runPrecompile('MODEXP', '0x05', data)
-  await runPrecompile('MODEXP', '0x05', data, Hardfork.Cancun)
-}
-
-void main()
-
-```
-
-### EIP-7951 Precompile for secp256r1 Curve Support (Osaka)
-
-The Osaka hardfork introduces a new precompile for secp256r1 curve support with [EIP-7951](https://eips.ethereum.org/EIPS/eip-7951).
-
-The following example code allows you to generate input values for the precompile using Noble Curves [v2.0.0](https://github.com/paulmillr/noble-curves/releases/tag/2.0.0) or later.
-
-```ts
-// No direct examples integration (library version not taken in as a dependency)
-import { p256 } from '@noble/curves/nist.js'
-import { sha256 } from '@noble/hashes/sha2.js'
-import { bigIntToHex, bytesToHex } from '@tvmjs/util'
-
-// Private/public key
-const { secretKey, publicKey } = p256.keygen()
-const pointPubKey = p256.Point.fromBytes(publicKey)
-const pointX = bigIntToHex(pointPubKey.X)
-const pointY = bigIntToHex(pointPubKey.Y)
-
-// Message (hash) / signature
-const msg = new TextEncoder().encode('Hello Fusaka!')
-const sig = p256.sign(msg, secretKey, { lowS: false, prehash: false })
-const msgHash = bytesToHex(sha256(msg))
-const sigR = bytesToHex(sig).substring(2, 64 + 2)
-const sigS = bytesToHex(sig).substring(64 + 2)
-```
+See [the MODEXP example](./examples/precompiles/05-modexp.ts) for a direct call. BLS, KZG and optional Ethereum hardfork activation examples have been retired with their configuration entry points.
 
 ### Custom Precompiles
 
@@ -393,7 +280,7 @@ Pass an array of `CustomPrecompile` entries to the `customPrecompiles` option wh
 ```ts
 // ./examples/precompiles/customPrecompile.ts
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { createTVM } from '@tvmjs/tvm'
 import {
   bigIntToBytes,
@@ -419,7 +306,7 @@ function additionPrecompile(input: PrecompileInput): ExecResult {
 }
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Prague })
+  const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron })
   const ADDRESS = '0x000000000000000000000000000000000000ff01'
 
   // Register the custom precompile with a hex string address
@@ -449,12 +336,17 @@ const main = async () => {
   console.log('--------------------------------')
   console.log('Custom Addition Precompile')
   console.log(`Input    : 7 + 35`)
-  console.log(`Result   : ${bytesToBigInt(result.execResult.returnValue)} (${bytesToHex(result.execResult.returnValue)})`)
+  console.log(
+    `Result   : ${bytesToBigInt(result.execResult.returnValue)} (${bytesToHex(result.execResult.returnValue)})`,
+  )
   console.log(`Gas used : ${result.execResult.executionGasUsed}`)
   console.log('--------------------------------')
 }
 
-void main()
+void main().catch((err) => {
+  console.error(err)
+  process.exitCode = 1
+})
 
 ```
 
@@ -463,7 +355,7 @@ The address for custom precompiles can be specified as either an `Address` insta
 You can use `tvm.getPrecompile(address)` to retrieve a registered precompile function at any address (works for both built-in and custom precompiles):
 
 ```ts
-const fn = tvm.getPrecompile('0x0000000000000000000000000000000000000002') // SHA256
+const sha256 = tvm.getPrecompile('0x0000000000000000000000000000000000000002')
 const custom = tvm.getPrecompile('0x000000000000000000000000000000000000ff01') // custom
 ```
 
@@ -661,6 +553,27 @@ Generally all results should rather encourage and need "self thinking" 😋 and 
 Happy TVM Profiling! 🎉 🤩
 
 ## Development
+
+Run the complete TVM package suites from the repository root:
+
+```sh
+npm run build --workspace @tvmjs/tvm
+npm run tsc --workspace @tvmjs/tvm
+npm run test:node --workspace @tvmjs/tvm
+npm run test:browser --workspace @tvmjs/tvm
+```
+
+Browser tests require a local Playwright Chromium installation. Both suites include the bundled MODEXP vectors and the Noble/MCL BLS helper vectors. BLS fixtures use JSON imports so Browser runs the same cases without a filesystem loader. Direct BLS/P256 helper tests do not enable those capabilities in the TRON execution profile.
+
+The v1.2.0 test migration follows these rules:
+
+| Treatment | Coverage |
+| --- | --- |
+| Migrate retained tests | Events, custom crypto, signature and BN254 precompiles, MODEXP, transient storage, and direct P256/BLS helpers use valid TRON configuration. Preserve expected outputs and meaningful error checks. |
+| Replace Ethereum expectations with TRON checks | Deployment and internal creation use root transaction IDs; CREATE2 checks the 21-byte stack result. CALL, CALLCODE, SELFDESTRUCT and BN254 use fixed TRON Energy expectations. Nonce-limit checks use different transaction IDs to avoid accidental address-collision failures; `skipBalance` tests inspect the actual caller and recipient balances. |
+| Retire unsupported execution tests | Ethereum hardfork transitions, BAL/EOF activation, and alternate precompile addresses are replaced by rejection or non-registration checks. The previously excluded Ethereum EOF runners and alternate-address wrappers are removed; the underlying inactive implementations and independent EOF container parser remain. |
+
+The external `ethereum-tests` EOF conformance vectors are not executed. A passing TVM suite covers this package's retained behavior and capability boundaries; VM API tests and the repository-wide release gates must be run separately.
 
 See [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) README.
 

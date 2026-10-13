@@ -1,11 +1,22 @@
-import { createBlock } from '@tvmjs/block'
-import { Common, Hardfork } from '@tvmjs/common'
-import { goerliChainConfig } from '@tvmjs/testdata'
+import { cliqueSigner, createSealedCliqueBlock } from '@tvmjs/block'
+import { Common, ConsensusAlgorithm, ConsensusType, TronMainnet } from '@tvmjs/common'
+import { hexToBytes } from '@tvmjs/util'
 
-const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
-
-console.log(common.consensusType()) // 'poa'
-console.log(common.consensusAlgorithm()) // 'clique'
-
-createBlock({ header: { extraData: new Uint8Array(97) } }, { common })
-console.log(`Old Clique Proof-of-Authority block created`)
+// Explicit local metadata for the retained Clique tool, not TRON network consensus.
+const common = new Common({
+  chain: {
+    ...TronMainnet,
+    consensus: {
+      type: ConsensusType.ProofOfAuthority,
+      algorithm: ConsensusAlgorithm.Clique,
+      clique: { period: 15, epoch: 30000 },
+    },
+  },
+})
+const exampleKey = hexToBytes(`0x${'20'.repeat(32)}`)
+const block = createSealedCliqueBlock(
+  { header: { number: 1n, extraData: new Uint8Array(97) } },
+  exampleKey,
+  { common },
+)
+console.log(`Recovered local signer: ${cliqueSigner(block.header)}`)

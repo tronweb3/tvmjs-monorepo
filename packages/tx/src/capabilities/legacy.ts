@@ -58,16 +58,6 @@ export function getDataGas(tx: LegacyTxInterface): bigint {
     tx.data[i] === 0 ? (cost += txDataZero) : (cost += txDataNonZero)
   }
 
-  if (
-    (tx.to === undefined || tx.to === null) &&
-    tx.common.isActivatedEIP(3860) &&
-    !tx.common.isTron()
-  ) {
-    const dataLength = BigInt(Math.ceil(tx.data.length / 32))
-    const initCodeCost = tx.common.param('initCodeWordGas') * dataLength
-    cost += initCodeCost
-  }
-
   if (Object.isFrozen(tx)) {
     tx.cache.dataFee = {
       value: cost,
@@ -82,7 +72,7 @@ export function getDataGas(tx: LegacyTxInterface): bigint {
  * The minimum gas limit which the tx to have to be valid.
  * This covers costs as the standard fee (21000 gas), the data fee (paid for each calldata byte),
  * the optional creation fee (if the transaction creates a contract), and if relevant the gas
- * to be paid for access lists (EIP-2930) and authority lists (EIP-7702).
+ * to be paid for access lists (EIP-2930).
  */
 export function getIntrinsicGas(tx: LegacyTxInterface): bigint {
   const txFee = tx.common.param('txGas')
@@ -94,7 +84,7 @@ export function getIntrinsicGas(tx: LegacyTxInterface): bigint {
   } catch {
     isContractCreation = false
   }
-  if (tx.common.gteHardfork('homestead') && isContractCreation) {
+  if (tx.common.isActivatedEIP(606) && isContractCreation) {
     const txCreationFee = tx.common.param('txCreationGas')
     if (txCreationFee) fee += txCreationFee
   }
@@ -138,7 +128,7 @@ export function hash(tx: LegacyTxInterface): Uint8Array {
  */
 export function validateHighS(tx: LegacyTxInterface): void {
   const { s } = tx
-  if (tx.common.gteHardfork('homestead') && s !== undefined && s > SECP256K1_ORDER_DIV_2) {
+  if (tx.common.isActivatedEIP(606) && s !== undefined && s > SECP256K1_ORDER_DIV_2) {
     const msg = errorMsg(
       tx,
       'Invalid Signature: s-values greater than secp256k1n/2 are considered invalid',
@@ -291,7 +281,7 @@ export function sign(
   let hackApplied = false
   if (
     tx.type === TransactionType.Legacy &&
-    tx.common.gteHardfork('spuriousDragon') &&
+    tx.common.isActivatedEIP(607) &&
     !tx.supports(Capability.EIP155ReplayProtection)
   ) {
     ;(tx as LegacyTx)['activeCapabilities'].push(Capability.EIP155ReplayProtection)

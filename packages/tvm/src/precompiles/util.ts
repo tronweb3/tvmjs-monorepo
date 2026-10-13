@@ -1,4 +1,3 @@
-import { Hardfork } from '@tvmjs/common'
 import { EthereumJSErrorWithoutCode, ecrecover, publicToAddress, short } from '@tvmjs/util'
 
 import { DataWord } from './dataWord.ts'
@@ -10,12 +9,10 @@ export const SIGNATURE_LENGTH = 65
 
 /**
  * Returns whether TRON's Osaka proposal is active for this execution profile.
- * Ethereum hardforks and proposal metadata must not enable TIP-854.
+ * Proposal 96 controls TIP-854 independently of other protocol capabilities.
  */
 export function isTronOsakaEnabled(opts: Pick<PrecompileInput, 'common'>): boolean {
-  return (
-    opts.common.gteHardfork(Hardfork.Tron) && opts.common.isActivatedProposal(TRON_OSAKA_PROPOSAL)
-  )
+  return opts.common.isActivatedProposal(TRON_OSAKA_PROPOSAL)
 }
 
 /**

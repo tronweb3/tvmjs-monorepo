@@ -1,40 +1,18 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { TVMError } from '@tvmjs/tvm'
+import { Common, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
 import { bytesToBigInt, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
-
 import { createVM } from '../../../src/index.ts'
 
-const testCases = [
-  { chain: Mainnet, hardfork: Hardfork.Istanbul, chainId: BigInt(1) },
-  { chain: Mainnet, hardfork: Hardfork.Constantinople, err: TVMError.errorMessages.INVALID_OPCODE },
-]
-
-// CHAINID PUSH8 0x00 MSTORE8 PUSH8 0x01 PUSH8 0x00 RETURN
-const code = ['46', '60', '00', '53', '60', '01', '60', '00', 'f3']
-
-describe('Istanbul: EIP-1344', () => {
-  it('CHAINID', async () => {
-    const runCodeArgs = {
-      code: hexToBytes(`0x${code.join('')}`),
-      gasLimit: BigInt(0xffff),
-    }
-
-    for (const testCase of testCases) {
-      const { chain, hardfork } = testCase
-      const common = new Common({ chain, hardfork })
-      const vm = await createVM({ common })
-      try {
-        const res = await vm.tvm.runCode!(runCodeArgs)
-        if (testCase.err !== undefined) {
-          assert.strictEqual(res.exceptionError?.error, testCase.err)
-        } else {
-          assert.isTrue(res.exceptionError === undefined)
-          assert.strictEqual(testCase.chainId, bytesToBigInt(res.returnValue))
-        }
-      } catch (e: any) {
-        assert.fail(e.message)
-      }
-    }
+describe.each([TronMainnet, TronNile, TronShasta])('CHAINID on $name', (chain) => {
+  it('returns the complete chain ID in a 32-byte word', async () => {
+    const vm = await createVM({ common: new Common({ chain, activatedProposals: [] }) })
+    const result = await vm.tvm.runCode({
+      code: hexToBytes('0x4660005260206000f3'),
+      gasLimit: 100n,
+    })
+    assert.isUndefined(result.exceptionError)
+    assert.strictEqual(result.returnValue.length, 32)
+    assert.strictEqual(bytesToBigInt(result.returnValue), BigInt(chain.chainId))
+    assert.strictEqual(result.executionGasUsed, 14n)
   })
 })

@@ -2,6 +2,7 @@ import { Common, TronMainnet } from '@tvmjs/common'
 import { SimpleStateManager } from '@tvmjs/statemanager'
 
 import { TVM } from './index.ts'
+import { rejectRemovedSizeOptions } from './options.ts'
 import { NobleBN254 } from './precompiles/index.ts'
 import { TVMMockBlockchain } from './types.ts'
 
@@ -15,9 +16,10 @@ import type { TVMOpts } from './index.ts'
  * @returns A new TVM
  */
 export async function createTVM(createOpts?: TVMOpts) {
-  const opts = createOpts ?? ({} as TVMOpts)
+  rejectRemovedSizeOptions(createOpts)
+  const opts: TVMOpts = { ...createOpts }
 
-  opts.bn254 = new NobleBN254()
+  opts.bn254 ??= new NobleBN254()
 
   if (opts.common === undefined) {
     opts.common = new Common({ chain: TronMainnet })

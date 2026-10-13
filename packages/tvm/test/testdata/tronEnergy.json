@@ -1,0 +1,63 @@
+{
+  "reference": {
+    "repository": "https://github.com/tronprotocol/java-tron",
+    "tag": "GreatVoyage-v4.8.2",
+    "commit": "f8ff7c76f45ab41d9bb76922329657506819701b",
+    "source": "actuator/src/main/java/org/tron/core/vm/EnergyCost.java",
+    "registration": "actuator/src/main/java/org/tron/core/vm/OperationRegistry.java",
+    "method": "Expected costs derived from the pinned source, not captured from a live node.",
+    "configuration": {
+      "contractVersion": 0,
+      "allowDynamicEnergy": false,
+      "allowHigherLimitForMaxCpuTimeOfOneTx": false,
+      "allowTvmSelfdestructRestriction": true,
+      "network": "Synthetic execution fixtures, independent of live network proposal state"
+    },
+    "previousTvmjsCommit": "4d3cc639db39bfbc9e7ffd461ab4a541076a0797"
+  },
+  "vectors": [
+    {
+      "name": "repeated BALANCE",
+      "code": "0x600031506000315000",
+      "energy": "50",
+      "previousEnergy": "2710",
+      "refund": "0"
+    },
+    {
+      "name": "repeated SLOAD",
+      "code": "0x600054506000545000",
+      "energy": "110",
+      "previousEnergy": "2210",
+      "refund": "0"
+    },
+    {
+      "name": "SSTORE zero to zero",
+      "code": "0x600060005500",
+      "energy": "5006",
+      "previousEnergy": "2206",
+      "refund": "0"
+    },
+    {
+      "name": "SSTORE set then clear",
+      "code": "0x6001600055600060005500",
+      "energy": "25012",
+      "previousEnergy": "22212",
+      "refund": "0",
+      "previousRefund": "19900"
+    },
+    {
+      "name": "MSTORE expansion without an extra base fee",
+      "code": "0x600060005200",
+      "energy": "9",
+      "previousEnergy": "12",
+      "refund": "0"
+    },
+    {
+      "name": "zero length CALLDATACOPY",
+      "code": "0x6000600060003700",
+      "energy": "9",
+      "previousEnergy": "12",
+      "refund": "0"
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import { createTVM } from '@tvmjs/tvm'
 import { EventEmitter } from 'eventemitter3'
 
 import { createVM } from './constructors.ts'
+import { rejectRemovedTVMOptions } from './options.ts'
 import { paramsVM } from './params.ts'
 
 import type { Common, StateManagerInterface } from '@tvmjs/common'
@@ -89,8 +90,9 @@ export class VM {
    * @param opts
    */
   constructor(opts: VMOpts = {}) {
+    rejectRemovedTVMOptions(opts)
     this.common = opts.common!
-    this.common.updateParams(opts.params ?? paramsVM)
+    this.common.updateParams(opts.params ?? paramsVM, opts.params !== undefined)
     this.stateManager = opts.stateManager!
     this.blockchain = opts.blockchain!
     this.tvm = opts.tvm!

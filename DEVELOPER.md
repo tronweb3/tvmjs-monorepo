@@ -37,7 +37,7 @@ TVM-JS uses [npm workspaces](https://docs.npmjs.com/cli/v7/using-npm/workspaces)
 - `/packages` - Contains all TVM-JS packages
 - `/config` - Shared configuration files and scripts
 - `packages/ethereum-tests` - Git submodule with Ethereum test vectors (legacy)
-- `packages/execution-spec-tests-fixtures` - Git submodule with selected Ethereum test vectors
+- `packages/vm/test/api` - Local TRON execution regressions; Ethereum execution-spec fixture runners have been retired
 
 ### Scripts
 

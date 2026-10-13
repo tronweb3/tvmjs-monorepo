@@ -1,6 +1,3 @@
-import { execSync } from 'child_process'
-import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
 import type { Block } from '@tvmjs/block'
 import { createBlock } from '@tvmjs/block'
 import { createTx } from '@tvmjs/tx'
@@ -11,11 +8,10 @@ import {
   hexToBytes,
   randomBytes,
 } from '@tvmjs/util'
-// @ts-expect-error missing types
-import wrapper from 'solc/wrapper'
 import { utils } from 'tronweb'
 import { runBlock } from '../../../src/runBlock.ts'
 import type { VM } from '../../../src/vm.ts'
+import compiled from './solidityCode/compiled.json' with { type: 'json' }
 
 import type { Types } from 'tronweb'
 import { setBalance } from '../utils.ts'
@@ -212,62 +208,12 @@ export async function getAccountNonce(vm: VM, address: Address) {
   return account?.nonce || 0n
 }
 
-export async function compileSol(fileName: string, contractName: string) {
-  const content = readFileSync(join(__dirname, 'solidityCode', fileName), 'utf-8')
-  const solcInput = {
-    language: 'Solidity',
-    sources: {
-      [fileName]: {
-        content,
-      },
-      // If more contracts were to be compiled, they should have their own entries here
-    },
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
-      },
-      outputSelection: {
-        '*': {
-          '*': ['abi', 'evm.bytecode'],
-        },
-      },
-    },
-  }
-
-  const DEFAULT_SOLIDITY_PATH = 'soljson.js'
-  const DEFAULT_SOLIDITY_URL =
-    'https://tronprotocol.github.io/solc-bin/wasm/soljson-v0.8.11%2Bcommit.b01f3284.js'
-  const solcFilePath = join(__dirname, DEFAULT_SOLIDITY_PATH)
-  if (!existsSync(solcFilePath)) {
-    try {
-      const safePath = solcFilePath.replace(/'/g, "'\\''")
-      execSync(`curl -sSL -o '${safePath}' ${DEFAULT_SOLIDITY_URL}`)
-    } catch (err) {
-      throw new Error(`Failed to download solc from ${DEFAULT_SOLIDITY_URL}: ${err}`)
-    }
-  }
-  const soljson = (await import(solcFilePath)).default
-  const solc = wrapper(soljson)
-  const output = JSON.parse(solc.compile(JSON.stringify(solcInput)))
-
-  let compileError = ''
-  if (output.errors) {
-    for (const error of output.errors) {
-      if (error.severity === 'error') {
-        compileError = error.formattedMessage
-      }
-    }
-  }
-
-  if (compileError) {
-    throw new Error(compileError)
-  }
-
-  const bytecodeInst = output.contracts[fileName][contractName].evm.bytecode
-  const bytecode: string = bytecodeInst.object
-
-  return { bytecode, abi: output.contracts[fileName][contractName].abi }
+export function getCompiledContract(fileName: string, contractName: string) {
+  const contract = compiled.contracts.find(
+    (item) => item.fileName === fileName && item.contractName === contractName,
+  )
+  if (!contract) throw new Error(`Missing TRON contract fixture: ${fileName}:${contractName}`)
+  return { bytecode: contract.bytecode, abi: contract.abi as FunctionFragment[] }
 }
 
 export function setLibraryAddress(

@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { createLegacyTx } from '@tvmjs/tx'
 import {
   Account,
@@ -17,8 +17,7 @@ const GWEI = BigInt(1000000000)
 const sender = createAddressFromPrivateKey(pkey)
 
 const common = new Common({
-  chain: Mainnet,
-  hardfork: Hardfork.London,
+  chain: TronMainnet,
   eips: [6780],
 })
 

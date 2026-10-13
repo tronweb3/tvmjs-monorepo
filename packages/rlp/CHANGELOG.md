@@ -18,4 +18,3 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 - Bump package version to `1.0.0`
 - Lock all dependency versions by removing `^` and `~` prefixes
 
-

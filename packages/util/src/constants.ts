@@ -8,6 +8,9 @@ import { hexToBytes } from './bytes.ts'
  */
 export const MAX_UINT64 = BigInt('0xffffffffffffffff')
 
+/** The maximum non-negative value representable by a signed 64-bit field. */
+export const MAX_INT64 = BigInt('0x7fffffffffffffff')
+
 /**
  * The max integer that the tvm can handle (2^256-1)
  */

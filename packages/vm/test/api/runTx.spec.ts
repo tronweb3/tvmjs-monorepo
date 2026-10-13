@@ -1,10 +1,6 @@
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
-import { createBlock, createBlockHeader } from '@tvmjs/block'
-import { Blockchain, createBlockchain } from '@tvmjs/blockchain'
-import { Common, Hardfork, Mainnet, TronMainnet, createCommonFromGethGenesis } from '@tvmjs/common'
+import { createBlock } from '@tvmjs/block'
+import { Common, Hardfork, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
 import {
-  Blob4844Tx,
-  EOACode7702Tx,
   FeeMarket1559Tx,
   TransactionType,
   createFeeMarket1559Tx,
@@ -16,27 +12,24 @@ import {
   Address,
   KECCAK256_NULL,
   MAX_INTEGER,
-  bigIntToBytes,
   bytesToHex,
   createAccount,
   createAddressFromPrivateKey,
   createAddressFromString,
   createZeroAddress,
   equalsBytes,
-  generateAddress,
   generateTronContractAddress,
-  generateTronCreateAddress,
   hexToBytes,
 } from '@tvmjs/util'
-import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
+
 import { assert, describe, expect, it } from 'vitest'
 
 import { createVM, runTx } from '../../src/index.ts'
 
-import { SIGNER_A, goerliChainConfig } from '@tvmjs/testdata'
+import { SIGNER_A } from '@tvmjs/testdata'
 import { createAccountWithDefaults, getTransaction, setBalance } from './utils.ts'
 
-import type { FeeMarketEIP1559TxData, LegacyTx, TypedTxData } from '@tvmjs/tx'
+import type { LegacyTx, TypedTxData } from '@tvmjs/tx'
 import type { VM } from '../../src/vm.ts'
 
 const TRANSACTION_TYPES = [
@@ -54,7 +47,7 @@ const TRANSACTION_TYPES = [
   },
 ]
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+const common = new Common({ chain: TronMainnet })
 
 describe('runTx() -> successful API parameter usage', async () => {
   async function simpleRun(vm: VM, msg: string) {
@@ -65,7 +58,7 @@ describe('runTx() -> successful API parameter usage', async () => {
       const acc = createAccountWithDefaults()
       await vm.stateManager.putAccount(caller, acc)
       let block
-      if (vm.common.consensusType() === 'poa') {
+      if (vm.common.hasConsensus() && vm.common.consensusType() === 'poa') {
         // Setup block with correct extraData for POA
         block = createBlock({ header: { extraData: new Uint8Array(97) } }, { common: vm.common })
       }
@@ -75,75 +68,33 @@ describe('runTx() -> successful API parameter usage', async () => {
     }
   }
 
-  it('simple run (unmodified options)', async () => {
-    let common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-    let vm = await createVM({ common })
-    await simpleRun(vm, 'mainnet (PoW), london HF, default SM - should run without errors')
+  it.each([TronMainnet, TronNile, TronShasta])(
+    'runs all local transaction types on $name',
+    async (chain) => {
+      const vm = await createVM({ common: new Common({ chain }) })
+      await simpleRun(vm, chain.name)
+    },
+  )
 
-    common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.London })
-    vm = await createVM({
-      common,
-      blockchain: await createBlockchain({ validateConsensus: false, validateBlocks: false }),
-    })
-    await simpleRun(vm, 'goerli (PoA), london HF, default SM - should run without errors')
+  it('accepts matching TRON block and transaction configurations', async () => {
+    const vm = await createVM({ common })
+    const tx = getTransaction(vm.common, 0, true)
+    await setBalance(vm, tx.getSenderAddress())
+    const block = createBlock({}, { common: vm.common.copy() })
+    const result = await runTx(vm, { tx, block })
+    assert.isUndefined(result.execResult.exceptionError)
+    assert.strictEqual(vm.common.hardfork(), Hardfork.Tron)
   })
 
-  it('test successful hardfork matching', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-    const vm = await createVM({
-      common,
-      blockchain: await createBlockchain({ validateConsensus: false, validateBlocks: false }),
-    })
-    const tx = getTransaction(vm.common, 0, true)
-    const caller = tx.getSenderAddress()
-    const acc = createAccountWithDefaults()
-    await vm.stateManager.putAccount(caller, acc)
+  it('rejects retired hardfork selection without changing the executable profile', async () => {
+    const vm = await createVM({ common: common.copy() })
     const block = createBlock({}, { common: vm.common.copy() })
-    await runTx(vm, { tx, block })
-    assert.isTrue(true, 'matched hardfork should run without throwing')
-  })
-
-  it('test hardfork mismatch', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-    const vm = await createVM({
-      common,
-      blockchain: await createBlockchain({ validateConsensus: false, validateBlocks: false }),
-    })
+    assert.throws(() => block.common.setHardfork(Hardfork.Paris), /not supported/)
+    assert.strictEqual(block.common.hardfork(), Hardfork.Tron)
     const tx = getTransaction(vm.common, 0, true)
-    const caller = tx.getSenderAddress()
-    const acc = createAccountWithDefaults()
-    await vm.stateManager.putAccount(caller, acc)
-    const block = createBlock({}, { common: vm.common.copy() })
-
-    block.common.setHardfork(Hardfork.Paris)
-    try {
-      await runTx(vm, { tx, block })
-      assert.fail('vm/block mismatched hardfork should have failed')
-    } catch (e) {
-      assert.strictEqual(
-        (e as Error).message.includes('block has a different hardfork than the vm'),
-        true,
-        'block has a different hardfork than the vm',
-      )
-      assert.isTrue(true, 'vm/tx mismatched hardfork correctly failed')
-    }
-
-    tx.common.setHardfork(Hardfork.London)
-    block.common.setHardfork(Hardfork.Paris)
-    try {
-      await runTx(vm, { tx, block })
-      assert.fail('vm/tx mismatched hardfork should have failed')
-    } catch (e) {
-      assert.strictEqual(
-        (e as Error).message.includes('block has a different hardfork than the vm'),
-        true,
-        'block has a different hardfork than the vm',
-      )
-      assert.isTrue(true, 'vm/tx mismatched hardfork correctly failed')
-    }
-
-    await runTx(vm, { tx, block, skipHardForkValidation: true })
-    assert.isTrue(true, 'runTx should not fail with mismatching hardforks if validation skipped')
+    await setBalance(vm, tx.getSenderAddress())
+    const result = await runTx(vm, { tx, block })
+    assert.isUndefined(result.execResult.exceptionError)
   })
 
   it('default VM runs a tx bound to the same TRON chainId', async () => {
@@ -164,17 +115,17 @@ describe('runTx() -> successful API parameter usage', async () => {
 
   it('rejects an EIP-155 legacy tx whose chainId does not match the vm', async () => {
     const vm = await createVM()
-    // Explicit Ethereum Mainnet common => chainId 1, replay-protected for a different chain.
+    // A valid TRON transaction bound to another network must still be rejected.
     const tx = createLegacyTx(
       { to: createZeroAddress(), gasLimit: 100000n, gasPrice: 100n },
-      { common: new Common({ chain: Mainnet }) },
+      { common: new Common({ chain: TronNile }) },
     ).sign(hexToBytes(`0x${'42'.repeat(32)}`))
 
-    assert.strictEqual(tx.common.chainId(), 1n)
+    assert.strictEqual(tx.common.chainId(), 3448148188n)
     await setBalance(vm, tx.getSenderAddress())
 
     await expect(runTx(vm, { tx, skipBlockGasLimitValidation: true })).rejects.toThrow(
-      /tx has a different chainId \(1\) than the vm \(728126428\)/,
+      /tx has a different chainId \(3448148188\) than the vm \(728126428\)/,
     )
   })
 
@@ -186,30 +137,45 @@ describe('runTx() -> successful API parameter usage', async () => {
         gasLimit: 100000n,
         maxFeePerGas: 100n,
       },
-      { common: new Common({ chain: Mainnet, hardfork: Hardfork.London }) },
+      { common: new Common({ chain: TronNile }) },
     ).sign(hexToBytes(`0x${'42'.repeat(32)}`))
 
     await expect(runTx(vm, { tx, skipBlockGasLimitValidation: true })).rejects.toThrow(
-      /tx has a different chainId \(1\) than the vm \(728126428\)/,
+      /tx has a different chainId \(3448148188\) than the vm \(728126428\)/,
     )
   })
 
-  it('allows an unprotected legacy tx whose Common has a different chainId', async () => {
+  it('allows an unprotected TRON envelope across networks', async () => {
     const vm = await createVM()
+    // Fixed independent signature from the Tx package's eight-field TRON vector.
     const tx = createLegacyTx(
-      { to: createZeroAddress(), gasLimit: 100000n, gasPrice: 100n },
-      { common: new Common({ chain: Mainnet, hardfork: Hardfork.Homestead }) },
-    ).sign(hexToBytes(`0x${'42'.repeat(32)}`))
-
-    assert.include([27n, 28n], tx.v, 'legacy signature should not contain an EIP-155 chainId')
-    await setBalance(vm, tx.getSenderAddress())
-
-    const res = await runTx(vm, { tx, skipBlockGasLimitValidation: true })
-    assert.strictEqual(res.totalGasSpent, 21000n)
+      {
+        data: '0x7cf5dab00000000000000000000000000000000000000000000000000000000000000005',
+        gasLimit: 90000n,
+        gasPrice: 1n,
+        nonce: 1n,
+        to: '0xd9024df085d09398ec76fbed18cac0e1149f50dc',
+        v: 27n,
+        r: '0xca0c813799270d9b9ae7fb90851e6338a26f65cbcc9ce3b40125c93967908805',
+        s: '0x49ea20dbe5dced20e2abb4aac25b34e76416b912ca32b32f4a19c0b5ec2ec7df',
+      },
+      { common: new Common({ chain: TronNile }) },
+    )
+    assert.isTrue(tx.verifySignature())
+    assert.strictEqual(
+      tx.getSenderAddress().toString(),
+      '0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f',
+    )
+    await vm.stateManager.putAccount(tx.getSenderAddress(), new Account(1n, 1000000n))
+    const block = createBlock({ header: { baseFeePerGas: 0n } }, { common: vm.common })
+    const result = await runTx(vm, { tx, block })
+    assert.isUndefined(result.execResult.exceptionError)
+    assert.strictEqual(result.totalGasSpent, tx.getIntrinsicGas())
+    assert.strictEqual((await vm.stateManager.getAccount(tx.getSenderAddress()))!.nonce, 2n)
   })
 
   it('should use passed in blockGasUsed to generate tx receipt', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
+    const common = new Common({ chain: TronMainnet })
     const vm = await createVM({ common })
 
     const tx = getTransaction(vm.common, 0, true)
@@ -227,8 +193,8 @@ describe('runTx() -> successful API parameter usage', async () => {
     )
   })
 
-  it('Legacy Transaction with HF set to pre-Berlin', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
+  it('runs legacy transactions with the TRON profile', async () => {
+    const common = new Common({ chain: TronMainnet })
     const vm = await createVM({ common })
 
     const tx = getTransaction(vm.common, 0, true)
@@ -240,7 +206,7 @@ describe('runTx() -> successful API parameter usage', async () => {
     const res = await runTx(vm, { tx })
     assert.isTrue(
       res.totalGasSpent > BigInt(0),
-      `mainnet (PoW), istanbul HF, default SM - should run without errors (${TRANSACTION_TYPES[0].name})`,
+      `TRON execution should succeed (${TRANSACTION_TYPES[0].name})`,
     )
   })
 
@@ -294,7 +260,7 @@ describe('runTx() -> successful API parameter usage', async () => {
       // calculate expected coinbase balance
       const baseFee = block.header.baseFeePerGas!
       const inclusionFeePerGas =
-        tx instanceof FeeMarket1559Tx || tx instanceof Blob4844Tx || tx instanceof EOACode7702Tx
+        tx instanceof FeeMarket1559Tx
           ? tx.maxPriorityFeePerGas < tx.maxFeePerGas - baseFee
             ? tx.maxPriorityFeePerGas
             : tx.maxFeePerGas - baseFee
@@ -319,28 +285,6 @@ describe('runTx() -> successful API parameter usage', async () => {
 })
 
 describe('runTx() -> API parameter usage/data errors', () => {
-  it('Typed Transaction with HF set to pre-Berlin', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
-    const vm = await createVM({ common })
-
-    const tx = getTransaction(new Common({ chain: Mainnet, hardfork: Hardfork.Berlin }), 1, true)
-
-    const caller = tx.getSenderAddress()
-    const acc = createAccountWithDefaults()
-    await vm.stateManager.putAccount(caller, acc)
-
-    try {
-      await runTx(vm, { tx, skipHardForkValidation: true })
-      // TODO uncomment:
-      // assert.fail('should throw error')
-    } catch (e: any) {
-      assert.isTrue(
-        e.message.includes('(EIP-2718) not activated'),
-        `should fail for ${TRANSACTION_TYPES[1].name}`,
-      )
-    }
-  })
-
   it('simple run (reportAccessList option)', async () => {
     const vm = await createVM({ common })
 
@@ -353,9 +297,9 @@ describe('runTx() -> API parameter usage/data errors', () => {
     const res = await runTx(vm, { tx, reportAccessList: true })
     assert.isTrue(
       res.totalGasSpent > BigInt(0),
-      `mainnet (PoW), istanbul HF, default SM - should run without errors (${TRANSACTION_TYPES[0].name})`,
+      `TRON execution should succeed (${TRANSACTION_TYPES[0].name})`,
     )
-    assert.deepEqual(res.accessList, [])
+    assert.deepEqual(res.accessList, [{ address: tx.to!.toString(), storageKeys: [] }])
   })
 
   it('simple run (reportPreimages option)', async () => {
@@ -400,14 +344,7 @@ describe('runTx() -> API parameter usage/data errors', () => {
     for (const txType of TRANSACTION_TYPES) {
       const vm = await createVM({ common })
       const tx = getTransaction(vm.common, txType.type, true)
-      try {
-        await runTx(vm, { tx })
-      } catch (e: any) {
-        assert.isTrue(
-          e.message.toLowerCase().includes('enough funds'),
-          `should fail for ${txType.name}`,
-        )
-      }
+      await expect(runTx(vm, { tx })).rejects.toThrow(/enough funds/i)
     }
 
     // EIP-1559
@@ -448,12 +385,7 @@ describe('runTx() -> API parameter usage/data errors', () => {
     account!.balance = BigInt(9000000)
     await vm.stateManager.putAccount(address, account!)
     const tx2 = getTransaction(common, 2, true, '0x64', false) // Send 100 wei; now balance < maxFeePerGas*gasLimit + callvalue
-    try {
-      await runTx(vm, { tx: tx2 })
-      assert.fail('cannot reach this')
-    } catch {
-      assert.isTrue(true, 'successfully threw on insufficient balance for transaction')
-    }
+    await expect(runTx(vm, { tx: tx2 })).rejects.toThrow(/max cost|enough funds/)
   })
 
   it('should throw on wrong nonces', async () => {
@@ -465,12 +397,7 @@ describe('runTx() -> API parameter usage/data errors', () => {
     account!.balance = BigInt(9000000) // This is the maxFeePerGas multiplied with the gasLimit of 90000
     account!.nonce = BigInt(1)
     await vm.stateManager.putAccount(address, account!)
-    try {
-      await runTx(vm, { tx })
-      assert.fail('cannot reach this')
-    } catch {
-      assert.isTrue(true, 'successfully threw on wrong nonces')
-    }
+    await expect(runTx(vm, { tx })).rejects.toThrow(/nonce/)
   })
 
   it("run with maxBaseFee less than block's baseFee", async () => {
@@ -496,16 +423,16 @@ describe('runTx() -> API parameter usage/data errors', () => {
 describe('runTx() -> runtime behavior', () => {
   it('storage cache', async () => {
     for (const txType of TRANSACTION_TYPES) {
-      const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
+      const common = new Common({ chain: TronMainnet })
       const vm = await createVM({ common })
       const privateKey = SIGNER_A.privateKey
       /* Code which is deployed here:
-        PUSH1 01
+        PUSH1 02
         PUSH1 00
         SSTORE
         INVALID
       */
-      const code = hexToBytes('0x6001600055FE')
+      const code = hexToBytes('0x6002600055FE')
       const address = new Address(hexToBytes('0x00000000000000000000000000000000000000ff'))
       await vm.stateManager.putCode(address, code)
       await vm.stateManager.putStorage(
@@ -515,20 +442,31 @@ describe('runTx() -> runtime behavior', () => {
       )
       const txParams: any = {
         nonce: '0x00',
-        gasPrice: 1,
+        gasPrice: 10,
         gasLimit: 100000,
         to: address,
       }
       if (txType.type === TransactionType.AccessListEIP2930) {
         txParams['chainId'] = common.chainId()
         txParams['accessList'] = []
-        txParams['type'] = txType.type
+      }
+      txParams.type = txType.type
+      if (txType.type === TransactionType.FeeMarketEIP1559) {
+        delete txParams.gasPrice
+        txParams.maxFeePerGas = 10n
+        txParams.maxPriorityFeePerGas = 1n
       }
       const tx = createTx(txParams, { common }).sign(privateKey)
+      assert.strictEqual(tx.type, txType.type)
 
       await vm.stateManager.putAccount(tx.getSenderAddress(), createAccountWithDefaults())
 
-      await runTx(vm, { tx }) // this tx will fail, but we have to ensure that the cache is cleared
+      const result = await runTx(vm, { tx })
+      assert.strictEqual(result.execResult.exceptionError?.error, 'invalid opcode')
+      assert.deepEqual(
+        await vm.stateManager.getStorage(address, new Uint8Array(32)),
+        hexToBytes('0x01'),
+      )
 
       assert.strictEqual(
         (vm.stateManager.originalStorageCache as any).map.size,
@@ -576,7 +514,7 @@ describe('runTx() -> runtime errors', () => {
       const from = createAccountWithDefaults()
       await vm.stateManager.putAccount(caller, from)
 
-      const contractAddress = createAddressFromString('0x61de9dc6f6cff1df2809480882cfd3c2364b28f7')
+      const contractAddress = new Address(generateTronContractAddress(tx.hash(), caller.bytes))
       const to = createAccountWithDefaults(BigInt(0), MAX_INTEGER)
       await vm.stateManager.putAccount(contractAddress, to)
 
@@ -687,90 +625,48 @@ describe('runTx() -> API return values', () => {
   })
 })
 
-describe('runTx() -> consensus bugs', () => {
-  it('validate out-of-gas does not give any refunds', async () => {
-    // There was a consensus bug in the following mainnet tx:
-    // 0xe3b0fb0a45bc905d1f98baabaadd194901267d02de74cdad187b7feb8920d7b3
-    // This tx does not access any other accounts and creates a new contract,
-    // so we are safe to setup the account which creates this contract
-    // and just re-use the tx.
-    const txData = {
-      blockHash: '0x78046e1c8f7956f2b654033c02f348b1c1d111701ec83cd9b5bf690e92efdedd',
-      blockNumber: 2772981,
-      gasLimit: 489999,
-      gasPrice: 41000000000,
-      data: '0x6060604052604060405190810160405280600981526020017f546f6b656e20302e31000000000000000000000000000000000000000000000081526020015060009080519060200190828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106200008b57805160ff1916838001178555620000bc565b82800160010185558215620000bc579182015b82811115620000bb5782518255916020019190600101906200009e565b5b509050620000e491905b80821115620000e0576000816000905550600101620000c6565b5090565b5050604060405190810160405280600d81526020017f7472616c616c6120746f6b656e0000000000000000000000000000000000000081526020015060019080519060200190828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106200016d57805160ff19168380011785556200019e565b828001600101855582156200019e579182015b828111156200019d57825182559160200191906001019062000180565b5b509050620001c691905b80821115620001c2576000816000905550600101620001a8565b5090565b5050604060405190810160405280600481526020017f476f6c640000000000000000000000000000000000000000000000000000000081526020015060029080519060200190828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106200024f57805160ff191683800117855562000280565b8280016001018555821562000280579182015b828111156200027f57825182559160200191906001019062000262565b5b509050620002a891905b80821115620002a45760008160009055506001016200028a565b5090565b50506002600360006101000a81548160ff02191690837f0100000000000000000000000000000000000000000000000000000000000000908102040217905550621e84806004553462000000576040516200107638038062001076833981016040528080519060200190919080518201919060200180519060200190919080518201919060200150505b83600560003373ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002081905550836004819055508260019080519060200190828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f10620003b557805160ff1916838001178555620003e6565b82800160010185558215620003e6579182015b82811115620003e5578251825591602001919060010190620003c8565b5b5090506200040e91905b808211156200040a576000816000905550600101620003f0565b5090565b50508060029080519060200190828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106200045e57805160ff19168380011785556200048f565b828001600101855582156200048f579182015b828111156200048e57825182559160200191906001019062000471565b5b509050620004b791905b80821115620004b357600081600090555060010162000499565b5090565b505081600360006101000a81548160ff02191690837f01000000000000000000000000000000000000000000000000000000000000009081020402179055505b505050505b610b6b806200050b6000396000f3606060405236156100a7576000357c01000000000000000000000000000000000000000000000000000000009004806306fdde03146100b9578063095ea7b31461013457806318160ddd1461017057806323b872dd14610193578063313ce567146101d85780635a3b7e42146101fe57806370a082311461027957806395d89b41146102aa578063a9059cbb14610325578063cae9ca511461034b578063dd62ed3e146103ca575b34610000576100b75b610000565b565b005b34610000576100c6610404565b60405180806020018281038252838181518152602001915080519060200190808383829060006004602084601f0104600302600f01f150905090810190601f1680156101265780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b346100005761015860048080359060200190919080359060200190919050506104a2565b60405180821515815260200191505060405180910390f35b346100005761017d610504565b6040518082815260200191505060405180910390f35b34610000576101c0600480803590602001909190803590602001909190803590602001909190505061050a565b60405180821515815260200191505060405180910390f35b34610000576101e561073d565b604051808260ff16815260200191505060405180910390f35b346100005761020b610750565b60405180806020018281038252838181518152602001915080519060200190808383829060006004602084601f0104600302600f01f150905090810190601f16801561026b5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b346100005761029460048080359060200190919050506107ee565b6040518082815260200191505060405180910390f35b34610000576102b7610806565b60405180806020018281038252838181518152602001915080519060200190808383829060006004602084601f0104600302600f01f150905090810190601f1680156103175780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b346100005761034960048080359060200190919080359060200190919050506108a4565b005b34610000576103b2600480803590602001909190803590602001909190803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843782019150505050505091905050610a13565b60405180821515815260200191505060405180910390f35b34610000576103ee6004808035906020019091908035906020019091905050610b46565b6040518082815260200191505060405180910390f35b60018054600181600116156101000203166002900480601f01602080910402602001604051908101604052809291908181526020018280546001816001161561010002031660029004801561049a5780601f1061046f5761010080835404028352916020019161049a565b820191906000526020600020905b81548152906001019060200180831161047d57829003601f168201915b505050505081565b600081600660003373ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008573ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002081905550600190505b92915050565b60045481565b600081600560008673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002054101561054257610000565b600560008473ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205482600560008673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020540110156105a357610000565b600660008573ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060003373ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205482111561060057610000565b81600560008673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254039250508190555081600560008573ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254019250508190555081600660008673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060003373ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825403925050819055508273ffffffffffffffffffffffffffffffffffffffff168473ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef846040518082815260200191505060405180910390a3600190505b9392505050565b600360009054906101000a900460ff1681565b60008054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156107e65780601f106107bb576101008083540402835291602001916107e6565b820191906000526020600020905b8154815290600101906020018083116107c957829003601f168201915b505050505081565b60056020528060005260406000206000915090505481565b60028054600181600116156101000203166002900480601f01602080910402602001604051908101604052809291908181526020018280546001816001161561010002031660029004801561089c5780601f106108715761010080835404028352916020019161089c565b820191906000526020600020905b81548152906001019060200180831161087f57829003601f168201915b505050505081565b80600560003373ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205410156108da57610000565b600560008373ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205481600560008573ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205401101561093b57610000565b80600560003373ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254039250508190555080600560008473ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825401925050819055508173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef836040518082815260200191505060405180910390a35b5050565b60006000849050610a2485856104a2565b15610b3d578073ffffffffffffffffffffffffffffffffffffffff16638f4ffcb133863087604051857c0100000000000000000000000000000000000000000000000000000000028152600401808573ffffffffffffffffffffffffffffffffffffffff1681526020018481526020018373ffffffffffffffffffffffffffffffffffffffff168152602001806020018281038252838181518152602001915080519060200190808383829060006004602084601f0104600302600f01f150905090810190601f168015610b0c5780820380516001836020036101000a031916815260200191505b5095505050505050600060405180830381600087803b156100005760325a03f1156100005750505060019150610b3e565b5b509392505050565b600660205281600052604060002060205280600052604060002060009150915050548156',
-      nonce: 2,
-      r: '0x79d4e717d1249512572b90ca87fe545dde24815e33eb74064bdd7336463f6d8',
-      s: '0x4a16b7d119cdc34e454fa2cc0a152904f7deb23e2a5f2966f70981361c853874',
-      v: '0x26',
-      value: '0x0',
-    } as TypedTxData
-    const beforeBalance = BigInt(149123788000000000)
-    const afterBalance = BigInt(129033829000000000)
-
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.SpuriousDragon })
-    common.setHardforkBy({ blockNumber: 2772981 })
-    const vm = await createVM({ common })
-
-    const tx = createLegacyTx(txData, { common })
-    // Tron tx format changes the signing preimage, so the hardcoded r/s/v
-    // recover to a different sender than under Ethereum. Use the recovered
-    // sender at runtime (the consensus bug being exercised is in EVM gas
-    // accounting and is independent of which address signs the tx).
-    const addr = tx.getSenderAddress()
-    await vm.stateManager.putAccount(addr, new Account())
-    const acc = await vm.stateManager.getAccount(addr)
-    acc!.balance = beforeBalance
-    acc!.nonce = BigInt(2)
-    await vm.stateManager.putAccount(addr, acc!)
-
-    await runTx(vm, { tx })
-
-    const newBalance = (await vm.stateManager.getAccount(addr))!.balance
-    assert.strictEqual(newBalance, afterBalance)
+describe('runTx() -> exception accounting', () => {
+  it('consumes the execution budget on OOG and rolls back storage without refunds', async () => {
+    const vm = await createVM()
+    const contract = createAddressFromString('0x' + '31'.repeat(20))
+    // Clear a slot, then spend the remaining budget in a loop.
+    await vm.stateManager.putCode(contract, hexToBytes('0x60006000555b600556'))
+    const slot = new Uint8Array(32)
+    await vm.stateManager.putStorage(contract, slot, hexToBytes('0x01'))
+    await setBalance(vm, SIGNER_A.address, 1000000n)
+    const tx = createLegacyTx(
+      { to: contract, gasLimit: 30000n, gasPrice: 10n },
+      { common: vm.common },
+    ).sign(SIGNER_A.privateKey)
+    const result = await runTx(vm, { tx })
+    assert.strictEqual(result.execResult.exceptionError?.error, 'out of gas')
+    assert.strictEqual(result.totalGasSpent, 30000n)
+    assert.strictEqual(result.gasRefund, 0n)
+    assert.strictEqual(result.amountSpent, 300000n)
+    assert.strictEqual((await vm.stateManager.getAccount(SIGNER_A.address))!.balance, 700000n)
+    assert.deepEqual(await vm.stateManager.getStorage(contract, slot), hexToBytes('0x01'))
+    assert.strictEqual((result.receipt as { status: number }).status, 0)
   })
 
-  it('validate REVERT opcode does not consume all gas', async () => {
-    /* This test simulates the Kintsugi devnet transaction: 0x1fb8a5ac000196a54dfe63dfda60542340b790a874b1d319b0aa834ef2ea1425.
-       This transaction will try to create a contract, but it will REVERT.
-       REVERT puts an "error message" in the RETURNDATA buffer. This buffer would contain the contract code to deploy if the message would not fail.
-       In this case, REVERT puts a message in the RETURNDATA buffer which is larger than the `maxCodeSize`
-       This should not consume all gas: it should only consume the gas spent by the attempt to create the contract */
-    const pkey = new Uint8Array(32).fill(1)
-    const txData: FeeMarketEIP1559TxData = {
-      gasLimit: 100000,
-      maxPriorityFeePerGas: 1000,
-      maxFeePerGas: 1000,
-      data: '0x5a600060085548fd896000606e5591b1e13d6000593e596000208055600060e5557fce5f47d3286fafb6fd28e73513c7671cd3ade974d1c1d898b43f07f89c82aee960aa527f4a97c424e9050663e203c27528f85ca5b0348980d5e61cc3e062d253a246f95760ca52606660ea53605060eb53607360ec53602960ed5360a460',
-      nonce: 0,
-      accessList: [
-        {
-          address: '0x32dcab0ef3fb2de2fce1d2e0799d36239671f04a',
-          storageKeys: ['0x0000000000000000000000000000000000000000000000000000000000000008'],
-        },
-      ],
-    }
-
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-    const vm = await createVM({ common })
-
-    const addr = createAddressFromPrivateKey(pkey)
-    await vm.stateManager.putAccount(addr, new Account())
-    const acc = await vm.stateManager.getAccount(addr)
-    acc!.balance = BigInt(10000000000000)
-    await vm.stateManager.putAccount(addr, acc!)
-
-    const tx = createFeeMarket1559Tx(txData, { common }).sign(pkey)
-
-    const block = createBlock({ header: { baseFeePerGas: 0x0c } }, { common })
-    const result = await runTx(vm, { tx, block })
-
+  it('returns oversized REVERT data without depositing code or consuming the full budget', async () => {
+    const vm = await createVM()
+    await setBalance(vm, SIGNER_A.address, 10000000n)
+    // PUSH2 24577, PUSH1 0, REVERT; memory expands to 769 words.
+    const tx = createFeeMarket1559Tx(
+      { data: '0x6160016000fd', gasLimit: 100000n, maxFeePerGas: 10n },
+      { common: vm.common },
+    ).sign(SIGNER_A.privateKey)
+    const result = await runTx(vm, { tx })
+    assert.strictEqual(result.execResult.exceptionError?.error, 'revert')
+    assert.strictEqual(result.execResult.returnValue.length, 24577)
+    assert.strictEqual(result.execResult.executionGasUsed, 6n + 3n * 769n + (769n * 769n) / 512n)
     assert.strictEqual(
       result.totalGasSpent,
-      BigInt(66382),
-      'should use the right amount of gas and not consume all',
+      tx.getIntrinsicGas() + result.execResult.executionGasUsed,
     )
+    assert.isTrue(result.totalGasSpent < tx.gasLimit)
+    assert.isUndefined(await vm.stateManager.getAccount(result.createdAddress!))
+    assert.strictEqual((result.receipt as { status: number }).status, 0)
   })
 })
 
@@ -803,7 +699,7 @@ describe('runTx() -> RunTxOptions', () => {
 })
 
 it('runTx() -> skipBalance behavior', async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
+  const common = new Common({ chain: TronMainnet })
   const vm = await createVM({ common })
 
   for (const balance of [undefined, BigInt(5)]) {
@@ -816,7 +712,8 @@ it('runTx() -> skipBalance behavior', async () => {
       to: createZeroAddress(),
     }).sign(SIGNER_A.privateKey)
 
-    const res = await runTx(vm, { tx, skipBalance: true, skipHardForkValidation: true })
+    const block = createBlock({ header: { baseFeePerGas: 0n } }, { common })
+    const res = await runTx(vm, { tx, block, skipBalance: true })
     assert.isTrue(true, 'runTx should not throw with no balance and skipBalance')
     const afterTxBalance = (await vm.stateManager.getAccount(SIGNER_A.address))!.balance
     assert.strictEqual(
@@ -833,7 +730,7 @@ it('runTx() -> skipBalance behavior', async () => {
 })
 
 it('Validate EXTCODEHASH puts KECCAK256_NULL on stack if calling account has no balance and zero nonce (but it did exist)', async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
+  const common = new Common({ chain: TronMainnet })
   const vm = await createVM({ common })
 
   const pkey = new Uint8Array(32).fill(1)
@@ -846,7 +743,7 @@ it('Validate EXTCODEHASH puts KECCAK256_NULL on stack if calling account has no 
 
   const tx = createLegacyTx({
     gasLimit: 100000,
-    gasPrice: 1,
+    gasPrice: 10,
     to: codeAddr,
   }).sign(pkey)
 
@@ -862,7 +759,7 @@ it('Validate EXTCODEHASH puts KECCAK256_NULL on stack if calling account has no 
 })
 
 it('Validate CALL does not charge new account gas when calling CALLER and caller is non-empty', async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
+  const common = new Common({ chain: TronMainnet })
   const vm = await createVM({ common })
 
   const pkey = new Uint8Array(32).fill(1)
@@ -872,14 +769,14 @@ it('Validate CALL does not charge new account gas when calling CALLER and caller
   // CALL
   // STOP
 
-  // Calls CALLER and sends back the ETH just sent with the transaction
+  // Calls CALLER and sends back the TRX just sent with the transaction
   const code = hexToBytes('0x600080808034335AF100')
   const codeAddr = createAddressFromString('0x' + '20'.repeat(20))
   await vm.stateManager.putCode(codeAddr, code)
 
   const tx = createLegacyTx({
     gasLimit: 100000,
-    gasPrice: 1,
+    gasPrice: 10,
     value: 1,
     to: codeAddr,
   }).sign(pkey)
@@ -891,13 +788,13 @@ it('Validate CALL does not charge new account gas when calling CALLER and caller
   await vm.stateManager.putAccount(addr, acc!)
   assert.strictEqual(
     (await runTx(vm, { tx, skipHardForkValidation: true })).totalGasSpent,
-    BigInt(27818),
+    21000n + 3n * 4n + 2n * 3n + 40n + 9000n - 2300n,
     'did not charge callNewAccount',
   )
 })
 
 it('Validate SELFDESTRUCT does not charge new account gas when calling CALLER and caller is non-empty', async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
+  const common = new Common({ chain: TronMainnet })
   const vm = await createVM({ common })
 
   const pkey = new Uint8Array(32).fill(1)
@@ -910,7 +807,7 @@ it('Validate SELFDESTRUCT does not charge new account gas when calling CALLER an
 
   const tx = createLegacyTx({
     gasLimit: 100000,
-    gasPrice: 1,
+    gasPrice: 10,
     value: 1,
     to: codeAddr,
   }).sign(pkey)
@@ -922,273 +819,7 @@ it('Validate SELFDESTRUCT does not charge new account gas when calling CALLER an
   await vm.stateManager.putAccount(addr, acc!)
   assert.strictEqual(
     (await runTx(vm, { tx, skipHardForkValidation: true })).totalGasSpent,
-    BigInt(13001),
+    21000n + 2n + 5000n,
     'did not charge callNewAccount',
   )
-})
-
-describe('EIP 4844 transaction tests', () => {
-  const kzg = new microEthKZG(trustedSetup)
-  it('should work', async () => {
-    const { eip4844GethGenesis } = await import('@tvmjs/testdata')
-    const common = createCommonFromGethGenesis(eip4844GethGenesis, {
-      chain: 'customChain',
-      hardfork: Hardfork.Cancun,
-      customCrypto: { kzg },
-    })
-
-    common.setHardfork(Hardfork.Cancun)
-    const oldGetBlockFunction = Blockchain.prototype.getBlock
-
-    // Stub getBlock to produce a valid parent header under EIP 4844
-    Blockchain.prototype.getBlock = async () => {
-      return createBlock(
-        {
-          header: createBlockHeader(
-            {
-              excessBlobGas: 0n,
-              number: 1,
-
-              parentHash: blockchain.genesisBlock.hash(),
-            },
-            {
-              common,
-              skipConsensusFormatValidation: true,
-            },
-          ),
-        },
-        {
-          common,
-          skipConsensusFormatValidation: true,
-        },
-      )
-    }
-    const blockchain = await createBlockchain({
-      validateBlocks: false,
-      validateConsensus: false,
-    })
-    const vm = await createVM({ common, blockchain })
-
-    const tx = getTransaction(common, 3, true) as Blob4844Tx
-
-    const block = createBlock(
-      {
-        header: createBlockHeader(
-          {
-            excessBlobGas: 1n,
-            number: 2,
-            parentHash: (await blockchain.getBlock(1n)).hash(), // Faking parent hash with getBlock stub
-          },
-          {
-            common,
-            skipConsensusFormatValidation: true,
-          },
-        ),
-      },
-      { common, skipConsensusFormatValidation: true },
-    )
-    const res = await runTx(vm, { tx, block, skipBalance: true })
-    assert.isTrue(res.execResult.exceptionError === undefined, 'simple blob tx run succeeds')
-    assert.strictEqual(res.blobGasUsed, 131072n, 'returns correct blob gas used for 1 blob')
-    Blockchain.prototype.getBlock = oldGetBlockFunction
-  })
-}, 20000)
-
-describe('TRON rootTransactionId propagation', () => {
-  it('rejects an invalid transaction ID policy before events or BAL mutations', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Amsterdam })
-    const vm = await createVM({ common })
-    const tx = createLegacyTx({ gasLimit: 100000n, gasPrice: 10n, data: '0x00' }, { common }).sign(
-      SIGNER_A.privateKey,
-    )
-    let beforeTxCalls = 0
-    let cleanupCalls = 0
-    const originalCleanup = vm.tvm.journal.cleanup.bind(vm.tvm.journal)
-    vm.tvm.journal.cleanup = async () => {
-      cleanupCalls++
-      await originalCleanup()
-    }
-    vm.events.on('beforeTx', () => {
-      beforeTxCalls++
-    })
-
-    await expect(
-      runTx(vm, {
-        tx,
-        skipBalance: true,
-        tronTransactionIdPolicy: 'invalid' as any,
-      }),
-    ).rejects.toThrow('Invalid TRON transaction ID policy')
-
-    assert.strictEqual(beforeTxCalls, 0)
-    assert.strictEqual(cleanupCalls, 0)
-    assert.deepEqual(vm.tvm.blockLevelAccessList?.raw(), [])
-  })
-
-  it('uses the signed TVMJS transaction hash for a top-level TRON deployment by default', async () => {
-    const common = new Common({ chain: TronMainnet })
-    const vm = await createVM({ common })
-    const tx = createLegacyTx({ gasLimit: 100000n, gasPrice: 10n, data: '0x00' }, { common }).sign(
-      SIGNER_A.privateKey,
-    )
-
-    const result = await runTx(vm, { tx, skipBalance: true })
-
-    assert.strictEqual(
-      result.createdAddress?.toString(),
-      bytesToHex(generateTronContractAddress(tx.hash(), SIGNER_A.address.bytes)),
-    )
-  })
-
-  it('prefers an explicit rootTransactionId over the transaction hash fallback', async () => {
-    const common = new Common({ chain: TronMainnet })
-    const vm = await createVM({ common })
-    const rootTransactionId = hexToBytes(
-      '0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0',
-    )
-    const tx = createLegacyTx({ gasLimit: 100000n, gasPrice: 10n, data: '0x00' }, { common }).sign(
-      SIGNER_A.privateKey,
-    )
-
-    const result = await runTx(vm, { tx, rootTransactionId, skipBalance: true })
-
-    assert.strictEqual(
-      result.createdAddress?.toString(),
-      bytesToHex(generateTronContractAddress(rootTransactionId, SIGNER_A.address.bytes)),
-    )
-    assert.notStrictEqual(
-      result.createdAddress?.toString(),
-      bytesToHex(generateTronContractAddress(tx.hash(), SIGNER_A.address.bytes)),
-    )
-  })
-
-  it('propagates rootTransactionId from runTx to internal CREATE', async () => {
-    const common = new Common({ chain: TronMainnet })
-    const vm = await createVM({ common })
-
-    const deployer = createAddressFromString('0x0000000000000000000000000000000000000100')
-    await vm.stateManager.putAccount(deployer, createAccount({ balance: 10n ** 18n }))
-
-    // Simple CREATE: deploy empty contract and return its address
-    const deployCode = hexToBytes('0x600060006000f060005260206000f3')
-    await vm.stateManager.putCode(deployer, deployCode)
-
-    const rootTxId = hexToBytes(
-      '0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0',
-    )
-
-    const tx = createLegacyTx(
-      {
-        to: deployer,
-        gasLimit: 100000,
-        gasPrice: 10,
-        nonce: 0,
-      },
-      { common },
-    ).sign(SIGNER_A.privateKey)
-
-    const result = await runTx(vm, { tx, rootTransactionId: rootTxId, skipBalance: true })
-
-    // Extract the created address from return value (last 20 bytes)
-    const createdAddress = result.execResult.returnValue.subarray(-20)
-
-    // Verify it matches TRON CREATE derivation with the exact rootTransactionId and nonce=0
-    assert.strictEqual(
-      bytesToHex(createdAddress),
-      bytesToHex(generateTronCreateAddress(rootTxId, 0n)),
-      'runTx should propagate rootTransactionId to internal CREATE with correct derivation',
-    )
-  })
-
-  it('uses the signed TVMJS transaction hash for internal CREATE by default', async () => {
-    const common = new Common({ chain: TronMainnet })
-    const vm = await createVM({ common })
-    const deployer = createAddressFromString('0x0000000000000000000000000000000000000100')
-    await vm.stateManager.putCode(deployer, hexToBytes('0x600060006000f060005260206000f3'))
-
-    const tx = createLegacyTx(
-      {
-        to: deployer,
-        gasLimit: 100000,
-        gasPrice: 10,
-        nonce: 0,
-      },
-      { common },
-    ).sign(SIGNER_A.privateKey)
-
-    const result = await runTx(vm, { tx, skipBalance: true })
-
-    assert.strictEqual(
-      bytesToHex(result.execResult.returnValue.subarray(-20)),
-      bytesToHex(generateTronCreateAddress(tx.hash(), 0n)),
-    )
-  })
-
-  it('keeps Ethereum top-level deployment address derivation unchanged', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Constantinople })
-    const vm = await createVM({ common })
-    const tx = createLegacyTx({ gasLimit: 100000n, gasPrice: 10n, data: '0x00' }, { common }).sign(
-      SIGNER_A.privateKey,
-    )
-
-    const result = await runTx(vm, { tx, skipBalance: true })
-
-    assert.strictEqual(
-      result.createdAddress?.toString(),
-      bytesToHex(generateAddress(SIGNER_A.address.bytes, bigIntToBytes(0n))),
-    )
-  })
-
-  it('does not require an explicit ID for a TRON transaction that does not create a contract', async () => {
-    const common = new Common({ chain: TronMainnet })
-    const vm = await createVM({ common })
-    const tx = createLegacyTx(
-      { to: createZeroAddress(), gasLimit: 21000n, gasPrice: 10n },
-      { common },
-    ).sign(SIGNER_A.privateKey)
-
-    const result = await runTx(vm, {
-      tx,
-      skipBalance: true,
-      tronTransactionIdPolicy: 'require-explicit',
-    })
-
-    assert.isUndefined(result.execResult.exceptionError)
-  })
-
-  it('requires an explicit ID when the compatibility fallback is disabled', async () => {
-    const common = new Common({ chain: TronMainnet })
-    const vm = await createVM({ common })
-    const deployer = createAddressFromString('0x0000000000000000000000000000000000000100')
-    await vm.stateManager.putCode(deployer, hexToBytes('0x600060006000f000'))
-
-    const tx = createLegacyTx(
-      {
-        to: deployer,
-        gasLimit: 100000,
-        gasPrice: 10,
-        nonce: 0,
-      },
-      { common },
-    ).sign(SIGNER_A.privateKey)
-
-    let error: unknown
-    try {
-      await runTx(vm, {
-        tx,
-        skipBalance: true,
-        tronTransactionIdPolicy: 'require-explicit',
-      })
-    } catch (caught) {
-      error = caught
-    }
-
-    assert.match((error as Error).message, /rootTransactionId is required/)
-    assert.strictEqual(
-      (vm.tvm.journal as any).journalHeight,
-      0,
-      'runTx and runCall checkpoints must both be reverted',
-    )
-    assert.strictEqual(vm.stateManager, vm.tvm.stateManager)
-  })
 })

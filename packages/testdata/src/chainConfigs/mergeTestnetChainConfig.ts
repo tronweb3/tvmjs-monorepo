@@ -1,10 +1,10 @@
-import type { ChainConfig } from '@tvmjs/common'
+import type { EthereumChainData } from '@tvmjs/common'
 
 /**
  * Chain config for testing merge scenarios with most hardforks at block 0 and Paris at block 3.
  * Used for testing merge-related functionality in the client package.
  */
-export const mergeTestnetChainConfig: ChainConfig = {
+export const mergeTestnetChainConfig: EthereumChainData = {
   name: 'testnet',
   chainId: 12345,
   defaultHardfork: 'byzantium',

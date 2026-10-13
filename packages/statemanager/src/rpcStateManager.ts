@@ -1,5 +1,5 @@
 import { keccak_256 } from '@noble/hashes/sha3.js'
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { RLP } from '@tvmjs/rlp'
 import {
   Account,
@@ -14,6 +14,7 @@ import {
   intToHex,
   isDebugEnabled,
   toBytes,
+  tokenIdFromKey,
 } from '@tvmjs/util'
 import debugDefault from 'debug'
 
@@ -35,6 +36,8 @@ export class RPCStateManager implements StateManagerInterface {
   protected _debug: Debugger
   protected DEBUG: boolean
   private keccakFunction: Function
+  private readonly _tokenIdExists?: RPCStateManagerOpts['tokenIdExists']
+  private _tokenIdStack: Set<bigint>[] = [new Set()]
   public readonly common: Common
 
   constructor(opts: RPCStateManagerOpts) {
@@ -49,27 +52,31 @@ export class RPCStateManager implements StateManagerInterface {
     }
 
     this._blockTag = opts.blockTag === 'earliest' ? opts.blockTag : bigIntToHex(opts.blockTag)
+    if (opts.tokenIdExists !== undefined && typeof opts.tokenIdExists !== 'function') {
+      throw EthereumJSErrorWithoutCode('tokenIdExists must be a function')
+    }
+    this._tokenIdExists = opts.tokenIdExists
 
     this._caches = new Caches({ storage: { size: 100000 }, code: { size: 100000 } })
 
     this.originalStorageCache = new OriginalStorageCache(this.getStorage.bind(this))
-    this.common = opts.common ?? new Common({ chain: Mainnet })
+    this.common = opts.common ?? new Common({ chain: TronMainnet })
     this.keccakFunction = opts.common?.customCrypto.keccak256 ?? keccak_256
   }
 
   /**
-   * Note that the returned statemanager will share the same JSONRPCProvider as the original
+   * Returns independent empty caches at the same provider and block tag,
+   * preserving a copy of the execution configuration.
    *
    * @returns RPCStateManager
    */
   shallowCopy(): RPCStateManager {
-    const newState = new RPCStateManager({
+    return new RPCStateManager({
       provider: this._provider,
-      blockTag: BigInt(this._blockTag),
+      blockTag: this._blockTag === 'earliest' ? 'earliest' : BigInt(this._blockTag),
+      common: this.common.copy(),
+      tokenIdExists: this._tokenIdExists,
     })
-    newState._caches = new Caches({ storage: { size: 100000 } })
-
-    return newState
   }
 
   /**
@@ -89,6 +96,8 @@ export class RPCStateManager implements StateManagerInterface {
    */
   clearCaches(): void {
     this._caches.clear()
+    this.originalStorageCache.clear()
+    this._tokenIdStack = [new Set()]
   }
 
   /**
@@ -252,11 +261,14 @@ export class RPCStateManager implements StateManagerInterface {
         }`,
       )
     }
+    const tokenIds = account === undefined ? [] : Object.keys(account.asset).map(tokenIdFromKey)
     if (account !== undefined) {
       this._caches.account!.put(address, account)
     } else {
       this._caches.account!.del(address)
     }
+    const registry = this._tokenIdStack[this._tokenIdStack.length - 1]
+    for (const tokenId of tokenIds) registry.add(tokenId)
   }
 
   /**
@@ -311,17 +323,18 @@ export class RPCStateManager implements StateManagerInterface {
    */
   async checkpoint(): Promise<void> {
     this._caches.checkpoint()
+    this._tokenIdStack.push(new Set(this._tokenIdStack[this._tokenIdStack.length - 1]))
   }
 
   /**
    * Commits the current change-set to the instance since the
    * last call to checkpoint.
    *
-   * Partial implementation, called from the subclass.
+   * Account, code and storage caches advance to the same checkpoint.
    */
   async commit(): Promise<void> {
-    // setup cache checkpointing
-    this._caches.account?.commit()
+    this._caches.commit()
+    this._tokenIdStack.splice(-2, 1)
   }
 
   /**
@@ -332,6 +345,7 @@ export class RPCStateManager implements StateManagerInterface {
    */
   async revert(): Promise<void> {
     this._caches.revert()
+    this._tokenIdStack.pop()
   }
 
   async flush(): Promise<void> {
@@ -357,9 +371,17 @@ export class RPCStateManager implements StateManagerInterface {
     throw EthereumJSErrorWithoutCode('function not implemented')
   }
 
-  // TODO TRON implement token in rpc state manager
-  async tokenIdExists(_tokenId: number): Promise<boolean> {
-    throw EthereumJSErrorWithoutCode('Method not implemented.')
+  async tokenIdExists(tokenId: bigint): Promise<boolean> {
+    if (this._tokenIdStack[this._tokenIdStack.length - 1].has(tokenId)) return true
+    if (this._tokenIdExists === undefined) {
+      return false
+    }
+    const blockTag = this._blockTag === 'earliest' ? 'earliest' : BigInt(this._blockTag)
+    const exists = await this._tokenIdExists(tokenId, blockTag)
+    if (typeof exists !== 'boolean') {
+      throw EthereumJSErrorWithoutCode('tokenIdExists must return a boolean')
+    }
+    return exists
   }
 }
 
@@ -378,6 +400,11 @@ export class RPCBlockChain {
     return {
       hash: () => hexToBytes(block.hash),
     }
+  }
+
+  /** This adapter only reads provider data; block writes are unsupported. */
+  async putBlock(_block: unknown): Promise<void> {
+    throw EthereumJSErrorWithoutCode('RPCBlockChain is read-only')
   }
 
   shallowCopy() {

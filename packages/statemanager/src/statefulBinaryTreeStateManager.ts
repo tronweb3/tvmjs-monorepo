@@ -217,13 +217,7 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
     }
     if (this._caches?.account === undefined) {
       if (account !== undefined) {
-        const stem = getBinaryTreeStem(this.hashFunction, address, 0)
-        const basicDataBytes = encodeBinaryTreeLeafBasicData(account)
-        await this._tree.put(
-          stem,
-          [BinaryTreeLeafType.BasicData, BinaryTreeLeafType.CodeHash],
-          [basicDataBytes, account.codeHash],
-        )
+        await this._writeAccountToTree(address, account)
       } else {
         // Delete account
         await this.deleteAccount(address)
@@ -235,6 +229,23 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
         this._caches?.account?.del(address)
       }
     }
+  }
+
+  /** Writes account data or a deletion directly to the tree without updating caches. */
+  private async _writeAccountToTree(address: Address, account?: Account): Promise<void> {
+    // Negative cache entries must not create an empty stem in an empty tree.
+    if (account === undefined && equalsBytes(this._tree.root(), this._tree.EMPTY_TREE_ROOT)) {
+      return
+    }
+    const stem = getBinaryTreeStem(this.hashFunction, address, 0)
+    await this._tree.put(
+      stem,
+      [BinaryTreeLeafType.BasicData, BinaryTreeLeafType.CodeHash],
+      [
+        account === undefined ? null : encodeBinaryTreeLeafBasicData(account),
+        account?.codeHash ?? null,
+      ],
+    )
   }
 
   /**
@@ -249,13 +260,7 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
     this._caches?.deleteAccount(address)
 
     if (this._caches?.account === undefined) {
-      const stem = getBinaryTreeStem(this.hashFunction, address)
-      // Special instance where we delete the account and revert the trie value to untouched
-      await this._tree.put(
-        stem,
-        [BinaryTreeLeafType.BasicData, BinaryTreeLeafType.CodeHash],
-        [null, null],
-      )
+      await this._writeAccountToTree(address)
     }
   }
 
@@ -268,7 +273,10 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
     }
 
     this._caches?.code?.put(address, value)
+    await this._writeCodeToTree(address, value)
+  }
 
+  private async _writeCodeToTree(address: Address, value: Uint8Array): Promise<void> {
     const codeHash = keccak_256(value)
     if (equalsBytes(codeHash, KECCAK256_NULL)) {
       // If the code hash is the null hash, no code has to be stored
@@ -425,7 +433,7 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
     )
     const value = await this._tree.get(storageKey.slice(0, 31), [storageKey[31]])
 
-    this._caches?.storage?.put(address, key, value[0] ?? hexToBytes('0x80'))
+    this._caches?.storage?.put(address, key, RLP.encode(value[0] ?? new Uint8Array(0)))
     const decoded = (value[0] ?? new Uint8Array(0)) as Uint8Array
     return setLengthLeft(decoded, 32)
   }
@@ -433,13 +441,21 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
   putStorage = async (address: Address, key: Uint8Array, value: Uint8Array): Promise<void> => {
     this._caches?.storage?.put(address, key, RLP.encode(value))
     if (this._caches?.storage === undefined) {
-      const storageKey = getBinaryTreeKeyForStorageSlot(
-        address,
-        bytesToBigInt(key),
-        this.hashFunction,
-      )
-      await this._tree.put(storageKey.slice(0, 31), [storageKey[31]], [setLengthLeft(value, 32)])
+      await this._writeStorageToTree(address, key, value)
     }
+  }
+
+  private async _writeStorageToTree(
+    address: Address,
+    key: Uint8Array,
+    value: Uint8Array,
+  ): Promise<void> {
+    const storageKey = getBinaryTreeKeyForStorageSlot(
+      address,
+      bytesToBigInt(key),
+      this.hashFunction,
+    )
+    await this._tree.put(storageKey.slice(0, 31), [storageKey[31]], [setLengthLeft(value, 32)])
   }
 
   clearStorage = async (address: Address): Promise<void> => {
@@ -487,7 +503,7 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
         continue
       }
 
-      await this.putCode(addr, code)
+      await this._writeCodeToTree(addr, code)
     }
 
     const storageItems = this._caches?.storage?.flush() ?? []
@@ -496,11 +512,14 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
       const keyHex = item[1]
       const keyBytes = unprefixedHexToBytes(keyHex)
       const value = item[2]
+      // Clearing an account's storage cache can leave tracked keys without a cached value.
+      // Only explicit writes, including an RLP-encoded empty value, should change the tree.
+      if (value === undefined) continue
 
-      const decoded = RLP.decode(value ?? new Uint8Array(0)) as Uint8Array
+      const decoded = RLP.decode(value) as Uint8Array
       const account = await this.getAccount(address)
       if (account) {
-        await this.putStorage(address, keyBytes, decoded)
+        await this._writeStorageToTree(address, keyBytes, decoded)
       }
     }
 
@@ -509,10 +528,10 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
       const address = createAddressFromString(`0x${item[0]}`)
       const elem = item[1]
       if (elem.accountRLP === undefined) {
-        await this.deleteAccount(address)
+        await this._writeAccountToTree(address)
       } else {
         const account = createPartialAccountFromRLP(elem.accountRLP)
-        await this.putAccount(address, account)
+        await this._writeAccountToTree(address, account)
       }
     }
   }
@@ -787,7 +806,7 @@ export class StatefulBinaryTreeStateManager implements StateManagerInterface {
     await this.flush()
   }
   // TODO TRON implement token in rpc state manager
-  async tokenIdExists(_tokenId: number): Promise<boolean> {
+  async tokenIdExists(_tokenId: bigint): Promise<boolean> {
     throw EthereumJSErrorWithoutCode('Method not implemented.')
   }
 }

@@ -1,30 +1,12 @@
-import { createBlock } from '@tvmjs/block'
-import { Common, Mainnet } from '@tvmjs/common'
-import { Address, hexToBytes } from '@tvmjs/util'
+import { genWithdrawalsTrieRoot } from '@tvmjs/block'
+import { bytesToHex, createWithdrawal } from '@tvmjs/util'
 
-import type { WithdrawalData } from '@tvmjs/util'
-
-const common = new Common({ chain: Mainnet })
-
-const withdrawal: WithdrawalData = {
-  index: BigInt(0),
-  validatorIndex: BigInt(0),
-  address: new Address(hexToBytes(`0x${'20'.repeat(20)}`)),
-  amount: BigInt(1000),
-}
-
-const block = createBlock(
-  {
-    header: {
-      withdrawalsRoot: hexToBytes(
-        '0x69f28913c562b0d38f8dc81e72eb0d99052444d301bf8158dc1f3f94a4526357',
-      ),
-    },
-    withdrawals: [withdrawal],
-  },
-  {
-    common,
-  },
-)
-
-console.log(`Block with ${block.withdrawals!.length} withdrawal(s) created`)
+// A retained data helper; withdrawals cannot be included in TRON execution blocks.
+const withdrawal = createWithdrawal({
+  index: 0n,
+  validatorIndex: 0n,
+  address: `0x${'20'.repeat(20)}`,
+  amount: 1000n,
+})
+console.log(bytesToHex(await genWithdrawalsTrieRoot([withdrawal])))
+// 0x897ca49edcb278aecab2688bcc2b7b7ee43524cc489672534fee332a172f1718

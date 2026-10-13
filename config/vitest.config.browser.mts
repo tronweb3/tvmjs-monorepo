@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config'
 import { playwright } from '@vitest/browser-playwright'
+import { defineConfig } from 'vitest/config'
 
 const config = defineConfig({
   test: {
@@ -21,9 +21,6 @@ const config = defineConfig({
   },
   resolve: {
     conditions: ['typescript'],
-  },
-  optimizeDeps: {
-    exclude: ['kzg-wasm'],
   },
 })
 

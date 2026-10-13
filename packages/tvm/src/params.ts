@@ -3,6 +3,39 @@ import { SYSTEM_ADDRESS } from '@tvmjs/util'
 
 export const paramsTVM: ParamsDict = {
   /**
+   * TRON version-0 Energy schedule, java-tron GreatVoyage-v4.8.2.
+   * Memory instructions use the original schedule; callers can select the
+   * higher CPU limit schedule with mloadGas/mstoreGas/mstore8Gas set to 1.
+   * SELFDESTRUCT follows the restriction already selected by this profile.
+   */
+  tron: {
+    expByteGas: 10,
+    balanceGas: 20,
+    extcodesizeGas: 20,
+    extcodecopyGas: 20,
+    extcodehashGas: 400,
+    sloadGas: 50,
+    sstoreSetGas: 20000,
+    sstoreResetGas: 5000,
+    sstoreRefundGas: 0,
+    callGas: 40,
+    callcodeGas: 40,
+    delegatecallGas: 40,
+    staticcallGas: 40,
+    calltokenGas: 40,
+    tokenbalanceGas: 20,
+    iscontractGas: 20,
+    selfdestructGas: 5000,
+    selfdestructRefundGas: 0,
+    // These handlers charge memory expansion and copying without an extra base fee.
+    mloadGas: 0,
+    mstoreGas: 0,
+    mstore8Gas: 0,
+    calldatacopyGas: 0,
+    codecopyGas: 0,
+    returndatacopyGas: 0,
+  },
+  /**
    * Frontier/Chainstart
    */
   1: {
@@ -137,13 +170,11 @@ export const paramsTVM: ParamsDict = {
     selfdestructGas: 5000, // Base fee of the SELFDESTRUCT opcode
   },
   /**
-.  * Spurious Dragon HF Meta EIP
+.  * Retained Spurious Dragon parameters; EIP-170 code size limits are absent.
 .  */
   607: {
     // gasPrices
     expByteGas: 50, // Times ceil(log256(exponent)) for the EXP instruction
-    // tvm
-    maxCodeSize: 24576, // Maximum length of contract code
   },
   /**
 .  * Byzantium HF Meta EIP
@@ -165,31 +196,11 @@ export const paramsTVM: ParamsDict = {
 .  */
   1013: {
     // gasPrices
-    netSstoreNoopGas: 200, // Once per SSTORE operation if the value doesn't change
-    netSstoreInitGas: 20000, // Once per SSTORE operation from clean zero
-    netSstoreCleanGas: 5000, // Once per SSTORE operation from clean non-zero
-    netSstoreDirtyGas: 200, // Once per SSTORE operation from dirty
-    netSstoreClearRefundGas: 15000, // Once per SSTORE operation for clearing an originally existing storage slot
-    netSstoreResetRefundGas: 4800, // Once per SSTORE operation for resetting to the original non-zero value
-    netSstoreResetClearRefundGas: 19800, // Once per SSTORE operation for resetting to the original zero value
     shlGas: 3, // Base fee of the SHL opcode
     shrGas: 3, // Base fee of the SHR opcode
     sarGas: 3, // Base fee of the SAR opcode
     extcodehashGas: 400, // Base fee of the EXTCODEHASH opcode
     create2Gas: 32000, // Base fee of the CREATE2 opcode
-  },
-  /**
-.  * Petersburg HF Meta EIP
-.  */
-  1716: {
-    // gasPrices
-    netSstoreNoopGas: null, // Removed along EIP-1283
-    netSstoreInitGas: null, // Removed along EIP-1283
-    netSstoreCleanGas: null, // Removed along EIP-1283
-    netSstoreDirtyGas: null, // Removed along EIP-1283
-    netSstoreClearRefundGas: null, // Removed along EIP-1283
-    netSstoreResetRefundGas: null, // Removed along EIP-1283
-    netSstoreResetClearRefundGas: null, // Removed along EIP-1283
   },
   /**
 .  * Istanbul HF Meta EIP
@@ -201,14 +212,6 @@ export const paramsTVM: ParamsDict = {
     bn254MulGas: 6000, // Gas costs for curve multiplication precompile
     bn254PairingGas: 45000, // Base gas costs for curve pairing precompile
     bn254PairingWordGas: 34000, // Gas costs regarding curve pairing precompile input length
-    sstoreSentryEIP2200Gas: 2300, // Minimum gas required to be present for an SSTORE call, not consumed
-    sstoreNoopEIP2200Gas: 800, // Once per SSTORE operation if the value doesn't change
-    sstoreDirtyEIP2200Gas: 800, // Once per SSTORE operation if a dirty value is changed
-    sstoreInitEIP2200Gas: 20000, // Once per SSTORE operation from clean zero to non-zero
-    sstoreInitRefundEIP2200Gas: 19200, // Once per SSTORE operation for resetting to the original zero value
-    sstoreCleanEIP2200Gas: 5000, // Once per SSTORE operation from clean non-zero to something else
-    sstoreCleanRefundEIP2200Gas: 4200, // Once per SSTORE operation for resetting to the original non-zero value
-    sstoreClearRefundEIP2200Gas: 15000, // Once per SSTORE operation for clearing an originally existing storage slot
     balanceGas: 700, // Base fee of the BALANCE opcode
     extcodehashGas: 700, // Base fee of the EXTCODEHASH opcode
     chainidGas: 2, // Base fee of the CHAINID opcode
@@ -262,14 +265,8 @@ export const paramsTVM: ParamsDict = {
 .  */
   2929: {
     // gasPrices
-    coldsloadGas: 2100, // Gas cost of the first read of storage from a given location (per transaction)
     coldaccountaccessGas: 2600, // Gas cost of the first read of a given address (per transaction)
     warmstoragereadGas: 100, // Gas cost of reading storage locations which have already loaded 'cold'
-    sstoreCleanEIP2200Gas: 2900, // Once per SSTORE operation from clean non-zero to something else
-    sstoreNoopEIP2200Gas: 100, // Once per SSTORE operation if the value doesn't change
-    sstoreDirtyEIP2200Gas: 100, // Once per SSTORE operation if a dirty value is changed
-    sstoreInitRefundEIP2200Gas: 19900, // Once per SSTORE operation for resetting to the original zero value
-    sstoreCleanRefundEIP2200Gas: 4900, // Once per SSTORE operation for resetting to the original non-zero value
     callGas: 0, // Base fee of the CALL opcode
     callcodeGas: 0, // Base fee of the CALLCODE opcode
     delegatecallGas: 0, // Base fee of the DELEGATECALL opcode
@@ -305,7 +302,6 @@ export const paramsTVM: ParamsDict = {
     maxRefundQuotient: 5, // Maximum refund quotient; max tx refund is min(tx.gasUsed/maxRefundQuotient, tx.gasRefund)
     // gasPrices
     selfdestructRefundGas: 0, // Refunded following a selfdestruct operation
-    sstoreClearRefundEIP2200Gas: 4800, // Once per SSTORE operation for clearing an originally existing storage slot
   },
   /**
 .  * PUSH0 instruction
@@ -313,15 +309,6 @@ export const paramsTVM: ParamsDict = {
   3855: {
     // gasPrices
     push0Gas: 2, // Base fee of the PUSH0 opcode
-  },
-  /**
-.  * Limit and meter initcode
-.  */
-  3860: {
-    // gasPrices
-    initCodeWordGas: 2, // Gas to pay for each word (32 bytes) of initcode when creating a contract
-    // vm
-    maxInitCodeSize: 49152, // Maximum length of initialization code when creating a contract
   },
   /**
    * EOF - Static relative jumps
@@ -346,16 +333,6 @@ export const paramsTVM: ParamsDict = {
     // gasPrices
     callfGas: 5, // Base fee of the CALLF opcode
     retfGas: 3, // Base fee of the RETF opcode
-  },
-  /**
-.  * Shard Blob Transactions
-.  */
-  4844: {
-    kzgPointEvaluationPrecompileGas: 50000, // The fee associated with the point evaluation precompile
-    blobhashGas: 3, // Base fee of the BLOBHASH opcode
-    // sharding
-    blobCommitmentVersionKzg: 1, // The number indicated a versioned hash is a KZG commitment
-    fieldElementsPerBlob: 4096, // The number of field elements allowed per blob
   },
   /**
    * MCOPY - Memory copying instruction
@@ -387,23 +364,6 @@ export const paramsTVM: ParamsDict = {
     returndataloadGas: 3, // Base fee of the RETURNDATALOAD opcode
     minRetainedGas: 5000, // Minimum gas retained prior to executing an EXT*CALL opcode (this is the minimum gas available after performing the EXT*CALL)
     minCalleeGas: 2300, //Minimum gas available to the the address called by an EXT*CALL opcode
-  },
-  /**
-   * EOF - Data section access instructions
-   */
-  7480: {
-    // gasPrices
-    dataloadGas: 4, // Base fee of the DATALOAD opcode
-    dataloadnGas: 3, // Base fee of the DATALOADN opcode
-    datasizeGas: 2, // Base fee of the DATASIZE opcode
-    datacopyGas: 3, // Base fee of the DATACOPY opcode
-  },
-  /**
-.  * BLOBBASEFEE opcode
-.  */
-  7516: {
-    // gasPrices
-    blobbasefeeGas: 2, // Gas cost of the BLOBBASEFEE opcode
   },
   /**
 .  * EOF Contract Creation

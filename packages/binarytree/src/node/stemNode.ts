@@ -5,6 +5,14 @@ import { BinaryNodeType, NODE_WIDTH } from './types.ts'
 
 import type { BinaryNodeOptions } from './types.ts'
 
+export function assertValidSuffixIndex(index: number): void {
+  if (!Number.isInteger(index) || index < 0 || index >= NODE_WIDTH) {
+    throw EthereumJSErrorWithoutCode(
+      `Invalid suffix index: ${index}. Must be an integer between 0 and ${NODE_WIDTH - 1}.`,
+    )
+  }
+}
+
 export class StemBinaryNode {
   public stem: Uint8Array
   public values: (Uint8Array | null)[] // Array of 256 possible values represented as 32 byte Uint8Arrays
@@ -45,10 +53,12 @@ export class StemBinaryNode {
 
   // Retrieve the value at the provided index from the values array
   getValue(index: number): Uint8Array | null {
+    assertValidSuffixIndex(index)
     return this.values[index]
   }
 
   setValue(index: number, value: Uint8Array | null): void {
+    assertValidSuffixIndex(index)
     this.values[index] = value
   }
 

@@ -1,20 +1,13 @@
-import { Hardfork } from '@tvmjs/common'
+import type { Common, StateManagerInterface } from '@tvmjs/common'
 import {
-  Address,
   EthereumJSErrorWithoutCode,
   RIPEMD160_ADDRESS_STRING,
   bytesToHex,
   bytesToUnprefixedHex,
-  hexToBytes,
-  isDebugEnabled,
   stripHexPrefix,
   unprefixedHexToBytes,
 } from '@tvmjs/util'
-import debugDefault from 'debug'
-
-import type { Common, StateManagerInterface } from '@tvmjs/common'
-import type { Account, PrefixedHexString } from '@tvmjs/util'
-import type { Debugger } from 'debug'
+import type { Account, Address, PrefixedHexString } from '@tvmjs/util'
 
 type AddressString = string
 type SlotString = string
@@ -27,17 +20,20 @@ type JournalType = Map<AddressString, WarmSlots>
  * Index 0: remove warm address
  * Index 1: remove warm slots for this warm address
  * Index 2: remove touched
+ * Index 3: remove storage slots written in this transaction
  */
 
-type JournalDiffItem = [Set<AddressString>, Map<AddressString, Set<SlotString>>, Set<AddressString>]
+type JournalDiffItem = [
+  Set<AddressString>,
+  Map<AddressString, Set<SlotString>>,
+  Set<AddressString>,
+  Set<string>,
+]
 
 type JournalHeight = number
 
 export class Journal {
   private stateManager: StateManagerInterface
-  private common: Common
-  private DEBUG: boolean
-  private _debug: Debugger
 
   private journal!: JournalType
   private alwaysWarmJournal!: Map<AddressString, Set<SlotString>>
@@ -45,22 +41,17 @@ export class Journal {
   private journalDiff!: [JournalHeight, JournalDiffItem][]
 
   private journalHeight: JournalHeight
+  private storageWrites = new Set<string>()
 
   public accessList?: Map<AddressString, Set<SlotString>>
   public preimages?: Map<PrefixedHexString, Uint8Array>
 
-  constructor(stateManager: StateManagerInterface, common: Common) {
-    // Skip DEBUG calls unless 'tvmjs' included in environmental DEBUG variables
-    this.DEBUG = isDebugEnabled('tvmjs')
-
-    this._debug = debugDefault('tvm:journal')
-
+  constructor(stateManager: StateManagerInterface, _common: Common) {
     // TODO maybe call into this.clearJournal
     this.cleanJournal()
     this.journalHeight = 0
 
     this.stateManager = stateManager
-    this.common = common
   }
 
   /**
@@ -116,12 +107,12 @@ export class Journal {
   async commit() {
     await this.stateManager.commit()
     this.journalHeight--
-    this.journalDiff.push([this.journalHeight, [new Set(), new Map(), new Set()]])
+    this.journalDiff.push([this.journalHeight, [new Set(), new Map(), new Set(), new Set()]])
   }
 
   async checkpoint() {
     this.journalHeight++
-    this.journalDiff.push([this.journalHeight, [new Set(), new Map(), new Set()]])
+    this.journalDiff.push([this.journalHeight, [new Set(), new Map(), new Set(), new Set()]])
     try {
       await this.stateManager.checkpoint()
     } catch (error) {
@@ -154,6 +145,7 @@ export class Journal {
       const addressSet = diff[0]
       const slotsMap = diff[1]
       const touchedSet = diff[2]
+      for (const key of diff[3]) this.storageWrites.delete(key)
 
       for (const address of addressSet) {
         // Sanity check, journal should have the item
@@ -193,30 +185,50 @@ export class Journal {
     this.journal = new Map()
     this.alwaysWarmJournal = new Map()
     this.touched = new Set()
-    this.journalDiff = [[0, [new Set(), new Map(), new Set()]]]
+    this.journalDiff = [[0, [new Set(), new Map(), new Set(), new Set()]]]
+    this.storageWrites = new Set()
+  }
+
+  /** Reset only the execution-local storage presence information at a public execution boundary. */
+  clearStorageWrites(): void {
+    this.storageWrites.clear()
+    for (const [, diff] of this.journalDiff) diff[3].clear()
+  }
+
+  /** java-tron retains a written zero in Storage.rowCache until the transaction ends. */
+  hasStorageWrite(address: Address, slot: Uint8Array): boolean {
+    return this.storageWrites.has(`${address.toString()}:${bytesToHex(slot)}`)
+  }
+
+  recordStorageWrite(address: Address, slot: Uint8Array): void {
+    const key = `${address.toString()}:${bytesToHex(slot)}`
+    if (this.storageWrites.has(key)) return
+    this.storageWrites.add(key)
+    this.journalDiff[this.journalDiff.length - 1][1][3].add(key)
   }
 
   /**
-   * Removes accounts from the state trie that have been touched,
-   * as defined in EIP-161 (https://eips.ethereum.org/EIPS/eip-161).
-   * Also cleanups any other internal fields
+   * Clears transaction bookkeeping. TRON keeps existing empty accounts, whose
+   * existence affects the new-account Energy charged by CALL and SELFDESTRUCT.
    */
   async cleanup(): Promise<void> {
-    if (this.common.gteHardfork(Hardfork.SpuriousDragon)) {
-      for (const addressHex of this.touched) {
-        const address = new Address(hexToBytes(`0x${addressHex}`))
-        const account = await this.stateManager.getAccount(address)
-        if (account === undefined || account.isEmpty()) {
-          await this.deleteAccount(address)
-          if (this.DEBUG) {
-            this._debug(`Cleanup touched account address=${address} (>= SpuriousDragon)`)
-          }
-        }
-      }
-    }
     this.cleanJournal()
     delete this.accessList
     delete this.preimages
+  }
+
+  /** Records optional diagnostic access data without warming or charging. */
+  addAccessedAddress(address: Uint8Array): void {
+    if (this.accessList === undefined) return
+    const key = bytesToUnprefixedHex(address)
+    if (!this.accessList.has(key)) this.accessList.set(key, new Set())
+  }
+
+  /** Records a storage access, including accesses in subsequently reverted calls. */
+  addAccessedStorage(address: Uint8Array, slot: Uint8Array): void {
+    if (this.accessList === undefined) return
+    this.addAccessedAddress(address)
+    this.accessList.get(bytesToUnprefixedHex(address))!.add(bytesToUnprefixedHex(slot))
   }
 
   addAlwaysWarmAddress(addressStr: string, addToAccessList: boolean = false) {

@@ -1,4 +1,3 @@
-import { Hardfork } from '@tvmjs/common'
 import {
   BIGINT_0,
   BIGINT_1,
@@ -7,23 +6,13 @@ import {
   BIGINT_32,
   BIGINT_64,
   bigIntToBytes,
-  equalsBytes,
   setLengthLeft,
 } from '@tvmjs/util'
 
 import { EOFErrorMessage } from '../eof/errors.ts'
 import { TVMError } from '../errors.ts'
-import { DELEGATION_7702_FLAG } from '../types.ts'
 
-import { updateSstoreGasEIP1283 } from './EIP1283.ts'
-import { updateSstoreGasEIP2200 } from './EIP2200.ts'
-import {
-  accessAddressEIP2929,
-  accessStorageEIP2929,
-  addAddressToBAL,
-  getAddressAccessCost,
-  warmAddress,
-} from './EIP2929.ts'
+import { accessAddressEIP2929 } from './EIP2929.ts'
 import {
   createAddressFromStackBigInt,
   divCeil,
@@ -35,37 +24,20 @@ import {
 } from './util.ts'
 
 import type { Common } from '@tvmjs/common'
-import type { Address } from '@tvmjs/util'
 import type { RunState } from '../interpreter.ts'
 
 const EXTCALL_TARGET_MAX = BigInt(2) ** BigInt(8 * 20) - BigInt(1)
 
 /**
- * Gets the gas cost for EIP-7702 delegation lookup WITHOUT side effects.
- * Returns the gas cost and delegation address so callers can check gas
- * availability before committing to the access.
+ * Check the complete caller cost before forwarding the remaining version-0 Energy.
  */
-async function eip7702GetAccessCost(
-  runState: RunState,
-  common: Common,
-  address: Address,
-  charge2929Gas: boolean,
-): Promise<{ gas: bigint; delegationAddress: Uint8Array | null }> {
-  const code = await runState.stateManager.getCode(address)
-  if (equalsBytes(code.slice(0, 3), DELEGATION_7702_FLAG)) {
-    const delegationAddress = code.slice(3, 24)
-    // Just get the cost, don't warm yet
-    const gas = getAddressAccessCost(runState, delegationAddress, common, charge2929Gas)
-    return { gas, delegationAddress }
+function setCallGasLimit(runState: RunState, gas: bigint, requestedGas: bigint): bigint {
+  const gasLeft = runState.interpreter.getGasLeft()
+  if (gas > gasLeft) {
+    trap(TVMError.errorMessages.OUT_OF_GAS)
   }
-  return { gas: BIGINT_0, delegationAddress: null }
-}
-
-/**
- * Warms the delegation address for EIP-7702 (call after verifying sufficient gas).
- */
-function eip7702WarmAddress(runState: RunState, delegationAddress: Uint8Array): void {
-  warmAddress(runState, delegationAddress)
+  runState.messageGasLimit = maxCallGas(requestedGas, gasLeft - gas)
+  return gas
 }
 
 /**
@@ -120,20 +92,9 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
     [
       /* BALANCE */
       0x31,
-      async function (runState, gas, common): Promise<bigint> {
+      async function (runState, gas): Promise<bigint> {
         const address = createAddressFromStackBigInt(runState.stack.peek()[0])
-        let charge2929Gas = true
-        if (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) {
-          const coldAccessGas = runState.env.accessWitness!.readAccountBasicData(address)
-
-          gas += coldAccessGas
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        if (common.isActivatedEIP(2929)) {
-          gas += accessAddressEIP2929(runState, address.bytes, common, charge2929Gas)
-        }
-
+        runState.interpreter.journal.addAccessedAddress(address.bytes)
         return gas
       },
     ],
@@ -184,27 +145,9 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
     [
       /* EXTCODESIZE */
       0x3b,
-      async function (runState, gas, common): Promise<bigint> {
+      async function (runState, gas): Promise<bigint> {
         const address = createAddressFromStackBigInt(runState.stack.peek()[0])
-
-        let charge2929Gas = true
-        if (
-          (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) &&
-          runState.interpreter._tvm.getPrecompile(address) === undefined &&
-          !address.equals(createAddressFromStackBigInt(common.param('systemAddress')))
-        ) {
-          let coldAccessGas = BIGINT_0
-          coldAccessGas += runState.env.accessWitness!.readAccountBasicData(address)
-
-          gas += coldAccessGas
-          // if cold access gas has been charged 2929 gas shouldn't be charged
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        if (common.isActivatedEIP(2929)) {
-          gas += accessAddressEIP2929(runState, address.bytes, common, charge2929Gas)
-        }
-
+        runState.interpreter.journal.addAccessedAddress(address.bytes)
         return gas
       },
     ],
@@ -214,44 +157,9 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
       async function (runState, gas, common): Promise<bigint> {
         const [addressBigInt, memOffset, _codeOffset, dataLength] = runState.stack.peek(4)
         const address = createAddressFromStackBigInt(addressBigInt)
-
+        runState.interpreter.journal.addAccessedAddress(address.bytes)
         gas += subMemUsage(runState, memOffset, dataLength, common)
-
-        let charge2929Gas = true
-        if (
-          (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) &&
-          runState.interpreter._tvm.getPrecompile(address) === undefined &&
-          !address.equals(createAddressFromStackBigInt(common.param('systemAddress')))
-        ) {
-          let coldAccessGas = BIGINT_0
-          coldAccessGas += runState.env.accessWitness!.readAccountBasicData(address)
-
-          gas += coldAccessGas
-          // if cold access gas has been charged 2929 gas shouldn't be charged
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        if (common.isActivatedEIP(2929)) {
-          gas += accessAddressEIP2929(runState, address.bytes, common, charge2929Gas)
-        }
-
-        if (dataLength !== BIGINT_0) {
-          gas += common.param('copyGas') * divCeil(dataLength, BIGINT_32)
-
-          if (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) {
-            let codeEnd = _codeOffset + dataLength
-            const codeSize = BigInt((await runState.stateManager.getCode(address)).length)
-            if (codeEnd > codeSize) {
-              codeEnd = codeSize
-            }
-
-            gas += runState.env.accessWitness!.readAccountCodeChunks(
-              address,
-              Number(_codeOffset),
-              Number(codeEnd),
-            )
-          }
-        }
+        gas += common.param('copyGas') * divCeil(dataLength, BIGINT_32)
         return gas
       },
     ],
@@ -280,26 +188,9 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
     [
       /* EXTCODEHASH */
       0x3f,
-      async function (runState, gas, common): Promise<bigint> {
+      async function (runState, gas): Promise<bigint> {
         const address = createAddressFromStackBigInt(runState.stack.peek()[0])
-        let charge2929Gas = true
-
-        if (
-          (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) &&
-          runState.interpreter._tvm.getPrecompile(address) === undefined &&
-          !address.equals(createAddressFromStackBigInt(common.param('systemAddress')))
-        ) {
-          let coldAccessGas = BIGINT_0
-          coldAccessGas += runState.env.accessWitness!.readAccountCodeHash(address)
-
-          gas += coldAccessGas
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        if (common.isActivatedEIP(2929)) {
-          gas += accessAddressEIP2929(runState, address.bytes, common, charge2929Gas)
-        }
-
+        runState.interpreter.journal.addAccessedAddress(address.bytes)
         return gas
       },
     ],
@@ -333,23 +224,12 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
     [
       /* SLOAD */
       0x54,
-      async function (runState, gas, common): Promise<bigint> {
-        const key = runState.stack.peek()[0]
-        const keyBuf = setLengthLeft(bigIntToBytes(key), 32)
-
-        let charge2929Gas = true
-        if (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) {
-          const address = runState.interpreter.getAddress()
-          const coldAccessGas = runState.env.accessWitness!.readAccountStorage(address, key)
-
-          gas += coldAccessGas
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        if (common.isActivatedEIP(2929)) {
-          gas += accessStorageEIP2929(runState, keyBuf, false, common, charge2929Gas)
-        }
-
+      async function (runState, gas): Promise<bigint> {
+        const key = setLengthLeft(bigIntToBytes(runState.stack.peek()[0]), 32)
+        runState.interpreter.journal.addAccessedStorage(
+          runState.interpreter.getAddress().bytes,
+          key,
+        )
         return gas
       },
     ],
@@ -360,76 +240,21 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
         if (runState.interpreter.isStatic()) {
           trap(TVMError.errorMessages.STATIC_STATE_CHANGE)
         }
-        const [key, val] = runState.stack.peek(2)
-
+        const [key, value] = runState.stack.peek(2)
         const keyBytes = setLengthLeft(bigIntToBytes(key), 32)
-        // NOTE: this should be the shortest representation
-        let value
-        if (val === BIGINT_0) {
-          value = Uint8Array.from([])
-        } else {
-          value = bigIntToBytes(val)
-        }
-
-        // Read current and original storage for gas calculation.
-        // Pass trackBAL=false because we'll track the read manually below,
-        // but ONLY if the EIP-2200 sentry check passes (per EIP-7928).
-        const currentStorage = setLengthLeftStorage(
-          await runState.interpreter.storageLoad(keyBytes, false, false),
+        const currentStorage = await runState.interpreter.storageLoad(keyBytes)
+        runState.interpreter.journal.addAccessedStorage(
+          runState.interpreter.getAddress().bytes,
+          keyBytes,
         )
-        const originalStorage = setLengthLeftStorage(
-          await runState.interpreter.storageLoad(keyBytes, true, false),
+        // A zero written earlier in this transaction still exists in java-tron's row cache.
+        // Only an absent slot's first nonzero write incurs the set cost.
+        gas += updateSstoreGas(
+          setLengthLeftStorage(currentStorage),
+          value === BIGINT_0 ? new Uint8Array() : bigIntToBytes(value),
+          common,
+          runState.interpreter.journal.hasStorageWrite(runState.interpreter.getAddress(), keyBytes),
         )
-        if (common.hardfork() === Hardfork.Constantinople) {
-          gas += updateSstoreGasEIP1283(
-            runState,
-            currentStorage,
-            originalStorage,
-            setLengthLeftStorage(value),
-            common,
-          )
-        } else if (common.gteHardfork(Hardfork.Istanbul)) {
-          if (!common.isActivatedEIP(6800) && !common.isActivatedEIP(7864)) {
-            gas += updateSstoreGasEIP2200(
-              runState,
-              currentStorage,
-              originalStorage,
-              setLengthLeftStorage(value),
-              keyBytes,
-              common,
-            )
-          }
-        } else {
-          gas += updateSstoreGas(runState, currentStorage, setLengthLeftStorage(value), common)
-        }
-
-        // If we reach here, the EIP-2200 sentry check passed (didn't trap).
-        // Per EIP-7928, now track the storage read for BAL. If the SSTORE
-        // succeeds later, the write will remove this read (see addStorageWrite).
-        // If SSTORE fails with OOG after the sentry, the read remains in BAL.
-        if (common.isActivatedEIP(7928)) {
-          runState.interpreter._tvm.blockLevelAccessList?.addStorageRead(
-            runState.interpreter.getAddress().toString(),
-            keyBytes,
-          )
-        }
-
-        let charge2929Gas = true
-        if (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) {
-          const contract = runState.interpreter.getAddress()
-          const coldAccessGas = runState.env.accessWitness!.writeAccountStorage(contract, key)
-
-          gas += coldAccessGas
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        if (common.isActivatedEIP(2929)) {
-          // We have to do this after the Istanbul (EIP2200) checks.
-          // Otherwise, we might run out of gas, due to "sentry check" of 2300 gas,
-          // if we deduct extra gas first.
-          gas += accessStorageEIP2929(runState, keyBytes, true, common, charge2929Gas)
-        }
-
         return gas
       },
     ],
@@ -467,23 +292,6 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
         return gas
       },
     ],
-    /* DATACOPY */
-    [
-      0xd3,
-      async function (runState, gas, common) {
-        if (runState.env.eof === undefined) {
-          // Opcode not available in legacy contracts
-          trap(TVMError.errorMessages.INVALID_OPCODE)
-        }
-        const [memOffset, _dataOffset, dataLength] = runState.stack.peek(3)
-
-        gas += subMemUsage(runState, memOffset, dataLength, common)
-        if (dataLength !== BIGINT_0) {
-          gas += common.param('copyGas') * divCeil(dataLength, BIGINT_32)
-        }
-        return gas
-      },
-    ],
     /* EOFCREATE */
     [
       0xec,
@@ -503,19 +311,6 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
         // Pop stack values
         const [_value, _salt, inputOffset, inputSize] = runState.stack.peek(4)
 
-        //if (common.isActivatedEIP(2929)) {
-        // TODO: adding or not adding this makes test
-        // --test=tests/prague/eip7692_eof_v1/eip7620_eof_create/test_eofcreate.py::test_eofcreate_then_call[fork_CancunEIP7692-blockchain_test]
-        // still succeed. This only warms the current address?? This is also in CREATE/CREATE2
-        // Can this be removed in both?
-        /*gas += accessAddressEIP2929(
-            runState,
-            runState.interpreter.getAddress().bytes,
-            common,
-            false
-          )
-        }*/
-
         // Expand memory
         gas += subMemUsage(runState, inputOffset, inputSize, common)
 
@@ -526,7 +321,7 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
         gas += common.param('keccak256WordGas') * divCeil(BigInt(container.length), BIGINT_32)
 
         const gasLeft = runState.interpreter.getGasLeft() - gas
-        runState.messageGasLimit = maxCallGas(gasLeft, gasLeft, runState, common)
+        runState.messageGasLimit = maxCallGas(gasLeft, gasLeft)
 
         return gas
       },
@@ -553,23 +348,10 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
         }
         const [_value, offset, length] = runState.stack.peek(3)
 
-        if (common.isActivatedEIP(2929)) {
-          gas += accessAddressEIP2929(
-            runState,
-            runState.interpreter.getAddress().bytes,
-            common,
-            false,
-          )
-        }
-
-        if (common.isActivatedEIP(3860) && !common.isTron()) {
-          gas += ((length + BIGINT_31) / BIGINT_32) * common.param('initCodeWordGas')
-        }
-
         gas += subMemUsage(runState, offset, length, common)
 
         let gasLimit = BigInt(runState.interpreter.getGasLeft()) - gas
-        gasLimit = maxCallGas(gasLimit, gasLimit, runState, common)
+        gasLimit = maxCallGas(gasLimit, gasLimit)
 
         runState.messageGasLimit = gasLimit
         return gas
@@ -579,234 +361,44 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
       /* CALL */
       0xf1,
       async function (runState, gas, common): Promise<bigint> {
-        const [currentGasLimit, toAddr, value, inOffset, inLength, outOffset, outLength] =
+        const [requestedGas, toAddr, value, inOffset, inLength, outOffset, outLength] =
           runState.stack.peek(7)
         const toAddress = createAddressFromStackBigInt(toAddr)
 
         if (runState.interpreter.isStatic() && value !== BIGINT_0) {
           trap(TVMError.errorMessages.STATIC_STATE_CHANGE)
         }
+        runState.interpreter.journal.addAccessedAddress(toAddress.bytes)
         gas += subMemUsage(runState, inOffset, inLength, common)
         gas += subMemUsage(runState, outOffset, outLength, common)
 
-        // EIP-7928: Early OOG check before address access
-        // If we don't have enough gas to proceed, trap before adding to BAL
-        if (common.isActivatedEIP(7928) && gas > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        let charge2929Gas = true
-        if (
-          (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) &&
-          runState.interpreter._tvm.getPrecompile(toAddress) === undefined
-        ) {
-          const coldAccessGas = runState.env.accessWitness!.readAccountBasicData(toAddress)
-          if (value !== BIGINT_0) {
-            const contractAddress = runState.interpreter.getAddress()
-            gas += runState.env.accessWitness!.writeAccountBasicData(contractAddress)
-            gas += runState.env.accessWitness!.writeAccountBasicData(toAddress)
-          }
-
-          gas += coldAccessGas
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        // EIP-2929/7928: Get target access cost first (no side effects)
-        let targetAccessCost = BIGINT_0
-        if (common.isActivatedEIP(2929)) {
-          targetAccessCost = getAddressAccessCost(runState, toAddress.bytes, common, charge2929Gas)
-          gas += targetAccessCost
-        }
-
-        // EIP-7928: Check gas before committing target access.
-        // Include value transfer gas in this boundary, but defer new-account gas
-        // until after target access commit so OOG can still happen after target
-        // access for account-creation cases.
-        let valueTransferGas = BIGINT_0
-        let newAccountGas = BIGINT_0
-
-        if (value !== BIGINT_0 && !common.isActivatedEIP(6800) && !common.isActivatedEIP(7864)) {
-          valueTransferGas = common.param('callValueTransferGas')
-        }
-
-        // For BAL eligibility check: compute new account gas upfront only when needed
-        // (SpuriousDragon+ with value transfer)
-        if (value !== BIGINT_0 && common.gteHardfork(Hardfork.SpuriousDragon)) {
-          const account = await runState.stateManager.getAccount(toAddress)
-          if (account === undefined || account.isEmpty()) {
-            newAccountGas = common.param('callNewAccountGas')
-          }
-        }
-
-        // EIP-7928: Check gas before committing target access
-        const gasForTargetAccess = gas + valueTransferGas
-        if (common.isActivatedEIP(7928) && gasForTargetAccess > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        // Now commit target access: warm the address and add to BAL
-        if (common.isActivatedEIP(2929)) {
-          warmAddress(runState, toAddress.bytes)
-        }
-        addAddressToBAL(runState, toAddress.bytes, common)
-
-        // Add the value-related gas costs (already computed above for value transfers)
-        gas += valueTransferGas + newAccountGas
-
-        // For pre-SpuriousDragon: check new account gas regardless of value
-        if (!common.gteHardfork(Hardfork.SpuriousDragon)) {
+        if (value !== BIGINT_0) {
+          gas += common.param('callValueTransferGas')
+          // TRON checks existence, including accounts with zero TRX and token balances.
           if ((await runState.stateManager.getAccount(toAddress)) === undefined) {
             gas += common.param('callNewAccountGas')
           }
         }
 
-        // EIP-7702: Get delegation access cost (no side effects)
-        let delegationAddress: Uint8Array | null = null
-        if (common.isActivatedEIP(7702)) {
-          const { gas: delegationGas, delegationAddress: delAddr } = await eip7702GetAccessCost(
-            runState,
-            common,
-            toAddress,
-            charge2929Gas,
-          )
-          delegationAddress = delAddr
-          gas += delegationGas
-
-          // EIP-7928: Check gas before committing delegation access
-          if (common.isActivatedEIP(7928) && delegationAddress !== null) {
-            if (gas > runState.interpreter.getGasLeft()) {
-              trap(TVMError.errorMessages.OUT_OF_GAS)
-            }
-            // Commit delegation access: warm and add to BAL
-            eip7702WarmAddress(runState, delegationAddress)
-            addAddressToBAL(runState, delegationAddress, common)
-          } else if (delegationAddress !== null) {
-            // No BAL check needed, just warm the address
-            eip7702WarmAddress(runState, delegationAddress)
-          }
-        }
-
-        const gasLimit = maxCallGas(
-          currentGasLimit,
-          runState.interpreter.getGasLeft() - gas,
-          runState,
-          common,
-        )
-        // note that TangerineWhistle or later this cannot happen
-        // (it could have ran out of gas prior to getting here though)
-        if (gasLimit > runState.interpreter.getGasLeft() - gas) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        if (gas > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        runState.messageGasLimit = gasLimit
-        return gas
+        return setCallGasLimit(runState, gas, requestedGas)
       },
     ],
     [
       /* CALLCODE */
       0xf2,
       async function (runState, gas, common): Promise<bigint> {
-        const [currentGasLimit, toAddr, value, inOffset, inLength, outOffset, outLength] =
+        const [requestedGas, toAddr, value, inOffset, inLength, outOffset, outLength] =
           runState.stack.peek(7)
         const toAddress = createAddressFromStackBigInt(toAddr)
-
+        runState.interpreter.journal.addAccessedAddress(toAddress.bytes)
         gas += subMemUsage(runState, inOffset, inLength, common)
         gas += subMemUsage(runState, outOffset, outLength, common)
 
-        // EIP-7928: Early OOG check before address access
-        // If we don't have enough gas to proceed, trap before adding to BAL
-        if (common.isActivatedEIP(7928) && gas > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        let charge2929Gas = true
-        if (
-          (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) &&
-          runState.interpreter._tvm.getPrecompile(toAddress) === undefined
-        ) {
-          const coldAccessGas = runState.env.accessWitness!.readAccountBasicData(toAddress)
-
-          gas += coldAccessGas
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        // EIP-2929/7928: Get target access cost first (no side effects)
-        let targetAccessCost = BIGINT_0
-        if (common.isActivatedEIP(2929)) {
-          targetAccessCost = getAddressAccessCost(runState, toAddress.bytes, common, charge2929Gas)
-          gas += targetAccessCost
-        }
-
-        // For CALLCODE with value, compute value transfer cost before checking BAL eligibility
-        let valueTransferGas = BIGINT_0
         if (value !== BIGINT_0) {
-          valueTransferGas = common.param('callValueTransferGas')
+          gas += common.param('callValueTransferGas')
         }
 
-        // EIP-7928: Check gas before committing target access
-        // For value transfers, include value transfer gas in the check
-        const gasForTargetAccess = gas + valueTransferGas
-        if (common.isActivatedEIP(7928) && gasForTargetAccess > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        // Now commit target access: warm the address and add to BAL
-        if (common.isActivatedEIP(2929)) {
-          warmAddress(runState, toAddress.bytes)
-        }
-        addAddressToBAL(runState, toAddress.bytes, common)
-
-        // Add the value transfer gas (already computed above)
-        gas += valueTransferGas
-
-        // EIP-7702: Get delegation access cost (no side effects)
-        let delegationAddress: Uint8Array | null = null
-        if (common.isActivatedEIP(7702)) {
-          const { gas: delegationGas, delegationAddress: delAddr } = await eip7702GetAccessCost(
-            runState,
-            common,
-            toAddress,
-            charge2929Gas,
-          )
-          delegationAddress = delAddr
-          gas += delegationGas
-
-          // EIP-7928: Check gas before committing delegation access
-          if (common.isActivatedEIP(7928) && delegationAddress !== null) {
-            if (gas > runState.interpreter.getGasLeft()) {
-              trap(TVMError.errorMessages.OUT_OF_GAS)
-            }
-            // Commit delegation access: warm and add to BAL
-            eip7702WarmAddress(runState, delegationAddress)
-            addAddressToBAL(runState, delegationAddress, common)
-          } else if (delegationAddress !== null) {
-            // No BAL check needed, just warm the address
-            eip7702WarmAddress(runState, delegationAddress)
-          }
-        }
-
-        const gasLimit = maxCallGas(
-          currentGasLimit,
-          runState.interpreter.getGasLeft() - gas,
-          runState,
-          common,
-        )
-        // note that TangerineWhistle or later this cannot happen
-        // (it could have ran out of gas prior to getting here though)
-        if (gasLimit > runState.interpreter.getGasLeft() - gas) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        if (gas > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        runState.messageGasLimit = gasLimit
-        return gas
+        return setCallGasLimit(runState, gas, requestedGas)
       },
     ],
     [
@@ -822,93 +414,14 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
       /* DELEGATECALL */
       0xf4,
       async function (runState, gas, common): Promise<bigint> {
-        const [currentGasLimit, toAddr, inOffset, inLength, outOffset, outLength] =
+        const [requestedGas, toAddr, inOffset, inLength, outOffset, outLength] =
           runState.stack.peek(6)
         const toAddress = createAddressFromStackBigInt(toAddr)
-
+        runState.interpreter.journal.addAccessedAddress(toAddress.bytes)
         gas += subMemUsage(runState, inOffset, inLength, common)
         gas += subMemUsage(runState, outOffset, outLength, common)
 
-        // EIP-7928: Early OOG check before address access
-        // If we don't have enough gas to proceed, trap before adding to BAL
-        if (common.isActivatedEIP(7928) && gas > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        let charge2929Gas = true
-        if (
-          (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) &&
-          runState.interpreter._tvm.getPrecompile(toAddress) === undefined
-        ) {
-          const coldAccessGas = runState.env.accessWitness!.readAccountBasicData(toAddress)
-
-          gas += coldAccessGas
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        // EIP-2929/7928: Get target access cost first (no side effects)
-        let targetAccessCost = BIGINT_0
-        if (common.isActivatedEIP(2929)) {
-          targetAccessCost = getAddressAccessCost(runState, toAddress.bytes, common, charge2929Gas)
-          gas += targetAccessCost
-        }
-
-        // EIP-7928: Check gas before committing target access
-        if (common.isActivatedEIP(7928) && gas > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        // Now commit target access: warm the address and add to BAL
-        if (common.isActivatedEIP(2929)) {
-          warmAddress(runState, toAddress.bytes)
-        }
-        addAddressToBAL(runState, toAddress.bytes, common)
-
-        // EIP-7702: Get delegation access cost (no side effects)
-        let delegationAddress: Uint8Array | null = null
-        if (common.isActivatedEIP(7702)) {
-          const { gas: delegationGas, delegationAddress: delAddr } = await eip7702GetAccessCost(
-            runState,
-            common,
-            toAddress,
-            charge2929Gas,
-          )
-          delegationAddress = delAddr
-          gas += delegationGas
-
-          // EIP-7928: Check gas before committing delegation access
-          if (common.isActivatedEIP(7928) && delegationAddress !== null) {
-            if (gas > runState.interpreter.getGasLeft()) {
-              trap(TVMError.errorMessages.OUT_OF_GAS)
-            }
-            // Commit delegation access: warm and add to BAL
-            eip7702WarmAddress(runState, delegationAddress)
-            addAddressToBAL(runState, delegationAddress, common)
-          } else if (delegationAddress !== null) {
-            // No BAL check needed, just warm the address
-            eip7702WarmAddress(runState, delegationAddress)
-          }
-        }
-
-        const gasLimit = maxCallGas(
-          currentGasLimit,
-          runState.interpreter.getGasLeft() - gas,
-          runState,
-          common,
-        )
-
-        // note that TangerineWhistle or later this cannot happen
-        // (it could have ran out of gas prior to getting here though)
-        if (gasLimit > runState.interpreter.getGasLeft() - gas) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        if (gas > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        runState.messageGasLimit = gasLimit
-        return gas
+        return setCallGasLimit(runState, gas, requestedGas)
       },
     ],
     [
@@ -923,22 +436,9 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
 
         gas += subMemUsage(runState, offset, length, common)
 
-        if (common.isActivatedEIP(2929)) {
-          gas += accessAddressEIP2929(
-            runState,
-            runState.interpreter.getAddress().bytes,
-            common,
-            false,
-          )
-        }
-
-        if (common.isActivatedEIP(3860) && !common.isTron()) {
-          gas += ((length + BIGINT_31) / BIGINT_32) * common.param('initCodeWordGas')
-        }
-
         gas += common.param('keccak256WordGas') * divCeil(length, BIGINT_32)
         let gasLimit = runState.interpreter.getGasLeft() - gas
-        gasLimit = maxCallGas(gasLimit, gasLimit, runState, common) // CREATE2 is only available after TangerineWhistle (Constantinople introduced this opcode)
+        gasLimit = maxCallGas(gasLimit, gasLimit)
         runState.messageGasLimit = gasLimit
         return gas
       },
@@ -1077,83 +577,14 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
       /* STATICCALL */
       0xfa,
       async function (runState, gas, common): Promise<bigint> {
-        const [currentGasLimit, toAddr, inOffset, inLength, outOffset, outLength] =
+        const [requestedGas, toAddr, inOffset, inLength, outOffset, outLength] =
           runState.stack.peek(6)
         const toAddress = createAddressFromStackBigInt(toAddr)
-
+        runState.interpreter.journal.addAccessedAddress(toAddress.bytes)
         gas += subMemUsage(runState, inOffset, inLength, common)
         gas += subMemUsage(runState, outOffset, outLength, common)
 
-        // EIP-7928: Early OOG check before address access
-        // If we don't have enough gas to proceed, trap before adding to BAL
-        if (common.isActivatedEIP(7928) && gas > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        let charge2929Gas = true
-        if (
-          (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) &&
-          runState.interpreter._tvm.getPrecompile(toAddress) === undefined
-        ) {
-          const coldAccessGas = runState.env.accessWitness!.readAccountBasicData(toAddress)
-
-          gas += coldAccessGas
-          charge2929Gas = coldAccessGas === BIGINT_0
-        }
-
-        // EIP-2929/7928: Get target access cost first (no side effects)
-        let targetAccessCost = BIGINT_0
-        if (common.isActivatedEIP(2929)) {
-          targetAccessCost = getAddressAccessCost(runState, toAddress.bytes, common, charge2929Gas)
-          gas += targetAccessCost
-        }
-
-        // EIP-7928: Check gas before committing target access
-        if (common.isActivatedEIP(7928) && gas > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-
-        // Now commit target access: warm the address and add to BAL
-        if (common.isActivatedEIP(2929)) {
-          warmAddress(runState, toAddress.bytes)
-        }
-        addAddressToBAL(runState, toAddress.bytes, common)
-
-        // EIP-7702: Get delegation access cost (no side effects)
-        let delegationAddress: Uint8Array | null = null
-        if (common.isActivatedEIP(7702)) {
-          const { gas: delegationGas, delegationAddress: delAddr } = await eip7702GetAccessCost(
-            runState,
-            common,
-            toAddress,
-            charge2929Gas,
-          )
-          delegationAddress = delAddr
-          gas += delegationGas
-
-          // EIP-7928: Check gas before committing delegation access
-          if (common.isActivatedEIP(7928) && delegationAddress !== null) {
-            if (gas > runState.interpreter.getGasLeft()) {
-              trap(TVMError.errorMessages.OUT_OF_GAS)
-            }
-            // Commit delegation access: warm and add to BAL
-            eip7702WarmAddress(runState, delegationAddress)
-            addAddressToBAL(runState, delegationAddress, common)
-          } else if (delegationAddress !== null) {
-            // No BAL check needed, just warm the address
-            eip7702WarmAddress(runState, delegationAddress)
-          }
-        }
-
-        const gasLimit = maxCallGas(
-          currentGasLimit,
-          runState.interpreter.getGasLeft() - gas,
-          runState,
-          common,
-        ) // we set TangerineWhistle or later to true here, as STATICCALL was available from Byzantium (which is after TangerineWhistle)
-
-        runState.messageGasLimit = gasLimit
-        return gas
+        return setCallGasLimit(runState, gas, requestedGas)
       },
     ],
     /* EXTSTATICCALL */
@@ -1225,96 +656,12 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
         if (runState.interpreter.isStatic()) {
           trap(TVMError.errorMessages.STATIC_STATE_CHANGE)
         }
-        const selfdestructToaddressBigInt = runState.stack.peek()[0]
-
-        const selfdestructToAddress = createAddressFromStackBigInt(selfdestructToaddressBigInt)
-        const contractAddress = runState.interpreter.getAddress()
-
-        const balance = await runState.interpreter.getExternalBalance(contractAddress)
-
-        // Calculate new account gas first (needed for checkpoint ordering)
-        let newAccountGas = BIGINT_0
-        if (common.gteHardfork(Hardfork.Tron)) {
-          // TRON: java-tron getSuicideCost2/3 + isDeadAccount logic:
-          // - Only checks if beneficiary account does NOT exist (account === undefined)
-          // - Does NOT check isEmpty() (existing empty accounts don't charge)
-          // - Does NOT check transfer amount (charges even if TRX=0 and Token=0)
-          // This differs from EIP-161 which requires both transfersValue AND isEmpty().
-          const account = await runState.stateManager.getAccount(selfdestructToAddress)
-          if (account === undefined) {
-            newAccountGas = common.param('callNewAccountGas')
-          }
-        } else if (common.gteHardfork(Hardfork.SpuriousDragon)) {
-          // EIP-161 (Spurious Dragon): charge newAccountGas if transferring value to empty account
-          const account = await runState.stateManager.getAccount(selfdestructToAddress)
-          const transfersValue = balance > BIGINT_0
-          if (transfersValue && (account === undefined || account.isEmpty())) {
-            newAccountGas = common.param('callNewAccountGas')
-          }
-        } else if (common.gteHardfork(Hardfork.TangerineWhistle)) {
-          // EIP-150 (Tangerine Whistle) gas semantics
-          const exists =
-            (await runState.stateManager.getAccount(selfdestructToAddress)) !== undefined
-          if (!exists) {
-            newAccountGas = common.param('callNewAccountGas')
-          }
+        const beneficiary = createAddressFromStackBigInt(runState.stack.peek()[0])
+        runState.interpreter.journal.addAccessedAddress(beneficiary.bytes)
+        // java-tron getSuicideCost3 charges for a missing beneficiary even at zero balance.
+        if ((await runState.stateManager.getAccount(beneficiary)) === undefined) {
+          gas += common.param('callNewAccountGas')
         }
-
-        let selfDestructToCharge2929Gas = true
-        if (
-          (common.isActivatedEIP(6800) || common.isActivatedEIP(7864)) &&
-          runState.env.chargeCodeAccesses === true
-        ) {
-          gas += runState.env.accessWitness!.readAccountBasicData(contractAddress)
-          if (balance > BIGINT_0) {
-            gas += runState.env.accessWitness!.writeAccountBasicData(contractAddress)
-          }
-
-          let selfDestructToColdAccessGas =
-            runState.env.accessWitness!.readAccountBasicData(selfdestructToAddress)
-          if (balance > BIGINT_0) {
-            selfDestructToColdAccessGas +=
-              runState.env.accessWitness!.writeAccountBasicData(selfdestructToAddress)
-          }
-
-          gas += selfDestructToColdAccessGas
-          selfDestructToCharge2929Gas = selfDestructToColdAccessGas === BIGINT_0
-        }
-
-        // EIP-2929/7928: Get cold access cost first (no side effects)
-        let coldAccessCost = BIGINT_0
-        if (common.isActivatedEIP(2929)) {
-          coldAccessCost = getAddressAccessCost(
-            runState,
-            selfdestructToAddress.bytes,
-            common,
-            selfDestructToCharge2929Gas,
-            true,
-          )
-          gas += coldAccessCost
-        }
-
-        // EIP-7928: Check if we have enough gas for the cold access (checkpoint 1)
-        // If yes, add beneficiary to BAL - this is the "state access" point
-        // The newAccountGas (checkpoint 2) is added after, so OOG there still records BAL
-        if (common.isActivatedEIP(7928)) {
-          // Only add to BAL if we have enough gas for the current accumulated cost
-          // (base gas + cold access). newAccountGas is NOT included here because
-          // per EIP-7928, if we pass the cold access check but fail at new account
-          // creation, the beneficiary should still be in BAL.
-          if (gas <= runState.interpreter.getGasLeft()) {
-            addAddressToBAL(runState, selfdestructToAddress.bytes, common)
-          }
-        }
-
-        // Now commit the address warming (EIP-2929)
-        if (common.isActivatedEIP(2929)) {
-          warmAddress(runState, selfdestructToAddress.bytes)
-        }
-
-        // Add new account gas (checkpoint 2)
-        gas += newAccountGas
-
         return gas
       },
     ],
@@ -1323,65 +670,43 @@ export const dynamicGasHandlers: Map<number, AsyncDynamicGasHandler | SyncDynami
     [
       0xd0,
       async function (runState, gas, common): Promise<bigint> {
-        const [currentGasLimit, toAddr, value, _tokenId, inOffset, inLength, outOffset, outLength] =
+        const [requestedGas, toAddr, value, _tokenId, inOffset, inLength, outOffset, outLength] =
           runState.stack.peek(8)
         const toAddress = createAddressFromStackBigInt(toAddr)
 
         if (runState.interpreter.isStatic() && value !== BIGINT_0) {
           trap(TVMError.errorMessages.STATIC_STATE_CHANGE)
         }
+        runState.interpreter.journal.addAccessedAddress(toAddress.bytes)
         gas += subMemUsage(runState, inOffset, inLength, common)
         gas += subMemUsage(runState, outOffset, outLength, common)
-        gas += accessAddressEIP2929(runState, toAddress.bytes, common)
 
         if (value !== BIGINT_0) {
           gas += common.param('callValueTransferGas')
-        }
-
-        const account = await runState.stateManager.getAccount(toAddress)
-        if (common.gteHardfork('spuriousDragon')) {
-          // We are at or after Spurious Dragon
-          // Call new account gas: account is DEAD and we transfer nonzero value
-          if ((account === undefined || account.isEmpty()) && value !== BIGINT_0) {
+          // TRON checks existence, including accounts with zero TRX and token balances.
+          if ((await runState.stateManager.getAccount(toAddress)) === undefined) {
             gas += common.param('callNewAccountGas')
           }
-        } else if (account === undefined || account.isEmpty()) {
-          // We are before Spurious Dragon and the account does not exist.
-          // Call new account gas: account does not exist (it is not in the state trie, not even as an "empty" account)
-          gas += common.param('callNewAccountGas')
         }
 
-        const gasLimit = maxCallGas(
-          currentGasLimit,
-          runState.interpreter.getGasLeft() - gas,
-          runState,
-          common,
-        )
-        // note that TangerineWhistle or later this cannot happen (it could have ran out of gas prior to getting here though)
-        if (gasLimit > runState.interpreter.getGasLeft()) {
-          trap(TVMError.errorMessages.OUT_OF_GAS)
-        }
-        runState.messageGasLimit = gasLimit
-
-        return gas
+        return setCallGasLimit(runState, gas, requestedGas)
       },
     ],
     // 0xd1: TOKENBALANCE
     [
       0xd1,
-      async function (runState, gas, common): Promise<bigint> {
-        const [_tokenIdBN, addressBN] = runState.stack.peek(2)
-        const address = createAddressFromStackBigInt(addressBN)
-        gas += accessAddressEIP2929(runState, address.bytes, common)
+      async function (runState, gas): Promise<bigint> {
+        const [_tokenId, addressWord] = runState.stack.peek(2)
+        const address = createAddressFromStackBigInt(addressWord)
+        runState.interpreter.journal.addAccessedAddress(address.bytes)
         return gas
       },
     ],
     [
       0xd4,
-      async function (runState, gas, common) {
-        const addressBigInt = runState.stack.peek()[0]
-        const address = createAddressFromStackBigInt(addressBigInt)
-        gas += accessAddressEIP2929(runState, address.bytes, common)
+      async function (runState, gas): Promise<bigint> {
+        const address = createAddressFromStackBigInt(runState.stack.peek()[0])
+        runState.interpreter.journal.addAccessedAddress(address.bytes)
         return gas
       },
     ],

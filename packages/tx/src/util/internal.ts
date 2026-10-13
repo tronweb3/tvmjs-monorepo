@@ -1,8 +1,9 @@
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import {
   Address,
   BIGINT_0,
   EthereumJSErrorWithoutCode,
+  MAX_INT64,
   MAX_INTEGER,
   MAX_UINT64,
   bigIntToHex,
@@ -20,10 +21,10 @@ import type { TransactionInterface, TxData, TxOptions } from '../types.ts'
 /**
  * Gets a Common instance, creating a new one if none provided
  * @param common - Optional Common instance
- * @returns Common instance (copied if provided, new Mainnet instance if not)
+ * @returns Common instance (copied if provided, new TronMainnet instance if not)
  */
 export function getCommon(common?: Common): Common {
-  return common?.copy() ?? new Common({ chain: Mainnet })
+  return common?.copy() ?? new Common({ chain: TronMainnet })
 }
 
 /**
@@ -47,6 +48,8 @@ export function validateNotArray(values: { [key: string]: any }) {
     'gasLimit',
     'to',
     'value',
+    'tokenId',
+    'tokenValue',
     'data',
     'v',
     'r',
@@ -62,17 +65,6 @@ export function validateNotArray(values: { [key: string]: any }) {
         throw EthereumJSErrorWithoutCode(`${key} cannot be an array`)
       }
     }
-  }
-}
-
-function checkMaxInitCodeSize(common: Common, length: number) {
-  const maxInitCodeSize = common.param('maxInitCodeSize')
-  if (maxInitCodeSize && BigInt(length) > maxInitCodeSize) {
-    throw EthereumJSErrorWithoutCode(
-      `the initcode size of this transaction is too large: it is ${length} while the max is ${common.param(
-        'maxInitCodeSize',
-      )}`,
-    )
   }
 }
 
@@ -131,6 +123,35 @@ type Mutable<T> = {
   -readonly [P in keyof T]: T[P]
 }
 
+/** Validate the original input before constructors or RPC mapping discard fields. */
+export function rejectRemovedTransactionData(txData: TxData[TransactionType]) {
+  const type = bytesToBigInt(toBytes(txData.type))
+  if (type === 3n) {
+    throw EthereumJSErrorWithoutCode('Blob transaction type 0x03 is no longer supported')
+  }
+  if (type === 4n) {
+    throw EthereumJSErrorWithoutCode('EIP-7702 transaction type 0x04 is no longer supported')
+  }
+  for (const field of ['authorizationList', 'authorization_list']) {
+    if (field in txData) {
+      throw EthereumJSErrorWithoutCode(`EIP-7702 transaction field ${field} is no longer supported`)
+    }
+  }
+  for (const field of [
+    'maxFeePerBlobGas',
+    'blobVersionedHashes',
+    'blobs',
+    'blobsData',
+    'kzgCommitments',
+    'kzgProofs',
+    'networkWrapperVersion',
+  ]) {
+    if (field in txData) {
+      throw EthereumJSErrorWithoutCode(`Blob transaction field ${field} is no longer supported`)
+    }
+  }
+}
+
 /**
  * Shared constructor logic for all transaction types
  * Note: Uses Mutable type to write to readonly properties. Only call this in transaction constructors.
@@ -143,9 +164,14 @@ export function sharedConstructor(
   txData: TxData[TransactionType],
   opts: TxOptions = {},
 ) {
-  // LOAD base tx super({ ...txData, type: TransactionType.Legacy }, opts)
+  if ('allowUnlimitedInitCodeSize' in opts) {
+    throw EthereumJSErrorWithoutCode(
+      'The allowUnlimitedInitCodeSize option has been removed; TRON does not use EIP-3860',
+    )
+  }
+  rejectRemovedTransactionData(txData)
   tx.common = getCommon(opts.common)
-  tx.common.updateParams(opts.params ?? paramsTx)
+  tx.common.updateParams(opts.params ?? paramsTx, opts.params !== undefined)
 
   validateNotArray(txData) // is this necessary?
 
@@ -196,6 +222,17 @@ export function sharedConstructor(
   // EIP-2681 limits nonce to 2^64-1 (cannot equal 2^64-1)
   valueOverflowCheck({ nonce: tx.nonce }, 64, true)
 
+  // TRON legacy transactions carry token_id and call_token_value as signed
+  // protobuf int64 values. Keep them bounded before they reach the TVM stack.
+  for (const [key, value] of [
+    ['tokenId', tx.tokenId],
+    ['tokenValue', tx.tokenValue],
+  ] as const) {
+    if (value < BIGINT_0 || value > MAX_INT64) {
+      throw EthereumJSErrorWithoutCode(`${key} must fit in a signed 64-bit integer, given ${value}`)
+    }
+  }
+
   // EIP-7825: Transaction Gas Limit Cap
   if (tx.common.isActivatedEIP(7825)) {
     const maxGasLimit = tx.common.param('maxTransactionGasLimit')
@@ -204,18 +241,6 @@ export function sharedConstructor(
         `Transaction gas limit ${tx.gasLimit} exceeds the maximum allowed by EIP-7825 (${maxGasLimit})`,
       )
     }
-  }
-
-  const createContract = tx.to === undefined || tx.to === null
-  const allowUnlimitedInitCodeSize = opts.allowUnlimitedInitCodeSize ?? false
-
-  if (
-    createContract &&
-    tx.common.isActivatedEIP(3860) &&
-    !tx.common.isTron() &&
-    allowUnlimitedInitCodeSize === false
-  ) {
-    checkMaxInitCodeSize(tx.common, tx.data.length)
   }
 }
 

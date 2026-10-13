@@ -74,6 +74,7 @@ export class CodeCache extends Cache {
     // Using deprecated bytesToUnprefixedHex for performance: used as Map keys for cache lookups.
     const addressHex = bytesToUnprefixedHex(address.bytes)
     this._saveCachePreState(addressHex)
+    this._setDirty(addressHex, true)
     const elem = {
       code,
     }
@@ -123,6 +124,7 @@ export class CodeCache extends Cache {
     // Using deprecated bytesToUnprefixedHex for performance: used as Map keys for cache lookups.
     const addressHex = bytesToUnprefixedHex(address.bytes)
     this._saveCachePreState(addressHex)
+    this._setDirty(addressHex, true)
     if (this.DEBUG) {
       this._debug(`Delete code ${addressHex}`)
     }
@@ -141,19 +143,16 @@ export class CodeCache extends Cache {
 
   /**
    * Flushes the cache by returning codes that have been modified
-   * or deleted and resetting the diff cache (at checkpoint height).
+   * or deleted, without discarding checkpoint rollback history.
    */
   flush(): [string, CodeCacheElement][] {
     if (this.DEBUG) {
       this._debug(`Flushing cache on checkpoint ${this._checkpoints}`)
     }
 
-    const diffMap = this._diffCache[this._checkpoints]
-
     const items: [string, CodeCacheElement][] = []
 
-    for (const entry of diffMap.entries()) {
-      const cacheKeyHex = entry[0]
+    for (const cacheKeyHex of this._dirtyKeys) {
       let elem: CodeCacheElement | undefined
       if (this._lruCache) {
         elem = this._lruCache.get(cacheKeyHex)
@@ -162,10 +161,15 @@ export class CodeCache extends Cache {
       }
 
       if (elem !== undefined) {
+        // A pending outer value must survive eviction before this checkpoint reverts.
+        if (this._checkpoints > 0) this._saveCachePreState(cacheKeyHex)
         items.push([cacheKeyHex, elem])
       }
     }
-    this._diffCache[this._checkpoints] = new Map<string, CodeCacheElement | undefined>()
+    this._clearDirty()
+    if (this._checkpoints === 0) {
+      this._diffCache[0].clear()
+    }
     return items
   }
 
@@ -173,7 +177,7 @@ export class CodeCache extends Cache {
    * Revert changes to the cache to the last checkpoint (no effect on trie).
    */
   revert(): void {
-    this._checkpoints -= 1
+    super.revert()
     if (this.DEBUG) {
       this._debug(`Revert to checkpoint ${this._checkpoints}`)
     }
@@ -201,7 +205,7 @@ export class CodeCache extends Cache {
    * Commits the current state of the cache (no effect on trie).
    */
   commit(): void {
-    this._checkpoints -= 1
+    super.commit()
     if (this.DEBUG) {
       this._debug(`Commit to checkpoint ${this._checkpoints}`)
     }
@@ -221,7 +225,7 @@ export class CodeCache extends Cache {
    * later be reverted or committed.
    */
   checkpoint(): void {
-    this._checkpoints += 1
+    super.checkpoint()
     if (this.DEBUG) {
       this._debug(`New checkpoint ${this._checkpoints}`)
     }
@@ -265,6 +269,7 @@ export class CodeCache extends Cache {
    * Clears the cache.
    */
   clear(): void {
+    this._clearDirty()
     if (this.DEBUG) {
       this._debug(`Clear cache`)
     }

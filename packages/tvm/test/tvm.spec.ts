@@ -1,6 +1,6 @@
 import { assert, describe, expect, it } from 'vitest'
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import {
   Account,
   Address,
@@ -19,8 +19,9 @@ import { Message, TVMError, createTVM, paramsTVM } from '../src/index.ts'
 describe('initialization', () => {
   it('basic initialization', async () => {
     const tvm = await createTVM()
-    const msg = 'should use the correct parameter defaults'
-    assert.isFalse(tvm.allowUnlimitedContractSize, msg)
+    assert.notProperty(tvm, 'allowUnlimitedContractSize')
+    assert.notProperty(tvm, 'allowUnlimitedInitCodeSize')
+    assert.isFalse(tvm.common.isActivatedEIP(3860))
   })
 
   it('TVM parameter customization', async () => {
@@ -441,12 +442,16 @@ describe('initialization', () => {
     assert.strictEqual((tvm.journal as any).journalHeight, journalHeight)
   })
 
-  it('fully restores the block access list when a host hook rejects execution', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Amsterdam })
+  it('keeps BAL inactive and restores storage when a host hook rejects execution', async () => {
+    const common = new Common({ chain: TronMainnet })
+    assert.isFalse(common.isActivatedEIP(7928))
+    assert.throws(() => common.setEIPs([7928]), /not supported by the TRON execution profile/)
     const tvm = await createTVM({ common })
     const recipient = new Address(hexToBytes('0x0000000000000000000000000000000000000111'))
-    // PUSH1 0; SLOAD; STOP
-    await tvm.stateManager.putCode(recipient, hexToBytes('0x60005400'))
+    const slot = new Uint8Array(32)
+    // PUSH1 1; PUSH1 0; SSTORE; STOP
+    await tvm.stateManager.putCode(recipient, hexToBytes('0x600160005500'))
+    assert.isUndefined(tvm.blockLevelAccessList)
     tvm.events.once('afterMessage', () => {
       throw new Error('afterMessage listener failed')
     })
@@ -455,7 +460,8 @@ describe('initialization', () => {
       'afterMessage listener failed',
     )
 
-    assert.deepEqual(tvm.blockLevelAccessList?.raw(), [])
+    assert.deepEqual(await tvm.stateManager.getStorage(recipient, slot), new Uint8Array())
+    assert.isUndefined(tvm.blockLevelAccessList)
   })
 
   it('resets TRON transaction context when a top-level Message is reused', async () => {

@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { bytesToHex, utf8ToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -11,7 +11,7 @@ describe('Precompiles: RIPEMD160', () => {
   it('RIPEMD160', async () => {
     // Test reference: https://github.com/ethereum/go-ethereum/blob/e206d3f8975bd98cc86d14055dca40f996bacc60/core/vm/contracts_test.go#L217
 
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Petersburg })
+    const common = new Common({ chain: TronMainnet })
     const tvm = await createTVM({
       common,
     })

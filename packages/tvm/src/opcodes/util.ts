@@ -1,11 +1,9 @@
 import { keccak_256 } from '@noble/hashes/sha3.js'
-import { Hardfork } from '@tvmjs/common'
 import {
   BIGINT_0,
   BIGINT_1,
   BIGINT_2,
   BIGINT_32,
-  BIGINT_64,
   BIGINT_160,
   BIGINT_NEG1,
   bytesToHex,
@@ -216,32 +214,15 @@ export function jumpIsValid(runState: RunState, dest: number): boolean {
 }
 
 /**
- * Returns an overflow-safe slice of an array. It right-pads
- * the data with zeros to `length`.
+ * Caps requested call gas at the caller's remaining energy under the current
+ * TRON version-0 execution rules.
  * @param gasLimit requested gas Limit
  * @param gasLeft current gas left
- * @param runState the current runState
- * @param common the common
  */
-export function maxCallGas(
-  gasLimit: bigint,
-  gasLeft: bigint,
-  runState: RunState,
-  common: Common,
-): bigint {
-  // java-tron currently deploys version-0 contracts when
-  // allowTvmCompatibleEvm is disabled. Version-0 forwards the requested
-  // amount up to all available energy; version-1 can restore the EIP-150
-  // 63/64 rule when contract-version state is modeled.
-  if (common.gteHardfork(Hardfork.Tron)) {
-    return gasLimit > gasLeft ? gasLeft : gasLimit
-  }
-  if (common.gteHardfork(Hardfork.TangerineWhistle)) {
-    const gasAllowed = gasLeft - gasLeft / BIGINT_64
-    return gasLimit > gasAllowed ? gasAllowed : gasLimit
-  } else {
-    return gasLimit
-  }
+export function maxCallGas(gasLimit: bigint, gasLeft: bigint): bigint {
+  // Future contract-version rules must be selected explicitly through TRON
+  // capabilities instead of restoring Ethereum hardfork branches here.
+  return gasLimit > gasLeft ? gasLeft : gasLimit
 }
 
 /**
@@ -289,32 +270,17 @@ export function writeCallOutput(runState: RunState, outOffset: bigint, outLength
 }
 
 /**
- * The first rule set of SSTORE rules, which are the rules pre-Constantinople and in Petersburg
+ * TRON SSTORE charges a first nonzero write to an absent slot at the set rate.
+ * Written zero slots remain present until the transaction ends. There is no refund.
  */
 export function updateSstoreGas(
-  runState: RunState,
   currentStorage: Uint8Array,
   value: Uint8Array,
   common: Common,
+  writtenInTransaction = false,
 ): bigint {
-  if (
-    (value.length === 0 && currentStorage.length === 0) ||
-    (value.length > 0 && currentStorage.length > 0)
-  ) {
-    const gas = common.param('sstoreResetGas')
-    return gas
-  } else if (value.length === 0 && currentStorage.length > 0) {
-    const gas = common.param('sstoreResetGas')
-    runState.interpreter.refundGas(common.param('sstoreRefundGas'), 'updateSstoreGas')
-    return gas
-  } else {
-    /*
-      The situations checked above are:
-      -> Value/Slot are both 0
-      -> Value/Slot are both nonzero
-      -> Value is zero, but slot is nonzero
-      Thus, the remaining case is where value is nonzero, but slot is zero, which is this clause
-    */
+  if (currentStorage.length === 0 && value.length !== 0 && !writtenInTransaction) {
     return common.param('sstoreSetGas')
   }
+  return common.param('sstoreResetGas')
 }

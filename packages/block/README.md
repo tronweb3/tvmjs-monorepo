@@ -1,16 +1,22 @@
-# @tvmjs/block `1.0.1`
+# @tvmjs/block `1.2.0`
+
+TRON execution headers retain their base-fee container and parent gas-limit checks without London activation-block adjustments or DAO extra-data requirements. The protected `_validateDAOExtraData()` hook is removed; public PoW/Clique tools still require explicit consensus metadata.
+
+Serialized headers must include `baseFeePerGas`, including when the fee is zero. Old 15-field headers are rejected instead of being silently assigned a fee. Object construction still defaults the fee to `7n`; complete TRON header encodings and hashes are unchanged.
+
+v1.2.0 removes Blob transaction support and Blob header fields and fee helpers. Object, RPC, payload and RLP inputs containing retired fields are rejected. Ordinary TRON header serialization is unchanged. See [Blob migration and affected packages](../common/README.md#blob-removal-in-v120).
+
+EIP-4788 Beacon root fields and their serialization are also removed. Inputs containing `parentBeaconBlockRoot` or `parent_beacon_block_root` are rejected even when their values are empty. Ordinary Beacon payload data conversion remains available. See [Beacon root migration](../common/README.md#beacon-root-removal-in-v120).
+
+EIP-7702 transactions (`0x04`) and both authorization field spellings are rejected, including on transactions passed directly to `new Block()`. Ordinary transaction types and block round trips are preserved. See [EIP-7702 migration](../common/README.md#eip-7702-removal-in-v120).
 
 | Implements schema and functions related to TRON-compatible blocks. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
 
-- 🦄 All block features till **Osaka**
+- 🦄 TRON execution block contexts and serialization
 - 🌴 Tree-shakeable API
 - 👷🏼 Controlled dependency set (4 external + `@noble` crypto)
-- 🔮 `EIP-4844` Shard Blob Txs
-- 🔮 `EIP-7594` PeerDAS Blob Transactions
-- 💸 `EIP-4895` Beacon Chain Withdrawals
-- 📨 `EIP-7685` Consensus Layer Requests
-- 🛵 324KB bundle size (81KB gzipped)
+- Standalone withdrawal-trie and request-hash data helpers
 - 🏄🏾‍♂️ WASM-free default + Fully browser ready
 
 ## Table of Contents
@@ -33,7 +39,6 @@ To obtain the latest version, simply install the project using `npm`:
 npm install @tvmjs/block
 ```
 
-**Note:** If you want to work with `EIP-4844` related functionality, you will have additional initialization steps for the **KZG setup**, see related section below.
 
 ## Getting Started
 
@@ -81,17 +86,9 @@ console.log(`Created block header with hash=${bytesToHex(header.hash())}`)
 
 Properties of a `Block` or `BlockHeader` object are frozen with `Object.freeze()` which gives you enhanced security and consistency properties when working with the instantiated object. This behavior can be modified using the `freeze` option in the constructor if needed.
 
-API Usage Example:
+Block validation is asynchronous: `await block.validateData()` checks transaction signatures and trie roots. Parent gas-limit validation is available through `block.validateGasLimit(parent)`.
 
-```ts
-// ./examples/1559.ts#L46-L50
-
-try {
-  await blockWithMatchingBaseFee.validateData()
-} catch (err) {
-  console.log(err) // block validation fails
-}
-```
+`createBlockFromRPC()` requires full transaction objects. Fetch blocks with the second argument set to `true` in `eth_getBlockByNumber` / `eth_getBlockByHash`. Use `createBlockHeaderFromRPC()` for responses containing only transaction hashes. Decimal difficulty strings are converted directly to `bigint` to preserve integers above `2^53 - 1`.
 
 ### WASM Crypto Support
 
@@ -99,309 +96,81 @@ This library by default uses JavaScript implementations for the basic standard c
 
 ## EIP Integrations
 
-### Blocks with an EIP-1559 Fee Market
+### Retained base-fee container
 
-By default (since `Hardfork.London`) blocks created with this library are [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) compatible.
+The TRON execution profile retains EIP-1559 transaction envelopes, `baseFeePerGas`, and parent-derived base-fee arithmetic. These are execution-container semantics, not a model of TRON bandwidth, staking, or Energy resource prices. Ethereum Hardfork schedules cannot be selected.
 
 ```ts
 // ./examples/1559.ts
 
 import { createBlock } from '@tvmjs/block'
-import { Common, Mainnet } from '@tvmjs/common'
-import { createTx } from '@tvmjs/tx'
-const common = new Common({ chain: Mainnet })
+import { Common, TronMainnet } from '@tvmjs/common'
 
+const common = new Common({ chain: TronMainnet })
+// Base fee is retained execution-container metadata, not a TRON resource price model.
+const parent = createBlock(
+  { header: { baseFeePerGas: 10n, gasLimit: 1000000n, gasUsed: 600000n } },
+  { common },
+)
 const block = createBlock(
   {
     header: {
-      baseFeePerGas: BigInt(10),
-      gasLimit: BigInt(100),
-      gasUsed: BigInt(60),
+      number: 1n,
+      parentHash: parent.hash(),
+      timestamp: parent.header.timestamp + 1n,
+      baseFeePerGas: parent.header.calcNextBaseFee(),
+      gasLimit: parent.header.gasLimit,
     },
   },
   { common },
 )
-
-// Base fee will increase for next block since the
-// gas used is greater than half the gas limit
-console.log(Number(block.header.calcNextBaseFee())) // 11
-
-// So for creating a block with a matching base fee in a certain
-// chain context you can do:
-const blockWithMatchingBaseFee = createBlock(
-  {
-    header: {
-      baseFeePerGas: block.header.calcNextBaseFee(),
-      gasLimit: BigInt(100),
-      gasUsed: BigInt(60),
-    },
-  },
-  { common },
-)
-
-console.log(Number(blockWithMatchingBaseFee.header.baseFeePerGas)) // 11
-
-// successful validation does not throw error
-await blockWithMatchingBaseFee.validateData()
-
-// failed validation throws error
-const tx = createTx(
-  { type: 2, maxFeePerGas: BigInt(20) },
-  { common: new Common({ chain: Mainnet }) },
-)
-blockWithMatchingBaseFee.transactions.push(tx)
-console.log(blockWithMatchingBaseFee.getTransactionsValidationErrors()) // invalid transaction added to block
-try {
-  await blockWithMatchingBaseFee.validateData()
-} catch (err) {
-  console.log(err) // block validation fails
-}
-
+console.log(block.header.baseFeePerGas) // 11n
+await block.validateData()
+block.validateGasLimit(parent)
 ```
 
-### Blocks with EIP-4895 Beacon Chain Withdrawals
+### Standalone withdrawal and request helpers
 
-Starting with the `v4.1.0` release there is support for [EIP-4895](https://eips.ethereum.org/EIPS/eip-4895) beacon chain withdrawals (`Hardfork.Shanghai` or higher). To create a block containing system-level withdrawals, the `withdrawals` data option together with a matching `withdrawalsRoot` can be used:
+`genWithdrawalsTrieRoot()` and `genRequestsRoot()` remain available as data tools. EIP-4895 withdrawals, EIP-7685 execution requests, BAL and slot-number fields cannot be activated by a TRON profile. Their header fields are rejected in object, RPC and payload inputs. Additional RLP body fields are rejected rather than silently dropped.
 
-```ts
-// ./examples/withdrawals.ts
+The [withdrawal example](./examples/withdrawals.ts) and [request example](./examples/clrequests.ts) demonstrate standalone hashing only; they do not construct execution blocks carrying those fields.
 
-import { createBlock } from '@tvmjs/block'
-import { Common, Mainnet } from '@tvmjs/common'
-import { Address, hexToBytes } from '@tvmjs/util'
+## Consensus Types
 
-import type { WithdrawalData } from '@tvmjs/util'
+TRON execution presets provide no implicit consensus metadata or canonical network genesis. Default headers have zero difficulty, but that does not imply PoS consensus. Ethereum multi-Hardfork execution and TRON DPoS validation are outside this package's supported execution profile.
 
-const common = new Common({ chain: Mainnet })
+Explicit PoW, Clique and PoS metadata can still be supplied through a complete TRON `ChainConfig` to exercise retained tools. `createCustomCommon()` cannot attach this metadata. These extensions do not enable unsupported Ethereum EIPs or restore historical fork scheduling.
 
-const withdrawal: WithdrawalData = {
-  index: BigInt(0),
-  validatorIndex: BigInt(0),
-  address: new Address(hexToBytes(`0x${'20'.repeat(20)}`)),
-  amount: BigInt(1000),
-}
-
-const block = createBlock(
-  {
-    header: {
-      withdrawalsRoot: hexToBytes(
-        '0x69f28913c562b0d38f8dc81e72eb0d99052444d301bf8158dc1f3f94a4526357',
-      ),
-    },
-    withdrawals: [withdrawal],
-  },
-  {
-    common,
-  },
-)
-
-console.log(`Block with ${block.withdrawals!.length} withdrawal(s) created`)
-
-```
-
-Validation of the withdrawals trie can be manually triggered with the newly introduced async `Block.withdrawalsTrieIsValid()` method.
-
-### Blocks with EIP-4844 Shard Blob Transactions
-
-This library supports the blob transaction type introduced with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) (`Hardfork.Cancun` or higher), see the following example:
-
-```ts
-// ./examples/4844.ts
-
-import { createBlock } from '@tvmjs/block'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createBlob4844Tx } from '@tvmjs/tx'
-import { createAddressFromPrivateKey } from '@tvmjs/util'
-import { randomBytes } from '@noble/hashes/utils.js'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
-import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
-
-const main = async () => {
-  const kzg = new microEthKZG(trustedSetup)
-
-  const common = new Common({
-    chain: Mainnet,
-    customCrypto: {
-      kzg,
-    },
-    hardfork: Hardfork.Cancun,
-  })
-  const blobTx = createBlob4844Tx(
-    { blobsData: ['myFirstBlob'], to: createAddressFromPrivateKey(randomBytes(32)) },
-    { common },
-  )
-
-  const block = createBlock(
-    {
-      header: {
-        excessBlobGas: 0n,
-      },
-      transactions: [blobTx],
-    },
-    {
-      common,
-      skipConsensusFormatValidation: true,
-    },
-  )
-
-  console.log(
-    `4844 block header with excessBlobGas=${block.header.excessBlobGas} created and ${
-      block.transactions.filter((tx) => tx.type === 3).length
-    } blob transactions`,
-  )
-}
-
-void main()
-
-```
-
-**Note:** Working with blob transactions needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
-
-### Blocks with EIP-7685 Consensus Layer Requests
-
-Starting with v10 this library supports requests to the consensus layer which have been introduced with [EIP-7685](https://eips.ethereum.org/EIPS/eip-7685) (`Hardfork.Prague` or higher). See the `@tvmjs/util` [Request](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/util#module-request) README section for an overview of current request types.
-
-```ts
-// ./examples/clrequests.ts
-
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { CLRequestType, bytesToHex, createCLRequest, hexToBytes } from '@tvmjs/util'
-import { sha256 } from '@noble/hashes/sha2.js'
-
-import { createBlock, genRequestsRoot } from '../src'
-
-// Enable EIP-7685 to support CLRequests
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7685] })
-
-// Create examples of the three CLRequest types
-const createExampleRequests = () => {
-  // Create a deposit request (type 0)
-  const depositData = hexToBytes(
-    '0x00ac842878bb70009552a4cfcad801d6e659c50bd50d7d03306790cb455ce7363c5b6972f0159d170f625a99b2064dbefc010000000000000000000000818ccb1c4eda80270b04d6df822b1e72dd83c3030040597307000000a747f75c72d0cf0d2b52504c7385b516f0523e2f0842416399f42b4aee5c6384a5674f6426b1cc3d0827886fa9b909e616f5c9f61f986013ed2b9bf37071cbae951136265b549f44e3c8e26233c0433e9124b7fd0dc86e82f9fedfc0a179d7690000000000000000',
-  )
-  const depositRequest = createCLRequest(depositData)
-
-  // Create a withdrawal request (type 1)
-  const withdrawalData = hexToBytes(
-    '0x01000000000000000000000000000000000000000001000000000000000000000de0b6b3a7640000',
-  )
-  const withdrawalRequest = createCLRequest(withdrawalData)
-
-  // Create a consolidation request (type 2)
-  const consolidationData = hexToBytes('0x020000000100000000000000000000000000000000000001')
-  const consolidationRequest = createCLRequest(consolidationData)
-
-  // CLRequests must be sorted by type (Deposit=0, Withdrawal=1, Consolidation=2)
-  return [depositRequest, withdrawalRequest, consolidationRequest]
-}
-
-// Generate a block with CLRequests
-function createBlockWithCLRequests() {
-  const requests = createExampleRequests()
-  console.log(`Created ${requests.length} CLRequests:`)
-
-  for (const req of requests) {
-    console.log(
-      `- Type: ${req.type} (${Object.keys(CLRequestType).find(
-        (k) => CLRequestType[k as keyof typeof CLRequestType] === req.type,
-      )})`,
-    )
-  }
-
-  // Generate the requestsHash by hashing all the CLRequests
-  const requestsHash = genRequestsRoot(requests, sha256)
-  console.log(`Generated requestsHash: 0x${bytesToHex(requestsHash)}`)
-
-  // Create a block with the CLRequests hash
-  const block = createBlock({ header: { requestsHash } }, { common })
-  console.log(`Created block hash: 0x${bytesToHex(block.hash())}`)
-
-  return block
-}
-
-// Execute
-createBlockWithCLRequests()
-
-```
-
-### Consensus Types
-
-### Proof-of-Stake
-
-By default (`Hardfork.Paris` (aka: Merge) and higher) blocks are created as Proof-of-Stake blocks. These blocks come with their own set of header field simplifications and associated validation rules. The difficulty is set to `0` since not relevant anymore, just to name an example. For a full list of changes see [EIP-3675](https://eips.ethereum.org/EIPS/eip-3675).
-
-You can instantiate a Merge/PoS block like this:
-
-```ts
-// ./examples/pos.ts
-
-import { createBlock } from '@tvmjs/block'
-import { Common, Mainnet } from '@tvmjs/common'
-
-const common = new Common({ chain: Mainnet })
-
-const block = createBlock(
-  {
-    // Provide your block data here or use default values
-  },
-  { common },
-)
-
-console.log(`Proof-of-Stake (default) block created with hardfork=${block.common.hardfork()}`)
-```
-
-### Ethash/PoW
-
-Blocks before the Merge or blocks on dedicated PoW chains are created as Proof-of-work blocks. An Ethash/PoW block can be instantiated as follows:
-
-```ts
-// ./examples/pow.ts
-
-import { createBlock } from '@tvmjs/block'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart })
-
-console.log(common.consensusType()) // 'pow'
-console.log(common.consensusAlgorithm()) // 'ethash'
-
-createBlock({}, { common })
-console.log(`Old Proof-of-Work block created`)
-```
-
-To calculate the difficulty when creating the block pass in the block option `calcDifficultyFromHeader` with the preceding (parent) `BlockHeader`.
-
-### Clique/PoA
-
-Clique is a standalone Proof-of-Authority protocol which had been in use for older Ethereum testnets (like e.g. the `Goerli` testnet). This library still supports Clique/PoA so that blocks from those testnets can still be read.
-
-A clique block can be instantiated as follows:
+### Clique example
 
 ```ts
 // ./examples/clique.ts
 
-import { createBlock } from '@tvmjs/block'
-import { Common, Hardfork } from '@tvmjs/common'
-import { goerliChainConfig } from '@tvmjs/testdata'
+import { cliqueSigner, createSealedCliqueBlock } from '@tvmjs/block'
+import { Common, ConsensusAlgorithm, ConsensusType, TronMainnet } from '@tvmjs/common'
+import { hexToBytes } from '@tvmjs/util'
 
-const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
-
-console.log(common.consensusType()) // 'poa'
-console.log(common.consensusAlgorithm()) // 'clique'
-
-createBlock({ header: { extraData: new Uint8Array(97) } }, { common })
-console.log(`Old Clique Proof-of-Authority block created`)
-
+// Explicit local metadata for the retained Clique tool, not TRON network consensus.
+const common = new Common({
+  chain: {
+    ...TronMainnet,
+    consensus: {
+      type: ConsensusType.ProofOfAuthority,
+      algorithm: ConsensusAlgorithm.Clique,
+      clique: { period: 15, epoch: 30000 },
+    },
+  },
+})
+const exampleKey = hexToBytes(`0x${'20'.repeat(32)}`)
+const block = createSealedCliqueBlock(
+  { header: { number: 1n, extraData: new Uint8Array(97) } },
+  exampleKey,
+  { common },
+)
+console.log(`Recovered local signer: ${cliqueSigner(block.header)}`)
 ```
 
-For sealing a block on instantiation you can use the `cliqueSigner` constructor option:
-
-```ts
-const cliqueSigner = hexToBytes('PRIVATE_KEY_HEX_STRING')
-const block = createSealedCliqueBlock(blockData, cliqueSigner)
-```
-
-See the API docs for detailed documentation on Clique/PoA related utility methods. Note that these methods will throw if called in a non-Clique/PoA context.
+The [PoW example](./examples/pow.ts) exercises the retained difficulty helper. The [PoS example](./examples/pos.ts) exercises static header checks with explicit metadata; EIP-4399 remains unavailable.
 
 ## Browser
 
@@ -436,9 +205,18 @@ Using ESM will give you additional advantages over CJS beyond browser usage like
 
 ## Testing
 
-Tests in the `tests` directory are partly outdated and testing is primarily done by running the `BlockchainTests` from within the [@tvmjs/vm](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/vm) package.
+Run the retained regression suites from `packages/block`:
 
-To avoid bloating this repository with [ethereum/tests](https://github.com/ethereum/tests) JSON files, we usually copy specific JSON files and wrap them with some metadata (source, date, commit hash). There's a helper to aid in that process and can be found at [wrap-ethereum-test.sh](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/block/scripts/wrap-ethereum-test.sh).
+```sh
+npm run test:node
+npm run test:browser
+npm run build
+npm run tsc
+```
+
+Node and Chromium execute the same suite: TRON construction, encoding, fees, transaction validation, explicit consensus tools, and rejected Ethereum-only inputs. Embedded historical fixtures remain data vectors; a pre-base-fee header is not accepted as a complete TRON serialization.
+
+The old external Ethereum multi-Hardfork difficulty runner is retired. Official Ethereum blockchain/difficulty vectors are not executed as an Ethereum compatibility suite. Standalone withdrawal and request vectors do not imply support for those execution capabilities.
 
 ## Upstream
 

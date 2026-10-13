@@ -1,6 +1,4 @@
-import { Mainnet, createCustomCommon } from '@tvmjs/common'
-import { customChainConfig } from '@tvmjs/testdata'
+import { TronMainnet, createCustomCommon } from '@tvmjs/common'
 
-// Add custom chain config
-const common1 = createCustomCommon(customChainConfig, Mainnet)
-console.log(`Common is instantiated with custom chain parameters - ${common1.chainName()}`)
+const common = createCustomCommon({ name: 'private-tron', chainId: 123 }, TronMainnet)
+console.log(`Custom TRON network: ${common.chainName()}, chainId: ${common.chainId()}`)

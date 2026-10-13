@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { createTVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 import type { PrefixedHexString } from '@tvmjs/util'
@@ -8,7 +8,7 @@ import type { PrefixedHexString } from '@tvmjs/util'
  * @param name - Descriptive name for console output
  * @param precompile - The `0x`-prefixed hex address for the precompile (e.g., '0xb' for BLS12_G1ADD)
  * @param data - The `0x`-prefixed hex input data for the precompile
- * @param hardfork - The hardfork to use (defaults to Cancun)
+ * @param hardfork - The hardfork to use (defaults to Tron)
  * @param eips - Optional array of EIP numbers to activate on top of the hardfork
  * @returns The precompile execution result
  */
@@ -16,10 +16,10 @@ export async function runPrecompile(
   name: string,
   precompile: PrefixedHexString,
   data: PrefixedHexString,
-  hardfork: Hardfork = Hardfork.Cancun,
+  hardfork: Hardfork = Hardfork.Tron,
   eips?: number[],
 ) {
-  const common = new Common({ chain: Mainnet, hardfork, eips })
+  const common = new Common({ chain: TronMainnet, hardfork, eips })
   const tvm = await createTVM({ common })
 
   const precompileFunction = tvm.getPrecompile(precompile)

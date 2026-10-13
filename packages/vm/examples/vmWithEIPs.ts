@@ -1,11 +1,9 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { createVM } from '@tvmjs/vm'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7702] })
+  const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron, eips: [7939] })
   const vm = await createVM({ common })
-  console.log(
-    `EIP 7702 is active in isolation on top of the Cancun HF - ${vm.common.isActivatedEIP(7702)}`,
-  )
+  console.log(`CLZ is explicitly active on the TRON profile - ${vm.common.isActivatedEIP(7939)}`)
 }
 void main()

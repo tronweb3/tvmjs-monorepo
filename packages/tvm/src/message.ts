@@ -1,9 +1,15 @@
-import { BIGINT_0, EthereumJSErrorWithoutCode, MIN_TOKEN_ID, createZeroAddress } from '@tvmjs/util'
+import {
+  BIGINT_0,
+  EthereumJSErrorWithoutCode,
+  MAX_INT64,
+  MIN_TOKEN_ID,
+  createZeroAddress,
+} from '@tvmjs/util'
 
 import type { BinaryTreeAccessWitnessInterface } from '@tvmjs/common'
 import type { Address, PrefixedHexString } from '@tvmjs/util'
 import type { PrecompileFunc } from './precompiles/index.ts'
-import type { EOFEnv, SelfdestructMap } from './types.ts'
+import type { Block, EOFEnv, SelfdestructMap } from './types.ts'
 
 const defaults = {
   value: BIGINT_0,
@@ -15,6 +21,7 @@ const defaults = {
   isStatic: false,
   isCompiled: false,
   delegatecall: false,
+  callcode: false,
   gasRefund: BIGINT_0,
 }
 
@@ -42,8 +49,8 @@ interface MessageOpts {
    */
   createdAddresses?: Set<PrefixedHexString>
   delegatecall?: boolean
+  callcode?: boolean
   gasRefund?: bigint
-  blobVersionedHashes?: PrefixedHexString[]
   accessWitness?: BinaryTreeAccessWitnessInterface
   tronTransactionContext?: TronTransactionContext
 }
@@ -100,15 +107,13 @@ export class Message {
    */
   createdAddresses?: Set<PrefixedHexString>
   delegatecall: boolean
+  callcode: boolean
   gasRefund: bigint // Keeps track of the gasRefund at the start of the frame (used for journaling purposes)
-  /**
-   * List of versioned hashes if message is a blob transaction in the outer VM
-   */
-  blobVersionedHashes?: PrefixedHexString[]
   accessWitness?: BinaryTreeAccessWitnessInterface
   tronTransactionContext?: TronTransactionContext
 
   constructor(opts: MessageOpts) {
+    rejectRemovedExecutionOptions(opts)
     this.to = opts.to
     this.value = opts.value ?? defaults.value
     this.tokenId = opts.tokenId ?? defaults.tokenId
@@ -126,8 +131,8 @@ export class Message {
     this.selfdestruct = opts.selfdestruct
     this.createdAddresses = opts.createdAddresses
     this.delegatecall = opts.delegatecall ?? defaults.delegatecall
+    this.callcode = opts.callcode ?? defaults.callcode
     this.gasRefund = opts.gasRefund ?? defaults.gasRefund
-    this.blobVersionedHashes = opts.blobVersionedHashes
     this.accessWitness = opts.accessWitness
     this.tronTransactionContext = opts.tronTransactionContext
     if (this.tokenId !== BIGINT_0 && this.tokenId <= MIN_TOKEN_ID) {
@@ -143,6 +148,16 @@ export class Message {
     if (this.tokenValue < BIGINT_0) {
       throw EthereumJSErrorWithoutCode(
         `tokenValue field cannot be negative, received ${this.tokenValue}`,
+      )
+    }
+    if (this.tokenId > MAX_INT64) {
+      throw EthereumJSErrorWithoutCode(
+        `tokenId field must fit in a signed 64-bit integer, received ${this.tokenId}`,
+      )
+    }
+    if (this.tokenValue > MAX_INT64) {
+      throw EthereumJSErrorWithoutCode(
+        `tokenValue field must fit in a signed 64-bit integer, received ${this.tokenValue}`,
       )
     }
     if (this.value < BIGINT_0) {
@@ -163,3 +178,25 @@ export class Message {
 }
 
 export type MessageWithTo = Message & Pick<Required<MessageOpts>, 'to'>
+
+/** Reject removed execution context fields, including explicitly empty inputs. */
+export function rejectRemovedExecutionOptions(opts: object) {
+  if ('blobVersionedHashes' in opts) {
+    throw EthereumJSErrorWithoutCode('blobVersionedHashes is no longer supported')
+  }
+  const header = 'block' in opts ? (opts.block as Block | undefined)?.header : undefined
+  if (header) {
+    for (const field of ['blobGasUsed', 'excessBlobGas', 'getBlobGasPrice']) {
+      if (field in header) {
+        throw EthereumJSErrorWithoutCode(`Blob block context field ${field} is no longer supported`)
+      }
+    }
+    for (const field of ['parentBeaconBlockRoot', 'parent_beacon_block_root']) {
+      if (field in header) {
+        throw EthereumJSErrorWithoutCode(
+          `Beacon root block context field ${field} is no longer supported`,
+        )
+      }
+    }
+  }
+}

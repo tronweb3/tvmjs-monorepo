@@ -1,4 +1,4 @@
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import {
   bytesToHex,
   concatBytes,
@@ -21,7 +21,8 @@ describe('custom crypto', () => {
       sha256: customSha256,
     }
     const msg = Uint8Array.from([0, 1, 2, 3])
-    const common = new Common({ chain: Mainnet, customCrypto })
+
+    const common = new Common({ chain: TronMainnet, customCrypto })
     const tvm = await createTVM({ common })
     const addressStr = '0000000000000000000000000000000000000002'
     const SHA256 = getActivePrecompiles(common).get(addressStr)!
@@ -44,7 +45,8 @@ describe('custom crypto', () => {
       ecrecover: customEcrecover,
     }
     const msg = concatBytes(randomBytes(32), setLengthLeft(intToBytes(27), 32), randomBytes(32))
-    const common = new Common({ chain: Mainnet, customCrypto })
+
+    const common = new Common({ chain: TronMainnet, customCrypto })
     const tvm = await createTVM({ common })
     const addressStr = '0000000000000000000000000000000000000001'
     const ECRECOVER = getActivePrecompiles(common).get(addressStr)!

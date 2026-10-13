@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -6,12 +6,7 @@ import { type InterpreterStep, TVMError } from '@tvmjs/tvm'
 import { createVM } from '../../../src/index.ts'
 
 describe('EIP 3855 tests', () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Chainstart, eips: [3855] })
-  const commonNoEIP3855 = new Common({
-    chain: Mainnet,
-    hardfork: Hardfork.Chainstart,
-    eips: [],
-  })
+  const common = new Common({ chain: TronMainnet })
 
   it('should correctly use push0 opcode', async () => {
     const vm = await createVM({ common })
@@ -70,14 +65,16 @@ describe('EIP 3855 tests', () => {
     assert.strictEqual(result.exceptionError?.error, TVMError.errorMessages.STACK_OVERFLOW)
   })
 
-  it('push0 is not available if EIP3855 is not activated', async () => {
-    const vm = await createVM({ common: commonNoEIP3855 })
+  it('keeps the profile PUSH0 capability when optional EIPs are empty', async () => {
+    const vm = await createVM({ common: new Common({ chain: TronMainnet, eips: [] }) })
 
     const result = await vm.tvm.runCode!({
       code: hexToBytes('0x5F'),
       gasLimit: BigInt(10000),
     })
 
-    assert.strictEqual(result.exceptionError!.error, TVMError.errorMessages.INVALID_OPCODE)
+    assert.isTrue(vm.common.isActivatedEIP(3855))
+    assert.isUndefined(result.exceptionError)
+    assert.strictEqual(result.executionGasUsed, 2n)
   })
 })

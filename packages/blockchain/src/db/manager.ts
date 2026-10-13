@@ -236,8 +236,11 @@ export class DBManager {
       if (type === 'put') return convertedOp as PutBatch
       else return convertedOp as DelBatch
     })
-    // update the current cache for each operation
-    ops.map((op) => op.updateCache(this._cache))
-    return this._db.batch(convertedOps)
+    await this._db.batch(convertedOps)
+
+    // Publish cache changes only after the database batch succeeds.
+    for (const op of ops) {
+      op.updateCache(this._cache)
+    }
   }
 }

@@ -99,10 +99,6 @@ interface TVMRunOpts {
    */
   to?: Address
   /**
-   * Versioned hashes for each blob in a blob transaction
-   */
-  blobVersionedHashes?: PrefixedHexString[]
-  /**
    * The 32-byte root transaction ID used by java-tron to derive top-level
    * deployment and internal CREATE addresses. Required for TRON contract creation.
    */
@@ -215,73 +211,14 @@ export type TVMProfilerOpts = {
  */
 export interface TVMOpts {
   /**
-   * Use a {@link Common} instance for TVM instantiation.
+   * Use a TRON {@link Common} instance for TVM instantiation. Defaults to TronMainnet.
    *
-   * ### Supported EIPs
-   *
-   * - [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153) - Transient storage opcodes (Cancun)
-   * - [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) - Fee market change for ETH 1.0 chain
-   * - [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537) - Precompile for BLS12-381 curve operations (Prague)
-   * - [EIP-2565](https://eips.ethereum.org/EIPS/eip-2565) - ModExp gas cost
-   * - [EIP-2718](https://eips.ethereum.org/EIPS/eip-2718) - Typed Transaction Envelope
-   * - [EIP-2935](https://eips.ethereum.org/EIPS/eip-2935) - Serve historical block hashes from state (Prague)
-   * - [EIP-2929](https://eips.ethereum.org/EIPS/eip-2929) - gas cost increases for state access opcodes
-   * - [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) - Optional access list tx type
-   * - [EIP-3074](https://eips.ethereum.org/EIPS/eip-3074) - AUTH and AUTHCALL opcodes
-   * - [EIP-3198](https://eips.ethereum.org/EIPS/eip-3198) - Base fee Opcode
-   * - [EIP-3529](https://eips.ethereum.org/EIPS/eip-3529) - Reduction in refunds
-   * - [EIP-3541](https://eips.ethereum.org/EIPS/eip-3541) - Reject new contracts starting with the 0xEF byte
-   * - [EIP-3554](https://eips.ethereum.org/EIPS/eip-3554) - Difficulty Bomb Delay to December 2021 (only PoW networks)
-   * - [EIP-3607](https://eips.ethereum.org/EIPS/eip-3607) - Reject transactions from senders with deployed code
-   * - [EIP-3651](https://eips.ethereum.org/EIPS/eip-3651) - Warm COINBASE (Shanghai)
-   * - [EIP-3675](https://eips.ethereum.org/EIPS/eip-3675) - Upgrade consensus to Proof-of-Stake
-   * - [EIP-3855](https://eips.ethereum.org/EIPS/eip-3855) - Push0 opcode (Shanghai)
-   * - [EIP-3860](https://eips.ethereum.org/EIPS/eip-3860) - Limit and meter initcode (Shanghai)
-   * - [EIP-4345](https://eips.ethereum.org/EIPS/eip-4345) - Difficulty Bomb Delay to June 2022
-   * - [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) - Supplant DIFFICULTY opcode with PREVRANDAO (Merge)
-   * - [EIP-4788](https://eips.ethereum.org/EIPS/eip-4788) - Beacon block root in the TVM (Cancun)
-   * - [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) - Shard Blob Transactions (Cancun)
-   * - [EIP-4895](https://eips.ethereum.org/EIPS/eip-4895) - Beacon chain push withdrawals as operations (Shanghai)
-   * - [EIP-5133](https://eips.ethereum.org/EIPS/eip-5133) - Delaying Difficulty Bomb to mid-September 2022 (Gray Glacier)
-   * - [EIP-5656](https://eips.ethereum.org/EIPS/eip-5656) - MCOPY - Memory copying instruction (Cancun)
-   * - [EIP-6110](https://eips.ethereum.org/EIPS/eip-6110) - Supply validator deposits on chain (Prague)
-   * - [EIP-6780](https://eips.ethereum.org/EIPS/eip-6780) - SELFDESTRUCT only in same transaction (Cancun)
-   * - [EIP-7002](https://eips.ethereum.org/EIPS/eip-7002) - Execution layer triggerable exits (Prague)
-   * - [EIP-7251](https://eips.ethereum.org/EIPS/eip-7251) - Increase the MAX_EFFECTIVE_BALANCE (Prague)
-   * - [EIP-7516](https://eips.ethereum.org/EIPS/eip-7516) - BLOBBASEFEE opcode (Cancun)
-   * - [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623) - Increase calldata cost (Prague)
-   * - [EIP-7685](https://eips.ethereum.org/EIPS/eip-7685) - General purpose execution layer requests (Prague)
-   * - [EIP-7691](https://eips.ethereum.org/EIPS/eip-7691) - Blob throughput increase (Prague)
-   * - [EIP-7692](https://eips.ethereum.org/EIPS/eip-7692) - TVM Object Format (EOF) v1 (`experimental`)
-   * - [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) - Set EOA account code (Prague)
-   * - [EIP-7709](https://eips.ethereum.org/EIPS/eip-7709) - Read BLOCKHASH from storage and update cost (Verkle)
-   * - [EIP-7934](https://eips.ethereum.org/EIPS/eip-7934) - RLP Execution Block Size Limit
-   *
-   * *Annotations:*
-   *
-   * - `experimental`: behaviour can change on patch versions
+   * The `tronExecutionProfile` in `@tvmjs/common` defines the supported baseline
+   * and optional EIP capabilities. Ethereum hardfork configurations are rejected.
+   * Energy uses the `tron` parameter group; EIP-2929 cold/warm pricing,
+   * EIP-3529 refunds and EIP-3651 prewarming cannot be activated.
    */
   common?: Common
-
-  /**
-   * Allows unlimited contract sizes while debugging Ethereum or a custom chain. By setting this
-   * to `true`, the check for the 24KB contract size limit (see
-   * [EIP-170](https://git.io/vxZkK)) is bypassed.
-   *
-   * TRON chain profiles do not apply EIP-170 regardless of this option.
-   *
-   * Default: `false` [ONLY set to `true` during debugging]
-   */
-  allowUnlimitedContractSize?: boolean
-
-  /**
-   * Allows unlimited initcode while debugging Ethereum or a custom chain. This partially disables
-   * EIP-3860: the initcode size check is bypassed, but initcode word gas is still charged.
-   *
-   * TRON chain profiles do not apply EIP-3860 size checks or word gas regardless of this option.
-   * Use with caution.
-   */
-  allowUnlimitedInitCodeSize?: boolean
 
   /**
    * TVM parameters sorted by EIP can be found in the exported `paramsTVM` dictionary,
@@ -466,10 +403,6 @@ export interface ExecResult {
    * The gas refund counter
    */
   gasRefund?: bigint
-  /**
-   * Amount of blob gas consumed by the transaction
-   */
-  blobGasUsed?: bigint
 }
 
 /**
@@ -512,7 +445,6 @@ export type Block = {
     gasLimit: bigint
     baseFeePerGas?: bigint
     slotNumber?: bigint
-    getBlobGasPrice(): bigint | undefined
   }
 }
 
@@ -537,14 +469,14 @@ export interface TVMMockBlockchainInterface {
 }
 
 export class TVMMockBlockchain implements TVMMockBlockchainInterface {
-  async getBlock() {
+  async getBlock(_blockId: number) {
     return {
       hash() {
         return new Uint8Array(32)
       },
     }
   }
-  async putBlock() {}
+  async putBlock(_block: TVMMockBlock) {}
   shallowCopy() {
     return this
   }
@@ -557,6 +489,3 @@ export type EOFEnv = {
     returnStack: number[]
   }
 }
-
-// EIP-7702 flag: if contract code starts with these 3 bytes, it is a 7702-delegated EOA
-export const DELEGATION_7702_FLAG = new Uint8Array([0xef, 0x01, 0x00])

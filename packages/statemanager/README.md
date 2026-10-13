@@ -1,4 +1,4 @@
-# @tvmjs/statemanager `1.0.1`
+# @tvmjs/statemanager `1.2.0`
 
 | Library to provide high level access to TRON-compatible state. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -19,7 +19,7 @@
 - [MerkleStateManager](#merklestatemanager)
 - [SimpleStateManager](#simplestatemanager)
 - [RPCStateManager](#rpcstatemanager)
-- [Verkle (experimental)](#verkle-state-managers-experimental)
+- [Binary Tree (experimental)](#binary-tree-experimental)
 - [Browser](#browser)
 - [API](#api)
 - [Development](#development)
@@ -39,23 +39,35 @@ npm install @tvmjs/statemanager
 
 ### Overview
 
-The `StateManager` provides high-level access and manipulation methods to and for the TRON-compatible state, thinking in terms of accounts or contract code rather then the storage operations of the underlying data structure (e.g. a [Trie](../trie/)).
+The `StateManager` provides high-level access and manipulation methods to and for the TRON-compatible state, thinking in terms of accounts or contract code rather than the storage operations of the underlying data structure (e.g. a [Merkle-Patricia Trie](../mpt/)).
 
 This library includes several different implementations that all implement the `StateManager` interface which is accepted by the `vm` library. These include:
 
-- [`SimpleStateManager`](./src/simpleStateManager.ts) -a minimally functional (and dependency minimized) version of the state manager suitable for most basic TVM bytecode operations
-- [`MerkleStateManager`](./src/stateManager.ts) - a Merkle-Patricia Trie-based `MerkleStateManager` implementation that is used by the `@tvmjs/client` and `@tvmjs/vm`
-- [`RPCStateManager`](./src/rpcStateManager.ts) - a light-weight implementation that sources state and history data from an external JSON-RPC provider
-- [`StatefulVerkleStateManager`](./src/statefulVerkleStateManager.ts) - an experimental implementation of a stateful verkle state manager
-- [`StatelessVerkleStateManager`](./src/statelessVerkleStateManager.ts) - an experimental implementation of a "stateless" state manager that uses Verkle proofs to provide necessary state access for processing verkle-trie based blocks
+- [`SimpleStateManager`](./src/simpleStateManager.ts) - a minimally functional (and dependency minimized) version of the state manager suitable for most basic TVM bytecode operations
+- [`MerkleStateManager`](./src/merkleStateManager.ts) - a Merkle-Patricia Trie implementation used for local state, proofs and VM execution
+- [`RPCStateManager`](./src/rpcStateManager.ts) - an adapter that reads account, code and storage data from a compatible JSON-RPC provider and keeps execution changes in local caches
 
-It also includes a checkpoint/revert/commit mechanism to either persist or revert state changes and provides a sophisticated caching mechanism under the hood to reduce the need reading state accesses from disk.
+The exported [`StatefulBinaryTreeStateManager`](./src/statefulBinaryTreeStateManager.ts) is a retained experimental data implementation. It cannot be activated by a TRON execution profile; see [Binary Tree](#binary-tree-experimental).
+
+It also includes a checkpoint/revert/commit mechanism to either persist or revert state changes and provides a sophisticated caching mechanism under the hood to reduce repeated reads from disk.
+
+### TRON execution configuration
+
+`MerkleStateManager` and `RPCStateManager` default to `TronMainnet`. For `TronNile`, `TronShasta`, optional EIPs or custom crypto, pass a `Common` and use compatible configuration in the VM/TVM. `SimpleStateManager` also accepts an optional `common`.
+
+Ethereum presets and Ethereum Hardfork schedules cannot configure execution. The TRON presets provide execution settings without Ethereum genesis or consensus metadata. Reading a historical Ethereum proof or other data fixture does not enable Ethereum execution.
 
 ### WASM Crypto Support
 
 This library by default uses JavaScript implementations for the basic standard crypto primitives like hashing for underlying trie keys. See `@tvmjs/common` [README](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/common) for instructions on how to replace with e.g. a more performant WASM implementation by using a shared `common` instance.
 
 ## `MerkleStateManager`
+
+### Local TRC-10 registry
+
+`putAccount()` seeds an in-memory Token registry from `Account.asset` keys. `tokenIdExists()` queries these locally supplied IDs, not the network's asset issuance database. Checkpoints roll back new registrations along with account state; only the outermost commit makes registrations permanent. Loading a trie root or an account proof alone does not reconstruct this registry. When initializing a separate instance from external state, supply the required Token account data through `putAccount()` before executing Token transactions.
+
+`shallowCopy()` independently copies the registry at the state before the outermost open checkpoint, matching its copied trie root. Pending registrations from that checkpoint or any nested commit are excluded. Account caches are not copied; flush initialization writes before copying, or finish the outermost commit. Registrations and balances subsequently changed in one instance do not mutate the other instance's snapshot.
 
 ### Usage example
 
@@ -96,16 +108,9 @@ Have a look at the extended `CacheOptions` on how to use and leverage the new ca
 
 ### Instantiating from Proofs
 
-The `MerkleStateManager` has a standalone constructor function `fromMerkleStateProof` that accepts one or more [EIP-1186](https://eips.ethereum.org/EIPS/eip-1186) [proofs](./src/stateManager.ts) and will instantiate a `MerkleStateManager` with a partial trie containing the state provided by the proof(s). Be aware that this constructor accepts the `StateManagerOpts` dictionary as a third parameter (i.e. `fromMerkleStateProof(proof, safe, opts)`).
+`fromMerkleStateProof(proof, safe, opts)` creates a partial Merkle state from one or more [EIP-1186](https://eips.ethereum.org/EIPS/eip-1186) proofs. The optional third argument accepts `MerkleStateManagerOpts`, including a compatible `common`, trie and cache settings.
 
-Therefore, if you need to use a customized trie (e.g. one that does not use key hashing) or specify caching options, you can pass them in here. If you do instantiate a trie and pass it into the `createTrieFromProof` constructor, you also need to instantiate the trie using the corresponding `createStateManagerFromProof` constructor to ensure the state root matches when the proof data is added to the trie, consider an example:
-
-```ts
-const newTrie = await createTrieFromProof(proof, { useKeyHashing: false })
-const partialSM = await fromMerkleStateProof([proof], true, {
-  trie: newTrie,
-})
-```
+`verifyMerkleStateProof(stateManager, proof)` checks account proofs against that StateManager's root and storage proofs against the authenticated account storage root. Establish the expected root independently when using external data: a proof alone does not establish which root is canonical. Proofs do not contain contract bytecode.
 
 See below example for common usage:
 
@@ -155,8 +160,8 @@ const main = async () => {
   const accountFromOldSM = await stateManager.getAccount(contractAddress)
   console.log(accountFromNewSM, accountFromOldSM) // should match
 
-  const slot1FromNewSM = await stateManager.getStorage(contractAddress, storageKey1)
-  const slot2FromNewSM = await stateManager.getStorage(contractAddress, storageKey2)
+  const slot1FromNewSM = await partialStateManager.getStorage(contractAddress, storageKey1)
+  const slot2FromNewSM = await partialStateManager.getStorage(contractAddress, storageKey2)
   console.log(slot1FromNewSM, storageValue1) // should match
   console.log(slot2FromNewSM, storageValue2) // should match
 }
@@ -167,14 +172,19 @@ void main()
 
 The `SimpleStateManager` is a dependency-minimized simple state manager implementation. While this state manager implementation lacks the implementations of some non-core functionality as well as proof related logic (e.g. `setStateRoot()`) it is suitable for a lot use cases where things like sophisticated caching or state root handling is not needed.
 
+TRC-10 token IDs are exact `bigint` values throughout the `StateManagerInterface`: `tokenIdExists(tokenId: bigint)` replaces the former `number` parameter, and `Account.asset` is keyed by canonical decimal ID strings (see `tokenIdToKey()` in `@tvmjs/util`). Custom state manager implementations must update the `tokenIdExists()` signature and must not convert token IDs to `Number`, which merges IDs above `2^53 - 1`.
+
+`SimpleStateManager` implements a local in-memory Token registry seeded by `putAccount()` asset keys, including explicitly supplied zero balances. Unknown IDs return `false`. Known IDs remain registered when a balance is spent or a holder is deleted; registrations introduced in a reverted checkpoint are discarded. Nested commits remain reversible by their enclosing checkpoint. `shallowCopy()` copies the current account state and checkpoint stack, including independent registry snapshots, so each instance can commit or revert independently.
+
+This supports `runTx()` validation of nonzero TRC-10 transfers when the sender's Token balances are supplied locally. It does not fetch Token issuance records, implement proof/state-root operations, or add remote Token support to `RPCStateManager`.
+
 This state manager can be instantiated and used as follows:
 
 ```ts
 // ./examples/simple.ts
 
+import { SimpleStateManager } from '@tvmjs/statemanager'
 import { Account, createAddressFromPrivateKey, randomBytes } from '@tvmjs/util'
-
-import { SimpleStateManager } from '../src/index.ts'
 
 const main = async () => {
   const sm = new SimpleStateManager()
@@ -185,64 +195,76 @@ const main = async () => {
 }
 
 void main()
-
 ```
 
 ## `RPCStateManager`
 
-The `RPCStateManager` can be be used with any JSON-RPC provider that supports the `eth` namespace. Instantiate the `VM` and pass in an `RPCStateManager` to run transactions against accounts sourced from the provider or to run blocks pulled from the provider at any specified block height.
+`RPCStateManager` requires `eth_getProof`, `eth_getCode` and `eth_getStorageAt` at the selected block tag. It uses the returned account fields as trusted input and caches local execution changes; it does not authenticate provider responses against a trusted chain root. `getRPCStateProof()` retrieves the provider's proof without verifying it.
+
+Use it with VM/TVM for local execution under the selected TRON profile. A TRON `Common` does not make this adapter compatible with java-tron RPC or supply remote TRC-10 assets. Typed and EIP-155-protected transactions must match the VM chainId; unprotected legacy envelopes retain their existing cross-network behavior. java-tron RPC and client integration are outside this package's current scope.
 
 A simple example of usage:
 
 ```ts
 // ./examples/rpcStateManager.ts
 
+import { Common, TronMainnet } from '@tvmjs/common'
 import { RPCStateManager } from '@tvmjs/statemanager'
 import { createAddressFromString } from '@tvmjs/util'
 
 const main = async () => {
-  try {
-    const provider = 'https://path.to.my.provider.com'
-    const stateManager = new RPCStateManager({ provider, blockTag: 500000n })
-    const vitalikDotEth = createAddressFromString('0xd8da6bf26964af9d7eed9e03e53415d37aa96045')
-    const account = await stateManager.getAccount(vitalikDotEth)
-    console.log('Vitalik has a current ETH balance of ', account?.balance)
-  } catch (e) {
-    console.log(e.message) // fetch fails because provider url is not real. please replace provider with a valid rpc url string.
+  const provider = process.env.PROVIDER
+  if (provider === undefined) {
+    console.log('Set PROVIDER to an RPC URL supporting eth_getProof to read an account.')
+    return
   }
+  // The provider must support EIP-1186; a TRON Common does not add java-tron RPC support.
+  const common = new Common({ chain: TronMainnet })
+  const stateManager = new RPCStateManager({ common, provider, blockTag: 500000n })
+  const address = createAddressFromString('0xd8da6bf26964af9d7eed9e03e53415d37aa96045')
+  const account = await stateManager.getAccount(address)
+  console.log('Provider account balance at block 500000:', account?.balance)
 }
-void main()
+
+void main().catch((error) => {
+  console.error(error)
+  process.exitCode = 1
+})
 ```
 
-**Note:** Usage of this StateManager can cause a heavy load regarding state request API calls, so be careful (or at least: aware) if used in combination with a JSON-RPC provider connecting to a third-party API service like Infura!
+The account example makes a remote request only when `PROVIDER` is set. Choose an endpoint that supports the required methods and the requested historical state. The balance is reported in the provider's raw units.
 
 ### Points on `RPCStateManager` usage
 
 #### Instantiating the TVM
 
-In order to have an TVM instance that supports the BLOCKHASH opcode (which requires access to block history), you must instantiate both the `RPCStateManager` and the `RpcBlockChain` and use that when initializing your TVM instance as below:
+For BLOCKHASH reads, supply `RPCBlockChain` alongside `RPCStateManager`. The example below initializes TVM locally; execution also needs a matching block context and a provider supporting `eth_getBlockByNumber`. It does not query the network during initialization:
 
 ```ts
 // ./examples/tvm.ts
 
-import { createTVM } from '@tvmjs/tvm'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { RPCBlockChain, RPCStateManager } from '@tvmjs/statemanager'
+import { createTVM } from '@tvmjs/tvm'
 
 const main = async () => {
-  try {
-    const provider = 'https://path.to.my.provider.com'
-    const blockchain = new RPCBlockChain(provider)
-    const blockTag = 1n
-    const state = new RPCStateManager({ provider, blockTag })
-    const tvm = await createTVM({ blockchain, stateManager: state }) // note that tvm is ready to run BLOCKHASH opcodes (over RPC)
-  } catch (e) {
-    console.log(e.message) // fetch would fail because provider url is not real. please replace provider with a valid RPC url string.
-  }
+  const provider = process.env.PROVIDER ?? 'http://localhost:8545'
+  const common = new Common({ chain: TronMainnet })
+  const blockchain = new RPCBlockChain(provider)
+  const blockTag = 1n
+  const state = new RPCStateManager({ common, provider, blockTag })
+  const tvm = await createTVM({ common, blockchain, stateManager: state })
+  // Initialization is local. Execution needs the matching block context and a compatible provider.
+  console.log('Configured TVM chainId:', tvm.common.chainId())
 }
-void main()
+
+void main().catch((error) => {
+  console.error(error)
+  process.exitCode = 1
+})
 ```
 
-Note: Failing to provide the `RPCBlockChain` instance when instantiating the TVM means that the `BLOCKHASH` opcode will fail to work correctly during TVM execution.
+Use the same provider and consistent block context for state and history reads. RPC block hashes are trusted provider data, not locally verified headers. `RPCBlockChain` is read-only: `putBlock()` rejects writes instead of submitting or silently discarding them.
 
 #### Provider selection
 
@@ -254,22 +276,24 @@ Note: Failing to provide the `RPCBlockChain` instance when instantiating the TVM
 - You have to pass a block number or `earliest` in the constructor that specifies the block height you want to pull state from.
 - The `latest`/`pending` values supported by the Ethereum JSON-RPC are not supported as longer running scripts run the risk of state values changing as blocks are mined while your script is running.
 - If using a very recent block as your block tag, be aware that reorgs could occur and potentially alter the state you are interacting with.
-- If you want to rerun transactions from block X or run block X, you need to specify the block tag as X-1 in the state manager constructor to ensure you are pulling the state values at the point in time the transactions or block was run.
+- For local execution based on the state before block X, use block tag X-1. Transactions and block inputs must match the configured TRON chainId and supported execution fields; arbitrary historical Ethereum blocks are not valid execution inputs.
 
-#### Potential gotchas
+#### Cache and execution boundaries
 
-- The RPC State Manager cannot compute valid state roots when running blocks as it does not have access to the entire state trie so can not compute correct state roots, either for the account trie or for storage tries.
-- If you are replaying mainnet transactions and an account or account storage is touched by multiple transactions in a block, you must replay those transactions in order (with regard to their position in that block) or calculated gas will likely be different than actual gas consumed.
+- `shallowCopy()` preserves the provider, numeric or `earliest` block tag, and a copy of `Common`, including optional EIPs and custom crypto. It starts with empty independent caches; local writes from the source instance are not copied.
+- `checkpoint()`, `commit()` and `revert()` apply to account, code and storage caches together. Writes remain local and are not submitted to the provider.
+- `setBlockTag()` and `clearCaches()` clear both current and original storage caches. Change snapshots between executions, outside active checkpoints.
+- A full state trie is unavailable. `getStateRoot()` returns a placeholder of 32 zero bytes, `setStateRoot()` is a no-op, and `hasStateRoot()` is not implemented. A successful local block run does not validate the remote state root or consensus.
+- `eth_getProof` has no TRC-10 issuance registry or Token account balances. `putAccount()` seeds an exact, checkpoint-aware local Token registry from its asset keys, which is enough to validate transfers from explicitly supplied replay accounts. Unknown IDs return `false`. A snapshot-aware `tokenIdExists: (id: bigint, blockTag: bigint | 'earliest') => boolean | Promise<boolean>` resolver can supplement that registry with issuance data from an external source. The resolver receives the same fixed block tag as account and storage reads, follows `setBlockTag()`, and is preserved by `shallowCopy()`. `clearCaches()` clears the local registry. A non-boolean resolver result throws. The sender's Token balances must still be seeded with `putAccount()`; `skipBalance` is not a replacement for Token state.
+- VM results include the retained transaction envelope's intrinsic gas. They are not by themselves measurements of java-tron on-chain Energy.
 
-#### Further reference
+The offline tests in [rpcStateManager.spec.ts](./test/rpcStateManager.spec.ts) cover fixed historical data fixtures, and [rpcStateManager.tron.spec.ts](./test/rpcStateManager.tron.spec.ts) covers signed local execution on all three TRON presets. They do not contact or validate a live node.
 
-Refer to [this test script](./test/rpcStateManager.spec.ts) for complete examples of running transactions and blocks in the `vm` with data sourced from a provider.
+## Binary Tree (experimental)
 
-## Verkle (experimental)
+`StatefulBinaryTreeStateManager` and its public types remain available as experimental standalone data APIs. A supplied TRON `Common` is rejected because EIP-7864 is unavailable; EIP-6800 and EIP-7864 cannot be enabled in the TRON profile. The retained implementation is not evidence of TRON Binary Tree execution support.
 
-There are two new verkle related state managers integrated into the code base. These state managers are very experimental and meant to be used for connecting to early [Verkle Tree](https://eips.ethereum.org/EIPS/eip-6800) test networks (Kaustinen). These state managers are not yet sufficiently tested and APIs are not yet stable and it therefore should not be used in production.
-
-See [PRs around Verkle](https://github.com/search?q=repo%3Aethereumjs%2Fethereumjs-monorepo+verkle&type=pullrequests) in our monorepo for an entrypoint if you are interested in our current Verkle related work.
+Old Verkle StateManager implementation files are not exported. The legacy `StatelessVerkleStateManagerOpts` type remains exported for compatibility; it does not imply a corresponding implementation.
 
 ## Browser
 
@@ -281,7 +305,7 @@ It is easily possible to run a browser build of one of the TVMJS libraries withi
 
 ### Docs
 
-Generated TypeDoc API [Documentation](./docs/README.md)
+See the [public exports](./src/index.ts), [StateManager options and proof types](./src/types.ts), and [StateManagerInterface](../common/src/interfaces.ts). Generate TypeDoc locally with `npm run docs:build`.
 
 ### Hybrid CJS/ESM Builds
 
@@ -290,20 +314,20 @@ With the breaking releases from Summer 2023 we have started to ship our librarie
 If you use an ES6-style `import` in your code files from the ESM build will be used:
 
 ```ts
-import { TVMJSClass } from '@tvmjs/[PACKAGE_NAME]'
+import { MerkleStateManager } from '@tvmjs/statemanager'
 ```
 
 If you use Node.js specific `require`, the CJS build will be used:
 
 ```ts
-const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
+const { MerkleStateManager } = require('@tvmjs/statemanager')
 ```
 
 Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS can not provide.
 
 ## Development
 
-Developer documentation - currently mainly with information on testing and debugging - can be found [here](./DEVELOPER.md).
+Run `npm run test:node`, `npm run test:browser`, `npm run build`, `npm run tsc` and `npm run lint` from this package. Browser tests use Chromium and include the same offline RPC, proof and storage dump tests as Node. See the [repository developer guide](../../DEVELOPER.md) for shared tooling.
 
 ## Upstream
 

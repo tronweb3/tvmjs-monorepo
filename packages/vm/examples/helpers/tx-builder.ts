@@ -4,7 +4,7 @@ export const buildTransaction = (data: Partial<LegacyTxData>): LegacyTxData => {
   const defaultData: Partial<LegacyTxData> = {
     nonce: BigInt(0),
     gasLimit: 2_000_000, // We assume that 2M is enough,
-    gasPrice: 1,
+    gasPrice: 10,
     value: 0,
     data: '0x',
   }

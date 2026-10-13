@@ -1,5 +1,5 @@
 // cspell:ignore deaddeaddeaddeaddeaddeaddeaddeaddeaddead
-import { Common, Hardfork, Mainnet, TronMainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { Account, MIN_TOKEN_ID, createAddressFromString, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -21,10 +21,10 @@ describe('TRON SELFDESTRUCT new account gas (java-tron alignment)', () => {
       gasLimit: BigInt(50000),
     })
 
-    // 5003 base + 25000 new-account + 2600 EIP-2929 cold beneficiary access.
+    // PUSH20 (3) + SELFDESTRUCT (5000) + missing beneficiary (25000).
     assert.isUndefined(result.exceptionError, 'Should not error')
-    assert.equal(result.executionGasUsed, 32603n, 'Should charge new account gas')
-    assert.equal(result.gasRefund, 0n, 'EIP-3529 removes the selfdestruct refund')
+    assert.equal(result.executionGasUsed, 30003n, 'Should charge new account gas')
+    assert.equal(result.gasRefund, 0n, 'TRON does not refund SELFDESTRUCT Energy')
   })
 
   it('should NOT charge new account gas when beneficiary exists but is empty', async () => {
@@ -44,14 +44,14 @@ describe('TRON SELFDESTRUCT new account gas (java-tron alignment)', () => {
       gasLimit: BigInt(50000),
     })
 
-    // 5003 base + 2600 EIP-2929 cold beneficiary access, with no new-account gas.
+    // PUSH20 (3) + SELFDESTRUCT (5000), with no new-account or access charge.
     assert.isUndefined(result.exceptionError, 'Should not error')
     assert.equal(
       result.executionGasUsed,
-      7603n,
+      5003n,
       'Should NOT charge new account gas for existing empty account',
     )
-    assert.equal(result.gasRefund, 0n, 'EIP-3529 removes the selfdestruct refund')
+    assert.equal(result.gasRefund, 0n, 'TRON does not refund SELFDESTRUCT Energy')
   })
 
   it('should charge new account gas when only a TRC-10 token is transferred', async () => {
@@ -70,7 +70,7 @@ describe('TRON SELFDESTRUCT new account gas (java-tron alignment)', () => {
     const result = await tvm.runCall({ to: source, gasLimit: 50000n })
 
     assert.isUndefined(result.execResult.exceptionError, 'Should not error')
-    assert.equal(result.execResult.executionGasUsed, 32603n, 'Should charge new account gas')
+    assert.equal(result.execResult.executionGasUsed, 30003n, 'Should charge new account gas')
     assert.equal(
       (await tvm.stateManager.getAccount(beneficiary))?.getTokenBalance(tokenId),
       tokenBalance,
@@ -93,68 +93,69 @@ describe('TRON SELFDESTRUCT new account gas (java-tron alignment)', () => {
   })
 })
 
-describe('Ethereum EIP-161 SELFDESTRUCT regression (ensure not broken by TRON changes)', () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.SpuriousDragon })
-
-  it('EIP-161: should charge newAccountGas when transferring value to empty account', async () => {
-    const beneficiaryHex = 'deaddeaddeaddeaddeaddeaddeaddeaddeaddead'
-    const beneficiary = createAddressFromString(`0x${beneficiaryHex}`)
-    const code = hexToBytes(`0x73${beneficiaryHex}ff`)
-    const caller = createAddressFromString('0x1000000000000000000000000000000000000001')
+describe('TRON SELFDESTRUCT existing beneficiary transfer', () => {
+  it('transfers TRX without charging creation for an existing empty beneficiary', async () => {
+    const common = new Common({ chain: TronMainnet })
+    const source = createAddressFromString('0x1000000000000000000000000000000000000001')
+    const beneficiary = createAddressFromString('0xdeaddeaddeaddeaddeaddeaddeaddeaddeaddead')
     const tvm = await createTVM({ common })
-
-    // Pre-create an empty beneficiary account
-    const emptyAccount = new Account()
-    await tvm.stateManager.putAccount(beneficiary, emptyAccount)
-
-    // Give caller some TRX balance so SELFDESTRUCT transfers value
-    const callerAccount = new Account(0n, 1000n)
-    await tvm.stateManager.putAccount(caller, callerAccount)
-    await tvm.stateManager.putCode(caller, code)
-
-    const result = await tvm.runCall({
-      to: caller,
-      gasLimit: BigInt(50000),
-    })
-
-    // EIP-161: should charge newAccountGas because transfersValue && isEmpty()
-    // PUSH20 (3) + base SELFDESTRUCT (5000) + new account (25000) = 30003
-    assert.isUndefined(result.execResult.exceptionError, 'Should not error')
-    assert.equal(
-      result.execResult.executionGasUsed,
-      30003n,
-      'EIP-161: should charge newAccountGas when transferring value to empty account',
-    )
+    await tvm.stateManager.putAccount(beneficiary, new Account())
+    await tvm.stateManager.putAccount(source, new Account(0n, 1000n))
+    await tvm.stateManager.putCode(source, hexToBytes(`0x73${beneficiary.toString().slice(2)}ff`))
+    const result = await tvm.runCall({ to: source, gasLimit: 50000n })
+    assert.isUndefined(result.execResult.exceptionError)
+    assert.strictEqual(result.execResult.executionGasUsed, 5003n)
+    assert.strictEqual((await tvm.stateManager.getAccount(beneficiary))!.balance, 1000n)
+    assert.strictEqual((await tvm.stateManager.getAccount(source))!.balance, 0n)
   })
+})
 
-  it('EIP-161: should NOT charge newAccountGas when balance=0 (no value transfer)', async () => {
-    const beneficiaryHex = 'deaddeaddeaddeaddeaddeaddeaddeaddeaddead'
-    const beneficiary = createAddressFromString(`0x${beneficiaryHex}`)
-    const code = hexToBytes(`0x73${beneficiaryHex}ff`)
-    const caller = createAddressFromString('0x1000000000000000000000000000000000000001')
-    const tvm = await createTVM({ common })
+describe('TRON SELFDESTRUCT Energy balance matrix', () => {
+  for (const trx of [0n, 100n]) {
+    for (const tokens of [0n, 100n]) {
+      for (const exists of [false, true]) {
+        it(`TRX=${trx}, tokens=${tokens}, beneficiary exists=${exists}`, async () => {
+          const source = createAddressFromString('0x1000000000000000000000000000000000000001')
+          const beneficiary = createAddressFromString('0x2000000000000000000000000000000000000002')
+          const tokenId = MIN_TOKEN_ID + 1n
+          const tvm = await createTVM()
+          const account = new Account(0n, trx)
+          account.asset = { [Number(tokenId)]: tokens }
+          await tvm.stateManager.putAccount(source, account)
+          await tvm.stateManager.putCode(
+            source,
+            hexToBytes(`0x73${beneficiary.toString().slice(2)}ff`),
+          )
+          if (exists) await tvm.stateManager.putAccount(beneficiary, new Account())
+          const result = await tvm.runCall({ to: source, gasLimit: 40000n })
+          assert.isUndefined(result.execResult.exceptionError)
+          assert.strictEqual(result.execResult.executionGasUsed, exists ? 5003n : 30003n)
+          assert.strictEqual(result.execResult.gasRefund, 0n)
+          assert.strictEqual((await tvm.stateManager.getAccount(beneficiary))!.balance, trx)
+          assert.strictEqual(
+            (await tvm.stateManager.getAccount(beneficiary))!.getTokenBalance(tokenId),
+            tokens,
+          )
+        })
+      }
+    }
+  }
 
-    // Pre-create an empty beneficiary account
-    const emptyAccount = new Account()
-    await tvm.stateManager.putAccount(beneficiary, emptyAccount)
-
-    // Caller has ZERO balance - no value transfer
-    const callerAccount = new Account(0n, 0n)
-    await tvm.stateManager.putAccount(caller, callerAccount)
-    await tvm.stateManager.putCode(caller, code)
-
-    const result = await tvm.runCall({
-      to: caller,
-      gasLimit: BigInt(50000),
-    })
-
-    // EIP-161: should NOT charge because balance=0 (no value transfer)
-    // PUSH20 (3) + base SELFDESTRUCT (5000) = 5003
-    assert.isUndefined(result.execResult.exceptionError, 'Should not error')
-    assert.equal(
-      result.execResult.executionGasUsed,
-      5003n,
-      'EIP-161: should NOT charge newAccountGas when balance=0',
+  it('does not charge creation or refund Energy when the beneficiary is self', async () => {
+    const source = createAddressFromString('0x1000000000000000000000000000000000000001')
+    const tvm = await createTVM()
+    const account = new Account(0n, 100n)
+    account.asset = { [Number(MIN_TOKEN_ID + 1n)]: 100n }
+    await tvm.stateManager.putAccount(source, account)
+    await tvm.stateManager.putCode(source, hexToBytes(`0x73${source.toString().slice(2)}ff`))
+    const result = await tvm.runCall({ to: source, gasLimit: 10000n })
+    assert.isUndefined(result.execResult.exceptionError)
+    assert.strictEqual(result.execResult.executionGasUsed, 5003n)
+    assert.strictEqual(result.execResult.gasRefund, 0n)
+    assert.strictEqual((await tvm.stateManager.getAccount(source))!.balance, 100n)
+    assert.strictEqual(
+      (await tvm.stateManager.getAccount(source))!.getTokenBalance(MIN_TOKEN_ID + 1n),
+      100n,
     )
   })
 })

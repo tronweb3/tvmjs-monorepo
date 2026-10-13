@@ -1,6 +1,6 @@
 import { createBlock } from '@tvmjs/block'
 import { createBlockchain } from '@tvmjs/blockchain'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { createLegacyTx } from '@tvmjs/tx'
 import {
   Account,
@@ -13,9 +13,11 @@ import {
 import { createVM, runBlock } from '@tvmjs/vm'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
+  const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron })
+  // Supply a synthetic genesis block for local simulation.
   const blockchain = await createBlockchain({
     common,
+    genesisBlock: createBlock({}, { common }),
     validateBlocks: false,
     validateConsensus: false,
   })

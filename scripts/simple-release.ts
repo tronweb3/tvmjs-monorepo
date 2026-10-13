@@ -25,6 +25,7 @@ const ACTIVE_PACKAGES = [
   'binarytree',
   'block',
   'blockchain',
+  'client',
   'common',
   'tvm',
   'mpt',

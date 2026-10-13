@@ -1,15 +1,18 @@
-# @tvmjs/tx `1.0.1`
+# @tvmjs/tx `1.2.0`
+
+EIP-3860 initcode limits and word metering are removed. Omit `TxOptions.allowUnlimitedInitCodeSize`; this key now throws even with `false` or `undefined`. `paramsTx[3860]` is removed. Ordinary data byte fees, creation overhead, signing and serialization remain unchanged. See [contract size migration](../common/README.md#contract-size-configuration-in-v120).
+
+Blob transactions, their public constructors/types and network wrappers have been removed in v1.2.0. Type `0x03` and retired Blob fields are rejected, including zero or empty values. Legacy, EIP-2930 and EIP-1559 encodings keep their original type numbers. See [Blob migration and affected packages](../common/README.md#blob-removal-in-v120).
+
+EIP-7702 transaction classes, constructors, types and guards are also removed. Type `0x04`, `authorizationList` and `authorization_list` are rejected at input boundaries, including explicitly empty fields. Ordinary transaction signing is unchanged. See [EIP-7702 migration](../common/README.md#eip-7702-removal-in-v120).
 
 | Implements schema and functions for TRON-compatible transaction types (including TRC-10 token transfers). Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
 
-- 🦄 All tx types up to **Osaka**
+- 🦄 Legacy, EIP-2930 and EIP-1559 transaction encoding for TRON execution
 - 🌴 Tree-shakeable API
 - 👷🏼 Controlled dependency set (1 external + `@Noble` crypto)
 - 🎼 Unified tx type API
-- 📲 New type for **EIP-7702** account abstraction
-- 🔮 `EIP-7594` PeerDAS Blob Transactions
-- 🛵 190KB bundle size (all tx types) (47KB gzipped)
 - 🏄🏾‍♂️ WASM-free default + Fully browser ready
 
 ## Table of Contents
@@ -20,15 +23,13 @@
 - [Transaction Types](#transaction-types)
   - [Gas Fee Market Transactions (EIP-1559)](#gas-fee-market-transactions-eip-1559)
   - [Access List Transactions (EIP-2930)](#access-list-transactions-eip-2930)
-  - [Blob Transactions (EIP-4844 / EIP-7594)](#blob-transactions-eip-4844--eip-7594)
-  - [EOA Code Transaction (EIP-7702)](#eoa-code-transaction-eip-7702)
   - [Legacy Transactions](#legacy-transactions)
 - [Transaction Factory](#transaction-factory)
-- [KZG Setup](#kzg-setup)
-- [Sending a Transaction](#sending-a-transaction)
+- [Custom TRON execution transactions](#custom-tron-execution-transactions)
 - [Browser](#browser)
-- [Hardware Wallets](#hardware-wallets)
+- [External signing](#external-signing)
 - [API](#api)
+- [Development](#development)
 - [Upstream](#upstream)
 - [License](#license)
 
@@ -42,13 +43,15 @@ npm install @tvmjs/tx
 
 ## Getting Started
 
-### Static Constructor Methods
+### Transaction constructors
 
-To instantiate a tx, it is not recommended to use the constructor directly. Instead each tx type comes with the following set of static constructor methods which help instantiate depending on the input data format:
+Use the exported factory functions for the desired format:
 
-- `public static fromTxData(txData: TxData, opts: TxOptions = {})`: instantiate from a data dictionary
-- `public static fromSerializedTx(serialized: Uint8Array, opts: TxOptions = {})`: instantiate from a serialized tx
-- `public static fromValuesArray(values: Uint8Array[], opts: TxOptions = {})`: instantiate from a values array
+| Input | Legacy | Access list | Fee market |
+| --- | --- | --- | --- |
+| Object | `createLegacyTx` | `createAccessList2930Tx` | `createFeeMarket1559Tx` |
+| RLP bytes | `createLegacyTxFromRLP` | `createAccessList2930TxFromRLP` | `createFeeMarket1559TxFromRLP` |
+| Values array | `createLegacyTxFromBytesArray` | `createAccessList2930TxFromBytesArray` | `create1559FeeMarketTxFromBytesArray` |
 
 See one of the code examples on the tx types below on how to use.
 
@@ -60,21 +63,9 @@ This library by default uses JavaScript implementations for the basic standard c
 
 ## Chain and Hardfork Support
 
-To use a chain other than the default Mainnet chain, or a different hardfork than the default [`@tvmjs/common`](https://github.com/tronweb3/tvmjs-monorepo/blob/master/packages/common) hardfork (`Hardfork.Prague`), provide a `common` object in the constructor of the tx.
+Transactions default to `TronMainnet`. Supply a `Common` configured with `TronNile` or `TronShasta` for the other supported networks. The `tron` execution profile controls capabilities; Ethereum presets and hardfork schedules cannot be selected. See [TRON configuration](../common/README.md#tron-networks).
 
-Base default HF (determined by `Common`): `Hardfork.Prague`
-
-Hardforks adding features and/or tx types:
-
-| Hardfork         | Introduced | Description                                                                                             |
-| ---------------- | ---------- | ------------------------------------------------------------------------------------------------------- |
-| `spuriousDragon` |  `v2.0.0`  |  `EIP-155` replay protection (disable by setting HF pre-`spuriousDragon`)                               |
-| `istanbul`       |  `v2.1.1`  | Support for reduced non-zero call blob gas prices ([EIP-2028](https://eips.ethereum.org/EIPS/eip-2028)) |
-| `muirGlacier`    |  `v2.1.2`  |  -                                                                                                      |
-| `berlin`         | `v3.1.0`   |  `EIP-2718` Typed Transactions, Optional Access Lists Tx Type `EIP-2930`                                |
-| `london`         | `v3.2.0`   | `EIP-1559` Transactions                                                                                 |
-| `cancun`         | `v5.0.0`   | `EIP-4844` Transactions                                                                                 |
-| `prague`         | `v10.0.0`  | `EIP-7702` Transactions                                                                                 |
+Legacy, EIP-2930 and EIP-1559 envelopes retain their existing type numbers and signing rules. Blob (`0x03`) and EIP-7702 (`0x04`) transactions are unsupported.
 
 ## Transaction Types
 
@@ -84,28 +75,26 @@ This library supports the following transaction types ([EIP-2718](https://eips.e
 
 - [Gas Fee Market Transactions (EIP-1559)](#gas-fee-market-transactions-eip-1559)
 - [Access List Transactions (EIP-2930)](#access-list-transactions-eip-2930)
-- [Blob Transactions (EIP-4844)](#blob-transactions-eip-4844)
-- [EOA Code Transaction (EIP-7702)](#eoa-code-transaction-eip-7702)
-- [Legacy Transactions](#legacy-transactions) (original Ethereum txs)
+- [Legacy Transactions](#legacy-transactions) (including TRC-10 fields)
 
 ### Gas Fee Market Transactions (EIP-1559)
 
-- Class: `FeeMarketEIP1559Tx`
+- Class: `FeeMarket1559Tx`
 - EIP: [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559)
-- Activation: `london`
+- Availability: TRON execution profile
 - Type: `2`
 
-This is the recommended tx type starting with the activation of the `london` HF, see the following code snippet for an example on how to instantiate:
+This fee-market container is retained for local TRON execution. It does not model native TRON resource accounting or node transaction encoding:
 
 ```ts
 // ./examples/londonTx.ts
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import type { FeeMarketEIP1559TxData } from '@tvmjs/tx'
 import { createFeeMarket1559Tx } from '@tvmjs/tx'
-import { bytesToHex } from '@tvmjs/util'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+const common = new Common({ chain: TronMainnet })
 
 const txData: FeeMarketEIP1559TxData = {
   data: '0x1a8451e600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
@@ -115,37 +104,36 @@ const txData: FeeMarketEIP1559TxData = {
   nonce: '0x00',
   to: '0xcccccccccccccccccccccccccccccccccccccccc',
   value: '0x0186a0',
-  v: '0x01',
-  r: '0xafb6e247b1c490e284053c87ab5f6b59e219d51f743f7a4d83e400782bc7e4b9',
-  s: '0x479a268e0e0acd4de3f1e28e4fac2a6b32a4195e8dfa9d19147abe8807aa6f64',
-  chainId: '0x01',
+  chainId: common.chainId(),
   accessList: [],
   type: '0x02',
 }
 
 const tx = createFeeMarket1559Tx(txData, { common })
-console.log(bytesToHex(tx.hash())) // 0x6f9ef69ccb1de1aea64e511efd6542541008ced321887937c95b03779358ec8a
-
+// Demonstration key only. This is a local execution envelope, not a node broadcast.
+const privateKey = hexToBytes(`0x${'46'.repeat(32)}`)
+const signedTx = tx.sign(privateKey)
+console.log(bytesToHex(signedTx.hash()))
 ```
 
 ### Access List Transactions (EIP-2930)
 
-- Class: `AccessListEIP2930Tx`
+- Class: `AccessList2930Tx`
 - EIP: [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930)
-- Activation: `berlin`
+- Availability: TRON execution profile
 - Type: `1`
 
-This transaction type has been introduced along the `berlin` HF. See the following code snippet for an example on how to instantiate:
+Access lists remain part of the signed transaction payload. Their entries do not add TRON intrinsic gas or enable warm/cold access pricing:
 
 ```ts
 // ./examples/accessListTx.ts
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import type { AccessList2930TxData } from '@tvmjs/tx'
 import { createAccessList2930Tx } from '@tvmjs/tx'
-import { bytesToHex } from '@tvmjs/util'
+import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
+const common = new Common({ chain: TronMainnet })
 
 const txData: AccessList2930TxData = {
   data: '0x1a8451e600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
@@ -154,10 +142,7 @@ const txData: AccessList2930TxData = {
   nonce: '0x00',
   to: '0xcccccccccccccccccccccccccccccccccccccccc',
   value: '0x0186a0',
-  v: '0x01',
-  r: '0xafb6e247b1c490e284053c87ab5f6b59e219d51f743f7a4d83e400782bc7e4b9',
-  s: '0x479a268e0e0acd4de3f1e28e4fac2a6b32a4195e8dfa9d19147abe8807aa6f64',
-  chainId: '0x01',
+  chainId: common.chainId(),
   accessList: [
     {
       address: '0x0000000000000000000000000000000000000101',
@@ -171,195 +156,26 @@ const txData: AccessList2930TxData = {
 }
 
 const tx = createAccessList2930Tx(txData, { common })
-console.log(bytesToHex(tx.hash())) // 0x9150cdebad74e88b038e6c6b964d99af705f9c0883d7f0bbc0f3e072358f5b1d
-
+// Demonstration key only. Access-list entries do not add TRON access charges.
+const privateKey = hexToBytes(`0x${'46'.repeat(32)}`)
+const signedTx = tx.sign(privateKey)
+console.log(bytesToHex(signedTx.hash()))
 ```
 
-For generating access lists from tx data based on a certain network state there is a `reportAccessList` option
-on the `VM.runTx()` method of the `@tvmjs/vm` `TypeScript` VM implementation.
-
-### Blob Transactions (EIP-4844 / EIP-7594)
-
-- Class: `BlobEIP4844Tx`
-- EIPs: [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844), [EIP-7594](https://eips.ethereum.org/EIPS/eip-7594)
-- Activation: `cancun` (EIP-4844), `osaka` (EIP-7594)
-- Type: `3`
-
-#### Introduction
-
-This library supports the blob transaction type introduced with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844).
-Additionally it is able to process blobs in the "PeerDAS way" - introduced with [EIP-7594](https://eips.ethereum.org/EIPS/eip-7594) along the
-`osaka` hardfork and generate cell proofs instead of blob proofs.
-
-**Note:** This functionality needs a manual KZG library installation and global initialization, see [KZG Setup](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) for instructions.
-
-#### Example
-
-See the following code snippet for an example on how to create a blob transaction, one for EIP-4844 only 
-and one taking EIP-7594 into the mix:
-
-```ts
-// ./examples/blobTx.ts
-
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import type { BlobEIP4844TxData } from '@tvmjs/tx'
-import { createBlob4844Tx } from '@tvmjs/tx'
-import { bytesToHex, getBlobs, randomBytes } from '@tvmjs/util'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
-import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
-
-const main = async () => {
-  const kzg = new microEthKZG(trustedSetup)
-  // EIP-4844 only
-  const common4844 = new Common({
-    chain: Mainnet,
-    hardfork: Hardfork.Cancun,
-    customCrypto: { kzg },
-  })
-
-  // EIP-4844 and EIP-7594
-  const common4844and7594 = new Common({
-    chain: Mainnet,
-    hardfork: Hardfork.Osaka,
-    customCrypto: { kzg },
-  })
-  const setups = [
-    {
-      title: 'Blob transaction (EIP-4844 only)',
-      common: common4844,
-      proofAmountComment: 'one proof per blob',
-    },
-    {
-      title: 'Blob transaction (EIP-4844 + EIP-7594)',
-      common: common4844and7594,
-      proofAmountComment: '128 cells per blob + one proof per cell -> NUM_BLOBS * 128 proofs',
-    },
-  ]
-
-  for (const setup of setups) {
-    console.log(`\n${setup.title}:`)
-    console.log('---------------------------------------')
-
-    const blobsData = ['blob 1', 'blob 2', 'blob 3']
-    console.log(`Blobs (Data) : "${blobsData.join('", "')}"`)
-    // Final format, filled with a lot of 0s, added marker
-    const blobs = getBlobs(blobsData)
-
-    console.log('Generating tx...')
-
-    const txData: BlobEIP4844TxData = {
-      data: '0x1a8451e600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
-      gasLimit: 16_000_000n,
-      maxPriorityFeePerGas: '0x01',
-      maxFeePerGas: '0xff',
-      maxFeePerBlobGas: '0xfff',
-      nonce: '0x00',
-      to: '0xcccccccccccccccccccccccccccccccccccccccc',
-      value: '0x0186a0',
-      v: '0x01',
-      r: '0xafb6e247b1c490e284053c87ab5f6b59e219d51f743f7a4d83e400782bc7e4b9',
-      s: '0x479a268e0e0acd4de3f1e28e4fac2a6b32a4195e8dfa9d19147abe8807aa6f64',
-      chainId: '0x01',
-      accessList: [],
-      type: '0x05',
-      blobs,
-    }
-
-    const tx = createBlob4844Tx(txData, { common: setup.common })
-
-    console.log(`Tx hash               : ${bytesToHex(tx.hash())}`)
-    console.log(`Num blobs             : ${tx.numBlobs()}`)
-    console.log(`Blob versioned hashes : ${tx.blobVersionedHashes.join(', ')}`)
-    console.log(`KZG commitments       : ${tx.kzgCommitments!.join(', ')}`)
-    console.log(`First KZG (cell) proof: ${tx.kzgProofs![0]}`)
-    console.log(`Num KZG (cell) proofs : ${tx.kzgProofs!.length} (${setup.proofAmountComment})`)
-  }
-
-  // To send a transaction via RPC, you can something like this:
-  // const rawTx = tx.sign(privateKeyBytes).serializeNetworkWrapper()
-  // myRPCClient.request('eth_sendRawTransaction', [rawTx]) // submits a transaction via RPC
-  //
-  // Also see ./sendRawSepoliaTx.ts example
-}
-
-void main()
-
-```
-
-**Note:** `versionedHashes` and `kzgCommitments` have a real length of 32 bytes, `blobs` have a real length of `4096` bytes and values are trimmed here for brevity.
-
-You can either pass in blobs as the initial `blobsData` (the data you want to store in the blob) - and the final `blobs` format (filled with a lot of 0s, added marker) will be derived for you - or you can pass in the final `blobs` format directly as bytes. `versionedHashes`, `kzgCommitments` and `kzgProofs` are either derived or taken from the values passed in.
-
-The `kzgProofs` field is used for both blob proofs (EIP-4844) and cell proofs (EIP-7594). Note that the amount of proofs increases by a factor of 128 when EIP-7594 is activated, since proofs are then computed per cell instead of per blob (128 cells per blob).
-
-For manually deriving commitments, proofs and versioned hashes, there are dedicated helpers available in the [@tvmjs/util](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/util) package.
-
-#### Serialization
-
-Blob transactions can be serialized in two ways.
-1) `tx.serialize()` - the standard serialization returns an RLP-encoded `Uint8Array` that conforms to the transaction as represented after it is included in a block 
-2) `tx.serializeNetworkWrapper()` - this serialization format includes the `blobs` in the encoded data and is the format specified for transactions that are being submitted to/gossipped around the mempool.  **If you are constructing a transaction to submit via JSON-RPC, use this format.**
-
-See the [Send Raw Sepolia Tx](./examples/sendRawSepoliaTx.ts) example for a detailed example on how to send a blob transaction via JSON-RPC.
-
-See the [Blob Transaction Tests](./test/eip4844.spec.ts) for additional examples of usage in instantiating, serializing, and deserializing these transactions.
-
-### EOA Code Transaction (EIP-7702)
-
-- Class: `EOACodeEIP7702Tx`
-- EIP: [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702)
-- Activation: `prague`
-- Type: `4`
-
-This tx type lets you run code in the context of an EOA, extending the functionality available to an otherwise limited account.
-
-The following is a simple example how to use an `EOACodeEIP7702Tx` with one authorization list item:
-
-```ts
-// ./examples/EOACodeTx.ts
-
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { createEOACode7702Tx } from '@tvmjs/tx'
-import { type PrefixedHexString, createAddressFromPrivateKey, randomBytes } from '@tvmjs/util'
-
-const ones32 = `0x${'01'.repeat(32)}` as PrefixedHexString
-
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7702] })
-const tx = createEOACode7702Tx(
-  {
-    authorizationList: [
-      {
-        chainId: '0x2',
-        address: `0x${'20'.repeat(20)}`,
-        nonce: '0x1',
-        yParity: '0x1',
-        r: ones32,
-        s: ones32,
-      },
-    ],
-    to: createAddressFromPrivateKey(randomBytes(32)),
-  },
-  { common },
-)
-
-console.log(
-  `EIP-7702 EOA code tx created with ${tx.authorizationList.length} authorization list item(s).`,
-)
-```
+Access-list entries remain serializable metadata. Use the legacy format for transaction-level TRC-10 transfers; typed envelopes reject nonzero `tokenId` or `tokenValue` because their signing payloads do not include those fields.
 
 ### Legacy Transactions
 
 - Class: `LegacyTx`
-- Activation: `chainstart` (with modifications along the road, see HF section below)
+- Availability: TRON execution profile
 - Type: `0` (internal)
 
-Legacy transactions are still valid transactions within Ethereum `mainnet` but will likely be deprecated at some point.
-See this [example script](./examples/transactions.ts) or the following code example on how to use.
+Legacy envelopes include `tokenId` and `tokenValue` in their signing payloads and eleven-field RLP encoding. `toJSON()` emits these values as hex quantities, preserving IDs above Number precision when reconstructing a transaction with the same Common. See this [example script](./examples/transactions.ts) or the following example.
 
 ```ts
 // ./examples/legacyTx.ts
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import type { LegacyTxData } from '@tvmjs/tx'
 import { createLegacyTx } from '@tvmjs/tx'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
@@ -367,37 +183,37 @@ import { bytesToHex, hexToBytes } from '@tvmjs/util'
 const txData: LegacyTxData = {
   nonce: '0x0',
   gasPrice: '0x09184e72a000',
-  gasLimit: '0x2710',
+  gasLimit: '0xc350',
   to: '0x0000000000000000000000000000000000000000',
   value: '0x00',
   data: '0x7f7465737432000000000000000000000000000000000000000000000000000000600057',
 }
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
+const common = new Common({ chain: TronMainnet })
 const tx = createLegacyTx(txData, { common })
 
+// WARNING: The private key in this example is for demonstration only. Never use in production.
 const privateKey = hexToBytes('0xe331b6d69882b4cb4ea581d88e0b604039a3de5967688d3dcffdd2270c0fd109')
 
 const signedTx = tx.sign(privateKey)
 
 const _serializedTx = signedTx.serialize()
-console.log(bytesToHex(signedTx.hash())) // 0x894b72d87f8333fccd29d1b3aca39af69d97a6bc281e7e7a3a60640690a3cd2b
-
+console.log(bytesToHex(signedTx.hash()))
 ```
 
 ## Transaction Factory
 
-If you only know at runtime which tx type will be used within your code or if you want to keep your code transparent to tx types, this library comes with a `TransactionFactory` for your convenience which can be used as follows:
+Use `createTx()` when the transaction type is selected at runtime:
 
 ```ts
 // ./examples/txFactory.ts
 
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { Capability, createTx } from '@tvmjs/tx'
 
 import type { EIP1559CompatibleTx } from '@tvmjs/tx'
 
-const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
+const common = new Common({ chain: TronMainnet })
 
 const txData = { type: 2, maxFeePerGas: BigInt(20) } // Creates an EIP-1559 compatible transaction
 const tx = createTx(txData, { common })
@@ -411,73 +227,20 @@ if (tx.supports(Capability.EIP1559FeeMarket)) {
 
 The correct tx type class for instantiation will then be chosen at runtime based on the data provided as an input.
 
-`TransactionFactory` supports the following static constructor methods:
+The package exports these generic constructors:
 
-- `public static fromTxData(txData: TxData | AccessListEIP2930TxData, txOptions: TxOptions = {})`
-- `public static fromSerializedData(data: Uint8Array, txOptions: TxOptions = {})`
-- `public static fromBlockBodyData(data: Uint8Array | Uint8Array[], txOptions: TxOptions = {})`
-- `public static async fromJsonRpcProvider(provider: string | EthersProvider, txHash: string, txOptions?: TxOptions)`
+- `createTx(txData, txOptions)` for transaction objects.
+- `createTxFromRLP(data, txOptions)` for serialized bytes.
+- `createTxFromBlockBodyData(data, txOptions)` for block-body entries.
+- `createTxFromRPC(txData, txOptions)` and `createTxFromJSONRPCProvider(provider, txHash, txOptions)` for compatible JSON-RPC envelopes.
 
-## KZG Setup
+## Custom TRON execution transactions
 
-This library fully supports `EIP-4844` blob transactions. For blob transactions and other KZG related proof functionality (e.g. for TVM precompiles) KZG has to be manually installed and initialized in the `common` instance to be used in instantiating blob transactions.
+Use `createCustomCommon({ name, chainId }, TronMainnet)` to create a local TRON execution configuration. The TRON profile is preserved; Ethereum network presets and L2 execution configuration are no longer supported. The retired xDai example has been removed.
 
-As a first step add the [micro-eth-signer](https://github.com/paulmillr/micro-eth-signer) package for KZG and [@paulmillr/trusted-setups](https://github.com/paulmillr/trusted-setups) for the trusted setup data as dependencies to your `package.json` file and install the libraries. Then initialization can be done like the following:
+See [the custom TRON transaction example](./examples/custom-chain-tx.ts) for signing and sender verification. These transaction objects are local execution envelopes; this example does not submit a transaction to a TRON node.
 
-```ts
-// ./examples/initKzg.ts
-
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { trustedSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
-import { KZG as microEthKZG } from 'micro-eth-signer/kzg.js'
-
-const main = async () => {
-  const kzg = new microEthKZG(trustedSetup)
-  // Instantiate `common`
-  const common = new Common({
-    chain: Mainnet,
-    hardfork: Hardfork.Cancun,
-    customCrypto: { kzg },
-  })
-
-  console.log(common.customCrypto.kzg) // should output the KZG API as an object
-}
-
-void main()
-```
-
-Note: We did not want to directly bundle because bundle sizes are large due to the large trusted setup inclusion (especially for the mainnet trusted setup).
-
-## Sending a Transaction
-
-### L2 Support
-
-This library has been tested to work with various L2 networks. To set an associated chainID, use the `createCustomCommon()` constructor from our `Common` library. The following is a simple example to send a tx to the xDai chain:
-
-```ts
-// ./examples/l2tx.ts
-
-import { Mainnet, createCustomCommon } from '@tvmjs/common'
-import { createLegacyTx } from '@tvmjs/tx'
-import { bytesToHex, createAddressFromString, hexToBytes } from '@tvmjs/util'
-
-const pk = hexToBytes('0x076247989df60a82f6e86e58104368676096f84e60972282ee00d4673a2bc9b9')
-// xDai chain ID
-const common = createCustomCommon({ chainId: 100 }, Mainnet)
-const to = createAddressFromString('0x256e8f0ba532ad83a0debde7501669511a41a1f3')
-
-const txData = {
-  nonce: 0,
-  gasPrice: 1000000000,
-  gasLimit: 21000,
-  to,
-  value: 1,
-}
-
-const tx = createLegacyTx(txData, { common })
-const signedTx = tx.sign(pk)
-console.log(bytesToHex(signedTx.hash())) // 0xbf98f6f8700812ed6f2314275070256e11945fa48afd80fb301265f6a41a2dc2
-```
+`createCustomCommon()` accepts identity and discovery overrides only. Supply genesis or consensus metadata through a complete `ChainConfig` passed to `new Common({ chain })`; see [Common configuration migration](../common/README.md#custom-networks-and-cryptography).
 
 ## Browser
 
@@ -485,90 +248,11 @@ We provide hybrid ESM/CJS builds for all our libraries. With the v10 breaking re
 
 It is easily possible to run a browser build of one of the TVMJS libraries within a modern browser using the provided ESM build. For a setup example see [./examples/browser.html](./examples/browser.html).
 
-## Hardware Wallets
+## External signing
 
-### Ledger
+Use `getMessageToSign()` to obtain the signing payload and `addSignature()` to attach an external signature. Legacy transactions return an array of bytes that must be RLP encoded; typed transactions return serialized bytes. The legacy payload includes `tokenId` and `tokenValue`, and the selected TRON chain ID participates in replay protection.
 
-To sign a tx with a hardware or external wallet use `tx.getMessageToSign()` to return an [EIP-155](https://eips.ethereum.org/EIPS/eip-155) compliant unsigned tx.
-
-A legacy transaction will return a Buffer list of the values, and a Typed Transaction ([EIP-2718](https://eips.ethereum.org/EIPS/eip-2718)) will return the serialized output.
-
-Here is an example of signing txs with `@ledgerhq/hw-app-eth` with `v6.45.4` and `@ledgerhq/hw-transport-node-hid` with `v6.29.5`:
-```ts
-// examples/ledgerSigner.mts
-
-import { Common, Sepolia } from '@tvmjs/common'
-import { RLP } from '@tvmjs/rlp'
-import {
-  type FeeMarketEIP1559TxData,
-  type LegacyTxData,
-  createFeeMarket1559Tx,
-  createLegacyTx,
-} from '@tvmjs/tx'
-import { bytesToHex } from '@tvmjs/util'
-import Eth from '@ledgerhq/hw-app-eth'
-import TransportNodeHid from '@ledgerhq/hw-transport-node-hid'
-
-const transport = await TransportNodeHid.default.open()
-const eth = new Eth.default(transport)
-const common = new Common({ chain: Sepolia })
-
-// Signing with the first key of the derivation path
-const bip32Path = "44'/60'/0'/0/0"
-
-const legacyTxData: LegacyTxData = {
-  nonce: '0x0',
-  gasPrice: '0x09184e72a000',
-  gasLimit: '0x2710',
-  to: '0x0000000000000000000000000000000000000000',
-  value: '0x00',
-  data: '0x7f7465737432000000000000000000000000000000000000000000000000000000600057',
-}
-
-const eip1559TxData: FeeMarketEIP1559TxData = {
-  data: '0x1a8451e600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
-  gasLimit: '0x02625a00',
-  maxPriorityFeePerGas: '0x01',
-  maxFeePerGas: '0xff',
-  nonce: '0x00',
-  to: '0xcccccccccccccccccccccccccccccccccccccccc',
-  value: '0x0186a0',
-  accessList: [],
-  type: '0x02',
-}
-
-const run = async () => {
-  // Signing a legacy tx
-  const tx1 = createLegacyTx(legacyTxData, { common })
-  const unsignedTx1 = tx1.getMessageToSign()
-  // Ledger signTransaction API expects it to be serialized
-  // Ledger returns unprefixed hex strings without 0x for v, r, s values
-  const { v, r, s } = await eth.signTransaction(
-    bip32Path,
-    bytesToHex(RLP.encode(unsignedTx1)).slice(2),
-    null,
-  )
-  const signedTx1 = tx1.addSignature(BigInt(`0x${v}`), BigInt(`0x${r}`), BigInt(`0x${s}`))
-  const from = signedTx1.getSenderAddress().toString()
-  console.log(`signedTx: ${bytesToHex(tx1.serialize())}\nfrom: ${from}`)
-
-  // Signing a 1559 tx
-  const tx2 = createFeeMarket1559Tx(eip1559TxData, { common })
-  // Ledger returns unprefixed hex strings without 0x for v, r, s values
-  const unsignedTx2 = tx2.getMessageToSign()
-  const { v2, r2, s2 } = await eth.signTransaction(
-    bip32Path,
-    bytesToHex(unsignedTx2).slice(2),
-    null,
-  )
-  const signedTx2 = tx2.addSignature(BigInt(`0x${v2}`), BigInt(`0x${r2}`), BigInt(`0x${s2}`))
-  const from2 = signedTx2.getSenderAddress().toString()
-  console.log(`signedTx: ${bytesToHex(tx2.serialize())}\nfrom: ${from2}`)
-}
-
-run()
-
-```
+The former Ethereum Ledger example has been retired. Hardware-wallet support for these local execution envelopes has not been validated. Native TRON transaction signing and broadcasting require java-tron transaction encoding and are outside this package's examples.
 
 ## API
 
@@ -593,6 +277,29 @@ const { TVMJSClass } = require('@tvmjs/[PACKAGE_NAME]')
 ```
 
 Using ESM will give you additional advantages over CJS beyond browser usage like static code analysis / Tree Shaking which CJS can not provide.
+
+## Development
+
+From the repository root, run:
+
+```shell
+npm run build --workspace @tvmjs/tx
+npm run tsc --workspace @tvmjs/tx
+npm run test --workspace @tvmjs/tx
+npm run lint --workspace @tvmjs/tx
+npm run spellcheck --workspace @tvmjs/tx
+npm run examples --workspace @tvmjs/tx
+```
+
+`test` runs the complete retained Node and Chromium Browser suites. `test:node:api` remains available for Node-only runs; the obsolete `test:node:tx:*` FORKS scripts have been removed.
+
+| v1.2.0 test migration | Coverage |
+| --- | --- |
+| Migrated | Legacy, EIP-2930 and EIP-1559 encoding, signing, RPC normalization, input validation and Common copying. Bundled signature vectors retain their original chain IDs through explicit TRON custom identities. |
+| Retired | Ethereum fork-matrix/T9N runners and the Ethereum Ledger example. Ledger compatibility with TRON signing was not verified. The official Ethereum transaction-vector runner was not executed; bundled vectors are a separate local regression suite. |
+| Replaced | Ethereum hardfork switching, warm/cold access-list pricing and EIP-7825 activation assumptions become TRON rejection/isolation tests, zero access-list charges and uint64 bounds. All three TRON networks cover signature replay rejection and large TRC-10 ID serialization. |
+
+These package tests validate local transaction envelopes. They do not represent new live java-tron differential results or native TRON transaction broadcasting.
 
 ## Upstream
 

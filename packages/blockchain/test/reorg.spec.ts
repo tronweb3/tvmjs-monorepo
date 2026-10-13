@@ -1,208 +1,122 @@
-import { cliqueSigner, createBlock } from '@tvmjs/block'
-import { Common, ConsensusAlgorithm, Hardfork, Mainnet } from '@tvmjs/common'
-import { Address, equalsBytes, hexToBytes } from '@tvmjs/util'
-import { assert, describe, it } from 'vitest'
+import { cliqueSigner, createBlock, createSealedCliqueBlock } from '@tvmjs/block'
+import { SIGNER_A, SIGNER_B } from '@tvmjs/testdata'
+import { Address, concatBytes } from '@tvmjs/util'
+import { assert, describe, expect, it } from 'vitest'
 
-import { CLIQUE_NONCE_AUTH, CliqueConsensus } from '../src/consensus/clique.ts'
+import { CLIQUE_NONCE_AUTH, CLIQUE_NONCE_DROP, CliqueConsensus } from '../src/consensus/clique.ts'
 import { createBlockchain } from '../src/index.ts'
-
-import { goerliChainConfig } from '@tvmjs/testdata'
-import { generateConsecutiveBlock } from './util.ts'
+import { cliqueCommon, powCommon } from './util.ts'
 
 import type { Block } from '@tvmjs/block'
-import type { ConsensusDict } from '../src/index.ts'
+import type { Signer } from '@tvmjs/testdata'
 
 describe('reorg tests', () => {
-  it.skip('should correctly reorg the chain if the total difficulty is higher on a lower block number than the current head block', async () => {
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.MuirGlacier })
-    const genesis = createBlock(
-      {
-        header: {
-          number: BigInt(0),
-          difficulty: BigInt(0x020000),
-          gasLimit: BigInt(8000000),
+  it('reorgs to a shorter chain with higher total difficulty when consensus metadata is explicit', async () => {
+    const common = powCommon()
+    const genesisBlock = createBlock({ header: { gasLimit: 8000000n } }, { common })
+    // This tests stored fork choice, not Ethash proof verification.
+    const blockchain = await createBlockchain({
+      common,
+      genesisBlock,
+      validateBlocks: true,
+      validateConsensus: false,
+    })
+    const child = (parent: Block, difficulty: bigint, timestampOffset = 1n) =>
+      createBlock(
+        {
+          header: {
+            number: parent.header.number + 1n,
+            parentHash: parent.hash(),
+            timestamp: parent.header.timestamp + timestampOffset,
+            gasLimit: parent.header.gasLimit,
+            baseFeePerGas: parent.header.calcNextBaseFee(),
+            difficulty,
+          },
         },
-      },
-      { common },
-    )
-
-    const blocks_lowTD: Block[] = []
-    const blocks_highTD: Block[] = []
-
-    blocks_lowTD.push(generateConsecutiveBlock(genesis, 0))
-
-    let TD_Low = genesis.header.difficulty + blocks_lowTD[0].header.difficulty
-    let TD_High = genesis.header.difficulty
-
-    // Keep generating blocks until the Total Difficulty (TD) of the High TD chain is higher than the TD of the Low TD chain
-    // This means that the block number of the high TD chain is 1 lower than the low TD chain
-
-    while (TD_High < TD_Low) {
-      blocks_lowTD.push(generateConsecutiveBlock(blocks_lowTD[blocks_lowTD.length - 1], 0))
-      blocks_highTD.push(
-        generateConsecutiveBlock(blocks_highTD[blocks_highTD.length - 1] ?? genesis, 1),
+        { common },
       )
-
-      TD_Low += blocks_lowTD[blocks_lowTD.length - 1].header.difficulty
-      TD_High += blocks_highTD[blocks_highTD.length - 1].header.difficulty
-    }
-
-    // sanity check
-    const lowTDBlock = blocks_lowTD[blocks_lowTD.length - 1]
-    const highTDBlock = blocks_highTD[blocks_highTD.length - 1]
-
-    const number_lowTD = lowTDBlock.header.number
-    const number_highTD = highTDBlock.header.number
-
-    // ensure that the block difficulty is higher on the highTD chain when compared to the low TD chain
-    assert.isTrue(
-      number_lowTD > number_highTD,
-      'low TD should have a lower TD than the reported high TD',
-    )
-    assert.isTrue(
-      blocks_lowTD[blocks_lowTD.length - 1].header.number >
-        blocks_highTD[blocks_highTD.length - 1].header.number,
-      'low TD block should have a higher number than high TD block',
-    )
+    const low = [child(genesisBlock, 1n)]
+    low.push(child(low[0], 1n), child(genesisBlock, 10n, 2n))
+    await blockchain.putBlocks(low.slice(0, 2))
+    expect((await blockchain.getCanonicalHeadBlock()).hash()).toEqual(low[1].hash())
+    await blockchain.putBlock(low[2])
+    expect((await blockchain.getCanonicalHeadBlock()).hash()).toEqual(low[2].hash())
+    expect((await blockchain.getCanonicalHeadHeader()).number).toBe(1n)
+    expect(await blockchain.getTotalDifficulty(low[2].hash())).toBe(10n)
+    await expect(blockchain.getBlock(2n)).rejects.toThrow('not found in DB')
+    expect((await blockchain.getBlock(low[1].hash())).hash()).toEqual(low[1].hash())
   })
 
   it('should correctly reorg a poa chain and remove blocks from clique snapshots', async () => {
-    const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
-    const genesisBlock = createBlock({ header: { extraData: new Uint8Array(97) } }, { common })
-
-    const consensusDict: ConsensusDict = {}
-    consensusDict[ConsensusAlgorithm.Clique] = new CliqueConsensus()
+    const common = cliqueCommon()
+    const extraData = concatBytes(
+      new Uint8Array(32),
+      SIGNER_A.address.toBytes(),
+      SIGNER_B.address.toBytes(),
+      new Uint8Array(65),
+    )
+    const genesisBlock = createBlock({ header: { extraData, gasLimit: 8000000n } }, { common })
+    const consensus = new CliqueConsensus()
+    // Snapshot rollback is isolated here; the voting suite checks consensus validation.
     const blockchain = await createBlockchain({
-      validateBlocks: false,
-      validateConsensus: false,
-      consensusDict,
       common,
       genesisBlock,
+      consensusDict: { clique: consensus },
+      validateBlocks: false,
+      validateConsensus: false,
     })
-
-    const extraData = hexToBytes(
-      '0x506172697479205465636820417574686f7269747900000000000000000000002bbf886181970654ed46e3fae0ded41ee53fec702c47431988a7ae80e6576f3552684f069af80ba11d36327aaf846d470526e4a1c461601b2fd4ebdcdc2b734a01',
-    ) // from goerli block 1
-    const { gasLimit } = genesisBlock.header
-    const base = { extraData, gasLimit, difficulty: 1 }
-
-    const nonce = CLIQUE_NONCE_AUTH
     const beneficiary1 = new Address(new Uint8Array(20).fill(1))
     const beneficiary2 = new Address(new Uint8Array(20).fill(2))
-
-    const block1_low = createBlock(
-      {
-        header: {
-          ...base,
-          number: 1,
-          parentHash: genesisBlock.hash(),
-          timestamp: genesisBlock.header.timestamp + BigInt(30),
+    const child = (parent: Block, signer: Signer, timestampOffset: bigint, beneficiary?: Address) =>
+      createSealedCliqueBlock(
+        {
+          header: {
+            number: parent.header.number + 1n,
+            parentHash: parent.hash(),
+            timestamp: parent.header.timestamp + timestampOffset,
+            gasLimit: parent.header.gasLimit,
+            baseFeePerGas: parent.header.calcNextBaseFee(),
+            extraData: new Uint8Array(97),
+            difficulty: 1n,
+            nonce: beneficiary ? CLIQUE_NONCE_AUTH : CLIQUE_NONCE_DROP,
+            coinbase: beneficiary,
+          },
         },
-      },
-      { common },
-    )
-    const block2_low = createBlock(
-      {
-        header: {
-          ...base,
-          number: 2,
-          parentHash: block1_low.hash(),
-          timestamp: block1_low.header.timestamp + BigInt(30),
-          nonce,
-          coinbase: beneficiary1,
-        },
-      },
-      { common },
-    )
+        signer.privateKey,
+        { common },
+      )
 
-    const block1_high = createBlock(
-      {
-        header: {
-          ...base,
-          number: 1,
-          parentHash: genesisBlock.hash(),
-          timestamp: genesisBlock.header.timestamp + BigInt(15),
-        },
-      },
-      { common },
+    const firstLow = child(genesisBlock, SIGNER_A, 30n, beneficiary1)
+    const secondLow = child(firstLow, SIGNER_B, 30n, beneficiary1)
+    await blockchain.putBlocks([firstLow, secondLow])
+    assert.isTrue(consensus.cliqueActiveSigners(3n).some((address) => address.equals(beneficiary1)))
+    assert.deepEqual((await blockchain.getCanonicalHeadBlock()).hash(), secondLow.hash())
+
+    const firstHigh = child(genesisBlock, SIGNER_B, 15n, beneficiary2)
+    const secondHigh = child(firstHigh, SIGNER_A, 15n, beneficiary2)
+    const thirdHigh = child(secondHigh, SIGNER_B, 15n)
+    await blockchain.putBlocks([firstHigh, secondHigh, thirdHigh])
+    assert.deepEqual((await blockchain.getCanonicalHeadBlock()).hash(), thirdHigh.hash())
+    assert.isFalse(
+      consensus.cliqueActiveSigners(4n).some((address) => address.equals(beneficiary1)),
     )
-    const block2_high = createBlock(
-      {
-        header: {
-          ...base,
-          number: 2,
-          parentHash: block1_high.hash(),
-          timestamp: block1_high.header.timestamp + BigInt(15),
-        },
-      },
-      { common },
-    )
-    const block3_high = createBlock(
-      {
-        header: {
-          ...base,
-          number: 3,
-          parentHash: block2_high.hash(),
-          timestamp: block2_high.header.timestamp + BigInt(15),
-          nonce,
-          coinbase: beneficiary2,
-        },
-      },
-      { common },
-    )
-
-    await blockchain.putBlocks([block1_low, block2_low])
-
-    await blockchain.putBlocks([block1_high, block2_high, block3_high])
-
-    let signerStates = (blockchain.consensus as CliqueConsensus)._cliqueLatestSignerStates
-
+    assert.isTrue(consensus.cliqueActiveSigners(4n).some((address) => address.equals(beneficiary2)))
     assert.isUndefined(
-      signerStates.find(
-        (s: any): boolean =>
-          s[0] === BigInt(2) && s[1].find((a: Address) => a.equals(beneficiary1)),
+      consensus._cliqueLatestSignerStates.find(
+        ([height, signers]) =>
+          height === 2n && signers.some((address) => address.equals(beneficiary1)),
       ),
-      'should not find reorged signer state',
     )
-
-    let signerVotes = (blockchain.consensus as CliqueConsensus)._cliqueLatestVotes
+    assert.isUndefined(consensus._cliqueLatestVotes.find((vote) => vote[1][1].equals(beneficiary1)))
     assert.isUndefined(
-      signerVotes.find(
-        (v: any): boolean =>
-          v[0] === BigInt(2) &&
-          (v[1][0] as Address).equals(cliqueSigner(block1_low.header)) &&
-          (v[1][1] as Address).equals(beneficiary1) &&
-          equalsBytes(v[1][2], CLIQUE_NONCE_AUTH),
+      consensus._cliqueLatestBlockSigners.find(
+        ([height, signer]) => height === 1n && signer.equals(cliqueSigner(firstLow.header)),
       ),
-      'should not find reorged clique vote',
     )
-
-    let blockSigners = (blockchain.consensus as CliqueConsensus)._cliqueLatestBlockSigners
-    assert.isUndefined(
-      blockSigners.find(
-        (s: any): boolean => s[0] === BigInt(1) && s[1].equals(cliqueSigner(block1_low.header)),
-      ),
-      'should not find reorged block signer',
-    )
-
-    signerStates = (blockchain.consensus as CliqueConsensus)._cliqueLatestSignerStates
     assert.isDefined(
-      signerStates.find(
-        (s: any): boolean =>
-          s[0] === BigInt(3) && s[1].find((a: Address) => a.equals(beneficiary2)),
+      consensus._cliqueLatestBlockSigners.find(
+        ([height, signer]) => height === 3n && signer.equals(cliqueSigner(thirdHigh.header)),
       ),
-      'should find reorged signer state',
-    )
-
-    signerVotes = (blockchain.consensus as CliqueConsensus)._cliqueLatestVotes
-    assert.strictEqual(signerVotes.length, 0, 'votes should be empty')
-
-    blockSigners = (blockchain.consensus as CliqueConsensus)._cliqueLatestBlockSigners
-    assert.isDefined(
-      blockSigners.find(
-        (s: any): boolean => s[0] === BigInt(3) && s[1].equals(cliqueSigner(block3_high.header)),
-      ),
-      'should find reorged block signer',
     )
   })
 })

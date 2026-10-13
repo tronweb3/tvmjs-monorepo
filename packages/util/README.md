@@ -1,4 +1,8 @@
-# @tvmjs/util `1.1.0`
+# @tvmjs/util `1.2.0`
+
+v1.2.0 removes the Blob and KZG modules, their public helpers and dedicated dependencies. Generic hashes, signatures, bytes and TRON address tools remain available. See [Blob migration and affected packages](../common/README.md#blob-removal-in-v120).
+
+The EIP-7702 `authorization` module, signing/recovery helpers, constants, list types and guards are also removed. Generic signature utilities remain available. See [EIP-7702 migration](../common/README.md#eip-7702-removal-in-v120).
 
 | A collection of utility functions for TRON/TVM. Part of the [TVMJS](https://github.com/tronweb3/tvmjs-monorepo) project, forked from [EthereumJS](https://github.com/ethereumjs/ethereumjs-monorepo). |
 | --- |
@@ -10,14 +14,11 @@
   - [CREATE2 migration in 1.1.0](#create2-migration-in-110)
 - [Module: [account]](#module-account)
 - [Module: [address]](#module-address)
-- [Module: [authorization]](#module-authorization)
-- [Module: [blobs]](#module-blobs)
 - [Module: [bytes]](#module-bytes)
 - [Module: [constants]](#module-constants)
 - [Module: [db]](#module-db)
 - [Module: [genesis]](#module-genesis)
 - [Module: [internal]](#module-internal)
-- [Module: [kzg]](#module-kzg)
 - [Module: [mapDB]](#module-mapdb)
 - [Module: [request]](#module-request)
 - [Module: [signature]](#module-signature)
@@ -91,6 +92,18 @@ const account = createPartialAccount({
 console.log(`Partial account with nonce=${account.nonce} and balance=${account.balance} created`)
 ```
 
+### TRC-10 balances
+
+`Account.asset` maps canonical decimal token ID strings to `bigint` balances. Use `tokenIdToKey()` to build keys and pass token IDs as `bigint` so IDs above `2^53 - 1` stay exact; `number` inputs are accepted only when they are safe integers. Assets are RLP-encoded in ascending numeric ID order.
+
+```ts
+import { createAccount, tokenIdToKey } from '@tvmjs/util'
+
+const account = createAccount({ asset: { [tokenIdToKey(9007199254740993n)]: 100n } })
+console.log(account.getTokenBalance(9007199254740993n)) // 100n
+console.log(account.getTokenBalance(9007199254740992n)) // 0n
+```
+
 ## Module: [address](src/address.ts)
 
 Class representing a TRON-compatible `Address` with instantiation helpers and validation methods.
@@ -102,31 +115,6 @@ import { createAddressFromString } from '@tvmjs/util'
 
 const address = createAddressFromString('0x2f015c60e0be116b1f0cd534704db9c92118fb6a')
 console.log(`Address ${address.toString()} created`)
-```
-
-## Module: [authorization](src/authorization.ts)
-
-Module with `EIP-7702` authorization list signing utilities.
-
-## Module: [blobs](src/blobs.ts)
-
-Module providing helpers around EIP-4844 blobs for creating blobs, associated KZG commitments and proofs as well as versioned hashes. It also provides helpers for EIP-7594 conformant blobs for creating extended cells and corresponding proofs.
-
-```ts
-// ./examples/blobs.ts
-
-import { bytesToHex, computeVersionedHash, getBlobs } from '@tvmjs/util'
-
-const blobs = getBlobs('test input')
-
-console.log('Created the following blobs:')
-console.log(blobs)
-
-const commitment = bytesToHex(new Uint8Array([1, 2, 3]))
-const blobCommitmentVersion = 0x01
-const versionedHash = computeVersionedHash(commitment, blobCommitmentVersion)
-
-console.log(`Versioned hash ${versionedHash} computed`)
 ```
 
 ## Module: [bytes](src/bytes.ts)
@@ -168,10 +156,6 @@ Genesis related interfaces and helpers.
 ## Module: [internal](src/internal.ts)
 
 Internalized simple helper methods like `isHexString`. Note that methods from this module might get deprecated in the future.
-
-## Module: [kzg](src/kzg.ts)
-
-KZG interface (used for 4844 blob txs), see [@tvmjs/tx](https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/tx/README.md#kzg-setup) README for main usage instructions.
 
 ## Module: [mapDB](src/mapDB.ts)
 

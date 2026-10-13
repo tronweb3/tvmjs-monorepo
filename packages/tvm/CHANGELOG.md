@@ -1,3 +1,5 @@
+<!-- cspell:ignore dataloadn datasize datacopy coldsload -->
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -7,6 +9,44 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+- Fix SSTORE overcharging after a slot has been written to zero in the same transaction. Track storage presence through successful child calls and nested rollback, and reset it at public execution boundaries, matching java-tron's storage row cache.
+- Add 71 externally measured java-tron reference vectors with the upstream commit, configuration and provenance hashes. Replay them in TVMJS Node/Browser tests across three TRON networks and both StateManagers without Java or Gradle dependencies.
+
+### Tests
+
+- Migrate retained execution and precompile tests to TRON configuration, including transaction-ID-based creation, 21-byte CREATE2 results, Energy costs, sender funding, nonce boundaries and transient-storage cleanup. Remove the temporary Ethereum-input type suppressions from TVM tests.
+- Restore MODEXP vectors and direct P256/BLS helper tests; reject activation of inactive cryptographic capabilities and check their absence from the active precompile table. Validate BLS error results without swallowing failed assertions, and run the bundled Noble/MCL vectors in both Node and Browser.
+- Retire the old Ethereum EOF execution runners and unregistered alternate-precompile integration tests. Preserve independent EOF parser coverage and explicit TRON rejection tests; the external Ethereum EOF conformance vectors are not executed.
+
+### Breaking Changes
+
+- Remove obsolete storage-pricing entries from exported `paramsTVM`: `netSstoreNoopGas`, `netSstoreInitGas`, `netSstoreCleanGas`, `netSstoreDirtyGas`, `netSstoreClearRefundGas`, `netSstoreResetRefundGas`, `netSstoreResetClearRefundGas`, `sstoreSentryEIP2200Gas`, `sstoreNoopEIP2200Gas`, `sstoreDirtyEIP2200Gas`, `sstoreInitEIP2200Gas`, `sstoreInitRefundEIP2200Gas`, `sstoreCleanEIP2200Gas`, `sstoreCleanRefundEIP2200Gas`, `sstoreClearRefundEIP2200Gas` and `coldsloadGas`. Remove the now-empty `1716` parameter group; preserve other members of shared groups and the TRON schedule.
+- Remove the Frontier-only `CODESTORE_OUT_OF_GAS` error identifier and its internal result helper. Failed code deposits use `OUT_OF_GAS`, revert creation effects and return zero from internal CREATE/CREATE2.
+- Remove EIP-170/EIP-3860 size checks and initcode word metering. Remove `allowUnlimitedContractSize` / `allowUnlimitedInitCodeSize` from TVM options and instance properties, rejecting old options before initialization. Remove `paramsTVM[607].maxCodeSize`, `paramsTVM[3860]` and the `CODESIZE_EXCEEDS_MAXIMUM` / `INITCODE_SIZE_VIOLATION` error identifiers. Preserve code deposit, memory expansion, CREATE2 hashing and failure rollback.
+- Remove the EIP-7480 group from the exported `paramsTVM` dictionary, including `dataloadGas`, `dataloadnGas`, `datasizeGas` and `datacopyGas`. EOF parsing exports remain available.
+- Remove EIP-7702 delegation lookup, its dedicated warm/BAL tracking, the support declaration and `DELEGATION_7702_FLAG`. Former delegation code fails as invalid bytecode; ordinary CALL/DELEGATECALL and rollback behavior remain unchanged.
+- Remove the EIP-4788 support declaration and reject Beacon root fields in caller-supplied block contexts before state changes or execution locks.
+- Remove BLOBHASH/BLOBBASEFEE, Blob execution/message/result fields and the Ethereum KZG precompile implementation. Reject removed execution options and retain TRON multi-sign at `0x0a` and Token opcodes at `0xd0`–`0xd3`.
+- Replace Ethereum cold/warm access and storage refunds with the documented java-tron 4.8.2 Energy schedule. Align account access, SLOAD/SSTORE, CALL/CALLTOKEN, SELFDESTRUCT, EXP and memory/copy instruction costs.
+- Accept only the TRON execution profile. Resolve shared opcode and precompile capabilities directly without Ethereum hardfork ordering or inherited consensus metadata.
+
+### Fixes
+
+- Charge the full gas cost of jump instructions before analyzing jump destinations, avoiding full code scans on calls with insufficient gas. Remove the obsolete jump-analysis trigger for MCOPY.
+- Validate explicit EIPs against the same `tronExecutionProfile` used by Common, accepting its base groups as well as optional CLZ. Retired implementations are no longer listed as supported capabilities.
+- Delete unused EIP-1283/EIP-2200 storage-metering modules and EIP-2929 storage/refund/BAL helpers. Retain the address-access helpers used by inactive EOF calls; verify fixed TRON Energy, zero refunds and failure rollback.
+- Remove conflicting EOF data-instruction registrations and fees at `0xd0`–`0xd3`, preserving TRON Token opcode results, stack behavior and Energy costs. Retain independent EOF parsing and reject EOF activation through the TRON profile.
+- Migrate CLZ and MCOPY regressions to TRON configuration, checking successful execution, final stack/memory and fixed Energy costs.
+- Read and write TRC-10 balances by exact token ID in CALLTOKEN, TOKENBALANCE, message transfers and SELFDESTRUCT instead of converting IDs to `Number`, so adjacent IDs above `2^53 - 1` keep separate balances.
+- Charge new-account Energy only for missing CALL/CALLTOKEN recipients with nonzero value. Keep existing empty accounts across transactions and avoid creating recipients on zero-value calls, preserving the execution account for explicit `runCall({ code })` overrides.
+- Keep access reporting independent of warming and retain version-0 forwarding, checkpoint rollback and unused callee Energy handling.
+- Add pinned source vectors and VM/TVM, storage, transfer, insufficient Energy and revert regressions.
+- Remove unreachable Ethereum gas-forwarding branches and unused arguments from `maxCallGas`, preserving the current TRON version-0 forwarding rules and migrating the opcode regression tests.
+- Remove redundant TRON hardfork guards from CREATE/CREATE2, transaction-wide nonces, SELFDESTRUCT gas and Proposal 96 checks while preserving their active execution rules.
+- Limit the internal precompile registry to EIP capability checks and remove its unused hardfork declarations. Migrate availability tests to the three TRON networks and retain custom precompile override coverage.
+- Preserve caller options and custom BN254 implementations during TVM creation.
+- Migrate retained configuration examples and TRON regressions; retire examples requiring unsupported Ethereum profiles.
 
 ## 1.1.0
 

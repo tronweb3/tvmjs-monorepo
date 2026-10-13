@@ -1,6 +1,6 @@
 {
   "name": "@tvmjs/block",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "description": "Provides TRON block serialization and helper functions for TVM.",
   "keywords": ["ethereum", "block", "tron", "tvm"],
   "homepage": "https://github.com/tronweb3/tvmjs-monorepo/tree/master/packages/block#readme",
@@ -13,10 +13,9 @@
   },
   "license": "MPL-2.0",
   "author": "mjbecze (mb@ethdev.com)",
-  "type": "module",
+  "contributors": ["TVMJS Team"],
   "sideEffects": false,
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
+  "type": "module",
   "exports": {
     ".": {
       "import": {
@@ -26,6 +25,8 @@
       "require": "./dist/cjs/index.js"
     }
   },
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
   "files": ["dist", "src"],
   "scripts": {
     "biome": "npx @biomejs/biome check",
@@ -42,29 +43,26 @@
     "prepublishOnly": "../../config/cli/prepublish.sh",
     "sc": "npm run spellcheck",
     "spellcheck": "npm run spellcheck:ts && npm run spellcheck:md",
-    "spellcheck:ts": "npx cspell --gitignore -c ../../config/cspell-ts.json \"./**/*.ts\" --cache --show-suggestions --show-context",
     "spellcheck:md": "npx cspell --gitignore -c ../../config/cspell-md.json \"**.md\" --cache --show-suggestions --show-context",
+    "spellcheck:ts": "npx cspell --gitignore -c ../../config/cspell-ts.json \"./**/*.ts\" --cache --show-suggestions --show-context",
     "test": "npm run test:node && npm run test:browser",
     "test:browser": "npx vitest run --config=../../config/vitest.config.browser.mts",
     "test:node": "npx vitest run -c ../../config/vitest.config.mts",
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@tvmjs/common": "1.1.0",
-    "@tvmjs/rlp": "1.0.0",
-    "@tvmjs/mpt": "1.0.1",
-    "@tvmjs/tx": "1.0.1",
-    "@tvmjs/util": "1.1.0",
     "@noble/curves": "2.0.1",
-    "@noble/hashes": "2.0.1"
+    "@noble/hashes": "2.0.1",
+    "@tvmjs/common": "1.2.0",
+    "@tvmjs/mpt": "1.0.2",
+    "@tvmjs/rlp": "1.0.0",
+    "@tvmjs/tx": "1.2.0",
+    "@tvmjs/util": "1.2.0"
   },
   "devDependencies": {
-    "@tvmjs/testdata": "1.0.0",
-    "@paulmillr/trusted-setups": "0.2.0",
-    "micro-eth-signer": "0.15.0"
+    "@tvmjs/testdata": "1.0.0"
   },
   "engines": {
     "node": ">=20"
-  },
-  "contributors": ["TVMJS Team"]
+  }
 }

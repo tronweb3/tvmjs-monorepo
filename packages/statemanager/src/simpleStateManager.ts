@@ -1,5 +1,5 @@
 import { keccak_256 } from '@noble/hashes/sha3.js'
-import { Account, EthereumJSErrorWithoutCode, bytesToHex } from '@tvmjs/util'
+import { Account, EthereumJSErrorWithoutCode, bytesToHex, tokenIdFromKey } from '@tvmjs/util'
 
 import { OriginalStorageCache } from './cache/originalStorageCache.ts'
 import { modifyAccountFields } from './util.ts'
@@ -7,6 +7,15 @@ import { modifyAccountFields } from './util.ts'
 import type { AccountFields, Common, StateManagerInterface } from '@tvmjs/common'
 import type { Address, PrefixedHexString } from '@tvmjs/util'
 import type { SimpleStateManagerOpts } from './index.ts'
+
+function copyAccount(account: Account | undefined): Account | undefined {
+  if (account === undefined) return undefined
+  // Sharing the mutable TRC-10 balance map across checkpoints leaks transfers
+  // through REVERT and OOG, even when the Account instances themselves are copied.
+  return Object.assign(Object.create(Object.getPrototypeOf(account)), account, {
+    _asset: account._asset === null ? null : { ...account._asset },
+  })
+}
 
 /**
  * Simple and dependency-free state manager for basic state access use cases
@@ -27,6 +36,7 @@ export class SimpleStateManager implements StateManagerInterface {
   public accountStack: Map<PrefixedHexString, Account | undefined>[] = []
   public codeStack: Map<PrefixedHexString, Uint8Array>[] = []
   public storageStack: Map<string, Uint8Array>[] = []
+  private tokenIdStack: Set<bigint>[] = []
 
   originalStorageCache: {
     get(address: Address, key: Uint8Array): Promise<Uint8Array>
@@ -55,15 +65,12 @@ export class SimpleStateManager implements StateManagerInterface {
   protected checkpointSync() {
     const newTopA = new Map(this.topAccountStack())
     for (const [address, account] of newTopA) {
-      const accountCopy =
-        account !== undefined
-          ? Object.assign(Object.create(Object.getPrototypeOf(account)), account)
-          : undefined
-      newTopA.set(address, accountCopy)
+      newTopA.set(address, copyAccount(account))
     }
     this.accountStack.push(newTopA)
     this.codeStack.push(new Map(this.topCodeStack()))
     this.storageStack.push(new Map(this.topStorageStack()))
+    this.tokenIdStack.push(new Set(this.tokenIdStack[this.tokenIdStack.length - 1]))
   }
 
   async getAccount(address: Address): Promise<Account | undefined> {
@@ -71,7 +78,12 @@ export class SimpleStateManager implements StateManagerInterface {
   }
 
   async putAccount(address: Address, account?: Account | undefined): Promise<void> {
+    const tokenIds = account === undefined ? [] : Object.keys(account.asset).map(tokenIdFromKey)
     this.topAccountStack().set(address.toString(), account)
+    // Account assets seed the local registry. A known token remains registered
+    // when its balance is spent or its holder is deleted, unless the write reverts.
+    const registry = this.tokenIdStack[this.tokenIdStack.length - 1]
+    for (const tokenId of tokenIds) registry.add(tokenId)
   }
 
   async deleteAccount(address: Address): Promise<void> {
@@ -120,12 +132,14 @@ export class SimpleStateManager implements StateManagerInterface {
     this.accountStack.splice(-2, 1)
     this.codeStack.splice(-2, 1)
     this.storageStack.splice(-2, 1)
+    this.tokenIdStack.splice(-2, 1)
   }
 
   async revert(): Promise<void> {
     this.accountStack.pop()
     this.codeStack.pop()
     this.storageStack.pop()
+    this.tokenIdStack.pop()
   }
 
   async flush(): Promise<void> {}
@@ -133,11 +147,13 @@ export class SimpleStateManager implements StateManagerInterface {
 
   shallowCopy(): StateManagerInterface {
     const copy = new SimpleStateManager({ common: this.common })
-    for (let i = 0; i < this.accountStack.length; i++) {
-      copy.accountStack.push(new Map(this.accountStack[i]))
-      copy.codeStack.push(new Map(this.codeStack[i]))
-      copy.storageStack.push(new Map(this.storageStack[i]))
-    }
+    copy.accountStack = this.accountStack.map(
+      (accounts) =>
+        new Map([...accounts].map(([address, account]) => [address, copyAccount(account)])),
+    )
+    copy.codeStack = this.codeStack.map((code) => new Map(code))
+    copy.storageStack = this.storageStack.map((storage) => new Map(storage))
+    copy.tokenIdStack = this.tokenIdStack.map((tokenIds) => new Set(tokenIds))
     return copy
   }
 
@@ -152,8 +168,8 @@ export class SimpleStateManager implements StateManagerInterface {
     throw EthereumJSErrorWithoutCode('Method not implemented.')
   }
 
-  // TODO TRON implement token in rpc state manager
-  async tokenIdExists(_tokenId: number): Promise<boolean> {
-    throw EthereumJSErrorWithoutCode('Method not implemented.')
+  /** Checks IDs registered by local account writes, with the same snapshot as account state. */
+  async tokenIdExists(tokenId: bigint): Promise<boolean> {
+    return this.tokenIdStack[this.tokenIdStack.length - 1].has(tokenId)
   }
 }

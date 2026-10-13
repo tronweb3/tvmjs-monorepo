@@ -6,13 +6,11 @@ import {
   stripHexPrefix,
 } from '@tvmjs/util'
 
-import { Holesky, Hoodi, Mainnet, Sepolia, TronMainnet, TronNile, TronShasta } from './chains.ts'
+import { TronMainnet, TronNile, TronShasta } from './chains.ts'
 import { Hardfork } from './enums.ts'
-import { hardforksDict } from './hardforks.ts'
 
 import type { PrefixedHexString } from '@tvmjs/util'
 import type { GethGenesis } from './gethGenesis.ts'
-import type { HardforksDict } from './types.ts'
 
 type ConfigHardfork =
   | { name: string; block: null; timestamp: number }
@@ -33,9 +31,9 @@ function formatNonce(nonce: string): PrefixedHexString {
 }
 
 /**
- * Converts Geth genesis parameters to an EthereumJS compatible `CommonOpts` object
+ * Normalizes Geth genesis parameters as raw Ethereum network data.
  * @param gethGenesis GethGenesis object
- * @returns genesis parameters in a `CommonOpts` compliant object
+ * @returns non-executable genesis parameters without a TRON execution marker
  */
 function parseGethParams(gethGenesis: GethGenesis) {
   const {
@@ -46,7 +44,6 @@ function parseGethParams(gethGenesis: GethGenesis) {
     gasLimit,
     coinbase,
     baseFeePerGas,
-    excessBlobGas,
     requestsHash,
     extraData: unparsedExtraData,
     nonce: unparsedNonce,
@@ -54,6 +51,10 @@ function parseGethParams(gethGenesis: GethGenesis) {
   } = gethGenesis
   const genesisTimestamp = Number(unparsedTimestamp)
   const { chainId, depositContractAddress } = config
+
+  if ('blobSchedule' in config) {
+    throw EthereumJSErrorWithoutCode('blobSchedule is not supported by TRON configuration parsing')
+  }
 
   // geth is not strictly putting empty fields with a 0x prefix
   const extraData = addHexPrefix(unparsedExtraData ?? '')
@@ -75,38 +76,6 @@ function parseGethParams(gethGenesis: GethGenesis) {
     )
   }
 
-  let customHardforks: HardforksDict | undefined = undefined
-  if (config.blobSchedule !== undefined) {
-    customHardforks = {}
-    const blobGasPerBlob = 131072
-    for (const [hfKey, hfSchedule] of Object.entries(config.blobSchedule)) {
-      const hfConfig = hardforksDict[hfKey]
-      if (hfConfig === undefined) {
-        throw EthereumJSErrorWithoutCode(`unknown hardfork=${hfKey} specified in blobSchedule`)
-      }
-      const { target, max, baseFeeUpdateFraction: blobGasPriceUpdateFraction } = hfSchedule
-      if (target === undefined || max === undefined || blobGasPriceUpdateFraction === undefined) {
-        throw EthereumJSErrorWithoutCode(
-          `undefined target, max or baseFeeUpdateFraction specified in blobSchedule for hardfork=${hfKey}`,
-        )
-      }
-
-      // copy current hardfork info to custom and add blob config
-      const customHfConfig = JSON.parse(JSON.stringify(hfConfig))
-      customHfConfig.params = {
-        ...customHardforks.params,
-        // removes blobGasPriceUpdateFraction key to prevent undefined overriding if undefined
-        ...{
-          targetBlobGasPerBlock: blobGasPerBlob * target,
-          maxBlobGasPerBlock: blobGasPerBlob * max,
-          blobGasPriceUpdateFraction,
-        },
-      }
-
-      customHardforks[hfKey] = customHfConfig
-    }
-  }
-
   const params = {
     name,
     chainId,
@@ -120,12 +89,11 @@ function parseGethParams(gethGenesis: GethGenesis) {
       mixHash,
       coinbase,
       baseFeePerGas,
-      excessBlobGas,
       requestsHash,
     },
     hardfork: undefined as string | undefined,
     hardforks: [] as ConfigHardfork[],
-    customHardforks,
+    customHardforks: undefined,
     bootstrapNodes: [],
     consensus:
       config.clique !== undefined
@@ -273,13 +241,22 @@ function parseGethParams(gethGenesis: GethGenesis) {
 }
 
 /**
- * Parses a genesis object exported from Geth into parameters for Common instance
+ * Parses a Geth genesis object as raw Ethereum network data, not an executable ChainConfig.
+ * Use parseGethGenesisState() to import allocations independently of execution configuration.
+ * Blob schedules are unsupported, including empty schedules.
  * @param gethGenesis GethGenesis object
  * @param name optional chain name
- * @returns parsed params
+ * @returns parsed data without an execution profile; Common rejects this as a chain configuration
  */
 export function parseGethGenesis(gethGenesis: GethGenesis, name?: string) {
   try {
+    // Check the original object before spreading it: inherited and non-enumerable
+    // fields must be rejected rather than silently lost during copying.
+    if ('excessBlobGas' in gethGenesis || 'blobGasUsed' in gethGenesis) {
+      throw EthereumJSErrorWithoutCode(
+        'Blob gas fields are not supported by TRON configuration parsing',
+      )
+    }
     const required = ['config', 'difficulty', 'gasLimit', 'nonce', 'alloc']
     if (required.some((field) => !(field in gethGenesis))) {
       const missingField = required.filter((field) => !(field in gethGenesis))
@@ -302,7 +279,7 @@ export function parseGethGenesis(gethGenesis: GethGenesis, name?: string) {
 
 /**
  * Return the preset chain config for one of the predefined chain configurations
- * @param chain the representing a network name (e.g. 'mainnet') or number representing the chain ID
+ * @param chain TRON preset name (e.g. 'tron-mainnet') or numeric chain ID
  * @returns a {@link ChainConfig}
  */
 export const getPresetChainConfig = (chain: string | number) => {
@@ -316,18 +293,7 @@ export const getPresetChainConfig = (chain: string | number) => {
     case 'tron-shasta':
     case 2494104990:
       return TronShasta
-    case 'holesky':
-    case 17000:
-      return Holesky
-    case 'hoodi':
-    case 560048:
-      return Hoodi
-    case 'sepolia':
-    case 11155111:
-      return Sepolia
-    case 'mainnet':
-    case 1:
     default:
-      return Mainnet
+      throw EthereumJSErrorWithoutCode(`Unsupported chain ${chain}; use a TRON execution preset`)
   }
 }

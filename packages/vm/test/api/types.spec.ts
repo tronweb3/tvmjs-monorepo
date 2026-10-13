@@ -1,5 +1,5 @@
 import { createBlock } from '@tvmjs/block'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { createAccessList2930Tx, createLegacyTx } from '@tvmjs/tx'
 import { assert, describe, it } from 'vitest'
 
@@ -18,7 +18,7 @@ describe('[Types]', () => {
     > &
       Pick<TypeT, OptionalFieldsT>
 
-    const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin })
+    const common = new Common({ chain: TronMainnet })
 
     // Block
     const block = createBlock({}, { common }) as Omit<

@@ -75,6 +75,12 @@ export async function updateMPTFromMerkleProof(
       if (!equalsBytes(trie.root(), opStack[0].key)) {
         throw EthereumJSErrorWithoutCode('The provided proof does not have the expected trie root')
       }
+    } else {
+      if (!equalsBytes(trie.root(), trie.EMPTY_TRIE_ROOT)) {
+        throw EthereumJSErrorWithoutCode(
+          'The provided proof is empty and does not match the non-empty trie root',
+        )
+      }
     }
   }
 

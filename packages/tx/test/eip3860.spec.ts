@@ -1,122 +1,101 @@
-import { Common, Hardfork, Mainnet, TronMainnet } from '@tvmjs/common'
-import { createZeroAddress } from '@tvmjs/util'
-import { assert, describe, it } from 'vitest'
+import { Common, TronMainnet, TronNile, TronShasta } from '@tvmjs/common'
+import { createZeroAddress, hexToBytes } from '@tvmjs/util'
+import { describe, expect, it } from 'vitest'
 
-import { TransactionType, createTx, paramsTx } from '../src/index.ts'
+import {
+  AccessList2930Tx,
+  Capability,
+  FeeMarket1559Tx,
+  LegacyTx,
+  TransactionType,
+  createTx,
+  createTxFromRLP,
+  paramsTx,
+} from '../src/index.ts'
 
-const common = new Common({
-  chain: Mainnet,
-  hardfork: Hardfork.Paris,
-  eips: [3860, 4844, 4895],
-  params: paramsTx,
-})
-
-const maxInitCodeSize = common.param('maxInitCodeSize')
 const txTypes = [
   TransactionType.Legacy,
   TransactionType.AccessListEIP2930,
   TransactionType.FeeMarketEIP1559,
-  //TransactionType.BlobEIP4844, // Explicitly commented out: BlobEIP4844 txs cannot create contracts
 ]
-const addressZero = createZeroAddress()
-describe('[EIP3860 tests]', () => {
-  it('does not apply initcode size limits or word gas to TRON deployment transactions', () => {
-    const data = new Uint8Array(Number(maxInitCodeSize) + 1)
 
-    for (const hardfork of [undefined, Hardfork.Shanghai]) {
-      const tronCommon = new Common({ chain: TronMainnet, hardfork, params: paramsTx })
-      for (const txType of txTypes) {
-        const createTxData = createTx({ data, type: txType }, { common: tronCommon })
-        const callTxData = createTx({ data, type: txType, to: addressZero }, { common: tronCommon })
+describe.each([TronMainnet, TronNile, TronShasta])('TRON initcode on $name', (chain) => {
+  it.each([0, 31, 32, 33, 49151, 49152, 49153])(
+    'does not limit or charge word gas for %s bytes',
+    (size) => {
+      const common = new Common({ chain })
+      const data = new Uint8Array(size)
+      for (const type of txTypes) {
+        const deployment = createTx({ type, data }, { common })
+        const call = createTx({ type, data, to: createZeroAddress() }, { common })
+        expect(deployment.data).toEqual(data)
+        expect(deployment.getDataGas()).toBe(call.getDataGas())
+        expect(deployment.getDataGas()).toBe(BigInt(size) * 4n)
+        expect(deployment.getIntrinsicGas()).toBe(53000n + BigInt(size) * 4n)
+        expect(call.getIntrinsicGas()).toBe(21000n + BigInt(size) * 4n)
+      }
+    },
+  )
 
-        assert.strictEqual(
-          createTxData.getDataGas(),
-          callTxData.getDataGas(),
-          `did not charge EIP-3860 initcode word gas for txType: ${txType}, hardfork: ${hardfork ?? 'default'}`,
-        )
+  it('retains data byte fees with obsolete custom initcode parameters', () => {
+    const params = structuredClone(paramsTx)
+    params[1].maxInitCodeSize = 1
+    params[1].initCodeWordGas = 1000000
+    for (const type of txTypes) {
+      const data = new Uint8Array(49153)
+      data[0] = 1
+      data[data.length - 1] = 255
+      const tx = createTx({ type, data }, { common: new Common({ chain }), params })
+      expect(tx.getDataGas()).toBe(BigInt(data.length - 2) * 4n + 32n)
+      expect(tx.getIntrinsicGas()).toBe(53000n + tx.getDataGas())
+      expect(paramsTx).not.toHaveProperty('3860')
+    }
+  })
+
+  it('preserves signing, replay protection and serialization for large deployments', () => {
+    const common = new Common({ chain })
+    const privateKey = hexToBytes(`0x${'20'.repeat(32)}`)
+    for (const type of txTypes) {
+      const tx = createTx(
+        { type, data: new Uint8Array(49153), gasLimit: 1000000n },
+        { common },
+      ).sign(privateKey)
+      const decoded = createTxFromRLP(tx.serialize(), { common })
+      expect(decoded.hash()).toEqual(tx.hash())
+      expect(decoded.getSenderAddress().equals(tx.getSenderAddress())).toBe(true)
+      expect(decoded.verifySignature()).toBe(true)
+      expect(decoded.data).toEqual(tx.data)
+      expect(decoded.getIntrinsicGas()).toBe(249612n)
+      if (type === TransactionType.Legacy) {
+        expect(tx.supports(Capability.EIP155ReplayProtection)).toBe(true)
+        expect([35n, 36n]).toContain(tx.v! - 2n * common.chainId())
       }
     }
   })
 
-  it(`Should instantiate create txs with MAX_INITCODE_SIZE`, () => {
-    const data = new Uint8Array(Number(maxInitCodeSize))
-    for (const txType of txTypes) {
-      assert.doesNotThrow(
-        () => createTx({ data, type: txType }, { common }),
-        undefined,
-        undefined,
-        `Instantiated create tx with MAX_INITCODE_SIZE data for txType: ${txType}`,
-      )
-    }
-  })
-
-  it(`Should instantiate txs with MAX_INITCODE_SIZE data`, () => {
-    const data = new Uint8Array(Number(maxInitCodeSize))
-    for (const txType of txTypes) {
-      assert.doesNotThrow(
-        () => createTx({ data, type: txType, to: addressZero }, { common }),
-        undefined,
-        undefined,
-        `Instantiated tx with MAX_INITCODE_SIZE for txType: ${txType}`,
-      )
-    }
-  })
-
-  it(`Should not instantiate create txs with MAX_INITCODE_SIZE+1 data`, () => {
-    const data = new Uint8Array(Number(maxInitCodeSize) + 1)
-    for (const txType of txTypes) {
-      assert.throws(
-        () => createTx({ data, type: txType }, { common }),
-        'the initcode size of this transaction is too large',
-        undefined,
-        `Instantiated create tx with MAX_INITCODE_SIZE+1 for txType: ${txType}`,
-      )
-    }
-  })
-
-  it(`Should instantiate txs with MAX_INITCODE_SIZE+1 data`, () => {
-    const data = new Uint8Array(Number(maxInitCodeSize) + 1)
-    for (const txType of txTypes) {
-      assert.doesNotThrow(
-        () => createTx({ data, type: txType, to: addressZero }, { common }),
-        undefined,
-        undefined,
-        `Instantiated tx with MAX_INITCODE_SIZE+1 for txType: ${txType}`,
-      )
-    }
-  })
-
-  describe('Should allow txs with MAX_INITCODE_SIZE+1 data if allowUnlimitedInitCodeSize is active', () => {
-    it('should work', () => {
-      const data = new Uint8Array(Number(maxInitCodeSize) + 1)
-      for (const txType of txTypes) {
-        assert.doesNotThrow(
-          () => createTx({ data, type: txType }, { common, allowUnlimitedInitCodeSize: true }),
-          undefined,
-          undefined,
-          `Instantiated create tx with MAX_INITCODE_SIZE+1 for txType: ${txType} with unlimited init code size`,
-        )
+  it('rejects the removed initcode bypass option on factories, decoders and constructors', () => {
+    const common = new Common({ chain })
+    const before = common.copy()
+    for (const type of txTypes) {
+      const encoded = createTx({ type }, { common }).serialize()
+      for (const value of [true, false, undefined, null]) {
+        for (const opts of [
+          { common, allowUnlimitedInitCodeSize: value },
+          Object.assign(Object.create({ allowUnlimitedInitCodeSize: value }), { common }),
+        ]) {
+          expect(() => createTx({ type }, opts)).toThrow(
+            /allowUnlimitedInitCodeSize option has been removed/,
+          )
+          expect(() => createTxFromRLP(encoded, opts)).toThrow(
+            /allowUnlimitedInitCodeSize option has been removed/,
+          )
+          const Constructor = [LegacyTx, AccessList2930Tx, FeeMarket1559Tx][type]
+          expect(() => new Constructor({}, opts)).toThrow(
+            /allowUnlimitedInitCodeSize option has been removed/,
+          )
+        }
       }
-    })
-  })
-
-  describe('Should charge initcode analysis gas is allowUnlimitedInitCodeSize is active', () => {
-    it('should work', () => {
-      const data = new Uint8Array(Number(maxInitCodeSize))
-      for (const txType of txTypes) {
-        const eip3860ActiveTx = createTx(
-          { data, type: txType },
-          { common, allowUnlimitedInitCodeSize: true },
-        )
-        const eip3860DeactivatedTx = createTx(
-          { data, type: txType },
-          { common, allowUnlimitedInitCodeSize: false },
-        )
-        assert.isTrue(
-          eip3860ActiveTx.getDataGas() === eip3860DeactivatedTx.getDataGas(),
-          'charged initcode analysis gas',
-        )
-      }
-    })
+    }
+    expect(common.isCompatibleWith(before)).toBe(true)
   })
 })

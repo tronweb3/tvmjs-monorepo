@@ -16,7 +16,11 @@ import {
 } from '@tvmjs/util'
 
 import { generateCliqueBlockExtraData } from '../consensus/clique.ts'
-import { genTransactionsTrieRoot, genWithdrawalsTrieRoot } from '../helpers.ts'
+import {
+  genTransactionsTrieRoot,
+  genWithdrawalsTrieRoot,
+  rejectRemovedHeaderFields,
+} from '../helpers.ts'
 import {
   Block,
   createBlockHeader,
@@ -134,6 +138,12 @@ export function createBlockFromBytesArray(values: BlockBytes, opts?: BlockOption
     )
   }
 
+  if (valuesTail.length > 0) {
+    throw EthereumJSErrorWithoutCode(
+      'Unsupported block body extension: additional fields are not active in this execution profile',
+    )
+  }
+
   // parse transactions
   const transactions = []
   for (const txData of txsData ?? []) {
@@ -218,6 +228,11 @@ export function createBlockFromRPC(
   const transactions: TypedTransaction[] = []
   const opts = { common: header.common }
   for (const _txParams of blockParams.transactions ?? []) {
+    if (typeof _txParams !== 'object' || _txParams === null || Array.isArray(_txParams)) {
+      throw EthereumJSErrorWithoutCode(
+        'Full transaction objects are required to construct a block from RPC; request transactions with eth_getBlockByNumber or eth_getBlockByHash using true',
+      )
+    }
     const txParams = normalizeTxParams(_txParams)
     const tx = createTx(txParams, opts)
     transactions.push(tx)
@@ -302,6 +317,7 @@ export async function createBlockFromExecutionPayload(
   payload: ExecutionPayload,
   opts?: BlockOptions,
 ): Promise<Block> {
+  rejectRemovedHeaderFields(payload)
   const {
     blockNumber: number,
     receiptsRoot: receiptTrie,

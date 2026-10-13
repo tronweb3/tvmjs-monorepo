@@ -7,10 +7,7 @@ export const paramsVM: ParamsDict = {
    */
   1: {
     // gasConfig
-    maxRefundQuotient: 2, // Maximum refund quotient; max tx refund is min(tx.gasUsed/maxRefundQuotient, tx.gasRefund)
-    blobGasPerBlob: 0,
-    maxBlobGasPerBlock: 0,
-    targetBlobGasPerBlock: 0,
+    maxRefundQuotient: 2,
     // pow
     minerReward: '5000000000000000000', // the amount a miner get rewarded for mining a block
   },
@@ -53,25 +50,6 @@ export const paramsVM: ParamsDict = {
     maxRefundQuotient: 5, // Maximum refund quotient; max tx refund is min(tx.gasUsed/maxRefundQuotient, tx.gasRefund)
   },
   /**
-.  * Shard Blob Transactions
-.  */
-  4844: {
-    // gasConfig
-    targetBlobGasPerBlock: 393216, // The target blob gas consumed per block
-    blobGasPerBlob: 131072, // The base fee for blob gas per blob
-    maxBlobGasPerBlock: 786432, // The max blob gas allowable per block
-    blobGasPriceUpdateFraction: 3338477, // The denominator used in the exponential when calculating a blob gas price
-    // gasPrices
-    minBlobGas: 1, // The minimum fee per blob gas
-  },
-  /**
-.  * Beacon block root in the TVM
-.  */
-  4788: {
-    // config
-    historicalRootsLength: 8191, // The modulo parameter of the beaconroot ring buffer in the beaconroot stateful precompile
-  },
-  /**
    * Execution layer triggerable withdrawals (experimental)
    */
   7002: {
@@ -91,14 +69,5 @@ export const paramsVM: ParamsDict = {
     // See: https://github.com/ethereum/EIPs/pull/8934/files
     consolidationRequestPredeployAddress: '0x0000BBDDC7CE488642FB579F8B00F3A590007251', // Address of the consolidations contract
     systemCallGasLimit: 30_000_000, // EIP-7251 system call gas limit
-  },
-  /**
-.  * Shard Blob Transactions
-.  */
-  7691: {
-    // gasConfig
-    targetBlobGasPerBlock: 786432, // The target blob gas consumed per block
-    maxBlobGasPerBlock: 1179648, // The max blob gas allowable per block
-    blobGasPriceUpdateFraction: 5007716, // The denominator used in the exponential when calculating a blob gas price
   },
 }

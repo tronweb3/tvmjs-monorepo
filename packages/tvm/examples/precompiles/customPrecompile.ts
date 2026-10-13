@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { createTVM } from '@tvmjs/tvm'
 import {
   bigIntToBytes,
@@ -24,7 +24,7 @@ function additionPrecompile(input: PrecompileInput): ExecResult {
 }
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })
+  const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron })
   const ADDRESS = '0x000000000000000000000000000000000000ff01'
 
   // Register the custom precompile with a hex string address

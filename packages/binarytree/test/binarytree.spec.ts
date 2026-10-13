@@ -6,6 +6,25 @@ import { createBinaryTree } from '../src/index.ts'
 import { dumpLeafValues, dumpNodeHashes } from '../src/util.ts'
 
 describe('insert', () => {
+  it('rejects invalid suffixes without changing the tree', async () => {
+    const tree = await createBinaryTree()
+    const stem = new Uint8Array(31)
+    const value = new Uint8Array(32).fill(1)
+    await tree.put(stem, [0], [value])
+
+    const root = tree.root().slice()
+    const invalidSuffixes = [-1, 1.5, 256, Number.NaN, Number.POSITIVE_INFINITY]
+
+    for (const suffix of invalidSuffixes) {
+      const expectedError = `Invalid suffix index: ${suffix}. Must be an integer between 0 and 255.`
+      await expect(tree.get(stem, [suffix])).rejects.toThrow(expectedError)
+      await expect(tree.put(stem, [suffix], [value])).rejects.toThrow(expectedError)
+      await expect(tree.del(stem, [suffix])).rejects.toThrow(expectedError)
+      assert.deepEqual(tree.root(), root)
+      assert.deepEqual(await tree.get(stem, [0]), [value])
+    }
+  })
+
   it('should not destroy a previous root', async () => {
     const tree = await createBinaryTree({ useRootPersistence: true })
     await tree.put(
@@ -520,8 +539,7 @@ describe('insert', () => {
     )
   })
 
-  // Not sure if this test targets expect behavior (since we can't delete values?)
-  it.skip('should recover previous root when adding and then deleting a value', async () => {
+  it('should recover previous root when adding and then deleting a value', async () => {
     const tree = await createBinaryTree()
 
     const key1 = hexToBytes(`0x${'01'.repeat(32)}`)

@@ -1,10 +1,25 @@
 import { equalsBytes, hexToBytes } from '@tvmjs/util'
-import { assert, describe, it } from 'vitest'
+import { assert, describe, expect, it } from 'vitest'
 
 import { BinaryNodeType, decodeBinaryNode } from '../../src/index.ts'
 import { StemBinaryNode } from '../../src/node/stemNode.ts'
 
 describe('StemBinaryNode', () => {
+  it('rejects invalid value indexes without changing the node', () => {
+    const node = StemBinaryNode.create(new Uint8Array(31))
+    const value = new Uint8Array(32).fill(1)
+    node.setValue(0, value)
+
+    const invalidIndexes = [-1, 1.5, 256, Number.NaN, Number.POSITIVE_INFINITY]
+    for (const index of invalidIndexes) {
+      const expectedError = `Invalid suffix index: ${index}. Must be an integer between 0 and 255.`
+      expect(() => node.getValue(index)).toThrow(expectedError)
+      expect(() => node.setValue(index, value)).toThrow(expectedError)
+      assert.strictEqual(node.values.length, 256)
+      assert.strictEqual(node.getValue(0), value)
+    }
+  })
+
   it('should round-trip encode and decode a stem node', () => {
     // Create a 31-byte stem (for example, all 0x01 bytes)
     const stem = hexToBytes(`0x${'01'.repeat(31)}`)

@@ -24,6 +24,12 @@ export interface SimpleStateManagerOpts extends BaseStateManagerOpts {
 export interface RPCStateManagerOpts extends BaseStateManagerOpts {
   provider: string
   blockTag: bigint | 'earliest'
+  /**
+   * Supplement locally seeded TRC-10 IDs with issuance data from the same
+   * snapshot as account and storage reads. The eth_* provider does not expose
+   * this registry, and Token account balances must still be seeded separately.
+   */
+  tokenIdExists?: (tokenId: bigint, blockTag: bigint | 'earliest') => boolean | Promise<boolean>
 }
 
 /**

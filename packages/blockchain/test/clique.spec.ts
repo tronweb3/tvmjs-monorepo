@@ -1,11 +1,5 @@
 import { cliqueEpochTransitionSigners, createBlock, createSealedCliqueBlock } from '@tvmjs/block'
-import {
-  Common,
-  ConsensusAlgorithm,
-  ConsensusType,
-  Hardfork,
-  createCustomCommon,
-} from '@tvmjs/common'
+import { ConsensusAlgorithm } from '@tvmjs/common'
 import type { Address } from '@tvmjs/util'
 import { concatBytes, createAddressFromString, createZeroAddress } from '@tvmjs/util'
 import { assert, describe, expect, it } from 'vitest'
@@ -21,14 +15,14 @@ import {
   SIGNER_E,
   SIGNER_F,
   type Signer,
-  goerliChainConfig,
 } from '@tvmjs/testdata'
 
 import type { Block } from '@tvmjs/block'
-import type { CliqueConfig } from '@tvmjs/common'
+import type { CliqueConfig, Common } from '@tvmjs/common'
 import type { Blockchain, ConsensusDict } from '../src/index.ts'
+import { cliqueCommon } from './util.ts'
 
-const COMMON = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
+const COMMON = cliqueCommon()
 const EXTRA_DATA = new Uint8Array(97)
 const GAS_LIMIT = BigInt(8000000)
 
@@ -92,6 +86,7 @@ function getBlock(
       timestamp: lastBlock.header.timestamp + BigInt(15),
       extraData,
       gasLimit: GAS_LIMIT,
+      baseFeePerGas: lastBlock.header.calcNextBaseFee(),
       difficulty: BigInt(2),
       nonce,
     },
@@ -147,10 +142,23 @@ const addNextBlock = async (
 
 describe('Clique: Initialization', () => {
   it('should initialize a clique blockchain', async () => {
-    const common = new Common({ chain: goerliChainConfig, hardfork: Hardfork.Chainstart })
+    const common = cliqueCommon()
     const consensusDict: ConsensusDict = {}
     consensusDict[ConsensusAlgorithm.Clique] = new CliqueConsensus()
-    const blockchain = await createBlockchain({ common, consensusDict })
+    const genesisBlock = createBlock(
+      {
+        header: {
+          gasLimit: GAS_LIMIT,
+          extraData: concatBytes(
+            new Uint8Array(32),
+            SIGNER_A.address.toBytes(),
+            new Uint8Array(65),
+          ),
+        },
+      },
+      { common },
+    )
+    const blockchain = await createBlockchain({ common, consensusDict, genesisBlock })
 
     const head = await blockchain.getIteratorHead()
     assert.deepEqual(head.hash(), blockchain.genesisBlock.hash(), 'correct genesis hash')
@@ -643,22 +651,7 @@ describe('Clique: Initialization', () => {
   })
 
   it('Clique Voting: Epoch transitions reset all votes to allow chain checkpointing', async () => {
-    const common = createCustomCommon(
-      {
-        consensus: {
-          type: ConsensusType.ProofOfAuthority,
-          algorithm: ConsensusAlgorithm.Clique,
-          clique: {
-            period: 15,
-            epoch: 3,
-          },
-        },
-      },
-      goerliChainConfig,
-      {
-        hardfork: Hardfork.Chainstart,
-      },
-    )
+    const common = cliqueCommon(3)
     const { blocks, blockchain } = await initWithSigners([SIGNER_A, SIGNER_B], common)
     await addNextBlock(blockchain, blocks, SIGNER_A, [SIGNER_C, true], undefined, common)
     await addNextBlock(blockchain, blocks, SIGNER_B, undefined, undefined, common)
@@ -699,22 +692,7 @@ describe('Clique: Initialization', () => {
   })
 
   it('Clique Voting: Recent signatures should not reset on checkpoint blocks imported in a batch', async () => {
-    const common = createCustomCommon(
-      {
-        consensus: {
-          type: ConsensusType.ProofOfAuthority,
-          algorithm: ConsensusAlgorithm.Clique,
-          clique: {
-            period: 15,
-            epoch: 3,
-          },
-        },
-      },
-      goerliChainConfig,
-      {
-        hardfork: Hardfork.Chainstart,
-      },
-    )
+    const common = cliqueCommon(3)
     const { blocks, blockchain } = await initWithSigners([SIGNER_A, SIGNER_B, SIGNER_C], common)
     await addNextBlock(blockchain, blocks, SIGNER_A, undefined, undefined, common)
     await addNextBlock(blockchain, blocks, SIGNER_B, undefined, undefined, common)
@@ -819,6 +797,112 @@ describe('Clique: Initialization', () => {
   })
 })
 
+describe('Clique: Redundant votes', () => {
+  const reload = async (blockchain: Blockchain) =>
+    createBlockchain({
+      common: blockchain.common,
+      genesisBlock: blockchain.genesisBlock,
+      db: blockchain.db,
+      validateBlocks: true,
+      validateConsensus: true,
+      consensusDict: { [ConsensusAlgorithm.Clique]: new CliqueConsensus() },
+    })
+
+  describe.each([false, true])('reload after voting: %s', (reopen) => {
+    const cases: {
+      name: string
+      vote?: [Signer, boolean]
+      expected: Signer[]
+      nextSigner: Signer
+    }[] = [
+      { name: 'no vote', expected: [SIGNER_A], nextSigner: SIGNER_A },
+      {
+        name: 'redundant authorization',
+        vote: [SIGNER_A, true],
+        expected: [SIGNER_A],
+        nextSigner: SIGNER_A,
+      },
+      {
+        name: 'redundant removal',
+        vote: [SIGNER_B, false],
+        expected: [SIGNER_A],
+        nextSigner: SIGNER_A,
+      },
+      {
+        name: 'valid authorization',
+        vote: [SIGNER_B, true],
+        expected: [SIGNER_A, SIGNER_B],
+        nextSigner: SIGNER_B,
+      },
+    ]
+
+    it.each(cases)(
+      'continues producing blocks after $name',
+      async ({ vote, expected, nextSigner }) => {
+        const initial = await initWithSigners([SIGNER_A])
+        const { blocks } = initial
+        let { blockchain } = initial
+        await addNextBlock(blockchain, blocks, SIGNER_A, vote)
+        if (reopen) blockchain = await reload(blockchain)
+
+        const expectedAddresses = expected.map((signer) => signer.address)
+        assert.deepEqual(
+          (blockchain.consensus as CliqueConsensus).cliqueActiveSigners(2n),
+          expectedAddresses,
+        )
+        const second = await addNextBlock(blockchain, blocks, nextSigner)
+        assert.strictEqual(second.header.number, 2n)
+        assert.deepEqual((await blockchain.getCanonicalHeadBlock()).hash(), second.hash())
+        assert.deepEqual(
+          (blockchain.consensus as CliqueConsensus).cliqueActiveSigners(3n),
+          expectedAddresses,
+        )
+      },
+    )
+
+    it.each([
+      { name: 'A', beneficiary: SIGNER_A },
+      { name: 'B', beneficiary: SIGNER_B },
+    ])('ignores a majority authorizing existing signer $name', async ({ beneficiary }) => {
+      const initial = await initWithSigners([SIGNER_A, SIGNER_B])
+      const { blocks } = initial
+      let { blockchain } = initial
+      await addNextBlock(blockchain, blocks, SIGNER_A, [beneficiary, true])
+      await addNextBlock(blockchain, blocks, SIGNER_B, [beneficiary, true])
+      if (reopen) blockchain = await reload(blockchain)
+
+      assert.deepEqual((blockchain.consensus as CliqueConsensus).cliqueActiveSigners(3n), [
+        SIGNER_A.address,
+        SIGNER_B.address,
+      ])
+      await addNextBlock(blockchain, blocks, SIGNER_A)
+
+      // A real membership change must still work after the redundant votes.
+      await addNextBlock(blockchain, blocks, SIGNER_B, [SIGNER_C, true])
+      await addNextBlock(blockchain, blocks, SIGNER_A, [SIGNER_C, true])
+      assert.deepEqual((blockchain.consensus as CliqueConsensus).cliqueActiveSigners(6n), [
+        SIGNER_A.address,
+        SIGNER_B.address,
+        SIGNER_C.address,
+      ])
+    })
+  })
+
+  it('preserves the signer list across an epoch after repeated redundant authorizations', async () => {
+    const common = cliqueCommon(3)
+    const { blocks, blockchain } = await initWithSigners([SIGNER_A], common)
+    await addNextBlock(blockchain, blocks, SIGNER_A, [SIGNER_A, true], undefined, common)
+    await addNextBlock(blockchain, blocks, SIGNER_A, [SIGNER_A, true], undefined, common)
+    await addNextBlock(blockchain, blocks, SIGNER_A, undefined, [SIGNER_A], common)
+    const fourth = await addNextBlock(blockchain, blocks, SIGNER_A, undefined, undefined, common)
+
+    assert.strictEqual(fourth.header.number, 4n)
+    assert.deepEqual((blockchain.consensus as CliqueConsensus).cliqueActiveSigners(5n), [
+      SIGNER_A.address,
+    ])
+  })
+})
+
 describe('clique: reorgs', () => {
   it('Two signers, voting to add one other signer, then reorg and revoke this addition', async () => {
     const { blocks, blockchain } = await initWithSigners([SIGNER_A, SIGNER_B])
@@ -847,70 +931,4 @@ describe('clique: reorgs', () => {
       'address SIGNER_C not added to signers',
     )
   })
-
-  /**
-   * This test fails, but demonstrates why at an epoch reorg with changing votes, we get an internal error.
-  it(
-    'Two signers, voting to add one other signer, epoch transition, then reorg and revoke this addition',
-    async (st) => {
-      const common = createCustomCommon(
-        {
-          consensus: {
-            type: ConsensusType.ProofOfAuthority,
-            algorithm: ConsensusAlgorithm.Clique,
-            clique: {
-              period: 15,
-              epoch: 3,
-            },
-          },
-        },
-        {
-          baseChain: Chain.Rinkeby,
-          hardfork: Hardfork.Chainstart,
-        }
-      )
-      const { blocks, blockchain } = await initWithSigners([SIGNER_A, SIGNER_B])
-      const genesis = blocks[0]
-      await addNextBlock(blockchain, blocks, SIGNER_A, [SIGNER_C, true], undefined, common)
-      await addNextBlock(blockchain, blocks, SIGNER_B, [SIGNER_C, true], undefined, common)
-      await addNextBlock(blockchain, blocks, SIGNER_A, undefined, undefined, common)
-      const headBlockNotForked = await addNextBlock(
-        blockchain,
-        blocks,
-        SIGNER_B,
-        undefined,
-        undefined,
-        common
-      )
-     assert.deepEqual(
-        (blockchain.consensus as CliqueConsensus).cliqueActiveSigners(
-          blocks[blocks.length - 1].header.number + BigInt(1)
-        ),
-        [SIGNER_A.address, SIGNER_B.address, SIGNER_C.address],
-        'address SIGNER_C added to signers'
-      )
-     assert.deepEqual((await blockchain.getCanonicalHeadBlock()).hash(), headBlockNotForked.hash())
-      await addNextBlockReorg(blockchain, blocks, genesis, SIGNER_B, undefined, undefined, common)
-      await addNextBlock(blockchain, blocks, SIGNER_A, undefined, undefined, common)
-
-      // Add block 3: epoch transition
-      await addNextBlock(blockchain, blocks, SIGNER_B, undefined, undefined, common)
-      // Now here suddenly SIGNER_C is added again as signer
-
-      await addNextBlock(blockchain, blocks, SIGNER_A, undefined, undefined, common)
-      await addNextBlock(blockchain, blocks, SIGNER_B, undefined, undefined, common)
-
-      const headBlock = await addNextBlock(blockchain, blocks, SIGNER_A, undefined, undefined, common)
-     assert.deepEqual((await blockchain.getCanonicalHeadBlock()).hash(), headBlock.hash())
-
-     assert.deepEqual(
-        (blockchain.consensus as CliqueConsensus).cliqueActiveSigners(
-          blocks[blocks.length - 1].header.number + BigInt(1)
-        ),
-        [SIGNER_A.address, SIGNER_B.address],
-        'address SIGNER_C not added to signers'
-      )
-
-          }
-  ) */
 })

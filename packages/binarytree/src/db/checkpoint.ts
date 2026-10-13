@@ -84,9 +84,9 @@ export class CheckpointDB implements DB {
    * Commits the latest checkpoint
    */
   async commit() {
-    const { keyValueMap } = this.checkpoints.pop()!
-    if (!this.hasCheckpoints()) {
-      // This was the final checkpoint, we should now commit and flush everything to disk
+    const { keyValueMap } = this.checkpoints[this.checkpoints.length - 1]
+    if (this.checkpoints.length === 1) {
+      // Keep the final checkpoint readable and recoverable until the batch succeeds.
       const batchOp: BatchDBOp[] = []
       for (const [key, value] of keyValueMap.entries()) {
         if (value === undefined) {
@@ -102,14 +102,15 @@ export class CheckpointDB implements DB {
           })
         }
       }
-      await this.batch(batchOp)
+      await this._writeBatch(batchOp)
     } else {
-      // dump everything into the current (higher level) diff cache
-      const currentKeyValueMap = this.checkpoints[this.checkpoints.length - 1].keyValueMap
+      // Merge into the parent checkpoint without writing to disk.
+      const currentKeyValueMap = this.checkpoints[this.checkpoints.length - 2].keyValueMap
       for (const [key, value] of keyValueMap.entries()) {
         currentKeyValueMap.set(key, value)
       }
     }
+    this.checkpoints.pop()
   }
 
   /**
@@ -234,39 +235,45 @@ export class CheckpointDB implements DB {
         }
       }
     } else {
-      const convertedOps = opStack.map((op) => {
-        const convertedOp: {
-          key: string
-          value: Uint8Array | string | undefined
-          type: 'put' | 'del'
-          opts?: EncodingOpts
-        } = {
-          key: bytesToUnprefixedHex(op.key),
-          value: op.type === 'put' ? op.value : undefined,
-          type: op.type,
-          opts: { ...op.opts, ...{ valueEncoding: this.valueEncoding } },
-        }
-        this._stats.db.writes += 1
-        if (op.type === 'put' && this.valueEncoding === ValueEncoding.String) {
-          convertedOp.value = bytesToUnprefixedHex(convertedOp.value as Uint8Array)
-        }
-        return convertedOp
-      })
-      await this.db.batch(convertedOps as any)
+      await this._writeBatch(opStack)
+    }
+  }
 
-      // Keep the performance cache coherent with the successfully persisted batch. Final
-      // checkpoint commits use this path, so omitting this update would leak stale values into
-      // later transactions and blocks.
-      if (this._cache !== undefined) {
-        for (const op of opStack) {
-          const keyHex = bytesToUnprefixedHex(op.key)
-          if (op.type === 'put') {
-            this._cache.set(keyHex, op.value)
-          } else {
-            this._cache.delete(keyHex)
-          }
-          this._stats.cache.writes += 1
+  /** Writes directly to the backing database, then updates the read cache. */
+  private async _writeBatch(opStack: BatchDBOp[]): Promise<void> {
+    // Using deprecated bytesToUnprefixedHex for performance: used as database keys/values (string encoding).
+    const convertedOps = opStack.map((op) => {
+      const convertedOp: {
+        key: string
+        value: Uint8Array | string | undefined
+        type: 'put' | 'del'
+        opts?: EncodingOpts
+      } = {
+        key: bytesToUnprefixedHex(op.key),
+        value: op.type === 'put' ? op.value : undefined,
+        type: op.type,
+        opts: { ...op.opts, ...{ valueEncoding: this.valueEncoding } },
+      }
+      this._stats.db.writes += 1
+      if (op.type === 'put' && this.valueEncoding === ValueEncoding.String) {
+        convertedOp.value = bytesToUnprefixedHex(convertedOp.value as Uint8Array)
+      }
+      return convertedOp
+    })
+    await this.db.batch(convertedOps as any)
+
+    // Keep the performance cache coherent with the successfully persisted batch. Final
+    // checkpoint commits use this path, so omitting this update would leak stale values into
+    // later transactions and blocks.
+    if (this._cache !== undefined) {
+      for (const op of opStack) {
+        const keyHex = bytesToUnprefixedHex(op.key)
+        if (op.type === 'put') {
+          this._cache.set(keyHex, op.value)
+        } else {
+          this._cache.delete(keyHex)
         }
+        this._stats.cache.writes += 1
       }
     }
   }

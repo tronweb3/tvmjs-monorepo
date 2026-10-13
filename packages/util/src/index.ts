@@ -70,10 +70,8 @@ export * from './bal.ts'
 /**
  * Export tvmjs-util methods
  */
-export * from './authorization.ts'
-export * from './env.ts'
 export * from './binaryTree.ts'
-export * from './blobs.ts'
+export * from './env.ts'
 export {
   arrayContainsArray,
   fromAscii,
@@ -85,7 +83,6 @@ export {
   stripHexPrefix,
   toAscii,
 } from './internal.ts'
-export * from './kzg.ts'
 export * from './lock.ts'
 export * from './mapDB.ts'
 export * from './provider.ts'

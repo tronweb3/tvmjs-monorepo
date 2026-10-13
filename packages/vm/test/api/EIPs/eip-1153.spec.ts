@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { createLegacyTx } from '@tvmjs/tx'
 import { Account, Address, bytesToInt, hexToBytes, privateToAddress } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
@@ -11,24 +11,19 @@ import type { TypedTransaction } from '@tvmjs/tx'
 import type { PrefixedHexString } from '@tvmjs/util'
 
 interface Test {
-  steps: { expectedOpcode: string; expectedGasUsed: number; expectedStack: bigint[] }[]
+  steps: { expectedOpcode: string; expectedStack: bigint[] }[]
   contracts: { code: string; address: Address }[]
   transactions: TypedTransaction[]
 }
 
 describe('EIP 1153: transient storage', () => {
-  const initialGas = BigInt(0xffffffffff)
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Berlin, eips: [1153] })
+  const common = new Common({ chain: TronMainnet, activatedProposals: [], eips: [1153] })
 
   const runTest = async function (test: Test) {
     let i = 0
-    let currentGas = initialGas
     const vm = await createVM({ common })
 
     const handler = function (step: InterpreterStep) {
-      const gasUsed = currentGas - step.gasLeft
-      currentGas = step.gasLeft
-
       assert.strictEqual(
         step.opcode.name,
         test.steps[i].expectedOpcode,
@@ -41,15 +36,10 @@ describe('EIP 1153: transient storage', () => {
         `Expected stack: ${step.stack}`,
       )
 
-      if (i > 0) {
-        const expectedGasUsed = BigInt(test.steps[i - 1].expectedGasUsed)
-        assert.strictEqual(
-          gasUsed,
-          expectedGasUsed,
-          `Opcode: ${
-            test.steps[i - 1].expectedOpcode
-          }, Gas Used: ${gasUsed}, Expected: ${expectedGasUsed}`,
-        )
+      // Compare costs in the current frame. Subtracting gasLeft across CALL/RETURN
+      // or transaction boundaries does not measure an opcode's Energy cost.
+      if (step.opcode.name === 'TSTORE' || step.opcode.name === 'TLOAD') {
+        assert.strictEqual(step.opcode.dynamicFee ?? BigInt(step.opcode.fee), 100n)
       }
       i++
     }
@@ -68,6 +58,7 @@ describe('EIP 1153: transient storage', () => {
     }
 
     vm.tvm.events!.removeListener('step', handler)
+    assert.strictEqual(i, test.steps.length, 'executes every expected step')
     return results
   }
 
@@ -79,6 +70,7 @@ describe('EIP 1153: transient storage', () => {
     const address = new Address(hexToBytes('0x00000000000000000000000636F6E7472616374'))
     const tx = createLegacyTx({
       gasLimit: BigInt(21000 + 9000),
+      gasPrice: 10n,
       to: address,
       value: BigInt(1),
     }).sign(SIGNER_A.privateKey)
@@ -87,20 +79,21 @@ describe('EIP 1153: transient storage', () => {
       contracts: [{ address, code }],
       transactions: [tx],
       steps: [
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(2)] },
-        { expectedOpcode: 'TSTORE', expectedGasUsed: 100, expectedStack: [BigInt(2), BigInt(1)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'TLOAD', expectedGasUsed: 100, expectedStack: [BigInt(1)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(2)] },
-        { expectedOpcode: 'MSTORE', expectedGasUsed: 6, expectedStack: [BigInt(2), BigInt(0)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(32)] },
-        { expectedOpcode: 'RETURN', expectedGasUsed: NaN, expectedStack: [BigInt(32), BigInt(0)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(2)] },
+        { expectedOpcode: 'TSTORE', expectedStack: [BigInt(2), BigInt(1)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'TLOAD', expectedStack: [BigInt(1)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(2)] },
+        { expectedOpcode: 'MSTORE', expectedStack: [BigInt(2), BigInt(0)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(32)] },
+        { expectedOpcode: 'RETURN', expectedStack: [BigInt(32), BigInt(0)] },
       ],
     }
 
     const result = await runTest(test)
+    assert.strictEqual(result[0].execResult.executionGasUsed, 221n)
     assert.deepEqual(returndata, result[0].execResult.returnValue)
     assert.strictEqual(undefined, result[0].execResult.exceptionError)
   })
@@ -122,46 +115,48 @@ describe('EIP 1153: transient storage', () => {
       transactions: [
         createLegacyTx({
           gasLimit: BigInt(15000000),
+          gasPrice: 10n,
           to: address,
           data: new Uint8Array(32),
         }).sign(SIGNER_A.privateKey),
         createLegacyTx({
           nonce: 1,
           gasLimit: BigInt(15000000),
+          gasPrice: 10n,
           to: address,
         }).sign(SIGNER_A.privateKey),
       ],
       steps: [
         // first tx
-        { expectedOpcode: 'CALLDATASIZE', expectedGasUsed: 2, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(32)] },
-        { expectedOpcode: 'EQ', expectedGasUsed: 3, expectedStack: [BigInt(32), BigInt(0)] },
-        { expectedOpcode: 'PUSH4', expectedGasUsed: 3, expectedStack: [BigInt(0)] },
-        { expectedOpcode: 'JUMPI', expectedGasUsed: 10, expectedStack: [BigInt(0), BigInt(28)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'PUSH4', expectedGasUsed: 3, expectedStack: [BigInt(1)] },
-        { expectedOpcode: 'JUMPI', expectedGasUsed: 10, expectedStack: [BigInt(1), BigInt(18)] },
-        { expectedOpcode: 'JUMPDEST', expectedGasUsed: 1, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(255)] },
-        { expectedOpcode: 'TSTORE', expectedGasUsed: 100, expectedStack: [BigInt(255), BigInt(0)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'DUP1', expectedGasUsed: 3, expectedStack: [BigInt(0)] },
-        { expectedOpcode: 'RETURN', expectedGasUsed: -278, expectedStack: [BigInt(0), BigInt(0)] },
+        { expectedOpcode: 'CALLDATASIZE', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(32)] },
+        { expectedOpcode: 'EQ', expectedStack: [BigInt(32), BigInt(0)] },
+        { expectedOpcode: 'PUSH4', expectedStack: [BigInt(0)] },
+        { expectedOpcode: 'JUMPI', expectedStack: [BigInt(0), BigInt(28)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'PUSH4', expectedStack: [BigInt(1)] },
+        { expectedOpcode: 'JUMPI', expectedStack: [BigInt(1), BigInt(18)] },
+        { expectedOpcode: 'JUMPDEST', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(255)] },
+        { expectedOpcode: 'TSTORE', expectedStack: [BigInt(255), BigInt(0)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'DUP1', expectedStack: [BigInt(0)] },
+        { expectedOpcode: 'RETURN', expectedStack: [BigInt(0), BigInt(0)] },
         // second tx
-        { expectedOpcode: 'CALLDATASIZE', expectedGasUsed: 2, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(0)] },
-        { expectedOpcode: 'EQ', expectedGasUsed: 3, expectedStack: [BigInt(0), BigInt(0)] },
-        { expectedOpcode: 'PUSH4', expectedGasUsed: 3, expectedStack: [BigInt(1)] },
-        { expectedOpcode: 'JUMPI', expectedGasUsed: 10, expectedStack: [BigInt(1), BigInt(28)] },
-        { expectedOpcode: 'JUMPDEST', expectedGasUsed: 1, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'TLOAD', expectedGasUsed: 100, expectedStack: [BigInt(0)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(0)] },
-        { expectedOpcode: 'MSTORE', expectedGasUsed: 6, expectedStack: [BigInt(0), BigInt(0)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(32)] },
-        { expectedOpcode: 'RETURN', expectedGasUsed: 3, expectedStack: [BigInt(32), BigInt(0)] },
+        { expectedOpcode: 'CALLDATASIZE', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(0)] },
+        { expectedOpcode: 'EQ', expectedStack: [BigInt(0), BigInt(0)] },
+        { expectedOpcode: 'PUSH4', expectedStack: [BigInt(1)] },
+        { expectedOpcode: 'JUMPI', expectedStack: [BigInt(1), BigInt(28)] },
+        { expectedOpcode: 'JUMPDEST', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'TLOAD', expectedStack: [BigInt(0)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(0)] },
+        { expectedOpcode: 'MSTORE', expectedStack: [BigInt(0), BigInt(0)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(32)] },
+        { expectedOpcode: 'RETURN', expectedStack: [BigInt(32), BigInt(0)] },
       ],
     }
 
@@ -191,6 +186,7 @@ describe('EIP 1153: transient storage', () => {
 
     const unsignedTx = createLegacyTx({
       gasLimit: BigInt(15000000),
+      gasPrice: 10n,
       to: callingAddress,
     })
 
@@ -203,34 +199,34 @@ describe('EIP 1153: transient storage', () => {
       ],
       transactions: [tx],
       steps: [
-        { expectedOpcode: 'PUSH4', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(1660795326)] },
+        { expectedOpcode: 'PUSH4', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(1660795326)] },
         {
           expectedOpcode: 'MSTORE',
-          expectedGasUsed: 6,
+
           expectedStack: [BigInt(1660795326), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(32)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(32), BigInt(0)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(32)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(32), BigInt(0)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(32), BigInt(0), BigInt(32)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(32), BigInt(0), BigInt(32), BigInt(0)],
         },
         {
           expectedOpcode: 'PUSH32',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(32), BigInt(0), BigInt(32), BigInt(0), BigInt(0)],
         },
         {
           expectedOpcode: 'PUSH2',
-          expectedGasUsed: 3,
+
           expectedStack: [
             BigInt(32),
             BigInt(0),
@@ -242,7 +238,7 @@ describe('EIP 1153: transient storage', () => {
         },
         {
           expectedOpcode: 'CALL',
-          expectedGasUsed: 14913432,
+
           expectedStack: [
             BigInt(32),
             BigInt(0),
@@ -253,118 +249,118 @@ describe('EIP 1153: transient storage', () => {
             BigInt('65535'),
           ],
         },
-        { expectedOpcode: 'CALLDATASIZE', expectedGasUsed: 2, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(32)] },
+        { expectedOpcode: 'CALLDATASIZE', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(32)] },
         //
-        { expectedOpcode: 'DUP1', expectedGasUsed: 3, expectedStack: [BigInt(32), BigInt(0)] },
+        { expectedOpcode: 'DUP1', expectedStack: [BigInt(32), BigInt(0)] },
         {
           expectedOpcode: 'CALLDATACOPY',
-          expectedGasUsed: 9,
+
           expectedStack: [BigInt(32), BigInt(0), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'MLOAD', expectedGasUsed: 3, expectedStack: [BigInt(0)] },
-        { expectedOpcode: 'DUP1', expectedGasUsed: 3, expectedStack: [BigInt(1660795326)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'MLOAD', expectedStack: [BigInt(0)] },
+        { expectedOpcode: 'DUP1', expectedStack: [BigInt(1660795326)] },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1660795326), BigInt(1660795326)],
         },
         {
           expectedOpcode: 'EQ',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1660795326), BigInt(1660795326), BigInt(2949149906)],
         },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1660795326), BigInt(0)],
         },
         {
           expectedOpcode: 'JUMPI',
-          expectedGasUsed: 10,
+
           expectedStack: [BigInt(1660795326), BigInt(0), BigInt(52)],
         },
-        { expectedOpcode: 'DUP1', expectedGasUsed: 3, expectedStack: [BigInt(1660795326)] },
+        { expectedOpcode: 'DUP1', expectedStack: [BigInt(1660795326)] },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1660795326), BigInt(1660795326)],
         },
         {
           expectedOpcode: 'EQ',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1660795326), BigInt(1660795326), BigInt(1660795326)],
         },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1660795326), BigInt(1)],
         },
         {
           expectedOpcode: 'JUMPI',
-          expectedGasUsed: 10,
+
           expectedStack: [BigInt(1660795326), BigInt(1), BigInt(63)],
         },
-        { expectedOpcode: 'JUMPDEST', expectedGasUsed: 1, expectedStack: [BigInt(1660795326)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(1660795326)] },
+        { expectedOpcode: 'JUMPDEST', expectedStack: [BigInt(1660795326)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(1660795326)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1660795326), BigInt(170)],
         },
         {
           expectedOpcode: 'TSTORE',
-          expectedGasUsed: 100,
+
           expectedStack: [BigInt(1660795326), BigInt(170), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(1660795326)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(1660795326)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1660795326), BigInt(0)],
         },
         {
           expectedOpcode: 'RETURN',
-          expectedGasUsed: -14910832,
+
           expectedStack: [BigInt(1660795326), BigInt(0), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH4', expectedGasUsed: 3, expectedStack: [BigInt(1)] },
+        { expectedOpcode: 'PUSH4', expectedStack: [BigInt(1)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(2949149906)],
         },
         {
           expectedOpcode: 'MSTORE',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(2949149906), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(1)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(1), BigInt(32)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(1)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(1), BigInt(32)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(32), BigInt(0)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(32), BigInt(0), BigInt(32)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(32), BigInt(0), BigInt(32), BigInt(0)],
         },
         {
           expectedOpcode: 'PUSH32',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(32), BigInt(0), BigInt(32), BigInt(0), BigInt(0)],
         },
         {
           expectedOpcode: 'PUSH2',
-          expectedGasUsed: 3,
+
           expectedStack: [
             BigInt(1),
             BigInt(32),
@@ -377,7 +373,7 @@ describe('EIP 1153: transient storage', () => {
         },
         {
           expectedOpcode: 'CALL',
-          expectedGasUsed: 14910622,
+
           expectedStack: [
             BigInt(1),
             BigInt(32),
@@ -389,95 +385,95 @@ describe('EIP 1153: transient storage', () => {
             BigInt(0xffff),
           ],
         },
-        { expectedOpcode: 'CALLDATASIZE', expectedGasUsed: 2, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(32)] },
-        { expectedOpcode: 'DUP1', expectedGasUsed: 3, expectedStack: [BigInt(32), BigInt(0)] },
+        { expectedOpcode: 'CALLDATASIZE', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(32)] },
+        { expectedOpcode: 'DUP1', expectedStack: [BigInt(32), BigInt(0)] },
         {
           expectedOpcode: 'CALLDATACOPY',
-          expectedGasUsed: 9,
+
           expectedStack: [BigInt(32), BigInt(0), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'MLOAD', expectedGasUsed: 3, expectedStack: [BigInt(0)] },
-        { expectedOpcode: 'DUP1', expectedGasUsed: 3, expectedStack: [BigInt(2949149906)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'MLOAD', expectedStack: [BigInt(0)] },
+        { expectedOpcode: 'DUP1', expectedStack: [BigInt(2949149906)] },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(2949149906), BigInt(2949149906)],
         },
         {
           expectedOpcode: 'EQ',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(2949149906), BigInt(2949149906), BigInt(2949149906)],
         },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(2949149906), BigInt(1)],
         },
         {
           expectedOpcode: 'JUMPI',
-          expectedGasUsed: 10,
+
           expectedStack: [BigInt(2949149906), BigInt(1), BigInt(52)],
         },
-        { expectedOpcode: 'JUMPDEST', expectedGasUsed: 1, expectedStack: [BigInt(2949149906)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(2949149906)] },
+        { expectedOpcode: 'JUMPDEST', expectedStack: [BigInt(2949149906)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(2949149906)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(2949149906), BigInt(255)],
         },
         {
           expectedOpcode: 'TSTORE',
-          expectedGasUsed: 100,
+
           expectedStack: [BigInt(2949149906), BigInt(255), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(2949149906)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(2949149906)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(2949149906), BigInt(0)],
         },
         {
           expectedOpcode: 'REVERT',
-          expectedGasUsed: -14910522,
+
           expectedStack: [BigInt(2949149906), BigInt(0), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH4', expectedGasUsed: 3, expectedStack: [BigInt(1), BigInt(0)] },
+        { expectedOpcode: 'PUSH4', expectedStack: [BigInt(1), BigInt(0)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(1135352889)],
         },
         {
           expectedOpcode: 'MSTORE',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(1135352889), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(1), BigInt(0)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(1), BigInt(0)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(32)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(32), BigInt(0)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(32), BigInt(0), BigInt(32)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(32), BigInt(0), BigInt(32), BigInt(0)],
         },
         {
           expectedOpcode: 'PUSH32',
-          expectedGasUsed: 3,
+
           expectedStack: [
             BigInt(1),
             BigInt(0),
@@ -490,7 +486,7 @@ describe('EIP 1153: transient storage', () => {
         },
         {
           expectedOpcode: 'PUSH2',
-          expectedGasUsed: 3,
+
           expectedStack: [
             BigInt(1),
             BigInt(0),
@@ -504,7 +500,7 @@ describe('EIP 1153: transient storage', () => {
         },
         {
           expectedOpcode: 'CALL',
-          expectedGasUsed: 14910334,
+
           expectedStack: [
             BigInt(1),
             BigInt(0),
@@ -517,144 +513,144 @@ describe('EIP 1153: transient storage', () => {
             BigInt(0xffff),
           ],
         },
-        { expectedOpcode: 'CALLDATASIZE', expectedGasUsed: 2, expectedStack: [] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(32)] },
-        { expectedOpcode: 'DUP1', expectedGasUsed: 3, expectedStack: [BigInt(32), BigInt(0)] },
+        { expectedOpcode: 'CALLDATASIZE', expectedStack: [] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(32)] },
+        { expectedOpcode: 'DUP1', expectedStack: [BigInt(32), BigInt(0)] },
         {
           expectedOpcode: 'CALLDATACOPY',
-          expectedGasUsed: 9,
+
           expectedStack: [BigInt(32), BigInt(0), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [] },
-        { expectedOpcode: 'MLOAD', expectedGasUsed: 3, expectedStack: [BigInt(0)] },
-        { expectedOpcode: 'DUP1', expectedGasUsed: 3, expectedStack: [BigInt(1135352889)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [] },
+        { expectedOpcode: 'MLOAD', expectedStack: [BigInt(0)] },
+        { expectedOpcode: 'DUP1', expectedStack: [BigInt(1135352889)] },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(1135352889)],
         },
         {
           expectedOpcode: 'EQ',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(1135352889), BigInt(2949149906)],
         },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(0)],
         },
         {
           expectedOpcode: 'JUMPI',
-          expectedGasUsed: 10,
+
           expectedStack: [BigInt(1135352889), BigInt(0), BigInt(52)],
         },
         {
           expectedOpcode: 'DUP1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889)],
         },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(1135352889)],
         },
         {
           expectedOpcode: 'EQ',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(1135352889), BigInt(1660795326)],
         },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(0)],
         },
         {
           expectedOpcode: 'JUMPI',
-          expectedGasUsed: 10,
+
           expectedStack: [BigInt(1135352889), BigInt(0), BigInt(63)],
         },
-        { expectedOpcode: 'DUP1', expectedGasUsed: 3, expectedStack: [BigInt(1135352889)] },
+        { expectedOpcode: 'DUP1', expectedStack: [BigInt(1135352889)] },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(1135352889)],
         },
         {
           expectedOpcode: 'EQ',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(1135352889), BigInt(1135352889)],
         },
         {
           expectedOpcode: 'PUSH4',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(1)],
         },
         {
           expectedOpcode: 'JUMPI',
-          expectedGasUsed: 10,
+
           expectedStack: [BigInt(1135352889), BigInt(1), BigInt(74)],
         },
-        { expectedOpcode: 'JUMPDEST', expectedGasUsed: 1, expectedStack: [BigInt(1135352889)] },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(1135352889)] },
+        { expectedOpcode: 'JUMPDEST', expectedStack: [BigInt(1135352889)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(1135352889)] },
         {
           expectedOpcode: 'TLOAD',
-          expectedGasUsed: 100,
+
           expectedStack: [BigInt(1135352889), BigInt(0)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(170)],
         },
         {
           expectedOpcode: 'MSTORE',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(170), BigInt(0)],
         },
-        { expectedOpcode: 'PUSH1', expectedGasUsed: 3, expectedStack: [BigInt(1135352889)] },
+        { expectedOpcode: 'PUSH1', expectedStack: [BigInt(1135352889)] },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1135352889), BigInt(32)],
         },
         {
           expectedOpcode: 'RETURN',
-          expectedGasUsed: -14910234,
+
           expectedStack: [BigInt(1135352889), BigInt(32), BigInt(0)],
         },
         {
           expectedOpcode: 'CALLDATASIZE',
-          expectedGasUsed: 2,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(1)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(1), BigInt(0)],
         },
         {
           expectedOpcode: 'DUP1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(1), BigInt(0), BigInt(0)],
         },
         {
           expectedOpcode: 'CALLDATACOPY',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(1), BigInt(0), BigInt(0), BigInt(0)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(1)],
         },
         {
           expectedOpcode: 'PUSH1',
-          expectedGasUsed: 3,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(1), BigInt(32)],
         },
         {
           expectedOpcode: 'RETURN',
-          expectedGasUsed: NaN,
+
           expectedStack: [BigInt(1), BigInt(0), BigInt(1), BigInt(32), BigInt(0)],
         },
       ],

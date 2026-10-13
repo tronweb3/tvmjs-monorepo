@@ -1,4 +1,4 @@
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet, TronNile } from '@tvmjs/common'
 import { hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
@@ -15,19 +15,16 @@ import {
   createTxFromRLP,
 } from '../src/index.ts'
 
-const common = new Common({
-  chain: Mainnet,
-  hardfork: Hardfork.London,
-})
+const common = new Common({ chain: TronMainnet })
 
 const pKey = hexToBytes('0x4646464646464646464646464646464646464646464646464646464646464646')
 
 const unsignedLegacyTx = createLegacyTx({})
 const signedLegacyTx = unsignedLegacyTx.sign(pKey)
 
-const unsignedEIP2930Tx = createAccessList2930Tx({ chainId: BigInt(1) }, { common })
+const unsignedEIP2930Tx = createAccessList2930Tx({}, { common })
 const signedEIP2930Tx = unsignedEIP2930Tx.sign(pKey)
-const unsignedEIP1559Tx = createFeeMarket1559Tx({ chainId: BigInt(1) }, { common })
+const unsignedEIP1559Tx = createFeeMarket1559Tx({}, { common })
 const signedEIP1559Tx = unsignedEIP1559Tx.sign(pKey)
 
 const txTypes = [
@@ -73,16 +70,15 @@ describe('[TransactionFactory]: Basic functions', () => {
   it('fromSerializedData() -> error cases', () => {
     for (const txType of txTypes) {
       if (txType.eip2718) {
-        const unsupportedCommon = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
+        const otherNetwork = new Common({ chain: TronNile })
         assert.throws(
           () => {
             createTxFromRLP(txType.unsigned.serialize(), {
-              common: unsupportedCommon,
+              common: otherNetwork,
             })
           },
-          undefined,
-          undefined,
-          `should throw when trying to create typed tx when not allowed in Common (${txType.name})`,
+          /chain ID|chainId/,
+          `should reject a transaction from another TRON network (${txType.name})`,
         )
 
         assert.throws(
@@ -149,10 +145,9 @@ describe('[TransactionFactory]: Basic functions', () => {
   })
 
   it('fromTxData() -> error cases', () => {
-    const unsupportedCommon = new Common({ chain: Mainnet, hardfork: Hardfork.Istanbul })
     assert.throws(() => {
-      createTx({ type: 1 }, { common: unsupportedCommon })
-    })
+      createTx({ type: 1, chainId: BigInt(TronNile.chainId) }, { common })
+    }, /chain ID|chainId/)
 
     assert.throws(() => {
       createTx({ type: 999 })

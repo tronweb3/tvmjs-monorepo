@@ -215,6 +215,7 @@ export class MerklePatriciaTrie {
    * @param key
    * @param value
    * @returns A Promise that resolves once value is stored.
+   * @throws If a node required to store the value is missing from the database.
    */
   async put(
     key: Uint8Array,
@@ -235,29 +236,34 @@ export class MerklePatriciaTrie {
     }
 
     await this._lock.acquire()
-    const appliedKey = skipKeyTransform ? key : this.appliedKey(key)
-    if (equalsBytes(this.root(), this.EMPTY_TRIE_ROOT)) {
-      await this._createInitialNode(appliedKey, value)
-    } else {
-      const { remaining, stack } = await this.findPath(appliedKey)
-      let ops: BatchDBOp[] = []
-      if (this._opts.useNodePruning) {
-        const val = await this.get(key)
-        // Only delete keys if it either does not exist, or if it gets updated
-        // (The update will update the hash of the node, thus we can delete the original leaf node)
-        if (val === null || !equalsBytes(val, value)) {
-          ops = this._createPruneDeleteOps(stack)
+    try {
+      const appliedKey = skipKeyTransform ? key : this.appliedKey(key)
+      if (equalsBytes(this.root(), this.EMPTY_TRIE_ROOT)) {
+        await this._createInitialNode(appliedKey, value)
+      } else {
+        // A missing referenced node is an incomplete trie, not an absent key.
+        // Reject it before updating or pruning any part of the path.
+        const { remaining, stack } = await this.findPath(appliedKey, true)
+        let ops: BatchDBOp[] = []
+        if (this._opts.useNodePruning) {
+          const val = await this.get(key)
+          // Only delete keys if it either does not exist, or if it gets updated
+          // (The update will update the hash of the node, thus we can delete the original leaf node)
+          if (val === null || !equalsBytes(val, value)) {
+            ops = this._createPruneDeleteOps(stack)
+          }
+        }
+        // then update
+        await this._updateNode(appliedKey, value, remaining, stack)
+        if (this._opts.useNodePruning) {
+          // Only after updating the node it is possible to delete the keyHashes
+          await this._db.batch(ops)
         }
       }
-      // then update
-      await this._updateNode(appliedKey, value, remaining, stack)
-      if (this._opts.useNodePruning) {
-        // Only after updating the node we can delete the keyHashes
-        await this._db.batch(ops)
-      }
+      await this.persistRoot()
+    } finally {
+      this._lock.release()
     }
-    await this.persistRoot()
-    this._lock.release()
   }
 
   /**
@@ -269,23 +275,26 @@ export class MerklePatriciaTrie {
   async del(key: Uint8Array, skipKeyTransform: boolean = false): Promise<void> {
     this.DEBUG && this.debug(`Key: ${bytesToHex(key)}`, ['del'])
     await this._lock.acquire()
-    const appliedKey = skipKeyTransform ? key : this.appliedKey(key)
-    const { node, stack } = await this.findPath(appliedKey)
+    try {
+      const appliedKey = skipKeyTransform ? key : this.appliedKey(key)
+      const { node, stack } = await this.findPath(appliedKey)
 
-    let ops: BatchDBOp[] = []
-    // Only delete if the `key` currently has any value
-    if (this._opts.useNodePruning && node !== null) {
-      ops = this._createPruneDeleteOps(stack)
+      let ops: BatchDBOp[] = []
+      // Only delete if the `key` currently has any value
+      if (this._opts.useNodePruning && node !== null) {
+        ops = this._createPruneDeleteOps(stack)
+      }
+      if (node) {
+        await this._deleteNode(appliedKey, stack)
+      }
+      if (this._opts.useNodePruning) {
+        // Only after deleting the node it is possible to delete the keyHashes
+        await this._db.batch(ops)
+      }
+      await this.persistRoot()
+    } finally {
+      this._lock.release()
     }
-    if (node) {
-      await this._deleteNode(appliedKey, stack)
-    }
-    if (this._opts.useNodePruning) {
-      // Only after deleting the node it is possible to delete the keyHashes
-      await this._db.batch(ops)
-    }
-    await this.persistRoot()
-    this._lock.release()
   }
 
   // ─── Path finding ───────────────────────────────────────────────────────────
@@ -1016,9 +1025,12 @@ export class MerklePatriciaTrie {
     }
     this.DEBUG && this.debug(`${bytesToHex(this.root())}`, ['commit'])
     await this._lock.acquire()
-    await this._db.commit()
-    await this.persistRoot()
-    this._lock.release()
+    try {
+      await this._db.commit()
+      await this.persistRoot()
+    } finally {
+      this._lock.release()
+    }
   }
 
   /**
@@ -1033,9 +1045,12 @@ export class MerklePatriciaTrie {
 
     this.DEBUG && this.debug(`${bytesToHex(this.root())}`, ['revert', 'before'])
     await this._lock.acquire()
-    this.root(await this._db.revert())
-    await this.persistRoot()
-    this._lock.release()
+    try {
+      this.root(await this._db.revert())
+      await this.persistRoot()
+    } finally {
+      this._lock.release()
+    }
     this.DEBUG && this.debug(`${bytesToHex(this.root())}`, ['revert', 'after'])
   }
 

@@ -1,5 +1,5 @@
 import type { secp256k1 } from '@noble/curves/secp256k1.js'
-import type { BigIntLike, KZG, PrefixedHexString } from '@tvmjs/util'
+import type { BigIntLike, PrefixedHexString } from '@tvmjs/util'
 import type { ConsensusAlgorithm, ConsensusType, Hardfork } from './enums.ts'
 
 export interface ChainName {
@@ -33,16 +33,48 @@ type ConsensusConfig = {
 export interface ChainConfig {
   name: string
   chainId: number | string
+  /** Execution profile family. Ethereum network configurations are not executable. */
+  execution: 'tron'
+  /** Proposals enabled when the caller does not supply activatedProposals. */
+  defaultActivatedProposals?: number[]
   defaultHardfork?: string
   comment?: string
   url?: string
-  genesis: GenesisBlockConfig
+  genesis?: GenesisBlockConfig
   hardforks: HardforkTransitionConfig[]
   customHardforks?: HardforksDict
   bootstrapNodes: BootstrapNodeConfig[]
   dnsNetworks?: string[]
-  consensus: ConsensusConfig
+  consensus?: ConsensusConfig
   depositContractAddress?: PrefixedHexString
+}
+
+/** A network configuration with explicitly supplied genesis and consensus data. */
+export interface NetworkChainConfig extends ChainConfig {
+  genesis: GenesisBlockConfig
+  consensus: ConsensusConfig
+}
+
+/** Historical Ethereum network data. Not accepted by execution constructors. */
+export interface EthereumChainData extends Omit<NetworkChainConfig, 'execution'> {
+  execution?: never
+}
+
+/** A TRON execution preset without network genesis or consensus metadata. */
+export interface TronExecutionChainConfig extends ChainConfig {
+  execution: 'tron'
+  genesis?: never
+  consensus?: never
+}
+
+type CustomChainField = 'name' | 'chainId' | 'comment' | 'url' | 'bootstrapNodes' | 'dnsNetworks'
+
+/**
+ * Identity and discovery overrides for createCustomCommon().
+ * Supply genesis and consensus explicitly in a complete ChainConfig instead.
+ */
+export type CustomChainConfig = Partial<Pick<ChainConfig, CustomChainField>> & {
+  [K in Exclude<keyof ChainConfig, CustomChainField>]?: never
 }
 
 export interface GenesisBlockConfig {
@@ -52,7 +84,6 @@ export interface GenesisBlockConfig {
   nonce: PrefixedHexString
   extraData: PrefixedHexString
   baseFeePerGas?: PrefixedHexString
-  excessBlobGas?: PrefixedHexString
   requestsHash?: PrefixedHexString
 }
 
@@ -75,7 +106,7 @@ export interface BootstrapNodeConfig {
 
 export interface CustomCrypto {
   /**
-   * Interface for providing custom cryptographic primitives in place of `ethereum-cryptography` variants
+   * Custom cryptographic primitives used by TVMJS execution packages.
    */
   keccak256?: (msg: Uint8Array) => Uint8Array
   ecrecover?: (
@@ -88,38 +119,35 @@ export interface CustomCrypto {
   sha256?: (msg: Uint8Array) => Uint8Array
   ecsign?: typeof secp256k1.sign
   ecdsaRecover?: (sig: Uint8Array, recId: number, hash: Uint8Array) => Uint8Array
-  kzg?: KZG
 }
 
 export interface BaseOpts {
   /**
-   * String identifier ('byzantium') for hardfork or {@link Hardfork} enum.
+   * TRON execution profile. Only `tron` / {@link Hardfork.Tron} is supported.
    *
-   * Default: Hardfork.London
+   * Default: Hardfork.Tron
    */
   hardfork?: string | Hardfork
   /**
    * Selected EIPs which can be activated, please use an array for instantiation
-   * (e.g. `eips: [ 2537, ]`)
+   * (e.g. `eips: [7939]`)
    *
    * Currently supported:
    *
-   * - [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537) - BLS12-381 precompiles
+   * - [EIP-7939](https://eips.ethereum.org/EIPS/eip-7939) - CLZ instruction
    */
   eips?: number[]
   /**
-   * Optionally pass in an EIP params dictionary, see one of the
-   * EthereumJS library `params.ts` files for an example (e.g. tx, tvm).
-   * By default parameters are set by the respective library, so this
-   * is only relevant if you want to use EthereumJS libraries with a
-   * custom parameter set.
+   * Optional parameter dictionaries, normally supplied by the consuming TVMJS
+   * package. Use the `tron` group for TRON overrides; explicitly activated
+   * optional EIP groups take precedence over that group.
    *
    * Example Format:
    *
    * ```ts
    * {
-   *   1559: {
-   *     initialBaseFee: 1000000000,
+   *   tron: {
+   *     callGas: 40,
    *   }
    * }
    * ```
@@ -127,7 +155,7 @@ export interface BaseOpts {
   params?: ParamsDict
   /**
    * This option can be used to replace the most common crypto primitives
-   * (keccak256 hashing e.g.) within the EthereumJS ecosystem libraries
+   * (keccak256 hashing e.g.) within TVMJS packages
    * with alternative implementations (e.g. more performant WASM libraries).
    *
    * Note: please be aware that this is adding new dependencies for your
@@ -143,7 +171,8 @@ export interface BaseOpts {
    * Common stores proposal state without mutating EIPs or params. Execution
    * consumers can use `Common.isActivatedProposal()` to gate protocol
    * behavior. IDs are deduplicated and kept in ascending order; unknown IDs
-   * throw on instantiation. No proposal is activated by default.
+   * throw on instantiation. An explicit array, including `[]`, overrides the
+   * chain preset's defaults.
    */
   activatedProposals?: number[]
 }
@@ -153,15 +182,10 @@ export interface BaseOpts {
  */
 export interface CommonOpts extends BaseOpts {
   /**
-   * The chain configuration to be used. There are available configuration object for mainnet
-   * (`Mainnet`) and the currently active testnets which can be directly used.
+   * TRON execution configuration, such as TronMainnet, TronNile or TronShasta.
+   * Ethereum presets and hardfork schedules are rejected with a migration error.
    */
   chain: ChainConfig
-}
-
-export interface GethConfigOpts extends BaseOpts {
-  chain?: string
-  genesisHash?: Uint8Array
 }
 
 export interface HardforkByOpts {
@@ -202,10 +226,4 @@ export type TronProposalConfig = {
 
 export type TronProposalsDict = {
   readonly [proposalId: string]: TronProposalConfig
-}
-
-export type BpoSchedule = {
-  targetBlobGasPerBlock: bigint
-  maxBlobGasPerBlock: bigint
-  blobGasPriceUpdateFraction: bigint
 }

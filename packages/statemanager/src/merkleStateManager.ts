@@ -1,5 +1,5 @@
 import { keccak_256 } from '@noble/hashes/sha3.js'
-import { Common, Mainnet } from '@tvmjs/common'
+import { Common, TronMainnet } from '@tvmjs/common'
 import { MerklePatriciaTrie } from '@tvmjs/mpt'
 import { RLP } from '@tvmjs/rlp'
 import {
@@ -16,6 +16,7 @@ import {
   isDebugEnabled,
   short,
   toBytes,
+  tokenIdFromKey,
   unpadBytes,
   unprefixedHexToBytes,
   utf8ToBytes,
@@ -67,10 +68,10 @@ export class MerkleStateManager implements StateManagerInterface {
   protected readonly _prefixCodeHashes: boolean
   protected readonly _prefixStorageTrieKeys: boolean
 
-  // _tokenIds only update once
-  protected _tokenIds: Map<number, bigint>
-  protected _tokenIdsCache: Map<number, bigint>
-  protected _tokenIdsCacheStack: Map<number, bigint>[]
+  // _tokenIds only update once. Keys are exact TRC-10 token IDs.
+  protected _tokenIds: Map<bigint, bigint>
+  protected _tokenIdsCache: Map<bigint, bigint>
+  protected _tokenIdsCacheStack: Map<bigint, bigint>[]
 
   public readonly common: Common
 
@@ -97,7 +98,7 @@ export class MerkleStateManager implements StateManagerInterface {
 
     this._debug = debugDefault('statemanager:merkle')
 
-    this.common = opts.common ?? new Common({ chain: Mainnet })
+    this.common = opts.common ?? new Common({ chain: TronMainnet })
 
     this._checkpointCount = 0
 
@@ -153,9 +154,8 @@ export class MerkleStateManager implements StateManagerInterface {
       )
     }
     if (account !== undefined) {
-      for (const _ in account.asset) {
-        const tokenId = Number(_)
-        const value = account.asset[tokenId]
+      for (const [key, value] of Object.entries(account.asset)) {
+        const tokenId = tokenIdFromKey(key)
         if (!this._tokenIds.has(tokenId)) {
           const total = this._tokenIdsCache.get(tokenId) ?? BIGINT_0
           this._tokenIdsCache.set(tokenId, value + total)
@@ -199,9 +199,8 @@ export class MerkleStateManager implements StateManagerInterface {
     }
     const account = await this.getAccount(address)
     if (account) {
-      for (const _ in account.asset) {
-        const tokenId = Number(_)
-        const value = account.asset[tokenId]
+      for (const [key, value] of Object.entries(account.asset)) {
+        const tokenId = tokenIdFromKey(key)
         if (this._tokenIdsCache.has(tokenId)) {
           const total = this._tokenIdsCache.get(tokenId) ?? BIGINT_0
           const cur = total - value
@@ -215,6 +214,9 @@ export class MerkleStateManager implements StateManagerInterface {
     }
 
     this._caches?.deleteAccount(address)
+    // Storage tries are indexed by the hashed address, as in _getStorageTrie().
+    const storageTrieKey = bytesToUnprefixedHex(this.keccakFunction(address.bytes))
+    delete this._storageTries[storageTrieKey]
 
     if (this._caches?.account === undefined) {
       await this._trie.del(address.bytes)
@@ -384,11 +386,6 @@ export class MerkleStateManager implements StateManagerInterface {
       const storageTrie = this._getStorageTrie(address, account)
 
       modifyTrie(storageTrie, async () => {
-        // update storage cache
-        // Using deprecated bytesToUnprefixedHex for performance: used as object keys for trie cache lookups.
-        const addressHex = bytesToUnprefixedHex(address.bytes)
-        this._storageTries[addressHex] = storageTrie
-
         // update contract storageRoot
         account.storageRoot = storageTrie.root()
         await this.putAccount(address, account)
@@ -494,8 +491,12 @@ export class MerkleStateManager implements StateManagerInterface {
     }
 
     this._tokenIdsCacheStack.pop()
-    this._tokenIdsCache.forEach((v, k) => this._tokenIds.set(k, v))
-    this._tokenIdsCache = new Map()
+    if (this._checkpointCount === 0) {
+      // Only the outermost commit makes registrations permanent. Nested commits
+      // keep them in the cache so an enclosing revert can still discard them.
+      this._tokenIdsCache.forEach((v, k) => this._tokenIds.set(k, v))
+      this._tokenIdsCache = new Map()
+    }
 
     if (this.DEBUG) {
       this._debug(`state checkpoint committed`)
@@ -578,8 +579,8 @@ export class MerkleStateManager implements StateManagerInterface {
 
   /**
    * Gets the state-root of the Merkle-Patricia trie representation
-   * of the state of this StateManager. Will error if there are uncommitted
-   * checkpoints on the instance.
+   * of the state of this StateManager, flushing cached writes first.
+   * Open checkpoints remain available for commit or revert after this call.
    * @returns {Promise<Uint8Array>} - Returns the state-root of the `StateManager`
    */
   async getStateRoot(): Promise<Uint8Array> {
@@ -744,16 +745,23 @@ export class MerkleStateManager implements StateManagerInterface {
 
     const cacheSize = !downlevelCaches ? this._trie['_opts']['cacheSize'] : 0
     const trie = this._trie.shallowCopy(false, { cacheSize })
+    // The copy has no checkpoint scratch data. Its root and token registrations
+    // must both refer to the state before the outermost open checkpoint.
+    const checkpoint = this._trie.database().checkpoints[0]
+    if (checkpoint !== undefined) trie.root(checkpoint.root)
     const prefixCodeHashes = this._prefixCodeHashes
     const prefixStorageTrieKeys = this._prefixStorageTrieKeys
 
-    return new MerkleStateManager({
+    const copy = new MerkleStateManager({
       common,
       trie,
       prefixStorageTrieKeys,
       prefixCodeHashes,
       caches: this._caches?.shallowCopy(downlevelCaches),
     })
+    copy._tokenIds = new Map(this._tokenIds)
+    copy._tokenIdsCache = new Map(this._tokenIdsCacheStack[0] ?? this._tokenIdsCache)
+    return copy
   }
 
   /**
@@ -775,9 +783,9 @@ export class MerkleStateManager implements StateManagerInterface {
 
   /**
    * Checks whether the token ID exists
-   * @param tokenId - tokenId to check
+   * @param tokenId - exact TRC-10 token ID to check
    */
-  async tokenIdExists(tokenId: number): Promise<boolean> {
+  async tokenIdExists(tokenId: bigint): Promise<boolean> {
     if (this._tokenIds.has(tokenId)) return true
 
     if (this._tokenIdsCache.has(tokenId)) return true

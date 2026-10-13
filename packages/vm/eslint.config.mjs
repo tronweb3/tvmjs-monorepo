@@ -22,7 +22,7 @@ export default [
     },
   },
   {
-    files: ['test/util.ts', 'test/tester/**/*.ts', 'examples/**/*.ts'],
+    files: ['test/util.ts', 'examples/**/*.ts'],
     rules: {
       'no-console': 'off',
     },

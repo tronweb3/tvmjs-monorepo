@@ -1,5 +1,6 @@
+import { createBlock } from '@tvmjs/block'
 import { bytesToHex, equalsBytes } from '@tvmjs/util'
-import { assert, describe, it } from 'vitest'
+import { assert, describe, expect, it } from 'vitest'
 
 import { createBlockchain } from '../src/index.ts'
 
@@ -24,8 +25,7 @@ describe('blockchain test', () => {
     assert.strictEqual(reorged, 0)
   })
 
-  // TODO: fix this test, it fails because MuirGlacier is not supported
-  it.skip('should iterate through 24 blocks with reorg', async () => {
+  it('should iterate through a longer TRON fork after reorg', async () => {
     const { blockchain, error } = await generateBlockchain(25)
     assert.strictEqual(error, null, 'no error')
     let reorged = 0
@@ -108,21 +108,18 @@ describe('blockchain test', () => {
   })
 
   it('should throw on a negative maxBlocks parameter in iterator', async () => {
-    const { blockchain, blocks, error } = await generateBlockchain(25)
-    assert.strictEqual(error, null, 'no error')
-    let i = 0
-    await blockchain
-      .iterator(
+    const { blockchain } = await generateBlockchain(25)
+    let calls = 0
+    await expect(
+      blockchain.iterator(
         'test',
-        (block: Block) => {
-          if (equalsBytes(block.hash(), blocks[i + 1].hash())) {
-            i++
-          }
+        () => {
+          calls++
         },
         -1,
-      )
-      .catch(() => {})
-    // Note: if st.end() is not called (Promise did not throw), then this test fails, as it does not end.
+      ),
+    ).rejects.toThrow()
+    assert.strictEqual(calls, 0)
   })
 
   it('should test setIteratorHead method', async () => {
@@ -153,19 +150,18 @@ describe('blockchain test', () => {
   })
 
   it('should catch iterator func error', async () => {
-    const { blockchain, error } = await generateBlockchain(25)
-    assert.strictEqual(error, null, 'no error')
-    try {
-      await blockchain.iterator('error', () => {
+    const { blockchain } = await generateBlockchain(25)
+    await expect(
+      blockchain.iterator('error', () => {
         throw new Error('iterator func error')
-      })
-    } catch (error: any) {
-      assert.strictEqual(error?.message, 'iterator func error', 'should return correct error')
-    }
+      }),
+    ).rejects.toThrow('iterator func error')
+    assert.strictEqual((await blockchain.getIteratorHead('error')).header.number, 0n)
   })
 
   it('should not call iterator function in an empty blockchain', async () => {
     const blockchain = await createBlockchain({
+      genesisBlock: createBlock(),
       validateBlocks: true,
       validateConsensus: false,
     })

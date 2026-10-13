@@ -1,82 +1,47 @@
 import { assert, describe, it } from 'vitest'
 
-import { Common, Hardfork, Mainnet } from '../src/index.ts'
+import { Common, TronMainnet } from '../src/index.ts'
 
-describe('[Common/EIPs]: Initialization / Chain params', () => {
-  it('Correct initialization', () => {
-    let eips = [2537, 2929]
-    const c = new Common({ chain: Mainnet, eips })
-    assert.strictEqual(c.eips(), eips, 'should initialize with supported EIP')
-
-    eips = [2718, 2929, 2930]
-    let f = () => {
-      new Common({ chain: Mainnet, eips, hardfork: Hardfork.Istanbul })
+describe('[Common/EIPs]: TRON capability selection', () => {
+  it('keeps CLZ explicit and independent of governance proposals', () => {
+    for (const activatedProposals of [[], [95], [96], [95, 96]]) {
+      const common = new Common({ chain: TronMainnet, activatedProposals })
+      assert.isFalse(common.isActivatedEIP(7939))
+      common.setEIPs([7939, 7939])
+      assert.isTrue(common.isActivatedEIP(7939))
+      assert.deepEqual(common.eips(), [7939])
+      common.setEIPs([])
+      assert.isFalse(common.isActivatedEIP(7939))
     }
-    assert.doesNotThrow(f, 'Should not throw when initializing with a consistent EIP list')
-
-    eips = [2930]
-    const msg =
-      'should throw when initializing with an EIP with required EIPs not being activated along'
-    f = () => {
-      new Common({ chain: Mainnet, eips, hardfork: Hardfork.Istanbul })
-    }
-    assert.throws(f, undefined, undefined, msg)
   })
 
-  it('supports explicitly activating EIP-7939 without changing the default', () => {
-    const defaultCommon = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun })
-    const explicitCommon = new Common({
-      chain: Mainnet,
-      hardfork: Hardfork.Cancun,
-      eips: [7939],
-    })
-
-    assert.isFalse(defaultCommon.isActivatedEIP(7939))
-    assert.isTrue(explicitCommon.isActivatedEIP(7939))
-  })
-
-  it('Initialization errors', () => {
-    const UNSUPPORTED_EIP = 1000000
-    const eips = [UNSUPPORTED_EIP]
-    const msg = 'should throw on an unsupported EIP'
-    const f = () => {
-      new Common({ chain: Mainnet, eips })
+  it('keeps shared baseline capabilities active independently of explicit selection', () => {
+    const common = new Common({ chain: TronMainnet })
+    for (const eip of [606, 607, 608, 609, 1013, 1679, 1153, 3855, 5656, 6780]) {
+      assert.isTrue(common.isActivatedEIP(eip))
+      assert.strictEqual(common.eipBlock(eip), 0n)
+      assert.isNull(common.eipTimestamp(eip))
     }
-    assert.throws(f, /not supported$/, undefined, msg)
+    assert.isNull(common.eipBlock(4844))
+    assert.isNull(common.eipTimestamp(4844))
+  })
 
-    /*
-    // Manual test since no test triggering EIP config available
-    // TODO: recheck on addition of new EIP configs
-    // To run manually change minimumHardfork in EIP2537 config to petersburg
-    eips = [ 2537, ]
-    msg = 'should throw on not meeting minimum hardfork requirements'
-    f = () => {
-      new Common({ chain: Mainnet, hardfork: Hardfork.Byzantium, eips })
+  it('rejects invalid or unavailable capabilities without changing state', () => {
+    const common = new Common({ chain: TronMainnet, eips: [7939] })
+    for (const eip of [
+      NaN,
+      Infinity,
+      -1,
+      0,
+      7939.5,
+      Number.MAX_SAFE_INTEGER + 1,
+      99999,
+      4844,
+      4788,
+      7516,
+    ]) {
+      assert.throws(() => common.setEIPs([eip]), /not supported/)
+      assert.deepEqual(common.eips(), [7939])
     }
-    assert.throws(f, /minimumHardfork/, undefined, msg)
-    */
-  })
-
-  it('eipBlock', () => {
-    const c = new Common({ chain: Mainnet })
-
-    let msg = 'should return correct value'
-    assert.strictEqual(c.eipBlock(1559), 12965000n, msg)
-
-    msg = 'should return null for unscheduled eip'
-    assert.isNull(c.eipBlock(0), msg)
-  })
-
-  it('eipTimestamp', () => {
-    const c = new Common({ chain: Mainnet })
-
-    let msg = 'should return null for unscheduled eip by timestamp'
-    assert.isNull(c.eipTimestamp(1559), msg)
-
-    msg = 'should return null for unscheduled eip'
-    assert.isNull(c.eipTimestamp(0), msg)
-
-    msg = 'should return correct value'
-    assert.strictEqual(c.eipTimestamp(3651), BigInt(1681338455), msg)
   })
 })

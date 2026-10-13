@@ -27,6 +27,20 @@ const debug = debugDefault('blockchain:#')
 export async function createBlockchain(opts: BlockchainOptions = {}) {
   const blockchain = new Blockchain(opts)
 
+  if (opts.genesisBlock === undefined && !blockchain.common.hasGenesis()) {
+    throw EthereumJSErrorWithoutCode(
+      'TRON execution presets require an explicit genesisBlock or network genesis metadata to create a Blockchain',
+    )
+  }
+  if (
+    opts.genesisBlock !== undefined &&
+    opts.genesisBlock.common.chainId() !== blockchain.common.chainId()
+  ) {
+    throw EthereumJSErrorWithoutCode(
+      'The genesis block has a different chainId than the Blockchain',
+    )
+  }
+
   await blockchain.consensus?.setup({ blockchain })
 
   let stateRoot = opts.genesisBlock?.header.stateRoot ?? opts.genesisStateRoot

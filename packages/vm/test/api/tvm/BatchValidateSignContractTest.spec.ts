@@ -2,7 +2,7 @@ import { bytesToHex, createAddressFromPrivateKey, hexToBytes } from '@tvmjs/util
 import { utils } from 'tronweb'
 import { assert, describe, it } from 'vitest'
 import { createVM } from '../../../src/constructors.ts'
-import { PK, compileSol, deployContract, triggerConstant } from './utils.ts'
+import { PK, deployContract, getCompiledContract, triggerConstant } from './utils.ts'
 
 import type { Address } from '@tvmjs/util'
 
@@ -10,7 +10,7 @@ const OWNER_ADDRESS = createAddressFromPrivateKey(hexToBytes(PK))
 
 const batchValidateSign = async (hash: string, signatures: string[], addresses: string[]) => {
   const vm = await createVM({})
-  const { bytecode, abi } = await compileSol('batchvalidatesign001.sol', 'Demo')
+  const { bytecode, abi } = getCompiledContract('batchvalidatesign001.sol', 'Demo')
   const contractAddress = (await deployContract(vm, {
     caller: OWNER_ADDRESS,
     bytecode: hexToBytes(`0x${bytecode}`),

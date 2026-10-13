@@ -4,15 +4,9 @@ import baseConfig from '../../config/vitest.config.browser.mts'
 export default mergeConfig(
   baseConfig,
   defineConfig({
+    optimizeDeps: { include: ['mcl-wasm'] },
     test: {
-      exclude: [
-        ...configDefaults.exclude,
-        // readDirSync method not provided fs mock for vite
-        'test/precompiles/eip-2537-bls.spec.ts',
-        'test/eips/eof-header-validation.spec.ts',
-        'test/eips/_*.spec.ts',
-        'test/precompiles/_*.spec.ts',
-      ],
+      exclude: [...configDefaults.exclude, 'test/eips/_*.spec.ts', 'test/precompiles/_*.spec.ts'],
     },
   }),
 )

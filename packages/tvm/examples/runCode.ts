@@ -1,13 +1,16 @@
+import { createBlock } from '@tvmjs/block'
 import { createBlockchain } from '@tvmjs/blockchain'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
+import { Common, Hardfork, TronMainnet } from '@tvmjs/common'
 import { createTVM } from '@tvmjs/tvm'
 import { bytesToHex, hexToBytes } from '@tvmjs/util'
 
 import type { PrefixedHexString } from '@tvmjs/util'
 
 const main = async () => {
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.London })
-  const blockchain = await createBlockchain()
+  const common = new Common({ chain: TronMainnet, hardfork: Hardfork.Tron })
+  // A synthetic genesis block for this local execution example.
+  const genesisBlock = createBlock({}, { common })
+  const blockchain = await createBlockchain({ common, genesisBlock })
 
   const tvm = await createTVM({
     common,

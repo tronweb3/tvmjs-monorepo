@@ -1,15 +1,14 @@
 import { sha256 } from '@noble/hashes/sha2.js'
-import { Common, Hardfork, Mainnet } from '@tvmjs/common'
-import { CLRequestType, createCLRequest, equalsBytes, hexToBytes } from '@tvmjs/util'
+import { Common, TronMainnet } from '@tvmjs/common'
+import { bytesToHex, createCLRequest, hexToBytes } from '@tvmjs/util'
 import { assert, describe, it } from 'vitest'
 
 import { createBlock, genRequestsRoot } from '../src/index.ts'
 
-import type { CLRequest } from '@tvmjs/util'
+import type { CLRequest, CLRequestType } from '@tvmjs/util'
 
 describe('[Block]: CLRequests tests', () => {
-  // Common with EIP-7685 enabled (CLRequests)
-  const common = new Common({ chain: Mainnet, hardfork: Hardfork.Cancun, eips: [7685] })
+  const common = new Common({ chain: TronMainnet })
 
   function createDepositRequest(): CLRequest<CLRequestType> {
     // Example deposit data
@@ -33,92 +32,45 @@ describe('[Block]: CLRequests tests', () => {
     return createCLRequest(consolidationData)
   }
 
-  it('should create a block with deposit request', () => {
-    const depositRequest = createDepositRequest()
-    assert.strictEqual(depositRequest.type, CLRequestType.Deposit, 'should be a deposit request')
-
-    const requestsHash = genRequestsRoot([depositRequest], sha256)
-    const block = createBlock(
-      {
-        header: { requestsHash },
-      },
-      { common },
-    )
-
-    assert.isDefined(block.header.requestsHash, 'block should have requestsHash')
-    assert.isTrue(
-      equalsBytes(block.header.requestsHash!, requestsHash),
-      'requestsHash should match the expected value',
-    )
-  })
-
-  it('should create a block with withdrawal request', () => {
-    const withdrawalRequest = createWithdrawalRequest()
+  it('hashes a deposit request as data and rejects it in a TRON block', () => {
+    const requestsHash = genRequestsRoot([createDepositRequest()], sha256)
     assert.strictEqual(
-      withdrawalRequest.type,
-      CLRequestType.Withdrawal,
-      'should be a withdrawal request',
+      bytesToHex(requestsHash),
+      '0xcda208fdf27463bbf25fa3a89c4207752d4060ec06a6afb4903c24bc621f19a4',
     )
-
-    const requestsHash = genRequestsRoot([withdrawalRequest], sha256)
-    const block = createBlock(
-      {
-        header: { requestsHash },
-      },
-      { common },
-    )
-
-    assert.isDefined(block.header.requestsHash, 'block should have requestsHash')
-    assert.isTrue(
-      equalsBytes(block.header.requestsHash!, requestsHash),
-      'requestsHash should match the expected value',
-    )
+    assert.throws(() => createBlock({ header: { requestsHash } }, { common }), 'EIP 7685')
   })
 
-  it('should create a block with consolidation request', () => {
-    const consolidationRequest = createConsolidationRequest()
+  it('hashes a withdrawal request as data and rejects it in a TRON block', () => {
+    const requestsHash = genRequestsRoot([createWithdrawalRequest()], sha256)
     assert.strictEqual(
-      consolidationRequest.type,
-      CLRequestType.Consolidation,
-      'should be a consolidation request',
+      bytesToHex(requestsHash),
+      '0x2139fa96081c4bc9ac4cb48ed391744d17ad24941e31ddcf0bc91857fb2bf3f2',
     )
-
-    const requestsHash = genRequestsRoot([consolidationRequest], sha256)
-    const block = createBlock(
-      {
-        header: { requestsHash },
-      },
-      { common },
-    )
-
-    assert.isDefined(block.header.requestsHash, 'block should have requestsHash')
-    assert.isTrue(
-      equalsBytes(block.header.requestsHash!, requestsHash),
-      'requestsHash should match the expected value',
-    )
+    assert.throws(() => createBlock({ header: { requestsHash } }, { common }), 'EIP 7685')
   })
 
-  it('should create a block with multiple CLRequests', () => {
-    const depositRequest = createDepositRequest()
-    const withdrawalRequest = createWithdrawalRequest()
-    const consolidationRequest = createConsolidationRequest()
-
-    // Requests should be sorted by type
-    const requests = [depositRequest, withdrawalRequest, consolidationRequest]
-    const requestsHash = genRequestsRoot(requests, sha256)
-
-    const block = createBlock(
-      {
-        header: { requestsHash },
-      },
-      { common },
+  it('hashes a consolidation request as data and rejects it in a TRON block', () => {
+    const requestsHash = genRequestsRoot([createConsolidationRequest()], sha256)
+    assert.strictEqual(
+      bytesToHex(requestsHash),
+      '0x67a037b7b1e7189b7181168fd34b8622b490acd1fb089de140620243b98db661',
     )
+    assert.throws(() => createBlock({ header: { requestsHash } }, { common }), 'EIP 7685')
+  })
 
-    assert.isDefined(block.header.requestsHash, 'block should have requestsHash')
-    assert.isTrue(
-      equalsBytes(block.header.requestsHash!, requestsHash),
-      'requestsHash should match the expected value',
+  it('hashes multiple request types without enabling execution requests', () => {
+    const requests = [
+      createDepositRequest(),
+      createWithdrawalRequest(),
+      createConsolidationRequest(),
+    ]
+    assert.strictEqual(
+      bytesToHex(genRequestsRoot(requests, sha256)),
+      '0xa506a2636d5f9ea89875b83c3ad5f18d26c5dd377d5cef89fc8604372a0f54a2',
     )
+    assert.isFalse(common.isActivatedEIP(7685))
+    assert.throws(() => common.setEIPs([7685]))
   })
 
   it('should validate the requests are sorted by type', () => {

@@ -85,10 +85,80 @@ export interface AccountData {
   balance?: BigIntLike
   storageRoot?: BytesLike
   codeHash?: BytesLike
-  asset?: {
-    [key: number]: bigint
-  }
+  asset?: AssetBalances
   activePermissions?: Permission[]
+}
+
+/**
+ * TRC-10 token ID input. Numbers must be safe integers; use `bigint` for IDs
+ * above `Number.MAX_SAFE_INTEGER`.
+ */
+export type TokenIdLike = bigint | number
+
+/**
+ * TRC-10 balances keyed by the canonical decimal string of the token ID, see
+ * {@link tokenIdToKey}. String keys keep IDs above `2^53 - 1` exact.
+ */
+export type AssetBalances = { [tokenId: string]: bigint }
+
+const CANONICAL_TOKEN_ID_KEY = /^(?:0|[1-9][0-9]*)$/
+
+/**
+ * Converts a TRC-10 token ID into its canonical {@link AssetBalances} key.
+ * @throws if the ID is negative, not an integer, or a `number` outside the safe integer range
+ */
+export function tokenIdToKey(tokenId: TokenIdLike): string {
+  let id: bigint
+  if (typeof tokenId === 'bigint') {
+    id = tokenId
+  } else if (typeof tokenId === 'number' && Number.isSafeInteger(tokenId)) {
+    id = BigInt(tokenId)
+  } else if (typeof tokenId === 'number') {
+    throw EthereumJSErrorWithoutCode(
+      `Token ID ${tokenId} is not a safe integer; pass TRC-10 token IDs as bigint`,
+    )
+  } else {
+    throw EthereumJSErrorWithoutCode(
+      `Token ID must be a bigint or a safe integer number, received ${typeof tokenId}`,
+    )
+  }
+  if (id < BIGINT_0) {
+    throw EthereumJSErrorWithoutCode(`Token ID cannot be negative, received ${id}`)
+  }
+  return id.toString(10)
+}
+
+/**
+ * Parses a canonical {@link AssetBalances} key back into the TRC-10 token ID.
+ * @throws if the key is not a canonical decimal string
+ */
+export function tokenIdFromKey(key: string): bigint {
+  if (typeof key !== 'string' || !CANONICAL_TOKEN_ID_KEY.test(key)) {
+    throw EthereumJSErrorWithoutCode(
+      `Invalid TRC-10 token ID key ${JSON.stringify(key)}; expected a canonical decimal string`,
+    )
+  }
+  return BigInt(key)
+}
+
+function compareTokenIdKeys(a: string, b: string): number {
+  const left = tokenIdFromKey(a)
+  const right = tokenIdFromKey(b)
+  if (left < right) return -1
+  if (left > right) return 1
+  return 0
+}
+
+function validateAssetBalances(asset: AssetBalances): void {
+  for (const [key, balance] of Object.entries(asset)) {
+    tokenIdFromKey(key)
+    if (typeof balance !== 'bigint') {
+      throw EthereumJSErrorWithoutCode(`TRC-10 balance for token ID ${key} must be a bigint`)
+    }
+    if (balance < BIGINT_0) {
+      throw EthereumJSErrorWithoutCode(`TRC-10 balance for token ID ${key} must not be negative`)
+    }
+  }
 }
 
 export interface PartialAccountData {
@@ -149,9 +219,7 @@ export class Account {
   // codeSize and version is separately stored in VKT
   _codeSize: number | null = null
   _version: number | null = null
-  _asset: {
-    [key: number | string]: bigint
-  } | null = null
+  _asset: AssetBalances | null = null
   _activePermissions: Permission[] | null = null
 
   get version() {
@@ -220,22 +288,27 @@ export class Account {
     this._codeSize = _codeSize
   }
 
-  get asset() {
+  get asset(): AssetBalances {
     if (this._asset !== null) {
       return this._asset
     } else {
       throw Error(`asset=${this._asset} not loaded`)
     }
   }
-  set asset(_asset: { [key: number]: bigint } | null) {
+  set asset(_asset: AssetBalances | null) {
+    if (_asset !== null) validateAssetBalances(_asset)
     this._asset = _asset
   }
 
-  getTokenBalance(tokenId: bigint): bigint {
+  /**
+   * Returns the TRC-10 balance for a token ID, or zero when the account holds none.
+   * @param tokenId Token ID as `bigint`, or a safe integer `number`
+   */
+  getTokenBalance(tokenId: TokenIdLike): bigint {
     if (this._asset === null) {
       throw Error(`asset=${this._asset} not loaded`)
     }
-    return this._asset[Number(tokenId)] ?? BIGINT_0
+    return this._asset[tokenIdToKey(tokenId)] ?? BIGINT_0
   }
 
   get activePermissions() {
@@ -279,7 +352,7 @@ export class Account {
     codeHash: Uint8Array | null = KECCAK256_NULL,
     codeSize: number | null = 0,
     version: number | null = 0,
-    asset: { [key: number]: bigint } | null = {},
+    asset: AssetBalances | null = {},
     activePermissions: Permission[] | null = [],
   ) {
     this._nonce = nonce
@@ -314,17 +387,26 @@ export class Account {
     if (this._codeSize !== null && this._codeSize < BIGINT_0) {
       throw EthereumJSErrorWithoutCode('codeSize must be greater than zero')
     }
+    if (this._asset !== null) {
+      validateAssetBalances(this._asset)
+    }
   }
 
   /**
    * Returns an array of Uint8Arrays of the raw bytes for the account, in order.
+   * TRC-10 assets are encoded as `[id, balance, id, balance, ...]` in ascending
+   * numeric token ID order.
    */
   raw(): Uint8Array[] {
-    const tokenIds = Object.keys(this.asset!)
+    const assetBalances = this.asset
+    // Nested RLP items; typed as `any` like the permission list so the return type stays unchanged.
     const asset: any = []
-    tokenIds.forEach((_) => {
-      asset.push(bigIntToUnpaddedBytes(BigInt(_)), bigIntToUnpaddedBytes(this.asset![Number(_)]))
-    })
+    for (const key of Object.keys(assetBalances).sort(compareTokenIdKeys)) {
+      asset.push(
+        bigIntToUnpaddedBytes(tokenIdFromKey(key)),
+        bigIntToUnpaddedBytes(assetBalances[key]),
+      )
+    }
     const activePermissions = (this.activePermissions ?? []).map((ele) => permissionToRlp(ele))
     return [
       bigIntToUnpaddedBytes(this.nonce),
@@ -450,14 +532,13 @@ export function createAccount(accountData: AccountData) {
 
 export function createAccountFromBytesArray(values: Uint8Array[]) {
   const [nonce, balance, storageRoot, codeHash, assetArr = [], activePermissionArr = []] = values
-  const asset: {
-    [key: number]: bigint
-  } = {}
+  const asset: AssetBalances = {}
 
   for (let i = 0; i < assetArr.length; i++) {
     const tokenId = assetArr[i] as unknown as Uint8Array
     const tokenValue = assetArr[++i] as unknown as Uint8Array
-    asset[bytesToInt(tokenId)] = bytesToBigInt(tokenValue)
+    // Decode with bigint precision; Number() would merge IDs above 2^53 - 1.
+    asset[bytesToBigInt(tokenId).toString(10)] = bytesToBigInt(tokenValue)
   }
 
   const activePermissions: Permission[] = []
